@@ -30,12 +30,16 @@ export default defineConfig({
       output: {
         manualChunks: {
           // Separar vendor chunks para mejor caching
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
+          'react-vendor': ['react', 'react-dom', 'react-router'],
+          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select', '@radix-ui/react-tabs', '@radix-ui/react-toast'],
           'chart-vendor': ['recharts'],
           'utils-vendor': ['date-fns', 'clsx', 'tailwind-merge'],
+          'form-vendor': ['react-hook-form'],
+          'i18n-vendor': ['i18next', 'react-i18next'],
         },
       },
     },
-    chunkSizeWarningLimit: 1000,
+    // Aumentar límite de advertencia de tamaño de chunks a 2MB
+    chunkSizeWarningLimit: 2000,
   },
 })
