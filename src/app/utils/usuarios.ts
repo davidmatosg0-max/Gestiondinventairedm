@@ -65,12 +65,31 @@ const USUARIOS_PREDEFINIDOS: Usuario[] = [
     rol: 'coordinador',
     permisos: ['coordinador'],
     descripcion: 'Coordinateur - Accès en Lecture Seule'
+  },
+  {
+    id: '5',
+    username: 'transport',
+    password: 'Transport2024!',
+    nombre: 'Marc',
+    apellido: 'Transporteur',
+    email: 'transport@banque-alimentaire.org',
+    rol: 'usuario',
+    permisos: [
+      'transporte.ver',
+      'transporte.editar',
+      'transporte.entregar',
+      'transporte.vehiculos',
+      'comandas.ver',
+      'organismos.ver',
+      'dashboard.ver'
+    ],
+    descripcion: 'Responsable Transport - Gestion des Livraisons et Véhicules'
   }
 ];
 
 const STORAGE_KEY = 'banque_alimentaire_usuarios';
 const VERSION_KEY = 'banque_alimentaire_usuarios_version';
-const CURRENT_VERSION = '2.0'; // Versión con usuario admin sin permisos de desarrollador
+const CURRENT_VERSION = '3.0'; // Versión con usuario de transporte agregado
 
 // Migrar usuarios existentes para actualizar permisos del usuario admin
 export function migrarUsuarios(): void {
@@ -92,9 +111,20 @@ export function migrarUsuarios(): void {
           permisos: ['administrador_general', 'administrador_liaison'],
           descripcion: 'Administrateur Démo - Accès Administrateur Complet (Sans Développeur)'
         };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(usuarios));
         console.log('✅ Usuario admin actualizado: permisos de desarrollador removidos');
       }
+      
+      // Agregar usuario de transporte si no existe
+      const transportIndex = usuarios.findIndex(u => u.username.toLowerCase() === 'transport');
+      if (transportIndex === -1) {
+        const nuevoUsuarioTransporte = USUARIOS_PREDEFINIDOS.find(u => u.username === 'transport');
+        if (nuevoUsuarioTransporte) {
+          usuarios.push(nuevoUsuarioTransporte);
+          console.log('✅ Usuario de transporte agregado');
+        }
+      }
+      
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(usuarios));
       
       // Marcar como actualizado
       localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
