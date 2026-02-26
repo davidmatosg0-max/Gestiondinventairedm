@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, ReactNode } from 'react';
 import { useBalance, BalanceConfig, BalanceData } from '../hooks/useBalance';
 
 interface BalanceContextType {
@@ -18,16 +18,6 @@ const BalanceContext = createContext<BalanceContextType | undefined>(undefined);
 
 export function BalanceProvider({ children }: { children: ReactNode }) {
   const balanceData = useBalance();
-  
-  // Debug logs
-  React.useEffect(() => {
-    console.log('🔌 BalanceProvider - Estado actualizado:', {
-      isConnected: balanceData.isConnected,
-      currentWeight: balanceData.currentWeight,
-      weight: balanceData.currentWeight?.weight,
-      stable: balanceData.currentWeight?.stable
-    });
-  }, [balanceData.isConnected, balanceData.currentWeight]);
 
   return (
     <BalanceContext.Provider value={balanceData}>

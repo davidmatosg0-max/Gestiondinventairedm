@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import defaultLogo from 'figma:asset/88882bc723a7419ad993393bc21033b23ba79364.png';
 
 interface BrandingConfig {
   primaryColor: string;
@@ -70,17 +69,14 @@ const DEFAULT_BRANDING: BrandingConfig = {
   successColor: '#2d9561',      // Verde éxito
   dangerColor: '#c23934',       // Rojo elegante
   warningColor: '#e8a419',      // Naranja/amarillo profesional
-  logo: null,  // Se carga dinámicamente desde defaultLogo
+  logo: null,  // Se puede personalizar desde el módulo de Personalización
   systemName: 'Banque Alimentaire'
 };
 
 export function useBranding() {
   const [config, setConfig] = useState<BrandingConfig>(() => {
-    // Inicializar con logo predeterminado
-    return {
-      ...DEFAULT_BRANDING,
-      logo: defaultLogo
-    };
+    // Inicializar con configuración predeterminada
+    return DEFAULT_BRANDING;
   });
 
   useEffect(() => {
@@ -95,7 +91,7 @@ export function useBranding() {
           // Si el logo es una cadena Base64 (comienza con "data:"), usarlo
           const finalLogo = parsed.logo && parsed.logo.startsWith('data:') 
             ? parsed.logo 
-            : defaultLogo;
+            : null;
           
           const finalConfig = {
             ...parsed,
@@ -108,7 +104,7 @@ export function useBranding() {
         } catch (error) {
           console.error('Error loading branding config:', error);
           // Si hay error al cargar, guardar y usar configuración por defecto
-          const defaultConfig = { ...DEFAULT_BRANDING, logo: defaultLogo };
+          const defaultConfig = { ...DEFAULT_BRANDING, logo: null };
           const configToSave = { ...DEFAULT_BRANDING, logo: null }; // Guardar sin logo asset
           localStorage.setItem('brandingConfig_permanent', JSON.stringify(configToSave));
           setConfig(defaultConfig);
@@ -119,7 +115,7 @@ export function useBranding() {
         // PRIMERA CARGA: Guardar automáticamente los colores predeterminados (sin logo asset)
         const configToSave = { ...DEFAULT_BRANDING, logo: null };
         localStorage.setItem('brandingConfig_permanent', JSON.stringify(configToSave));
-        const defaultConfig = { ...DEFAULT_BRANDING, logo: defaultLogo };
+        const defaultConfig = { ...DEFAULT_BRANDING, logo: null };
         setConfig(defaultConfig);
         applyBranding(defaultConfig);
         console.log('✅ Colores predeterminados inicializados y guardados permanentemente');
@@ -147,7 +143,7 @@ export function useBranding() {
       // Usar el logo predeterminado si no hay logo personalizado
       const finalConfig = {
         ...updatedConfig,
-        logo: updatedConfig.logo || defaultLogo
+        logo: updatedConfig.logo || null
       };
       
       setConfig(finalConfig);

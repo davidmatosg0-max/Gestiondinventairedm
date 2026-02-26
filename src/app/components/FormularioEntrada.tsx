@@ -58,16 +58,6 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
   // Hook de balanza desde context
   const { isConnected, currentWeight } = useBalanceContext();
   
-  // Debug logs
-  useEffect(() => {
-    console.log('🔍 FormularioEntrada - Estado de balanza:', {
-      isConnected,
-      currentWeight,
-      weight: currentWeight?.weight,
-      stable: currentWeight?.stable
-    });
-  }, [isConnected, currentWeight]);
-  
   // Estados
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [programas, setProgramas] = useState<ProgramaEntrada[]>([]);
@@ -177,20 +167,10 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
 
   // Auto-capturar peso de balanza cuando la unidad es PLT
   useEffect(() => {
-    console.log('⚖️ Efecto de captura automática:', {
-      unidad: formData.unidad,
-      isConnected,
-      currentWeight,
-      stable: currentWeight?.stable,
-      peso_actual: formData.peso
-    });
-    
     if (formData.unidad === 'PLT' && isConnected && currentWeight && currentWeight.stable) {
       // Solo actualizar si el peso cambió significativamente (más de 0.01 kg de diferencia = 10g)
       const diferencia = Math.abs(formData.peso - currentWeight.weight);
-      console.log('✅ Todas las condiciones cumplidas - Diferencia:', diferencia, 'kg');
       if (diferencia > 0.01) {
-        console.log('📊 Actualizando peso a:', currentWeight.weight, 'kg');
         setFormData(prev => ({ 
           ...prev, 
           peso: parseFloat(currentWeight.weight.toFixed(3)) 
@@ -198,11 +178,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
         toast.success(`⚖️ Peso capturado automáticamente: ${currentWeight.weight.toFixed(3)} kg`, {
           duration: 2000
         });
-      } else {
-        console.log('⏸️ Peso no actualizado - Diferencia demasiado pequeña:', diferencia, 'kg');
       }
-    } else {
-      console.log('❌ Condiciones NO cumplidas para captura automática');
     }
   }, [formData.unidad, isConnected, currentWeight?.stable, currentWeight?.weight]);
 
