@@ -149,9 +149,9 @@ export function Usuarios() {
                 </div>
                 <div className="space-y-2">
                   <Label>{t('users.role')}</Label>
-                  <Select>
+                  <Select value={formUsuario.rol} onValueChange={(value) => setFormUsuario({ ...formUsuario, rol: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder={t('users.selectRole')} value={formUsuario.rol} />
+                      <SelectValue placeholder={t('users.selectRole')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="administrador">{t('users.administrator')}</SelectItem>
