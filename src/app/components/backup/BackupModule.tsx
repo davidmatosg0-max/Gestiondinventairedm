@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Database,
   Download,
-  Upload,
+  Sparkles,
   Clock,
   Settings,
   TrendingUp,
@@ -23,6 +23,7 @@ import { BackupCreator } from './BackupCreator';
 import { BackupRestorer } from './BackupRestorer';
 import { BackupHistory } from './BackupHistory';
 import { BackupSettings } from './BackupSettings';
+import { TextCorrector } from './TextCorrector';
 import { getBackupStats, shouldRunAutoBackup, runAutoBackup } from '../utils/backupUtils';
 import { formatFileSize, formatDateRelative } from '../utils/formatUtils';
 
@@ -159,8 +160,8 @@ export function BackupModule() {
                 {t('backup.create', 'Crear')}
               </TabsTrigger>
               <TabsTrigger value="restore" className="flex items-center gap-2">
-                <Upload className="w-4 h-4" />
-                {t('backup.restore', 'Restaurar')}
+                <Sparkles className="w-4 h-4" />
+                {t('textCorrector.correction', 'Corrección')}
               </TabsTrigger>
               <TabsTrigger value="history" className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
@@ -275,10 +276,10 @@ export function BackupModule() {
             </div>
           </TabsContent>
           
-          {/* Tab: Restaurar */}
+          {/* Tab: Corrección de Texto */}
           <TabsContent value="restore">
             <div className="backdrop-blur-xl bg-white/90 rounded-2xl p-6 border border-white/20 shadow-xl">
-              <BackupRestorer />
+              <TextCorrector />
             </div>
           </TabsContent>
           
@@ -302,4 +303,4 @@ export function BackupModule() {
 }
 
 // Exportar componentes individuales
-export { BackupCreator, BackupRestorer, BackupHistory, BackupSettings };
+export { BackupCreator, BackupRestorer, BackupHistory, BackupSettings, TextCorrector };

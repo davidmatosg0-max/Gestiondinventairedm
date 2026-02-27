@@ -2424,5 +2424,27 @@
     "checkTransportModule": "Check transport module",
     "urgentAlerts": "Urgent Alerts",
     "requireImmediateAttention": "require immediate attention"
+  },
+  "textCorrector": {
+    "title": "Text Correction",
+    "description": "Correct spelling and grammar in Spanish, French, English and Arabic",
+    "language": "Text Language",
+    "inputLabel": "Text to Correct",
+    "placeholder": "Write or paste text here...",
+    "characters": "characters",
+    "correct": "Correct",
+    "processing": "Processing...",
+    "clear": "Clear",
+    "correctedText": "Corrected Text",
+    "copy": "Copy Text",
+    "copied": "Text copied to clipboard",
+    "structuredText": "Suggested Structure",
+    "structuredDescription": "Text reorganized with paragraphs and professional format",
+    "copyStructured": "Copy Structured Text",
+    "copiedStructured": "Structured text copied to clipboard",
+    "corrections": "Corrections Made",
+    "suggestions": "Improvement Suggestions",
+    "noCorrections": "Excellent!",
+    "noCorrectionsDesc": "No errors found in the text."
   }
 }

@@ -2558,5 +2558,27 @@
     "checkTransportModule": "Vérifiez le module de transport",
     "urgentAlerts": "Alertes Urgentes",
     "requireImmediateAttention": "nécessitent une attention immédiate"
+  },
+  "textCorrector": {
+    "title": "Correction de Texte",
+    "description": "Corrigez l'orthographe et la grammaire en espagnol, français, anglais et arabe",
+    "language": "Langue du Texte",
+    "inputLabel": "Texte à Corriger",
+    "placeholder": "Écrivez ou collez le texte ici...",
+    "characters": "caractères",
+    "correct": "Corriger",
+    "processing": "Traitement en cours...",
+    "clear": "Effacer",
+    "correctedText": "Texte Corrigé",
+    "copy": "Copier le Texte",
+    "copied": "Texte copié dans le presse-papiers",
+    "structuredText": "Structure Suggérée",
+    "structuredDescription": "Texte réorganisé avec paragraphes et format professionnel",
+    "copyStructured": "Copier le Texte Structuré",
+    "copiedStructured": "Texte structuré copié dans le presse-papiers",
+    "corrections": "Corrections Effectuées",
+    "suggestions": "Suggestions d'Amélioration",
+    "noCorrections": "Excellent !",
+    "noCorrectionsDesc": "Aucune erreur trouvée dans le texte."
   }
 }

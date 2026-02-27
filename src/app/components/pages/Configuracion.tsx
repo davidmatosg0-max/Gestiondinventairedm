@@ -50,6 +50,7 @@ import {
 import { obtenerUnidades, type Unidad as UnidadDinamica } from '../../utils/unidadStorage';
 import { ConfigurationBalance } from '../ConfigurationBalance';
 import { GestionAdressesQuartiers } from '../GestionAdressesQuartiers';
+import { TextCorrector } from '../backup/TextCorrector';
 import { obtenerUsuarioSesion } from '../../utils/sesionStorage';
 import type { Producto as ProductoTipo, Categoria as CategoriaTipo, Subcategoria as SubcategoriaTipo, Variante as VarianteTipo, Permiso } from '../../types';
 
@@ -1609,6 +1610,14 @@ export function Configuracion() {
           >
             <Scale className="w-4 h-4 mr-2" />
             Balance
+          </TabsTrigger>
+          <TabsTrigger 
+            value="correction" 
+            className="data-[state=active]:text-white"
+            style={{ fontFamily: 'Montserrat, sans-serif' }}
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Correction de Texte
           </TabsTrigger>
           {esDesarrollador && (
             <TabsTrigger 
@@ -3473,6 +3482,23 @@ export function Configuracion() {
             </CardHeader>
             <CardContent>
               <ConfigurationBalance />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tab: Correction de Texte */}
+        <TabsContent value="correction">
+          <Card>
+            <CardHeader>
+              <CardTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
+                <div className="flex items-center gap-3">
+                  <Sparkles className="w-6 h-6 text-[#1E73BE]" />
+                  Correction de Texte Multilingue
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TextCorrector />
             </CardContent>
           </Card>
         </TabsContent>

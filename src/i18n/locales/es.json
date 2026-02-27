@@ -2157,5 +2157,27 @@
     "checkTransportModule": "Revisa el módulo de transporte",
     "urgentAlerts": "Alertas Urgentes",
     "requireImmediateAttention": "requieren atención inmediata"
+  },
+  "textCorrector": {
+    "title": "Corrección de Texto",
+    "description": "Corrija ortografía y gramática en español, francés, inglés y árabe",
+    "language": "Idioma del Texto",
+    "inputLabel": "Texto a Corregir",
+    "placeholder": "Escriba o pegue el texto aquí...",
+    "characters": "caracteres",
+    "correct": "Corregir",
+    "processing": "Procesando...",
+    "clear": "Limpiar",
+    "correctedText": "Texto Corregido",
+    "copy": "Copiar Texto",
+    "copied": "Texto copiado al portapapeles",
+    "structuredText": "Estructura Sugerida",
+    "structuredDescription": "Texto reorganizado con párrafos y formato profesional",
+    "copyStructured": "Copiar Texto Estructurado",
+    "copiedStructured": "Texto estructurado copiado al portapapeles",
+    "corrections": "Correcciones Realizadas",
+    "suggestions": "Sugerencias de Mejora",
+    "noCorrections": "¡Excelente!",
+    "noCorrectionsDesc": "No se encontraron errores en el texto."
   }
 }

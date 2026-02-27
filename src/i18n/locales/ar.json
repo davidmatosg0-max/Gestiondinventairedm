@@ -2328,5 +2328,27 @@
     "checkTransportModule": "تحقق من وحدة النقل",
     "urgentAlerts": "تنبيهات عاجلة",
     "requireImmediateAttention": "تتطلب اهتماما فوريا"
+  },
+  "textCorrector": {
+    "title": "تصحيح النص",
+    "description": "تصحيح الإملاء والقواعد في الإسبانية والفرنسية والإنجليزية والعربية",
+    "language": "لغة النص",
+    "inputLabel": "النص المراد تصحيحه",
+    "placeholder": "اكتب أو الصق النص هنا...",
+    "characters": "حرف",
+    "correct": "تصحيح",
+    "processing": "جاري المعالجة...",
+    "clear": "مسح",
+    "correctedText": "النص المصحح",
+    "copy": "نسخ النص",
+    "copied": "تم نسخ النص إلى الحافظة",
+    "structuredText": "الهيكل المقترح",
+    "structuredDescription": "نص معاد تنظيمه مع فقرات وتنسيق احترافي",
+    "copyStructured": "نسخ النص المنظم",
+    "copiedStructured": "تم نسخ النص المنظم إلى الحافظة",
+    "corrections": "التصحيحات المنفذة",
+    "suggestions": "اقتراحات التحسين",
+    "noCorrections": "ممتاز!",
+    "noCorrectionsDesc": "لم يتم العثور على أخطاء في النص."
   }
 }

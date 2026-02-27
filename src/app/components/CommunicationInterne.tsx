@@ -6,6 +6,8 @@ import { GuiaCommunicationInterne } from './GuiaCommunicationInterne';
 import { GuiaCompletaApp } from './GuiaCompletaApp';
 import { GuideCompletModules } from './GuideCompletModules';
 import { TextareaSpellCheck } from './ui/textarea-spell-check';
+import { TextCorrector } from './backup/TextCorrector';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { 
   Send, 
   Inbox, 
@@ -104,6 +106,7 @@ export function CommunicationInterne() {
   const [notificationsNonLues, setNotificationsNonLues] = useState(0);
   const [afficherGuide, setAfficherGuide] = useState(false);
   const [afficherGuideCompleta, setAfficherGuideCompleta] = useState(false);
+  const [activeTab, setActiveTab] = useState('messagerie');
   
   // Nuevos estados para funcionalidades avanzadas
   const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null);
@@ -596,6 +599,32 @@ export function CommunicationInterne() {
           </div>
         </div>
       </div>
+
+      {/* Tabs para Messagerie y Correction de Texte */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+        <div className="backdrop-blur-xl bg-white/80 border-b border-white/20">
+          <TabsList className="bg-transparent p-0 h-auto border-0 w-full justify-start">
+            <TabsTrigger 
+              value="messagerie" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1a4d7a] data-[state=active]:to-[#2d9561] data-[state=active]:text-white px-8 py-4 rounded-none border-b-2 data-[state=active]:border-[#2d9561] data-[state=inactive]:border-transparent transition-all duration-300"
+              style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
+            >
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Messagerie
+            </TabsTrigger>
+            <TabsTrigger 
+              value="correction" 
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#1a4d7a] data-[state=active]:to-[#2d9561] data-[state=active]:text-white px-8 py-4 rounded-none border-b-2 data-[state=active]:border-[#2d9561] data-[state=inactive]:border-transparent transition-all duration-300"
+              style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Correction de Texte
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* Tab Content: Messagerie */}
+        <TabsContent value="messagerie" className="flex-1 flex flex-col m-0 overflow-hidden">
 
       {/* Guide Complet de tous les Modules */}
       {afficherGuide && (
@@ -1574,6 +1603,17 @@ export function CommunicationInterne() {
           )}
         </div>
       </div>
+
+        </TabsContent>
+
+        {/* Tab Content: Correction de Texte */}
+        <TabsContent value="correction" className="flex-1 overflow-auto m-0">
+          <div className="p-6 max-w-6xl mx-auto">
+            <TextCorrector />
+          </div>
+        </TabsContent>
+
+      </Tabs>
     </div>
   );
 }
