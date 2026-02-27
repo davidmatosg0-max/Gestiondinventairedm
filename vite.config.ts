@@ -39,7 +39,7 @@ export default defineConfig({
         },
       },
     },
-    // Aumentar límite de advertencia de tamaño de chunks a 2MB
-    chunkSizeWarningLimit: 2000,
+    // Aumentar límite de advertencia de tamaño de chunks a 1MB
+    chunkSizeWarningLimit: 1000,
   },
 })
