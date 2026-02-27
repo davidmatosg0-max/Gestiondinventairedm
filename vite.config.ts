@@ -30,7 +30,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           // Separar vendor chunks para mejor caching
-          'react-vendor': ['react', 'react-dom', 'react-router'],
+          'react-vendor': ['react', 'react-dom'],
           'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select', '@radix-ui/react-tabs', '@radix-ui/react-toast'],
           'chart-vendor': ['recharts'],
           'utils-vendor': ['date-fns', 'clsx', 'tailwind-merge'],
