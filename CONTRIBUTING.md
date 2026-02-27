@@ -1,448 +1,479 @@
-# Guía de Contribución
+# 🤝 Guía de Contribución
 
-¡Gracias por tu interés en contribuir al Sistema de Gestión para Banco de Alimentos! 🎉
+¡Gracias por tu interés en contribuir al Sistema de Gestión de Banque Alimentaire!
+
+---
 
 ## 📋 Tabla de Contenidos
 
-- [Código de Conducta](#código-de-conducta)
-- [¿Cómo puedo contribuir?](#cómo-puedo-contribuir)
-- [Configuración del Entorno de Desarrollo](#configuración-del-entorno-de-desarrollo)
-- [Guías de Estilo](#guías-de-estilo)
-- [Proceso de Pull Request](#proceso-de-pull-request)
-- [Reportar Bugs](#reportar-bugs)
-- [Sugerir Mejoras](#sugerir-mejoras)
+1. [Código de Conducta](#código-de-conducta)
+2. [Cómo Contribuir](#cómo-contribuir)
+3. [Reportar Bugs](#reportar-bugs)
+4. [Sugerir Mejoras](#sugerir-mejoras)
+5. [Pull Requests](#pull-requests)
+6. [Estándares de Código](#estándares-de-código)
+7. [Estructura del Proyecto](#estructura-del-proyecto)
+8. [Configuración del Entorno](#configuración-del-entorno)
+
+---
 
 ## 📜 Código de Conducta
 
-Este proyecto se adhiere a un Código de Conducta. Al participar, se espera que mantengas este código. Por favor reporta comportamiento inaceptable a soporte@bancoalimentos.org.
+Este proyecto se adhiere a un código de conducta. Al participar, se espera que mantengas este código.
 
-### Nuestros Estándares
+### Nuestros Valores
+- **Respeto**: Trata a todos con respeto
+- **Colaboración**: Trabaja en conjunto de manera constructiva
+- **Inclusión**: Da la bienvenida a todas las perspectivas
+- **Profesionalismo**: Mantén un ambiente profesional
 
-✅ **Comportamientos que fomentamos:**
-- Uso de lenguaje acogedor e inclusivo
-- Respeto a diferentes puntos de vista y experiencias
-- Aceptación de críticas constructivas
-- Enfoque en lo mejor para la comunidad
-- Empatía hacia otros miembros
+---
 
-❌ **Comportamientos inaceptables:**
-- Uso de lenguaje o imágenes sexualizadas
-- Trolling, comentarios insultantes o ataques personales
-- Acoso público o privado
-- Publicación de información privada de otros sin permiso
-- Cualquier conducta que sea inapropiada en un entorno profesional
+## 🤔 Cómo Contribuir
 
-## 🤝 ¿Cómo puedo contribuir?
+### Formas de Contribuir
 
-### Tipos de Contribuciones
+- 🐛 **Reportar bugs**
+- 💡 **Sugerir nuevas features**
+- 📝 **Mejorar documentación**
+- 🔧 **Arreglar bugs**
+- ✨ **Implementar features**
+- 🌍 **Agregar traducciones**
+- 🎨 **Mejorar diseño/UX**
+- 🧪 **Escribir tests**
 
-1. **Reportar Bugs** 🐛
-2. **Sugerir Nuevas Funcionalidades** 💡
-3. **Mejorar Documentación** 📚
-4. **Corregir Bugs** 🔧
-5. **Implementar Funcionalidades** ✨
-6. **Traducir a Nuevos Idiomas** 🌍
-7. **Mejorar el Diseño UI/UX** 🎨
-
-## 🛠️ Configuración del Entorno de Desarrollo
-
-### Prerrequisitos
-
-- Node.js >= 18.x
-- pnpm >= 8.x (recomendado)
-- Git
-- Editor de código (VSCode recomendado)
-
-### Instalación
-
-1. **Fork el repositorio**
-   - Ve a https://github.com/tu-usuario/banco-alimentos
-   - Clic en "Fork" en la esquina superior derecha
-
-2. **Clonar tu fork**
-   ```bash
-   git clone https://github.com/TU-USUARIO/banco-alimentos.git
-   cd banco-alimentos
-   ```
-
-3. **Agregar el repositorio original como upstream**
-   ```bash
-   git remote add upstream https://github.com/usuario-original/banco-alimentos.git
-   ```
-
-4. **Instalar dependencias**
-   ```bash
-   pnpm install
-   ```
-
-5. **Crear una rama para tu feature**
-   ```bash
-   git checkout -b feature/mi-nueva-funcionalidad
-   ```
-
-6. **Iniciar el servidor de desarrollo**
-   ```bash
-   pnpm dev
-   ```
-
-### Extensiones de VSCode Recomendadas
-
-- ESLint
-- Prettier
-- Tailwind CSS IntelliSense
-- i18n Ally (para traducciones)
-- TypeScript Vue Plugin (Volar)
-
-## 📝 Guías de Estilo
-
-### TypeScript
-
-```typescript
-// ✅ CORRECTO - Interfaces con PascalCase
-interface UserData {
-  id: string;
-  name: string;
-  email: string;
-}
-
-// ✅ CORRECTO - Functional components con tipos
-export function MyComponent({ data }: { data: UserData }) {
-  return <div>{data.name}</div>;
-}
-
-// ❌ INCORRECTO - No usar any
-const fetchData = (id: any) => { ... }
-
-// ✅ CORRECTO - Tipar correctamente
-const fetchData = (id: string | number) => { ... }
-```
-
-### Componentes React
-
-```tsx
-// ✅ CORRECTO - Functional component con TypeScript
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-
-interface Props {
-  title: string;
-  onClose: () => void;
-}
-
-export function MyComponent({ title, onClose }: Props) {
-  const { t } = useTranslation();
-  
-  return (
-    <div className="p-4">
-      <h2>{title}</h2>
-      <button onClick={onClose}>{t('common.close')}</button>
-    </div>
-  );
-}
-```
-
-### CSS con Tailwind
-
-```tsx
-// ✅ CORRECTO - Usar clases de Tailwind CSS v4
-<div className="p-4 bg-[#1E73BE] text-white rounded-lg shadow-md">
-  <h1 className="text-2xl font-bold">Title</h1>
-</div>
-
-// ✅ CORRECTO - Responsive design
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-  {items.map(item => <Card key={item.id} {...item} />)}
-</div>
-
-// ❌ EVITAR - CSS inline extensivo
-<div style={{ padding: '16px', backgroundColor: '#1E73BE' }}>
-```
-
-### Internacionalización (i18n)
-
-```typescript
-// ✅ CORRECTO - Usar traducciones
-const { t } = useTranslation();
-<h1>{t('comptoir.dashboard')}</h1>
-
-// ❌ INCORRECTO - Texto hardcodeado
-<h1>Panel Principal</h1>
-
-// ✅ CORRECTO - Agregar nueva traducción
-// En /src/i18n/locales/es.json
-{
-  "comptoir": {
-    "newFeature": "Nueva Funcionalidad"
-  }
-}
-```
-
-### Estructura de Archivos
-
-```
-/src/app/components/
-├── comptoir/              # Módulo Comptoir
-│   ├── Component.tsx     # PascalCase para componentes
-│   └── utils.ts          # camelCase para utilidades
-├── ui/                   # Componentes UI reutilizables
-└── pages/                # Páginas principales
-```
-
-### Nombres de Archivos
-
-- **Componentes**: `PascalCase.tsx` (ej: `FicheBeneficiaire.tsx`)
-- **Hooks**: `camelCase.ts` (ej: `useBranding.ts`)
-- **Utilidades**: `camelCase.ts` (ej: `formatDate.ts`)
-- **Tipos**: `PascalCase.types.ts` (ej: `User.types.ts`)
-
-### Comentarios
-
-```typescript
-// ✅ CORRECTO - Comentarios descriptivos en español o inglés
-// Función para calcular el valor total de la distribución
-const calculateTotal = (items: Item[]) => {
-  return items.reduce((sum, item) => sum + item.value, 0);
-};
-
-// ✅ CORRECTO - JSDoc para funciones complejas
-/**
- * Genera un PDF con la información del beneficiario
- * @param beneficiary - Datos del beneficiario
- * @param includeQR - Si debe incluir código QR
- * @returns Promise con el blob del PDF
- */
-export async function generatePDF(
-  beneficiary: Beneficiary,
-  includeQR: boolean = true
-): Promise<Blob> {
-  // ...
-}
-```
-
-### Git Commits
-
-Usar mensajes descriptivos siguiendo [Conventional Commits](https://www.conventionalcommits.org/):
-
-```bash
-# ✅ CORRECTO
-feat(comptoir): agregar filtro por fecha en demandas
-fix(calendar): corregir sincronización con demandas aprobadas
-docs(readme): actualizar instrucciones de instalación
-style(ui): mejorar espaciado en cards de beneficiarios
-refactor(types): mover interfaces a archivo separado
-test(utils): agregar tests para formatDate
-chore(deps): actualizar dependencias
-
-# ❌ INCORRECTO
-fix
-updated stuff
-changes
-WIP
-```
-
-### Formato de Código
-
-El proyecto usa ESLint y Prettier. Ejecuta antes de commit:
-
-```bash
-# Formatear código
-pnpm format
-
-# Verificar lint
-pnpm lint
-
-# Corregir problemas automáticamente
-pnpm lint:fix
-```
-
-## 🔄 Proceso de Pull Request
-
-### 1. Mantener tu fork actualizado
-
-```bash
-git fetch upstream
-git checkout main
-git merge upstream/main
-```
-
-### 2. Crear una rama descriptiva
-
-```bash
-git checkout -b feat/nueva-funcionalidad
-# o
-git checkout -b fix/correccion-bug
-# o
-git checkout -b docs/actualizar-readme
-```
-
-### 3. Hacer tus cambios
-
-- Escribe código limpio y bien documentado
-- Sigue las guías de estilo
-- Agrega tests si es necesario
-- Actualiza la documentación
-
-### 4. Commit tus cambios
-
-```bash
-git add .
-git commit -m "feat(modulo): descripción clara del cambio"
-```
-
-### 5. Push a tu fork
-
-```bash
-git push origin feat/nueva-funcionalidad
-```
-
-### 6. Crear Pull Request
-
-1. Ve a tu fork en GitHub
-2. Clic en "Compare & pull request"
-3. Completa la plantilla de PR:
-
-```markdown
-## Descripción
-Breve descripción de los cambios
-
-## Tipo de cambio
-- [ ] Bug fix
-- [ ] Nueva funcionalidad
-- [ ] Breaking change
-- [ ] Documentación
-
-## ¿Cómo se ha probado?
-Describe las pruebas realizadas
-
-## Checklist
-- [ ] Mi código sigue las guías de estilo
-- [ ] He revisado mi propio código
-- [ ] He comentado el código en áreas complejas
-- [ ] He actualizado la documentación
-- [ ] Mis cambios no generan nuevos warnings
-- [ ] He agregado tests que prueban mi cambio
-- [ ] Todos los tests pasan localmente
-- [ ] He actualizado las traducciones (si aplica)
-```
-
-### 7. Revisión de Código
-
-- Responde a los comentarios de los revisores
-- Haz los cambios solicitados
-- Push de nuevos commits a la misma rama
-
-### 8. Merge
-
-Una vez aprobado, tu PR será mergeado al repositorio principal. ¡Gracias por tu contribución! 🎉
+---
 
 ## 🐛 Reportar Bugs
 
-### Antes de reportar
+### Antes de Reportar
 
-1. **Verifica** que no sea un issue duplicado
-2. **Actualiza** a la última versión
-3. **Reproduce** el bug de forma consistente
+1. **Busca** en issues existentes
+2. **Verifica** en última versión
+3. **Prueba** en modo incógnito (sin extensiones)
 
 ### Template de Bug Report
 
 ```markdown
-**Descripción del Bug**
-Descripción clara y concisa del bug.
+## Descripción del Bug
+[Descripción clara y concisa]
 
-**Pasos para Reproducir**
+## Pasos para Reproducir
 1. Ir a '...'
-2. Hacer clic en '...'
-3. Scrollear hasta '...'
-4. Ver el error
+2. Click en '...'
+3. Ver error
 
-**Comportamiento Esperado**
-Descripción de lo que esperabas que sucediera.
+## Comportamiento Esperado
+[Qué debería pasar]
 
-**Comportamiento Actual**
-Descripción de lo que realmente sucede.
+## Comportamiento Actual
+[Qué está pasando]
 
-**Screenshots**
-Si aplica, agrega screenshots.
+## Screenshots
+[Si aplica]
 
-**Entorno**
-- OS: [ej. Windows 11, macOS 14]
-- Navegador: [ej. Chrome 120, Firefox 121]
-- Versión del Sistema: [ej. 1.2.0]
+## Entorno
+- OS: [e.g. Windows 10, macOS 12]
+- Navegador: [e.g. Chrome 120, Firefox 115]
+- Versión: [e.g. 2.1.0]
 
-**Contexto Adicional**
-Cualquier otra información relevante.
+## Información Adicional
+[Cualquier contexto adicional]
 ```
+
+---
 
 ## 💡 Sugerir Mejoras
 
 ### Template de Feature Request
 
 ```markdown
-**¿Tu feature request está relacionado con un problema?**
-Descripción clara del problema. Ej: Siempre me frustra cuando [...]
+## Problema a Resolver
+[Qué problema resuelve esta feature]
 
-**Describe la solución que te gustaría**
-Descripción clara de lo que quieres que suceda.
+## Solución Propuesta
+[Cómo debería funcionar]
 
-**Describe alternativas que hayas considerado**
-Descripción de soluciones o features alternativas.
+## Alternativas Consideradas
+[Otras soluciones que consideraste]
 
-**Contexto Adicional**
-Cualquier otra información, screenshots o ejemplos.
-
-**Impacto**
-- [ ] Bajo - Nice to have
-- [ ] Medio - Mejora notable
-- [ ] Alto - Feature crítico
+## Información Adicional
+[Mockups, ejemplos, etc.]
 ```
-
-## 🌍 Contribuir con Traducciones
-
-### Agregar un Nuevo Idioma
-
-1. Crear archivo en `/src/i18n/locales/xx.json`
-2. Copiar estructura de `es.json`
-3. Traducir todos los keys
-4. Actualizar `/src/i18n/i18n.ts`
-5. Agregar bandera en el selector de idioma
-
-### Mejorar Traducciones Existentes
-
-1. Editar archivo correspondiente en `/src/i18n/locales/`
-2. Mantener los keys sin cambios
-3. Mejorar el texto traducido
-4. Verificar contexto en la aplicación
-
-## 🎨 Contribuir con Diseño
-
-### UI/UX Improvements
-
-- Mantener los colores corporativos
-- Seguir las guías de Tailwind CSS v4
-- Asegurar accesibilidad (WCAG 2.1 AA)
-- Mantener diseño responsive
-- Agregar animaciones sutiles con Motion
-
-### Assets
-
-- **Iconos**: Usar Lucide React
-- **Imágenes**: Optimizar con formato WebP
-- **SVG**: Minimizar antes de agregar
-
-## ❓ Preguntas
-
-Si tienes preguntas sobre el proceso de contribución:
-
-- 📧 Email: soporte@bancoalimentos.org
-- 💬 Discord: [Servidor de la comunidad](https://discord.gg/tu-servidor)
-- 🐛 GitHub Issues: Para preguntas técnicas
-
-## 🏆 Reconocimientos
-
-Todos los contribuidores serán agregados a la sección de reconocimientos del README.
-
-¡Gracias por ayudar a mejorar el Sistema de Gestión para Banco de Alimentos! 🙏
 
 ---
 
-**Juntos hacemos la diferencia** ❤️
+## 🔀 Pull Requests
+
+### Proceso
+
+1. **Fork** el repositorio
+2. **Crea** una rama desde `main`:
+   ```bash
+   git checkout -b feature/nueva-feature
+   # o
+   git checkout -b fix/correccion-bug
+   ```
+3. **Desarrolla** tu cambio
+4. **Commitea** siguiendo [Conventional Commits](#conventional-commits)
+5. **Push** a tu fork
+6. **Abre** un Pull Request
+
+### Template de Pull Request
+
+```markdown
+## Descripción
+[Descripción de los cambios]
+
+## Tipo de Cambio
+- [ ] Bug fix (cambio que corrige un issue)
+- [ ] Nueva feature (cambio que agrega funcionalidad)
+- [ ] Breaking change (fix o feature que rompe funcionalidad existente)
+- [ ] Documentación
+- [ ] Refactor
+- [ ] Performance
+- [ ] Tests
+
+## ¿Cómo se ha Probado?
+[Describe las pruebas realizadas]
+
+## Checklist
+- [ ] Mi código sigue los estándares del proyecto
+- [ ] He realizado self-review de mi código
+- [ ] He comentado código complejo
+- [ ] He actualizado la documentación
+- [ ] Mis cambios no generan warnings
+- [ ] He agregado tests (si aplica)
+- [ ] Todos los tests pasan
+- [ ] He actualizado CHANGELOG.md
+
+## Screenshots (si aplica)
+[Screenshots de cambios UI]
+```
+
+---
+
+## 📝 Estándares de Código
+
+### TypeScript
+
+```typescript
+// ✅ Bueno
+interface Usuario {
+  id: string;
+  nombre: string;
+  email: string;
+}
+
+function obtenerUsuario(id: string): Usuario | null {
+  // Implementación
+}
+
+// ❌ Malo
+function obtenerUsuario(id: any): any {
+  // Implementación
+}
+```
+
+### React Components
+
+```typescript
+// ✅ Bueno - Componente funcional con TypeScript
+interface Props {
+  titulo: string;
+  onClose: () => void;
+}
+
+export function Modal({ titulo, onClose }: Props) {
+  return (
+    <div>
+      <h2>{titulo}</h2>
+      <button onClick={onClose}>Cerrar</button>
+    </div>
+  );
+}
+
+// ❌ Malo - Sin tipos
+export function Modal({ titulo, onClose }) {
+  return (
+    <div>
+      <h2>{titulo}</h2>
+      <button onClick={onClose}>Cerrar</button>
+    </div>
+  );
+}
+```
+
+### Naming Conventions
+
+```typescript
+// ✅ Componentes: PascalCase
+export function DashboardMetricas() {}
+
+// ✅ Variables: camelCase
+const nombreUsuario = 'Juan';
+
+// ✅ Constantes: UPPER_SNAKE_CASE
+const API_URL = 'https://api.example.com';
+
+// ✅ Interfaces: PascalCase con I prefix (opcional)
+interface IUsuario {}
+// o sin prefix (preferido en este proyecto)
+interface Usuario {}
+
+// ✅ Types: PascalCase
+type EstadoComanda = 'pendiente' | 'procesando' | 'completada';
+```
+
+### Conventional Commits
+
+Seguimos [Conventional Commits](https://www.conventionalcommits.org/):
+
+```bash
+# Features
+git commit -m "feat: agregar exportación a Excel en reportes"
+git commit -m "feat(inventario): agregar filtro por categoría"
+
+# Fixes
+git commit -m "fix: corregir cálculo de totales en dashboard"
+git commit -m "fix(comandas): resolver error al guardar nueva comanda"
+
+# Docs
+git commit -m "docs: actualizar README con instrucciones de deploy"
+
+# Style
+git commit -m "style: aplicar formato consistente a componentes"
+
+# Refactor
+git commit -m "refactor: simplificar lógica de autenticación"
+
+# Performance
+git commit -m "perf: optimizar carga de lista de productos"
+
+# Tests
+git commit -m "test: agregar tests para módulo de transporte"
+
+# Chore
+git commit -m "chore: actualizar dependencias"
+
+# Breaking change
+git commit -m "feat!: cambiar estructura de datos de organismos"
+```
+
+### Estructura de Archivos
+
+```
+src/
+├── app/
+│   ├── components/
+│   │   ├── pages/          # Páginas completas
+│   │   ├── ui/             # Componentes UI reutilizables
+│   │   └── [Feature]/      # Componentes específicos de feature
+│   ├── data/               # Data estática
+│   ├── hooks/              # Custom hooks
+│   ├── stores/             # Zustand stores
+│   ├── types/              # TypeScript types
+│   └── utils/              # Utilidades
+├── i18n/                   # Internacionalización
+├── styles/                 # Estilos globales
+└── contexts/               # React contexts
+```
+
+### Estilos con Tailwind
+
+```tsx
+// ✅ Bueno - Classes organizadas y legibles
+<div className="
+  flex items-center justify-between
+  px-6 py-4
+  bg-white/90 backdrop-blur-xl
+  rounded-xl shadow-lg
+  border border-gray-200/50
+">
+
+// ✅ Uso de clsx para condicionales
+import { clsx } from 'clsx';
+
+<button className={clsx(
+  'px-4 py-2 rounded-lg',
+  isActive ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+)}>
+
+// ❌ Evitar - Inline styles
+<div style={{ padding: '1rem', backgroundColor: 'white' }}>
+```
+
+---
+
+## 🏗️ Estructura del Proyecto
+
+### Componentes
+
+```
+components/
+├── pages/              # Páginas completas (Dashboard, Inventario, etc.)
+├── ui/                 # Componentes UI base (Button, Dialog, etc.)
+├── Layout.tsx          # Layout principal
+└── ErrorBoundary.tsx   # Error boundary global
+```
+
+### Utils
+
+```
+utils/
+├── logger.ts           # Sistema de logging
+├── *Storage.ts         # Funciones de localStorage
+└── export*.ts          # Funciones de exportación
+```
+
+### Stores (Zustand)
+
+```typescript
+// Ejemplo de store
+import { create } from 'zustand';
+
+interface AuthStore {
+  isAuthenticated: boolean;
+  user: Usuario | null;
+  login: (credentials: Credentials) => void;
+  logout: () => void;
+}
+
+export const useAuthStore = create<AuthStore>((set) => ({
+  isAuthenticated: false,
+  user: null,
+  login: (credentials) => {
+    // Implementación
+    set({ isAuthenticated: true, user: /* ... */ });
+  },
+  logout: () => {
+    set({ isAuthenticated: false, user: null });
+  }
+}));
+```
+
+---
+
+## ⚙️ Configuración del Entorno
+
+### Requisitos
+
+- Node.js 18+
+- npm o pnpm
+
+### Setup
+
+```bash
+# 1. Clonar repositorio
+git clone https://github.com/tu-usuario/banque-alimentaire.git
+cd banque-alimentaire
+
+# 2. Instalar dependencias
+npm install
+
+# 3. Copiar variables de entorno
+cp .env.example .env.local
+
+# 4. Iniciar desarrollo
+npm run dev
+
+# 5. Abrir navegador
+# http://localhost:5173
+```
+
+### Scripts Disponibles
+
+```bash
+npm run dev          # Servidor de desarrollo
+npm run build        # Build de producción
+npm run preview      # Preview del build
+npm run deploy       # Deploy a GitHub Pages
+```
+
+---
+
+## 🧪 Tests
+
+### Escribir Tests
+
+```typescript
+// Ejemplo de test (cuando se implemente testing)
+import { render, screen } from '@testing-library/react';
+import { Dashboard } from './Dashboard';
+
+describe('Dashboard', () => {
+  it('debería renderizar el título', () => {
+    render(<Dashboard />);
+    expect(screen.getByText('Tableau de Bord')).toBeInTheDocument();
+  });
+});
+```
+
+### Ejecutar Tests
+
+```bash
+npm run test         # (Cuando se implemente)
+npm run test:watch   # (Cuando se implemente)
+```
+
+---
+
+## 🌍 Internacionalización
+
+### Agregar Traducciones
+
+1. Editar archivos en `/src/i18n/locales/`
+2. Agregar keys en los 4 idiomas (fr, es, en, ar)
+
+```json
+// fr.json
+{
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler"
+  }
+}
+```
+
+### Usar Traducciones
+
+```typescript
+import { useTranslation } from 'react-i18next';
+
+function MiComponente() {
+  const { t } = useTranslation();
+  
+  return <button>{t('common.save')}</button>;
+}
+```
+
+---
+
+## 📚 Recursos
+
+- [React Docs](https://react.dev)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
+- [Tailwind CSS](https://tailwindcss.com/docs)
+- [Vite](https://vitejs.dev/guide/)
+- [Conventional Commits](https://www.conventionalcommits.org/)
+
+---
+
+## 🙋 Preguntas
+
+Si tienes preguntas:
+
+1. Revisa la documentación
+2. Busca en issues cerrados
+3. Abre un nuevo issue con la etiqueta `question`
+4. Contacta al equipo: dev@banquealimentaire.ca
+
+---
+
+## 📄 Licencia
+
+Al contribuir, aceptas que tus contribuciones serán licenciadas bajo la misma licencia del proyecto.
+
+---
+
+**¡Gracias por contribuir!** 🎉

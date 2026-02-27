@@ -35,6 +35,7 @@ import { cerrarSesionUsuario } from './utils/sesionStorage';
 import { inicializarConfigSupport } from './utils/supportConfig';
 import { inicializarTodosDatosEjemplo, datosEjemploInicializados } from './utils/inicializarDatosEjemplo';
 import { BalanceProvider } from '../contexts/BalanceContext';
+import { logger, showWelcomeBanner } from './utils/logger';
 
 // Sistema Integral de Gestión - Banque Alimentaire v2.1
 export default function App() {
@@ -127,29 +128,29 @@ export default function App() {
       
       // Marcar limpieza como realizada
       localStorage.setItem('limpieza_produccion_realizada', 'v1.0');
-      console.log('╔══════════════════════════════════════════════════════════╗');
-      console.log('║  ✅ SYSTÈME PRÊT POUR LA PRODUCTION                     ║');
-      console.log('║                                                          ║');
-      console.log('║  📋 Données d\'exemple supprimées:                       ║');
-      console.log('║     • Contacts                                           ║');
-      console.log('║     • Produits                                           ║');
-      console.log('║     • Personnes responsables                             ║');
-      console.log('║     • Recettes                                           ║');
-      console.log('║     • Commandes                                          ║');
-      console.log('║     • Bénévoles                                          ║');
-      console.log('║     • Feuilles de temps                                  ║');
-      console.log('║     • Transports                                         ║');
-      console.log('║     • Offres                                             ║');
-      console.log('║     • Organismes                                         ║');
-      console.log('║                                                          ║');
-      console.log('║  💾 Données conservées:                                  ║');
-      console.log('║     • Départements                                       ║');
-      console.log('║     • Unités de mesure                                   ║');
-      console.log('║     • Configuration du système                           ║');
-      console.log('║                                                          ║');
-      console.log('║  🚀 Le système est maintenant prêt à recevoir            ║');
-      console.log('║     vos données réelles!                                 ║');
-      console.log('╚══════════════════════════════════════════════════════════╝');
+      showWelcomeBanner('╔══════════════════════════════════════════════════════════╗');
+      showWelcomeBanner('║  ✅ SYSTÈME PRÊT POUR LA PRODUCTION                     ║');
+      showWelcomeBanner('║                                                          ║');
+      showWelcomeBanner('║  📋 Données d\'exemple supprimées:                       ║');
+      showWelcomeBanner('║     • Contacts                                           ║');
+      showWelcomeBanner('║     • Produits                                           ║');
+      showWelcomeBanner('║     • Personnes responsables                             ║');
+      showWelcomeBanner('║     • Recettes                                           ║');
+      showWelcomeBanner('║     • Commandes                                          ║');
+      showWelcomeBanner('║     • Bénévoles                                          ║');
+      showWelcomeBanner('║     • Feuilles de temps                                  ║');
+      showWelcomeBanner('║     • Transports                                         ║');
+      showWelcomeBanner('║     • Offres                                             ║');
+      showWelcomeBanner('║     • Organismes                                         ║');
+      showWelcomeBanner('║                                                          ║');
+      showWelcomeBanner('║  💾 Données conservées:                                  ║');
+      showWelcomeBanner('║     • Départements                                       ║');
+      showWelcomeBanner('║     • Unités de mesure                                   ║');
+      showWelcomeBanner('║     • Configuration du système                           ║');
+      showWelcomeBanner('║                                                          ║');
+      showWelcomeBanner('║  🚀 Le système est maintenant prêt à recevoir            ║');
+      showWelcomeBanner('║     vos données réelles!                                 ║');
+      showWelcomeBanner('╚══════════════════════════════════════════════════════════╝');
     }
     
     // LIMPIEZA: Eliminar tipos de contacto predefinidos antiguos (ahora el sistema usa tipos creados por el usuario)
@@ -160,42 +161,42 @@ export default function App() {
     
     // 🎯 INICIALIZAR DATOS DE EJEMPLO (solo si no se han inicializado antes)
     if (!datosEjemploInicializados()) {
-      console.log('╔══════════════════════════════════════════════════════════╗');
-      console.log('║  🎯 CARGANDO DATOS DE EJEMPLO PARA PRUEBAS...           ║');
-      console.log('╚══════════════════════════════════════════════════════════╝');
+      showWelcomeBanner('╔══════════════════════════════════════════════════════════╗');
+      showWelcomeBanner('║  🎯 CARGANDO DATOS DE EJEMPLO PARA PRUEBAS...           ║');
+      showWelcomeBanner('╚══════════════════════════════════════════════════════════╝');
       inicializarTodosDatosEjemplo();
-      console.log('╔══════════════════════════════════════════════════════════╗');
-      console.log('║  ✅ DATOS DE EJEMPLO CARGADOS EXITOSAMENTE              ║');
-      console.log('║                                                          ║');
-      console.log('║  📋 Datos disponibles:                                   ║');
-      console.log('║     • 3 Usuarios del sistema                             ║');
-      console.log('║     • 4 Organismos                                       ║');
-      console.log('║     • 5 Comandas                                         ║');
-      console.log('║     • 3 Movimientos de inventario                        ║');
-      console.log('║     • 5 Vehículos                                        ║');
-      console.log('║     • 4 Rutas                                            ║');
-      console.log('║     • 3 Transportes                                      ║');
-      console.log('║     • 3 IDs Digitales                                    ║');
-      console.log('║     • 10 Usuarios internos (Dept. Entrepôt - ID 1):     ║');
-      console.log('║       → 3 Bénévoles                                      ║');
-      console.log('║       → 2 Employés                                       ║');
-      console.log('║       → 3 Donateurs (sincronizados con formularios)      ║');
-      console.log('║       → 2 Fournisseurs (sincronizados con formularios)   ║');
-      console.log('║     • 5 Registros PRS                                    ║');
-      console.log('║                                                          ║');
-      console.log('║  🎯 Sincronización completa:                             ║');
-      console.log('║     ✅ Entrepôt (Départements)                           ║');
-      console.log('║     ✅ Contactos Almacén                                 ║');
-      console.log('║     ✅ Entrada Don/Achat (donateurs/fournisseurs)        ║');
-      console.log('║     ✅ Entrada PRS                                       ║');
-      console.log('║                                                          ║');
-      console.log('║  🚀 ¡El sistema está listo para pruebas!                ║');
-      console.log('║                                                          ║');
-      console.log('║  💡 Para reiniciar datos:                                ║');
-      console.log('║     localStorage.removeItem("datos_ejemplo_inicializados"); location.reload(); ║');
-      console.log('╚══════════════════════════════════════════════════════════╝');
+      showWelcomeBanner('╔══════════════════════════════════════════════════════════╗');
+      showWelcomeBanner('║  ✅ DATOS DE EJEMPLO CARGADOS EXITOSAMENTE              ║');
+      showWelcomeBanner('║                                                          ║');
+      showWelcomeBanner('║  📋 Datos disponibles:                                   ║');
+      showWelcomeBanner('║     • 3 Usuarios del sistema                             ║');
+      showWelcomeBanner('║     • 4 Organismos                                       ║');
+      showWelcomeBanner('║     • 5 Comandas                                         ║');
+      showWelcomeBanner('║     • 3 Movimientos de inventario                        ║');
+      showWelcomeBanner('║     • 5 Vehículos                                        ║');
+      showWelcomeBanner('║     • 4 Rutas                                            ║');
+      showWelcomeBanner('║     • 3 Transportes                                      ║');
+      showWelcomeBanner('║     • 3 IDs Digitales                                    ║');
+      showWelcomeBanner('║     • 10 Usuarios internos (Dept. Entrepôt - ID 1):     ║');
+      showWelcomeBanner('║       → 3 Bénévoles                                      ║');
+      showWelcomeBanner('║       → 2 Employés                                       ║');
+      showWelcomeBanner('║       → 3 Donateurs (sincronizados con formularios)      ║');
+      showWelcomeBanner('║       → 2 Fournisseurs (sincronizados con formularios)   ║');
+      showWelcomeBanner('║     • 5 Registros PRS                                    ║');
+      showWelcomeBanner('║                                                          ║');
+      showWelcomeBanner('║  🎯 Sincronización completa:                             ║');
+      showWelcomeBanner('║     ✅ Entrepôt (Départements)                           ║');
+      showWelcomeBanner('║     ✅ Contactos Almacén                                 ║');
+      showWelcomeBanner('║     ✅ Entrada Don/Achat (donateurs/fournisseurs)        ║');
+      showWelcomeBanner('║     ✅ Entrada PRS                                       ║');
+      showWelcomeBanner('║                                                          ║');
+      showWelcomeBanner('║  🚀 ¡El sistema está listo para pruebas!                ║');
+      showWelcomeBanner('║                                                          ║');
+      showWelcomeBanner('║  💡 Para reiniciar datos:                                ║');
+      showWelcomeBanner('║     localStorage.removeItem("datos_ejemplo_inicializados"); location.reload(); ║');
+      showWelcomeBanner('╚══════════════════════════════════════════════════════════╝');
     } else {
-      console.log('ℹ️ Datos de ejemplo ya inicializados. Para reiniciar: localStorage.removeItem("datos_ejemplo_inicializados") y recargar');
+      logger.info('ℹ️ Datos de ejemplo ya inicializados. Para reiniciar: localStorage.removeItem("datos_ejemplo_inicializados") y recargar');
     }
   }, []);
 
