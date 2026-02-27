@@ -26,19 +26,6 @@ export default defineConfig({
     // Usar esbuild (incluido por defecto en Vite) en lugar de terser (no instalado)
     minify: 'esbuild',
     copyPublicDir: true,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          // Separar vendor chunks para mejor caching
-          'react-vendor': ['react', 'react-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select', '@radix-ui/react-tabs', '@radix-ui/react-toast'],
-          'chart-vendor': ['recharts'],
-          'utils-vendor': ['date-fns', 'clsx', 'tailwind-merge'],
-          'form-vendor': ['react-hook-form'],
-          'i18n-vendor': ['i18next', 'react-i18next'],
-        },
-      },
-    },
     // Aumentar límite de advertencia de tamaño de chunks a 1MB
     chunkSizeWarningLimit: 1000,
   },
