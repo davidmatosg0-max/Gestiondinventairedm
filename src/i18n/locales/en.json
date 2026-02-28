@@ -2453,6 +2453,8 @@
     "subtitle": "Individual and group email sending system",
     "sendGroupEmail": "Send Group Email",
     "newOrganism": "New Organization",
+    "createOrganism": "Create Organization",
+    "updateOrganism": "Update Organization",
     "totalOrganisms": "Total Organizations",
     "activeOrganisms": "Active Organizations",
     "totalBeneficiaries": "Total Beneficiaries",
@@ -2481,7 +2483,9 @@
     "selectAtLeastOneOrganism": "Please select at least one organization",
     "emailSentSuccessfully": "✅ Email sent successfully to",
     "organism": "organization",
-    "organisms": "organization(s)"
+    "organisms": "organization(s)",
+    "emailModalIndividualDescription": "Send a personalized message to this organization",
+    "emailModalGroupDescription": "Send a message to multiple organizations at once"
   },
   "entradaDonAchat": {
     "informationDonateur": "Donor/Supplier Information *",

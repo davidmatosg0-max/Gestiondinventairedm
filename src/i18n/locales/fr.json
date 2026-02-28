@@ -722,7 +722,7 @@
     "organismCreated": "Organisme créé avec succès",
     "organismUpdated": "Organisme mis à jour avec succès",
     "createOrganism": "Créer Organisme",
-    "updateOrganism": "Mettre à jour",
+    "updateOrganism": "Mettre à jour Organisme",
     "newOrganismForm": "Nouvel Organisme - Formulaire Complet",
     "formDescription": "Remplissez tous les champs pour enregistrer un nouvel organisme bénéficiaire",
     "basicInfo": "Informations de Base",
@@ -2587,6 +2587,8 @@
     "subtitle": "Système d'envoi d'emails individuels et groupés",
     "sendGroupEmail": "Envoyer Email Groupé",
     "newOrganism": "Nouvel Organisme",
+    "createOrganism": "Créer Organisme",
+    "updateOrganism": "Mettre à jour Organisme",
     "totalOrganisms": "Total des Organismes",
     "activeOrganisms": "Organismes Actifs",
     "totalBeneficiaries": "Total Bénéficiaires",
@@ -2615,7 +2617,9 @@
     "selectAtLeastOneOrganism": "Veuillez sélectionner au moins un organisme",
     "emailSentSuccessfully": "✅ Email envoyé avec succès à",
     "organism": "organisme",
-    "organisms": "organisme(s)"
+    "organisms": "organisme(s)",
+    "emailModalIndividualDescription": "Envoyez un message personnalisé à cet organisme",
+    "emailModalGroupDescription": "Envoyez un message à plusieurs organismes à la fois"
   },
   "entradaDonAchat": {
     "informationDonateur": "Informations du Donateur/Fournisseur *",

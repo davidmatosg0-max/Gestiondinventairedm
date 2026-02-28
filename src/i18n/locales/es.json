@@ -2186,6 +2186,8 @@
     "subtitle": "Sistema de envío de emails individuales y grupales",
     "sendGroupEmail": "Enviar Email Grupal",
     "newOrganism": "Nuevo Organismo",
+    "createOrganism": "Crear Organismo",
+    "updateOrganism": "Actualizar Organismo",
     "totalOrganisms": "Total de Organismos",
     "activeOrganisms": "Organismos Activos",
     "totalBeneficiaries": "Total Beneficiarios",
@@ -2214,7 +2216,9 @@
     "selectAtLeastOneOrganism": "Por favor seleccione al menos un organismo",
     "emailSentSuccessfully": "✅ Email enviado exitosamente a",
     "organism": "organismo",
-    "organisms": "organismo(s)"
+    "organisms": "organismo(s)",
+    "emailModalIndividualDescription": "Envíe un mensaje personalizado a este organismo",
+    "emailModalGroupDescription": "Envíe un mensaje a múltiples organismos a la vez"
   },
   "entradaDonAchat": {
     "informationDonateur": "Información del Donador/Proveedor *",

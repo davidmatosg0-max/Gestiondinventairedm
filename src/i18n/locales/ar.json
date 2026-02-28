@@ -2357,6 +2357,8 @@
     "subtitle": "نظام إرسال البريد الإلكتروني الفردي والجماعي",
     "sendGroupEmail": "إرسال بريد جماعي",
     "newOrganism": "مؤسسة جديدة",
+    "createOrganism": "إنشاء مؤسسة",
+    "updateOrganism": "تحديث المؤسسة",
     "totalOrganisms": "إجمالي المؤسسات",
     "activeOrganisms": "المؤسسات النشطة",
     "totalBeneficiaries": "إجمالي المستفيدين",
@@ -2385,7 +2387,9 @@
     "selectAtLeastOneOrganism": "يرجى تحديد مؤسسة واحدة على الأقل",
     "emailSentSuccessfully": "✅ تم إرسال البريد الإلكتروني بنجاح إلى",
     "organism": "مؤسسة",
-    "organisms": "مؤسسة(s)"
+    "organisms": "مؤسسة(s)",
+    "emailModalIndividualDescription": "إرسال رسالة مخصصة لهذه المؤسسة",
+    "emailModalGroupDescription": "إرسال رسالة إلى عدة مؤسسات في وقت واحد"
   },
   "entradaDonAchat": {
     "informationDonateur": "معلومات المتبرع/المورد *",
