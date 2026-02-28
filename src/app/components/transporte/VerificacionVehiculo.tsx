@@ -185,9 +185,9 @@ export function VerificacionVehiculo() {
 
   const getEstadoBadge = (estado: EstadoVerificacion) => {
     const config = {
-      conforme: { bg: 'bg-[#4CAF50]', text: '✓ Conforme', icon: CheckCircle2 },
-      no_conforme: { bg: 'bg-[#DC3545]', text: '✗ No Conforme', icon: XCircle },
-      reparar: { bg: 'bg-[#FFC107]', text: '⚠ Reparar', icon: AlertTriangle },
+      conforme: { bg: 'bg-[#4CAF50]', text: t('transport.saaqVerification.conformStatus'), icon: CheckCircle2 },
+      no_conforme: { bg: 'bg-[#DC3545]', text: t('transport.saaqVerification.nonConformStatus'), icon: XCircle },
+      reparar: { bg: 'bg-[#FFC107]', text: t('transport.saaqVerification.repairStatus'), icon: AlertTriangle },
     };
     const c = config[estado];
     const Icon = c.icon;
@@ -201,26 +201,16 @@ export function VerificacionVehiculo() {
 
   const getEstadoGeneralBadge = (estado: 'apto' | 'apto_con_observaciones' | 'no_apto') => {
     const config = {
-      apto: { bg: 'bg-[#4CAF50]', text: 'APTO' },
-      apto_con_observaciones: { bg: 'bg-[#FFC107]', text: 'APTO CON OBSERVACIONES' },
-      no_apto: { bg: 'bg-[#DC3545]', text: 'NO APTO' },
+      apto: { bg: 'bg-[#4CAF50]', text: t('transport.saaqVerification.apt') },
+      apto_con_observaciones: { bg: 'bg-[#FFC107]', text: t('transport.saaqVerification.aptWithObservations') },
+      no_apto: { bg: 'bg-[#DC3545]', text: t('transport.saaqVerification.notApt') },
     };
     const c = config[estado];
     return <Badge className={`${c.bg} hover:${c.bg} text-white text-sm px-3 py-1`}>{c.text}</Badge>;
   };
 
   const getCategoriaLabel = (categoria: string) => {
-    const labels: { [key: string]: string } = {
-      exterior: 'Exterior del Vehículo',
-      cabina: 'Cabina del Conductor',
-      motor: 'Motor y Fluidos',
-      frenos: 'Sistema de Frenos',
-      luces: 'Luces y Señalización',
-      neumaticos: 'Neumáticos y Ruedas',
-      carga: 'Carga y Equipamiento',
-      documentacion: 'Documentación y Permisos',
-    };
-    return labels[categoria] || categoria;
+    return t(`transport.saaqVerification.categories.${categoria}`, categoria);
   };
 
   const progresoTotal = items.length > 0 
@@ -559,10 +549,10 @@ export function VerificacionVehiculo() {
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto" aria-describedby="historial-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
-              📋 Historial de Verificaciones SAAQ
+              📋 {t('transport.saaqVerification.verificationHistory')}
             </DialogTitle>
             <DialogDescription id="historial-dialog-description">
-              Registro completo de todas las inspecciones realizadas
+              {t('transport.saaqVerification.completeRecord')}
             </DialogDescription>
           </DialogHeader>
 
@@ -598,7 +588,7 @@ export function VerificacionVehiculo() {
                       <div className="flex flex-col items-end gap-2">
                         {getEstadoGeneralBadge(ver.estadoGeneral)}
                         <Badge className="bg-gray-200 text-gray-700">
-                          {ver.tipoVerificacion === 'pre_viaje' ? 'Pre-Viaje' : ver.tipoVerificacion === 'post_viaje' ? 'Post-Viaje' : 'Mensual'}
+                          {ver.tipoVerificacion === 'pre_viaje' ? t('transport.saaqVerification.preTrip') : ver.tipoVerificacion === 'post_viaje' ? t('transport.saaqVerification.postTrip') : t('transport.saaqVerification.monthly')}
                         </Badge>
                       </div>
                     </div>
@@ -610,26 +600,26 @@ export function VerificacionVehiculo() {
                         <p className="text-2xl font-bold text-[#4CAF50]">
                           {ver.items.filter(i => i.estado === 'conforme').length}
                         </p>
-                        <p className="text-xs text-[#666666]">Conformes</p>
+                        <p className="text-xs text-[#666666]">{t('transport.saaqVerification.conform')}</p>
                       </div>
                       <div className="text-center">
                         <p className="text-2xl font-bold text-[#FFC107]">
                           {itemsReparar.length}
                         </p>
-                        <p className="text-xs text-[#666666]">A Reparar</p>
+                        <p className="text-xs text-[#666666]">{t('transport.saaqVerification.toRepair')}</p>
                       </div>
                       <div className="text-center">
                         <p className="text-2xl font-bold text-[#DC3545]">
                           {itemsNoConformes.length}
                         </p>
-                        <p className="text-xs text-[#666666]">No Conformes</p>
+                        <p className="text-xs text-[#666666]">{t('transport.saaqVerification.nonConform')}</p>
                       </div>
                     </div>
 
                     {/* Acciones Requeridas */}
                     {ver.accionesRequeridas && ver.accionesRequeridas.length > 0 && (
                       <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="font-medium text-red-800 mb-2">⚠️ Acciones Requeridas:</p>
+                        <p className="font-medium text-red-800 mb-2">⚠️ {t('transport.saaqVerification.requiredActions')}:</p>
                         <ul className="list-disc list-inside space-y-1 text-sm text-red-700">
                           {ver.accionesRequeridas.map((accion, idx) => (
                             <li key={`accion-ver-${ver.vehiculoId}-${idx}`}>{accion}</li>
@@ -641,7 +631,7 @@ export function VerificacionVehiculo() {
                     {/* Observaciones */}
                     {ver.observacionesGenerales && (
                       <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <p className="text-sm">📝 <strong>Observaciones:</strong> {ver.observacionesGenerales}</p>
+                        <p className="text-sm">📝 <strong>{t('transport.saaqVerification.observations')}:</strong> {ver.observacionesGenerales}</p>
                       </div>
                     )}
                   </CardContent>
@@ -657,10 +647,10 @@ export function VerificacionVehiculo() {
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto" aria-describedby="detalle-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
-              📋 Detalle de Verificación SAAQ
+              📋 {t('transport.saaqVerification.verificationDetail')}
             </DialogTitle>
             <DialogDescription id="detalle-dialog-description">
-              Detalles completos de la inspección realizada
+              {t('transport.saaqVerification.completeDetails')}
             </DialogDescription>
           </DialogHeader>
 
@@ -691,7 +681,7 @@ export function VerificacionVehiculo() {
                     <div className="flex flex-col items-end gap-2">
                       {getEstadoGeneralBadge(verDetalle.estadoGeneral)}
                       <Badge className="bg-gray-200 text-gray-700">
-                        {verDetalle.tipoVerificacion === 'pre_viaje' ? 'Pre-Viaje' : verDetalle.tipoVerificacion === 'post_viaje' ? 'Post-Viaje' : 'Mensual'}
+                        {verDetalle.tipoVerificacion === 'pre_viaje' ? t('transport.saaqVerification.preTrip') : verDetalle.tipoVerificacion === 'post_viaje' ? t('transport.saaqVerification.postTrip') : t('transport.saaqVerification.monthly')}
                       </Badge>
                       <div className="flex gap-2 print:hidden">
                         <Select value={tipoImpresion} onValueChange={(value: 'resumen' | 'completo') => setTipoImpresion(value)}>
@@ -699,8 +689,8 @@ export function VerificacionVehiculo() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="resumen">Resumen</SelectItem>
-                            <SelectItem value="completo">Completo</SelectItem>
+                            <SelectItem value="resumen">{t('transport.saaqVerification.summary')}</SelectItem>
+                            <SelectItem value="completo">{t('transport.saaqVerification.complete')}</SelectItem>
                           </SelectContent>
                         </Select>
                         <Button
@@ -710,7 +700,7 @@ export function VerificacionVehiculo() {
                           style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
                         >
                           <Printer className="w-4 h-4 mr-1" />
-                          Imprimir
+                          {t('transport.saaqVerification.print')}
                         </Button>
                       </div>
                     </div>
@@ -723,26 +713,26 @@ export function VerificacionVehiculo() {
                       <p className="text-2xl font-bold text-[#4CAF50]">
                         {verDetalle.items.filter(i => i.estado === 'conforme').length}
                       </p>
-                      <p className="text-xs text-[#666666]">Conformes</p>
+                      <p className="text-xs text-[#666666]">{t('transport.saaqVerification.conform')}</p>
                     </div>
                     <div className="text-center">
                       <p className="text-2xl font-bold text-[#FFC107]">
                         {verDetalle.items.filter(i => i.estado === 'reparar').length}
                       </p>
-                      <p className="text-xs text-[#666666]">A Reparar</p>
+                      <p className="text-xs text-[#666666]">{t('transport.saaqVerification.toRepair')}</p>
                     </div>
                     <div className="text-center">
                       <p className="text-2xl font-bold text-[#DC3545]">
                         {verDetalle.items.filter(i => i.estado === 'no_conforme').length}
                       </p>
-                      <p className="text-xs text-[#666666]">No Conformes</p>
+                      <p className="text-xs text-[#666666]">{t('transport.saaqVerification.nonConform')}</p>
                     </div>
                   </div>
 
                   {/* Acciones Requeridas */}
                   {verDetalle.accionesRequeridas && verDetalle.accionesRequeridas.length > 0 && (
                     <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <p className="font-medium text-red-800 mb-2">⚠️ Acciones Requeridas:</p>
+                      <p className="font-medium text-red-800 mb-2">⚠️ {t('transport.saaqVerification.requiredActions')}:</p>
                       <ul className="list-disc list-inside space-y-1 text-sm text-red-700">
                         {verDetalle.accionesRequeridas.map((accion, idx) => (
                           <li key={`accion-detalle-${verDetalle.id}-${idx}`}>{accion}</li>
@@ -754,7 +744,7 @@ export function VerificacionVehiculo() {
                   {/* Observaciones */}
                   {verDetalle.observacionesGenerales && (
                     <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-sm">📝 <strong>Observaciones:</strong> {verDetalle.observacionesGenerales}</p>
+                      <p className="text-sm">📝 <strong>{t('transport.saaqVerification.observations')}:</strong> {verDetalle.observacionesGenerales}</p>
                     </div>
                   )}
 
@@ -784,7 +774,7 @@ export function VerificacionVehiculo() {
                                     {getCategoriaLabel(categoria)}
                                   </CardTitle>
                                   <p className="text-xs text-[#666666] mt-1">
-                                    {itemsCategoria.length} elementos • {progreso}% completado
+                                    {itemsCategoria.length} {t('transport.saaqVerification.elements')} • {progreso}% {t('transport.saaqVerification.completed')}
                                   </p>
                                 </div>
                               </div>
@@ -842,12 +832,12 @@ export function VerificacionVehiculo() {
                                   </div>
                                   {item.observaciones && item.observaciones.trim() !== '' && (
                                     <div className="text-sm text-gray-600 bg-white p-2 rounded border border-gray-200">
-                                      <strong>Observaciones:</strong> {item.observaciones}
+                                      <strong>{t('transport.saaqVerification.observations')}:</strong> {item.observaciones}
                                     </div>
                                   )}
                                   {item.estado !== 'conforme' && (
                                     <Input
-                                      placeholder="Observaciones..."
+                                      placeholder={t('transport.saaqVerification.observationsPlaceholder')}
                                       value={item.observaciones || ''}
                                       onChange={(e) => actualizarObservacionItem(item.id, e.target.value)}
                                       className="text-sm print:hidden"

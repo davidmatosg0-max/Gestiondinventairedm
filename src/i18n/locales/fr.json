@@ -1077,7 +1077,6 @@
     "selectDriver": "Sélectionner un conducteur",
     "selectVehicle": "Sélectionner un véhicule",
     "drivers": "Conducteurs",
-    "saaqVerification": "Vérification SAAQ",
     "driversManagement": {
       "title": "Gestion des Conducteurs",
       "totalDrivers": "Total Conducteurs",
@@ -1158,7 +1157,17 @@
       "repairStatus": "⚠ Réparer",
       "elements": "éléments",
       "completed": "complété",
-      "observationsPlaceholder": "Observations..."
+      "observationsPlaceholder": "Observations...",
+      "categories": {
+        "exterior": "Extérieur du Véhicule",
+        "cabina": "Cabine du Conducteur",
+        "motor": "Moteur et Fluides",
+        "frenos": "Système de Freins",
+        "luces": "Lumières et Signalisation",
+        "neumaticos": "Pneus et Roues",
+        "carga": "Charge et Équipement",
+        "documentacion": "Documentation et Permis"
+      }
     },
     "vehicles": {
       "title": "Gestion des Véhicules",

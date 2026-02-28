@@ -1031,7 +1031,6 @@
     "selectDriver": "اختر سائق",
     "selectVehicle": "اختر مركبة",
     "drivers": "السائقون",
-    "saaqVerification": "التحقق من SAAQ",
     "driversManagement": {
       "title": "إدارة السائقين",
       "totalDrivers": "إجمالي السائقين",
@@ -1112,7 +1111,17 @@
       "repairStatus": "⚠ إصلاح",
       "elements": "عناصر",
       "completed": "مكتمل",
-      "observationsPlaceholder": "الملاحظات..."
+      "observationsPlaceholder": "الملاحظات...",
+      "categories": {
+        "exterior": "خارج المركبة",
+        "cabina": "مقصورة السائق",
+        "motor": "المحرك والسوائل",
+        "frenos": "نظام الفرامل",
+        "luces": "الأضواء والإشارات",
+        "neumaticos": "الإطارات والعجلات",
+        "carga": "الحمولة والمعدات",
+        "documentacion": "الوثائق والتصاريح"
+      }
     },
     "vehicles": {
       "title": "إدارة المركبات",

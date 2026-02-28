@@ -1018,7 +1018,6 @@
     "selectDriver": "Select driver",
     "selectVehicle": "Select vehicle",
     "drivers": "Drivers",
-    "saaqVerification": "SAAQ Verification",
     "driversManagement": {
       "title": "Driver Management",
       "totalDrivers": "Total Drivers",
@@ -1099,7 +1098,17 @@
       "repairStatus": "⚠ Repair",
       "elements": "elements",
       "completed": "completed",
-      "observationsPlaceholder": "Observations..."
+      "observationsPlaceholder": "Observations...",
+      "categories": {
+        "exterior": "Vehicle Exterior",
+        "cabina": "Driver Cabin",
+        "motor": "Engine and Fluids",
+        "frenos": "Brake System",
+        "luces": "Lights and Signaling",
+        "neumaticos": "Tires and Wheels",
+        "carga": "Load and Equipment",
+        "documentacion": "Documentation and Permits"
+      }
     },
     "vehicles": {
       "title": "Vehicle Management",

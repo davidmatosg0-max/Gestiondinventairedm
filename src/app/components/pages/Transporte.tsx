@@ -124,7 +124,7 @@ export function Transporte() {
             👨‍✈️ {t('transport.drivers')}
           </TabsTrigger>
           <TabsTrigger value="verificacion" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}>
-            🔍 {t('transport.saaqVerification')}
+            🔍 {t('transport.saaqVerification.title')}
           </TabsTrigger>
         </TabsList>
 
