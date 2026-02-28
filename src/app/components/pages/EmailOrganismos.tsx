@@ -565,19 +565,21 @@ export function EmailOrganismos({ onNavigate }: { onNavigate?: (page: string) =>
   const agregarContacto = () => {
     setFormOrganismo({
       ...formOrganismo,
-      contactosNotificacion: [...formOrganismo.contactosNotificacion, { nombre: '', email: '', cargo: '', joursDisponibles: [] }]
+      contactosNotificacion: [...(formOrganismo.contactosNotificacion || []), { nombre: '', email: '', cargo: '', joursDisponibles: [] }]
     });
   };
 
   const eliminarContacto = (index: number) => {
-    const nuevosContactos = formOrganismo.contactosNotificacion.filter((_, i) => i !== index);
+    const nuevosContactos = (formOrganismo.contactosNotificacion || []).filter((_, i) => i !== index);
     setFormOrganismo({ ...formOrganismo, contactosNotificacion: nuevosContactos });
   };
 
   const actualizarContacto = (index: number, campo: string, valor: string | JourDisponible[]) => {
-    const nuevosContactos = [...formOrganismo.contactosNotificacion];
-    nuevosContactos[index] = { ...nuevosContactos[index], [campo]: valor };
-    setFormOrganismo({ ...formOrganismo, contactosNotificacion: nuevosContactos });
+    const nuevosContactos = [...(formOrganismo.contactosNotificacion || [])];
+    if (nuevosContactos[index]) {
+      nuevosContactos[index] = { ...nuevosContactos[index], [campo]: valor };
+      setFormOrganismo({ ...formOrganismo, contactosNotificacion: nuevosContactos });
+    }
   };
 
   const handleCrearOrganismo = () => {
@@ -1659,7 +1661,7 @@ export function EmailOrganismos({ onNavigate }: { onNavigate?: (page: string) =>
                         notificaciones: org.notificaciones,
                         logo: org.logo || null,
                         documentoPDF: org.documentoPDF || null,
-                        contactosNotificacion: org.contactosNotificacion.length > 0 
+                        contactosNotificacion: org.contactosNotificacion && org.contactosNotificacion.length > 0 
                           ? org.contactosNotificacion.map(c => ({
                               nombre: c.nombre,
                               email: c.email,
@@ -2398,13 +2400,13 @@ export function EmailOrganismos({ onNavigate }: { onNavigate?: (page: string) =>
                 </Button>
               </div>
               <div className="space-y-3">
-                {formOrganismo.contactosNotificacion.map((contacto, index) => (
+                {(formOrganismo.contactosNotificacion || []).map((contacto, index) => (
                   <div key={index} className="border-2 border-gray-300 rounded-lg p-3 bg-[#FAFAFA]">
                     <div className="flex items-center justify-between mb-2">
                       <Badge className="bg-[#1E73BE] hover:bg-[#1E73BE] text-sm h-6 px-3">
                         Contact {index + 1}
                       </Badge>
-                      {formOrganismo.contactosNotificacion.length > 1 && (
+                      {formOrganismo.contactosNotificacion && formOrganismo.contactosNotificacion.length > 1 && (
                         <Button
                           type="button"
                           variant="ghost"
