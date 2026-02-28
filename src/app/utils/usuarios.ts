@@ -84,12 +84,31 @@ const USUARIOS_PREDEFINIDOS: Usuario[] = [
       'dashboard.ver'
     ],
     descripcion: 'Responsable Transport - Gestion des Livraisons et Véhicules'
+  },
+  {
+    id: '6',
+    username: 'Louise',
+    password: 'Louise2024!',
+    nombre: 'Louise',
+    apellido: 'Durand',
+    email: 'louise.durand@banque-alimentaire.org',
+    rol: 'usuario',
+    permisos: [
+      'transporte.ver',
+      'transporte.editar',
+      'transporte.entregar',
+      'transporte.vehiculos',
+      'comandas.ver',
+      'organismos.ver',
+      'dashboard.ver'
+    ],
+    descripcion: 'Transporteuse - Gestion des Livraisons'
   }
 ];
 
 const STORAGE_KEY = 'banque_alimentaire_usuarios';
 const VERSION_KEY = 'banque_alimentaire_usuarios_version';
-const CURRENT_VERSION = '3.0'; // Versión con usuario de transporte agregado
+const CURRENT_VERSION = '3.1'; // Versión con usuario Louise agregado
 
 // Migrar usuarios existentes para actualizar permisos del usuario admin
 export function migrarUsuarios(): void {
@@ -121,6 +140,16 @@ export function migrarUsuarios(): void {
         if (nuevoUsuarioTransporte) {
           usuarios.push(nuevoUsuarioTransporte);
           console.log('✅ Usuario de transporte agregado');
+        }
+      }
+      
+      // Agregar usuario Louise si no existe
+      const louiseIndex = usuarios.findIndex(u => u.username.toLowerCase() === 'louise');
+      if (louiseIndex === -1) {
+        const nuevoUsuarioLouise = USUARIOS_PREDEFINIDOS.find(u => u.username === 'Louise');
+        if (nuevoUsuarioLouise) {
+          usuarios.push(nuevoUsuarioLouise);
+          console.log('✅ Usuario Louise agregado');
         }
       }
       
@@ -175,6 +204,16 @@ export function obtenerUsuarios(): Usuario[] {
   }
   // Retornar array vacío si hay error
   return [];
+}
+
+// Guardar usuarios en localStorage
+export function guardarUsuarios(usuarios: Usuario[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(usuarios));
+    console.log('✅ Usuarios guardados:', usuarios.length, 'usuarios');
+  } catch (error) {
+    console.error('Error al guardar usuarios:', error);
+  }
 }
 
 // Validar credenciales de usuario

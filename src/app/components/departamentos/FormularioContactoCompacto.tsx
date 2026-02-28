@@ -1658,10 +1658,10 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
 
       {/* Dialog: Gestión de Tipos */}
       <Dialog open={dialogGestionTipos} onOpenChange={setDialogGestionTipos}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby="manage-types-description">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Gestion des Types de Contact</DialogTitle>
-            <DialogDescription id="manage-types-description">
+            <DialogDescription>
               Créez, modifiez ou supprimez des types de contact personnalisés. Tous les types sont sauvegardés de manière permanente.
             </DialogDescription>
           </DialogHeader>
@@ -1732,10 +1732,10 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
         setDialogEditarTipo(open);
         if (!open) limpiarFormularioTipo();
       }}>
-        <DialogContent className="max-w-xl" aria-describedby="edit-type-description">
+        <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>{tipoEditando ? 'Modifier le type' : 'Créer un nouveau type'}</DialogTitle>
-            <DialogDescription id="edit-type-description">
+            <DialogDescription>
               Définissez les propriétés du type de contact
             </DialogDescription>
           </DialogHeader>
@@ -1841,10 +1841,10 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
 
       {/* Dialog: Gestión de Tipos de Documentos */}
       <Dialog open={dialogGestionDocumentos} onOpenChange={setDialogGestionDocumentos}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto" aria-describedby="manage-document-types-description">
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Gestion des Types de Documents</DialogTitle>
-            <DialogDescription id="manage-document-types-description">
+            <DialogDescription>
               Créez, modifiez ou supprimez des types de documents estandarizados. 
               Les modifications affecteront tous les documents de ce type dans tous les contacts.
             </DialogDescription>
@@ -1937,12 +1937,12 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
         setDialogEditarDocumento(open);
         if (!open) limpiarFormularioTipoDocumento();
       }}>
-        <DialogContent className="max-w-xl" aria-describedby="edit-document-type-description">
+        <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>
               {documentoEditando ? 'Modifier le type de document' : 'Créer un nouveau type de document'}
             </DialogTitle>
-            <DialogDescription id="edit-document-type-description">
+            <DialogDescription>
               Définissez les propriétés du type de document. 
               {documentoEditando && ' Les modifications affecteront tous les documents de ce type.'}
             </DialogDescription>
@@ -2059,10 +2059,10 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
 
       {/* Dialog: Seleccionar Tipo de Documento */}
       <Dialog open={dialogSeleccionarTipo} onOpenChange={setDialogSeleccionarTipo}>
-        <DialogContent className="max-w-2xl" aria-describedby="select-document-type-description">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Sélectionner le type de document</DialogTitle>
-            <DialogDescription id="select-document-type-description">
+            <DialogDescription>
               Choisissez le type de document pour {archivosPendientes.length} fichier(s)
             </DialogDescription>
           </DialogHeader>
@@ -2111,10 +2111,10 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
 
       {/* Dialog: Exportar/Importar Tipos */}
       <Dialog open={dialogExportarImportar} onOpenChange={setDialogExportarImportar}>
-        <DialogContent className="max-w-2xl" aria-describedby="export-import-description">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Exporter / Importer Types de Contact</DialogTitle>
-            <DialogDescription id="export-import-description">
+            <DialogDescription>
               Sauvegardez ou restaurez vos types de contact personnalisés
             </DialogDescription>
           </DialogHeader>

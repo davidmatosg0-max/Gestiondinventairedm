@@ -31,7 +31,8 @@ import {
   Upload,
   Settings,
   Link,
-  RefreshCw
+  RefreshCw,
+  Shield
 } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
@@ -69,6 +70,7 @@ import {
 import { obtenerTiposContacto } from '../../utils/tiposContactoStorage';
 import { FormularioContactoCompacto } from './FormularioContactoCompacto';
 import { CalendarioContactos } from './CalendarioContactos';
+import { AsignarRolContacto } from '../AsignarRolContacto';
 
 // Mapeo de iconos para tipos personalizados
 const ICON_MAP: Record<string, any> = {
@@ -109,7 +111,48 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
   const [dialogEditarDepartamentos, setDialogEditarDepartamentos] = useState(false);
   const [departamentosEditando, setDepartamentosEditando] = useState<string[]>([]);
 
+  // NUEVO: Estados para asignar rol y acceso al sistema
+  const [dialogAsignarRolOpen, setDialogAsignarRolOpen] = useState(false);
+  const [contactoParaRol, setContactoParaRol] = useState<{
+    id: string;
+    nombre: string;
+    apellido: string;
+    nombreCompleto: string;
+    email: string;
+    telefono: string;
+    cargo: string;
+    modulo: 'organismo' | 'benevole' | 'donador' | 'vendedor';
+  } | null>(null);
+
   const diasSemana = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+
+  // Roles disponibles del sistema
+  const rolesDisponibles = [
+    {
+      id: 'admin',
+      nombre: 'Administrateur',
+      descripcion: 'Accès complet à toutes les fonctionnalités du système',
+      color: '#DC3545'
+    },
+    {
+      id: 'coordinador',
+      nombre: 'Coordinateur',
+      descripcion: 'Gestion de l\'inventaire, des commandes et des organismes',
+      color: '#FF9800'
+    },
+    {
+      id: 'benevole',
+      nombre: 'Bénévole',
+      descripcion: 'Accès limité aux fonctions assignées',
+      color: '#9C27B0'
+    },
+    {
+      id: 'responsable-departement',
+      nombre: 'Responsable de Département',
+      descripcion: 'Gestion d\'un département spécifique',
+      color: branding.primaryColor
+    }
+  ];
 
   // NUEVO: Definir tipos de contacto disponibles según el departamento
   const getTiposPermitidos = (): TipoContacto[] => {
@@ -707,6 +750,26 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => {
+                            setContactoParaRol({
+                              id: contacto.id.toString(),
+                              nombre: contacto.nombre,
+                              apellido: contacto.apellido,
+                              nombreCompleto: `${contacto.nombre} ${contacto.apellido}`,
+                              email: contacto.email,
+                              telefono: contacto.telefono || '',
+                              cargo: contacto.cargo || 'Contact',
+                              modulo: contacto.tipo === 'benevole' ? 'benevole' : contacto.tipo === 'donador' ? 'donador' : 'vendedor'
+                            });
+                            setDialogAsignarRolOpen(true);
+                          }}
+                          title="Créer un accès au système"
+                        >
+                          <Shield className="w-3.5 h-3.5" style={{ color: '#9C27B0' }} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => abrirDialogoEditar(contacto)}
                         >
                           <Edit2 className="w-3.5 h-3.5" style={{ color: branding.primaryColor }} />
@@ -874,13 +937,13 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
 
       {/* Dialog Asignar Bénévole Existente */}
       <Dialog open={dialogAsignarBenevole} onOpenChange={setDialogAsignarBenevole}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="assign-benevole-description">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               <Link className="w-6 h-6" style={{ color: branding.primaryColor }} />
               Assigner un bénévole existant
             </DialogTitle>
-            <DialogDescription id="assign-benevole-description">
+            <DialogDescription>
               Sélectionnez un bénévole enregistré dans le système pour l'assigner à ce département
             </DialogDescription>
           </DialogHeader>
@@ -1007,6 +1070,21 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog: Asignar Rol a Contacto */}
+      {contactoParaRol && (
+        <AsignarRolContacto
+          open={dialogAsignarRolOpen}
+          onOpenChange={setDialogAsignarRolOpen}
+          contacto={contactoParaRol}
+          rolesDisponibles={rolesDisponibles}
+          onGuardar={(datosAcceso) => {
+            console.log('✅ Accès créé pour contact:', datosAcceso);
+            toast.success(`🔐 Accès au système créé pour ${contactoParaRol.nombreCompleto}!`);
+            setContactoParaRol(null);
+          }}
+        />
+      )}
     </div>
   );
 }

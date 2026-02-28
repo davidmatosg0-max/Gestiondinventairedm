@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Shield, Users, Lock, Eye, Edit, Trash2, Plus,
@@ -18,7 +18,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Switch } from '../ui/switch';
 import { toast } from 'sonner';
 import { Textarea } from '../ui/textarea';
-import { mockUsuarios } from '../../data/mockData';
+import { obtenerUsuarios } from '../../utils/usuarios';
+import { GestionPasswordDialog } from '../GestionPasswordDialog';
 
 // Tipos de permisos granulares
 type Permiso = {
@@ -56,6 +57,8 @@ export function GestionRolesPermisos() {
   const [dialogRolOpen, setDialogRolOpen] = useState(false);
   const [dialogUsuarioOpen, setDialogUsuarioOpen] = useState(false);
   const [dialogPermisosOpen, setDialogPermisosOpen] = useState(false);
+  const [dialogPasswordOpen, setDialogPasswordOpen] = useState(false);
+  const [usuarioPasswordSeleccionado, setUsuarioPasswordSeleccionado] = useState<{ id: string; nombre: string; username: string } | null>(null);
   const [rolSeleccionado, setRolSeleccionado] = useState<Rol | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroActivo, setFiltroActivo] = useState<'todos' | 'activos' | 'inactivos'>('todos');
@@ -182,13 +185,7 @@ export function GestionRolesPermisos() {
     }
   ]);
 
-  const [usuarios, setUsuarios] = useState<Usuario[]>([
-    { id: '1', nombre: 'María García', email: 'maria.garcia@ba.org', rol: 'admin', activo: true, ultimoAcceso: '2025-01-05 14:30' },
-    { id: '2', nombre: 'Juan Pérez', email: 'juan.perez@ba.org', rol: 'coordinador', activo: true, ultimoAcceso: '2025-01-05 13:15' },
-    { id: '3', nombre: 'Carlos Rodríguez', email: 'carlos.rodriguez@ba.org', rol: 'almacenista', activo: true, ultimoAcceso: '2025-01-05 12:45' },
-    { id: '4', nombre: 'Ana Martínez', email: 'ana.martinez@ba.org', rol: 'transportista', activo: true, ultimoAcceso: '2025-01-04 16:20' },
-    { id: '5', nombre: 'Luis Fernández', email: 'luis.fernandez@ba.org', rol: 'visualizador', activo: false, ultimoAcceso: '2024-12-28 10:00' },
-  ]);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
 
   const [nuevoRol, setNuevoRol] = useState({
     nombre: '',
@@ -344,6 +341,19 @@ export function GestionRolesPermisos() {
     acc[permiso.modulo].push(permiso);
     return acc;
   }, {} as Record<string, Permiso[]>);
+
+  useEffect(() => {
+    const usuariosData = obtenerUsuarios();
+    const usuariosFormateados = usuariosData.map(u => ({
+      id: u.id,
+      nombre: `${u.nombre} ${u.apellido}`,
+      email: u.email,
+      rol: u.rol,
+      activo: true,
+      ultimoAcceso: new Date().toLocaleDateString('fr-FR')
+    }));
+    setUsuarios(usuariosFormateados);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -704,6 +714,24 @@ export function GestionRolesPermisos() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const usuariosData = obtenerUsuarios();
+                              const usuarioCompleto = usuariosData.find(u => u.id === usuario.id);
+                              if (usuarioCompleto) {
+                                setUsuarioPasswordSeleccionado({ 
+                                  id: usuarioCompleto.id, 
+                                  nombre: usuario.nombre, 
+                                  username: usuarioCompleto.username 
+                                });
+                                setDialogPasswordOpen(true);
+                              }
+                            }}
+                          >
+                            <Key className="w-4 h-4" />
+                          </Button>
                           <Button variant="ghost" size="sm">
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -820,6 +848,17 @@ export function GestionRolesPermisos() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog: Cambiar Contraseña de Usuario */}
+      {usuarioPasswordSeleccionado && (
+        <GestionPasswordDialog
+          open={dialogPasswordOpen}
+          onOpenChange={setDialogPasswordOpen}
+          usuarioId={usuarioPasswordSeleccionado.id}
+          nombreUsuario={usuarioPasswordSeleccionado.nombre}
+          username={usuarioPasswordSeleccionado.username}
+        />
+      )}
     </div>
   );
 }

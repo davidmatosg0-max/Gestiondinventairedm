@@ -22,6 +22,8 @@ import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { toast } from 'sonner';
+import { obtenerUsuarios } from '../../utils/usuarios';
+import { obtenerUsuarioSesion } from '../../utils/sesionStorage';
 
 export type TipoMovimiento = 'entrada' | 'salida' | 'ajuste' | 'transferencia' | 'merma' | 'donacion';
 
@@ -67,7 +69,17 @@ export function MovimientosInventario({ productos = [] }: MovimientosInventarioP
 
   const generarMovimientosEjemplo = () => {
     const tiposMovimiento: TipoMovimiento[] = ['entrada', 'salida', 'ajuste', 'transferencia', 'merma', 'donacion'];
-    const usuarios = ['María García', 'Juan Pérez', 'Ana Martínez', 'Carlos López'];
+    
+    // Obtener usuarios reales del sistema
+    const usuariosData = obtenerUsuarios();
+    const usuarios = usuariosData.map(u => `${u.nombre} ${u.apellido}`);
+    
+    // Si no hay usuarios, usar el usuario actual
+    if (usuarios.length === 0) {
+      const usuarioActual = obtenerUsuarioSesion();
+      usuarios.push(usuarioActual ? `${usuarioActual.nombre} ${usuarioActual.apellido}` : 'Usuario Sistema');
+    }
+    
     const categoriasEjemplo = ['Alimentos Secos', 'Conservas', 'Lácteos', 'Frutas y Verduras', 'Proteínas'];
     const productosEjemplo = [
       'Arroz blanco', 'Frijoles negros', 'Aceite vegetal', 'Leche en polvo',

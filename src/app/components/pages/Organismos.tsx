@@ -1,7 +1,7 @@
 // 🎨🎨🎨 VERSIÓN 3.0.0 - SISTEMA DE LOGOS IMPLEMENTADO 🎨🎨🎨
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Eye, Edit, Phone, Mail, MapPin, Users, Upload, X, FileText, Bell, Calendar, Percent, UserCheck, UtensilsCrossed, Coffee, Clock, PackageCheck, History, ClipboardCheck, Key, Copy, Check, Send, Sparkles, Languages } from 'lucide-react';
+import { Plus, Eye, Edit, Phone, Mail, MapPin, Users, Upload, X, FileText, Bell, Calendar, Percent, UserCheck, UtensilsCrossed, Coffee, Clock, PackageCheck, History, ClipboardCheck, Key, Copy, Check, Send, Sparkles, Languages, Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -31,6 +31,7 @@ import {
 } from '../../utils/organismosStorage';
 import { esAdministradorLiaison } from '../../utils/sesionStorage';
 import { useBranding } from '../../../hooks/useBranding';
+import { AsignarRolContacto } from '../AsignarRolContacto';
 
 // Tipos de organismos predefinidos
 const getTiposOrganismo = (t: any) => [
@@ -98,6 +99,19 @@ export function Organismos() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchOrganismoPRS, setSearchOrganismoPRS] = useState('');
   
+  // Estados para AsignarRolContacto
+  const [dialogAsignarRolOpen, setDialogAsignarRolOpen] = useState(false);
+  const [contactoParaRol, setContactoParaRol] = useState<{
+    id: string;
+    nombre: string;
+    apellido: string;
+    nombreCompleto: string;
+    email: string;
+    telefono: string;
+    cargo: string;
+    modulo: 'organismo' | 'benevole' | 'donador' | 'vendedor';
+  } | null>(null);
+  
   // Cargar organismos al montar el componente
   useEffect(() => {
     // Ejecutar migración de claves de acceso
@@ -164,6 +178,28 @@ export function Organismos() {
   
   // Estado para personas autorizadas
   const [personasAutorizadas, setPersonasAutorizadas] = useState<any[]>([]);
+  
+  // Roles disponibles del sistema
+  const rolesDisponibles = [
+    {
+      id: 'organismo',
+      nombre: 'Organisme',
+      descripcion: 'Accès au portail public de l\'organisme',
+      color: branding.primaryColor
+    },
+    {
+      id: 'coordinador',
+      nombre: 'Coordinateur Organisme',
+      descripcion: 'Gestion complète de l\'organisme',
+      color: '#FF9800'
+    },
+    {
+      id: 'contact-organismo',
+      nombre: 'Contact Organisme',
+      descripcion: 'Accès limité pour recevoir des notifications',
+      color: branding.secondaryColor
+    }
+  ];
   
   // Estado para sistema de emails
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
@@ -1253,17 +1289,47 @@ export function Organismos() {
                         <Badge style={{ backgroundColor: branding.primaryColor }}>
                           Contacto {index + 1}
                         </Badge>
-                        {formOrganismo.contactosNotificacion.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => eliminarContacto(index)}
-                            style={{ color: branding.dangerColor }}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        )}
+                        <div className="flex gap-2">
+                          {/* Botón para crear acceso al sistema */}
+                          {contacto.nombre && contacto.email && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const nombreParts = contacto.nombre.split(' ');
+                                const nombre = nombreParts[0] || contacto.nombre;
+                                const apellido = nombreParts.slice(1).join(' ') || '';
+                                
+                                setContactoParaRol({
+                                  id: `contacto-org-${index}`,
+                                  nombre: nombre,
+                                  apellido: apellido,
+                                  nombreCompleto: contacto.nombre,
+                                  email: contacto.email,
+                                  telefono: '',
+                                  cargo: contacto.cargo || 'Contact',
+                                  modulo: 'organismo'
+                                });
+                                setDialogAsignarRolOpen(true);
+                              }}
+                              title="Créer un accès au système"
+                            >
+                              <Shield className="w-4 h-4" style={{ color: '#9C27B0' }} />
+                            </Button>
+                          )}
+                          {formOrganismo.contactosNotificacion.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => eliminarContacto(index)}
+                              style={{ color: branding.dangerColor }}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       <div className="grid grid-cols-3 gap-3">
                         <div className="space-y-2">
@@ -1856,6 +1922,21 @@ export function Organismos() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog: Asignar Rol a Contacto */}
+      {contactoParaRol && (
+        <AsignarRolContacto
+          open={dialogAsignarRolOpen}
+          onOpenChange={setDialogAsignarRolOpen}
+          contacto={contactoParaRol}
+          rolesDisponibles={rolesDisponibles}
+          onGuardar={(datosAcceso) => {
+            console.log('✅ Accès créé pour contact d\'organisme:', datosAcceso);
+            toast.success(`🔐 Accès au système créé pour ${contactoParaRol.nombreCompleto}!`);
+            setContactoParaRol(null);
+          }}
+        />
+      )}
       </div>
     </div>
   );

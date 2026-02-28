@@ -16,6 +16,7 @@ import { MultiSelectDepartements } from '../ui/multi-select-departements';
 import { FicheBenevole } from '../benevoles/FicheBenevole';
 import { IDDigitalBenevole } from '../benevoles/IDDigitalBenevole';
 import { FormularioNouveauBenevole } from '../benevoles/FormularioNouveauBenevole';
+import { AsignarRolContacto } from '../AsignarRolContacto';
 import { obtenirQuartiersLaval } from '../../data/quartiersLaval';
 import { SelecteurJoursDisponibles, type JourDisponible } from '../shared/SelecteurJoursDisponibles';
 import { obtenerDepartamentos } from '../../utils/departamentosStorage';
@@ -77,6 +78,7 @@ import {
   Star,
   UserCheck,
   ShieldPlus,
+  Shield,
   AlertCircle,
   Link
 } from 'lucide-react';
@@ -308,6 +310,10 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
   const [idDigitalModalOpen, setIdDigitalModalOpen] = useState(false);
   const [selectedBenevoleForID, setSelectedBenevoleForID] = useState<Benevole | null>(null);
 
+  // Estado para diálogo de asignar rol
+  const [dialogAsignarRolOpen, setDialogAsignarRolOpen] = useState(false);
+  const [benevoleParaRol, setBenevoleParaRol] = useState<any>(null);
+
   // Départements - Cargar desde el sistema
   const departementosStorage = obtenerDepartamentos();
   const departements = departementosStorage.map(d => d.nombre);
@@ -358,6 +364,46 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       message: 'Bonjour,\n\nNous souhaitons vous informer d\'une annonce importante concernant nos activités.\n\n[Votre message ici]\n\nN\'hésitez pas à nous contacter pour toute question.\n\nCordialement,\nL\'équipe de la Banque Alimentaire'
     }
   };
+
+  // Roles disponibles del sistema
+  const rolesDisponibles = [
+    {
+      id: 'admin',
+      nombre: 'Administrateur',
+      descripcion: 'Accès complet à toutes les fonctionnalités du système',
+      color: '#DC3545'
+    },
+    {
+      id: 'coordinador',
+      nombre: 'Coordinateur',
+      descripcion: 'Gestion de l\'inventaire, des commandes et des organismes',
+      color: '#1E73BE'
+    },
+    {
+      id: 'almacenista',
+      nombre: 'Magasinier',
+      descripcion: 'Gestion de l\'inventaire et mouvements de produits',
+      color: '#4CAF50'
+    },
+    {
+      id: 'transportista',
+      nombre: 'Transporteur',
+      descripcion: 'Gestion des routes et des livraisons',
+      color: '#FFC107'
+    },
+    {
+      id: 'visualizador',
+      nombre: 'Visualiseur',
+      descripcion: 'Lecture seule des informations du système',
+      color: '#9E9E9E'
+    },
+    {
+      id: 'liaison',
+      nombre: 'Liaison Organisme',
+      descripcion: 'Gestion des organismes et communication',
+      color: '#9C27B0'
+    }
+  ];
 
   // Mock Data - Bénévoles
   const [benevoles, setBenevoles] = useState<Benevole[]>(() => {
@@ -2135,6 +2181,27 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                             title="Assigner aux départements"
                           >
                             <Link className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => {
+                              setBenevoleParaRol({
+                                id: benevole.id.toString(),
+                                nombre: benevole.prenom,
+                                apellido: benevole.nom,
+                                nombreCompleto: `${benevole.prenom} ${benevole.nom}`,
+                                email: benevole.email,
+                                telefono: benevole.telephone,
+                                cargo: benevole.poste || 'Bénévole',
+                                modulo: 'benevole'
+                              });
+                              setDialogAsignarRolOpen(true);
+                            }}
+                            className="border-[#9C27B0] text-[#9C27B0] hover:bg-[#9C27B0] hover:text-white"
+                            title="Créer un accès au système"
+                          >
+                            <Shield className="w-4 h-4" />
                           </Button>
                           <Button 
                             variant="outline" 
@@ -4997,13 +5064,13 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
       {/* Dialog Asignar Bénévole a Departamentos */}
       <Dialog open={dialogAsignarDepartamentos} onOpenChange={setDialogAsignarDepartamentos}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="assign-dept-description">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               <Link className="w-6 h-6" style={{ color: branding.primaryColor }} />
               Assigner aux départements
             </DialogTitle>
-            <DialogDescription id="assign-dept-description">
+            <DialogDescription>
               Sélectionnez les départements où ce bénévole travaillera
             </DialogDescription>
           </DialogHeader>
@@ -5113,6 +5180,22 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Dialog: Asignar Rol a Bénévole */}
+      {benevoleParaRol && (
+        <AsignarRolContacto
+          open={dialogAsignarRolOpen}
+          onOpenChange={setDialogAsignarRolOpen}
+          contacto={benevoleParaRol}
+          rolesDisponibles={rolesDisponibles}
+          onGuardar={(datosAcceso) => {
+            console.log('✅ Accès créé pour bénévole:', datosAcceso);
+            toast.success(`🔐 Accès au système créé pour ${benevoleParaRol.nombreCompleto}!`);
+            // Aquí podrías actualizar el bénévole con la información de acceso si lo deseas
+            setBenevoleParaRol(null);
+          }}
+        />
+      )}
 
       {/* Botón flotante para agregar bénévole */}
       <button

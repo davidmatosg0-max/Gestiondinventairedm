@@ -3180,7 +3180,7 @@ export function EntradaDonAchat() {
 
     {/* Diálogo Crear Producto PRS */}
     <Dialog open={crearProductoPRSOpen} onOpenChange={setCrearProductoPRSOpen}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="pb-4 border-b">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#E91E63] to-[#C2185B] flex items-center justify-center text-white text-2xl">

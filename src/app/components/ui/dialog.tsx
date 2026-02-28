@@ -5,7 +5,13 @@ import { XIcon } from "lucide-react";
 import { cn } from "./utils";
 
 // Contexto para compartir el ID entre DialogContent y DialogDescription
-const DialogDescriptionContext = React.createContext<string>("");
+const DialogDescriptionContext = React.createContext<{
+  descriptionId: string;
+  setDescriptionId: (id: string) => void;
+}>({
+  descriptionId: "",
+  setDescriptionId: () => {},
+});
 
 function Dialog({
   ...props
@@ -54,13 +60,48 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentProps<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
+  const descriptionId = React.useId();
+  
+  // Check if children contains a DialogDescription
+  const hasDescription = React.useMemo(() => {
+    let found = false;
+    React.Children.forEach(children, (child) => {
+      if (React.isValidElement(child)) {
+        // Check DialogHeader children
+        if (child.type === DialogHeader) {
+          React.Children.forEach(child.props.children, (headerChild) => {
+            if (React.isValidElement(headerChild) && 
+                (headerChild.type === DialogDescription || 
+                 headerChild.type === DialogPrimitive.Description)) {
+              found = true;
+            }
+          });
+        }
+        // Check direct DialogDescription
+        if (child.type === DialogDescription || 
+            child.type === DialogPrimitive.Description) {
+          found = true;
+        }
+      }
+    });
+    return found;
+  }, [children]);
+
+  // Only set aria-describedby if explicitly provided or if there's a DialogDescription
+  const ariaDescribedBy = props["aria-describedby"] !== undefined 
+    ? props["aria-describedby"]
+    : hasDescription 
+    ? descriptionId 
+    : undefined;
+  
   return (
-    <DialogDescriptionContext.Provider value="">
+    <DialogDescriptionContext.Provider value={{ descriptionId, setDescriptionId: () => {} }}>
       <DialogPortal>
         <DialogOverlay />
         <DialogPrimitive.Content
           ref={ref}
           data-slot="dialog-content"
+          aria-describedby={ariaDescribedBy}
           className={cn(
             "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200",
             !className?.includes("max-w-") && "max-w-[calc(100%-2rem)] sm:max-w-lg",
@@ -121,8 +162,11 @@ function DialogDescription({
   className,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Description>) {
+  const { descriptionId } = React.useContext(DialogDescriptionContext);
+  
   return (
     <DialogPrimitive.Description
+      id={props.id || descriptionId}
       data-slot="dialog-description"
       className={cn("text-muted-foreground text-sm", className)}
       {...props}

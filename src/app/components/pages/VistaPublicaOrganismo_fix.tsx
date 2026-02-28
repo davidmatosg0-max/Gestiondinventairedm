@@ -1779,7 +1779,7 @@ export function VistaPublicaOrganismo({ organismo, onCerrarSesion }: VistaPublic
 
       {/* Dialog para edición de perfil */}
       <Dialog open={editarPerfilOpen} onOpenChange={setEditarPerfilOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby={undefined}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               Editar Perfil del Organismo
@@ -1888,7 +1888,7 @@ export function VistaPublicaOrganismo({ organismo, onCerrarSesion }: VistaPublic
 
       {/* Dialog para edición de ofertas */}
       <Dialog open={editarOfertaOpen} onOpenChange={setEditarOfertaOpen}>
-        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby={undefined}>
+        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-y-auto scrollbar-thin">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               <div className="flex items-center gap-2">
@@ -2196,7 +2196,7 @@ export function VistaPublicaOrganismo({ organismo, onCerrarSesion }: VistaPublic
 
       {/* Dialog: Formulario de Persona Responsable */}
       <Dialog open={dialogFormPersonaOpen} onOpenChange={setDialogFormPersonaOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               <div className="flex items-center gap-2">

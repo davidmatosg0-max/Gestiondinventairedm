@@ -11,6 +11,7 @@ import { Badge } from '../ui/badge';
 import { Card, CardContent } from '../ui/card';
 import { toast } from 'sonner';
 import { mockProductos, mockUsuariosInternos } from '../../data/mockData';
+import { obtenerUsuarioSesion } from '../../utils/sesionStorage';
 
 interface TransformarProductoDialogProps {
   open: boolean;
@@ -145,6 +146,11 @@ export function TransformarProductoDialog({ open, onOpenChange, productoInicial 
   };
 
   // Historial de transformaciones (mock)
+  const usuarioActual = obtenerUsuarioSesion();
+  const nombreUsuarioActual = usuarioActual 
+    ? `${usuarioActual.nombre} ${usuarioActual.apellido}`
+    : 'Usuario Sistema';
+
   const historialTransformaciones = [
     {
       id: '1',
@@ -155,7 +161,7 @@ export function TransformarProductoDialog({ open, onOpenChange, productoInicial 
       productoDestino: 'Arroz Blanco 1kg',
       cantidadDestino: 25,
       unidadDestino: 'unidades',
-      usuario: 'Admin',
+      usuario: nombreUsuarioActual,
       motivo: 'Fraccionamiento para distribución'
     },
     {
@@ -167,7 +173,7 @@ export function TransformarProductoDialog({ open, onOpenChange, productoInicial 
       productoDestino: 'Salsa de Tomate',
       cantidadDestino: 30,
       unidadDestino: 'kg',
-      usuario: 'María García',
+      usuario: nombreUsuarioActual,
       motivo: 'Procesamiento de productos próximos a vencer'
     },
     {
@@ -179,7 +185,7 @@ export function TransformarProductoDialog({ open, onOpenChange, productoInicial 
       productoDestino: 'Leche 1L',
       cantidadDestino: 200,
       unidadDestino: 'unidades',
-      usuario: 'Juan Pérez',
+      usuario: nombreUsuarioActual,
       motivo: 'Fraccionamiento para familias'
     }
   ];

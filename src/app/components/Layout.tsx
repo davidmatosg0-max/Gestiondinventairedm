@@ -3,6 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { useBranding } from '../../hooks/useBranding';
 import { obtenerUsuarioSesion } from '../utils/sesionStorage';
 import { 
+  moduloDisponible, 
+  esDesarrollador,
+  tienePermiso,
+  PERMISOS
+} from '../utils/permisos';
+import { 
   LayoutDashboard, 
   Package, 
   ClipboardList, 
@@ -68,6 +74,28 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
   const usuarioActual = obtenerUsuarioSesion();
   const esDesarrollador = usuarioActual?.permisos?.includes('desarrollador' as any) || false;
 
+  // Obtener datos del usuario para mostrar en el header
+  const nombreCompleto = usuarioActual 
+    ? `${usuarioActual.nombre} ${usuarioActual.apellido}` 
+    : 'Usuario';
+  
+  const iniciales = usuarioActual 
+    ? `${usuarioActual.nombre[0]}${usuarioActual.apellido[0]}`.toUpperCase() 
+    : 'U';
+  
+  // Mapeo de roles a francés
+  const rolesTraduccion: Record<string, string> = {
+    'administrador': 'Administrateur',
+    'coordinador': 'Coordinateur',
+    'usuario': 'Utilisateur',
+    'almacenista': 'Magasinier',
+    'transportista': 'Transporteur'
+  };
+  
+  const rolTraducido = usuarioActual?.rol 
+    ? rolesTraduccion[usuarioActual.rol] || usuarioActual.rol 
+    : 'Utilisateur';
+
   const handleLogout = () => {
     if (onLogout) {
       // Limpiar todas las sesiones guardadas
@@ -126,13 +154,34 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
   ];
 
   // Filtrar menú según permisos
-  const menuItemsFiltrado = menuItems.filter(item => {
+  const menuItemsFiltrado = menuItems.map(item => {
     // Si el item es solo para desarrollador y el usuario no lo es, no mostrarlo
     if (item.soloDesarrollador && !esDesarrollador) {
-      return false;
+      return null;
     }
-    return true;
-  });
+    
+    // Si tiene hijos, filtrar los hijos según permisos
+    if (item.children) {
+      const hijosFiltrados = item.children.filter(child => moduloDisponible(child.id));
+      
+      // Si no hay hijos disponibles, no mostrar el padre
+      if (hijosFiltrados.length === 0) {
+        return null;
+      }
+      
+      return {
+        ...item,
+        children: hijosFiltrados
+      };
+    }
+    
+    // Verificar si el módulo está disponible para el usuario
+    if (!moduloDisponible(item.id)) {
+      return null;
+    }
+    
+    return item;
+  }).filter((item): item is MenuItem => item !== null);
 
   return (
     <div 
@@ -220,15 +269,15 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
               <div className="hidden md:flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2">
                 <div className="text-right">
                   <p className="text-xs sm:text-sm text-white font-semibold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    María García
+                    {nombreCompleto}
                   </p>
-                  <p className="text-xs text-white/80">{t('common.administrator')}</p>
+                  <p className="text-xs text-white/80">{rolTraducido}</p>
                 </div>
                 <div 
                   className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold flex-shrink-0 shadow-lg"
                   style={{ backgroundColor: branding.secondaryColor }}
                 >
-                  MG
+                  {iniciales}
                 </div>
               </div>
               {/* Avatar móvil (sin nombre) */}
@@ -236,7 +285,7 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
                 className="md:hidden w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 shadow-lg"
                 style={{ backgroundColor: branding.secondaryColor }}
               >
-                MG
+                {iniciales}
               </div>
               {onLogout && (
                 <button
