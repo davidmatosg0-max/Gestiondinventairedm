@@ -45,6 +45,13 @@ export function Usuarios() {
     cargarUsuarios();
   }, []);
 
+  // Resetear formulario cuando se cierra el diálogo
+  useEffect(() => {
+    if (!usuarioDialogOpen) {
+      resetForm();
+    }
+  }, [usuarioDialogOpen]);
+
   const cargarUsuarios = () => {
     const usuariosStorage = obtenerUsuarios();
     setUsuarios(usuariosStorage);
@@ -108,6 +115,9 @@ export function Usuarios() {
       return;
     }
 
+    // Debug: Verificar password antes de guardar
+    console.log('🔐 Password a guardar:', formUsuario.password ? '***[oculto]***' : '[vacío]');
+
     try {
       if (modoEdicion && usuarioSeleccionado) {
         // Actualizar usuario existente
@@ -122,8 +132,11 @@ export function Usuarios() {
         };
 
         // Solo actualizar password si se proporcionó uno nuevo
-        if (formUsuario.password) {
+        if (formUsuario.password && formUsuario.password.trim()) {
           datosActualizados.password = formUsuario.password;
+          console.log('🔐 Actualizando password del usuario');
+        } else {
+          console.log('🔐 Manteniendo password anterior (no se proporcionó nuevo)');
         }
 
         const success = actualizarUsuario(usuarioSeleccionado.id, datosActualizados);
@@ -137,6 +150,7 @@ export function Usuarios() {
         }
       } else {
         // Crear nuevo usuario
+        console.log('🆕 Creando nuevo usuario con password');
         const nuevoUsuario = agregarUsuario({
           username: formUsuario.username,
           nombre: formUsuario.nombre,
