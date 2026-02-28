@@ -121,10 +121,10 @@ export function Transporte() {
             🚛 {t('transport.vehicleManagement')}
           </TabsTrigger>
           <TabsTrigger value="choferes" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}>
-            👨‍✈️ Choferes
+            👨‍✈️ {t('transport.drivers')}
           </TabsTrigger>
           <TabsTrigger value="verificacion" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}>
-            🔍 Verificación SAAQ
+            🔍 {t('transport.saaqVerification')}
           </TabsTrigger>
         </TabsList>
 

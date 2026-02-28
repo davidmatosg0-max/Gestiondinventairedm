@@ -111,7 +111,7 @@ export function VerificacionVehiculo() {
 
   const handleGuardarVerificacion = () => {
     if (!formData.vehiculoId || !formData.conductorId) {
-      toast.error('Complete todos los campos requeridos');
+      toast.error(t('transport.saaqVerification.completeRequired'));
       return;
     }
 
@@ -119,7 +119,7 @@ export function VerificacionVehiculo() {
     const conductor = mockUsuarios.find(u => u.id === formData.conductorId);
 
     if (!vehiculo || !conductor) {
-      toast.error('Vehículo o conductor no encontrado');
+      toast.error(t('transport.saaqVerification.vehicleNotFound'));
       return;
     }
 
@@ -148,16 +148,16 @@ export function VerificacionVehiculo() {
     
     if (guardado) {
       const mensajes = {
-        apto: '✅ Verificación completada - Vehículo APTO para circular',
-        apto_con_observaciones: '⚠️ Verificación completada - Vehículo APTO con observaciones',
-        no_apto: '❌ Verificación completada - Vehículo NO APTO para circular',
+        apto: `✅ ${t('transport.saaqVerification.verificationCompleteApt')}`,
+        apto_con_observaciones: `⚠️ ${t('transport.saaqVerification.verificationCompleteAptObs')}`,
+        no_apto: `❌ ${t('transport.saaqVerification.verificationCompleteNotApt')}`,
       };
       
       toast.success(mensajes[estadoGeneral]);
       setDialogOpen(false);
       cargarHistorial();
     } else {
-      toast.error('Error al guardar la verificación');
+      toast.error(t('transport.saaqVerification.saveError'));
     }
   };
 
@@ -263,9 +263,9 @@ export function VerificacionVehiculo() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, fontSize: '1.5rem', color: '#333333' }}>
-            🔍 Verificación de Vehículos SAAQ
+            🔍 {t('transport.saaqVerification.title')}
           </h2>
-          <p className="text-[#666666]">Inspección según reglamentos de Quebec</p>
+          <p className="text-[#666666]">{t('transport.saaqVerification.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -274,7 +274,7 @@ export function VerificacionVehiculo() {
             style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
           >
             <FileText className="w-4 h-4 mr-2" />
-            Historial ({verificaciones.length})
+            {t('transport.saaqVerification.history')} ({verificaciones.length})
           </Button>
           <Button 
             onClick={handleAbrirDialog} 
@@ -282,7 +282,7 @@ export function VerificacionVehiculo() {
             style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
           >
             <ClipboardCheck className="w-4 h-4 mr-2" />
-            Nueva Verificación
+            {t('transport.saaqVerification.newVerification')}
           </Button>
         </div>
       </div>
@@ -291,15 +291,15 @@ export function VerificacionVehiculo() {
       <Card>
         <CardHeader>
           <CardTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
-            Verificaciones Recientes
+            {t('transport.saaqVerification.recentVerifications')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {verificaciones.length === 0 ? (
             <div className="text-center py-8 text-[#666666]">
               <ClipboardCheck className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>No hay verificaciones registradas</p>
-              <p className="text-sm">Realiza tu primera verificación SAAQ</p>
+              <p>{t('transport.saaqVerification.noVerifications')}</p>
+              <p className="text-sm">{t('transport.saaqVerification.firstVerification')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -318,7 +318,7 @@ export function VerificacionVehiculo() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge className="bg-gray-200 text-gray-700">
-                        {ver.tipoVerificacion === 'pre_viaje' ? 'Pre-Viaje' : ver.tipoVerificacion === 'post_viaje' ? 'Post-Viaje' : 'Mensual'}
+                        {ver.tipoVerificacion === 'pre_viaje' ? t('transport.saaqVerification.preTrip') : ver.tipoVerificacion === 'post_viaje' ? t('transport.saaqVerification.postTrip') : t('transport.saaqVerification.monthly')}
                       </Badge>
                       {getEstadoGeneralBadge(ver.estadoGeneral)}
                       <Button
@@ -332,7 +332,7 @@ export function VerificacionVehiculo() {
                         }}
                       >
                         <FileText className="w-4 h-4 mr-1" />
-                        Ver Detalles
+                        {t('transport.saaqVerification.viewDetails')}
                       </Button>
                     </div>
                   </div>
@@ -348,10 +348,10 @@ export function VerificacionVehiculo() {
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" aria-describedby="verificacion-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
-              🔍 Nueva Verificación SAAQ - Quebec
+              🔍 {t('transport.saaqVerification.newVerificationSAAQ')}
             </DialogTitle>
             <DialogDescription id="verificacion-dialog-description">
-              Inspección según los reglamentos de la Société de l'assurance automobile du Québec
+              {t('transport.saaqVerification.inspectionDescription')}
             </DialogDescription>
           </DialogHeader>
 
@@ -360,15 +360,15 @@ export function VerificacionVehiculo() {
             <Card className="border-2 border-[#1E73BE]">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  Información de la Verificación
+                  {t('transport.saaqVerification.verificationInfo')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <Label>Vehículo *</Label>
+                  <Label>{t('transport.saaqVerification.vehicle')} *</Label>
                   <Select value={formData.vehiculoId} onValueChange={(value) => setFormData({ ...formData, vehiculoId: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar..." />
+                      <SelectValue placeholder={t('transport.saaqVerification.select')} />
                     </SelectTrigger>
                     <SelectContent>
                       {mockVehiculos.map(v => (
@@ -381,10 +381,10 @@ export function VerificacionVehiculo() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Conductor *</Label>
+                  <Label>{t('transport.saaqVerification.driver')} *</Label>
                   <Select value={formData.conductorId} onValueChange={(value) => setFormData({ ...formData, conductorId: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar..." />
+                      <SelectValue placeholder={t('transport.saaqVerification.select')} />
                     </SelectTrigger>
                     <SelectContent>
                       {mockUsuarios.filter(u => u.rol === 'transportista').map(c => (
@@ -397,21 +397,21 @@ export function VerificacionVehiculo() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Tipo de Verificación *</Label>
+                  <Label>{t('transport.saaqVerification.verificationType')} *</Label>
                   <Select value={formData.tipoVerificacion} onValueChange={(value: any) => setFormData({ ...formData, tipoVerificacion: value })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pre_viaje">Pre-Viaje</SelectItem>
-                      <SelectItem value="post_viaje">Post-Viaje</SelectItem>
-                      <SelectItem value="mensual">Mensual</SelectItem>
+                      <SelectItem value="pre_viaje">{t('transport.saaqVerification.preTrip')}</SelectItem>
+                      <SelectItem value="post_viaje">{t('transport.saaqVerification.postTrip')}</SelectItem>
+                      <SelectItem value="mensual">{t('transport.saaqVerification.monthly')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Odómetro (km) *</Label>
+                  <Label>{t('transport.saaqVerification.odometer')} *</Label>
                   <Input
                     type="number"
                     value={formData.odometro || ''}
@@ -426,7 +426,7 @@ export function VerificacionVehiculo() {
             <div className="bg-gradient-to-r from-[#1E73BE] to-[#4CAF50] p-4 rounded-lg text-white">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  Progreso de Inspección
+                  {t('transport.saaqVerification.inspectionProgress')}
                 </span>
                 <span className="text-2xl font-bold">{progresoTotal}%</span>
               </div>
@@ -459,7 +459,7 @@ export function VerificacionVehiculo() {
                               {getCategoriaLabel(categoria)}
                             </CardTitle>
                             <p className="text-xs text-[#666666] mt-1">
-                              {itemsCategoria.length} elementos • {progreso}% completado
+                              {itemsCategoria.length} {t('transport.saaqVerification.elements')} • {progreso}% {t('transport.saaqVerification.completed')}
                             </p>
                           </div>
                         </div>
@@ -510,7 +510,7 @@ export function VerificacionVehiculo() {
                             </div>
                             {item.estado !== 'conforme' && (
                               <Input
-                                placeholder="Observaciones..."
+                                placeholder={t('transport.saaqVerification.observationsPlaceholder')}
                                 value={item.observaciones || ''}
                                 onChange={(e) => actualizarObservacionItem(item.id, e.target.value)}
                                 className="text-sm"
@@ -527,9 +527,9 @@ export function VerificacionVehiculo() {
 
             {/* Observaciones Generales */}
             <div className="space-y-2">
-              <Label>Observaciones Generales</Label>
+              <Label>{t('transport.saaqVerification.generalObservations')}</Label>
               <Textarea
-                placeholder="Comentarios adicionales sobre la inspección..."
+                placeholder={t('transport.saaqVerification.additionalComments')}
                 value={formData.observacionesGenerales}
                 onChange={(e) => setFormData({ ...formData, observacionesGenerales: e.target.value })}
                 rows={3}
@@ -539,7 +539,7 @@ export function VerificacionVehiculo() {
             {/* Acciones */}
             <div className="flex justify-end gap-2 pt-4 border-t">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancelar
+                {t('transport.saaqVerification.cancel')}
               </Button>
               <Button 
                 onClick={handleGuardarVerificacion} 
@@ -547,7 +547,7 @@ export function VerificacionVehiculo() {
                 style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
               >
                 <Save className="w-4 h-4 mr-2" />
-                Guardar Verificación
+                {t('transport.saaqVerification.saveVerification')}
               </Button>
             </div>
           </div>

@@ -202,7 +202,7 @@ export function GestionChoferes() {
 
   const guardarChofer = () => {
     if (!formData.nombre || !formData.apellido || !formData.cedula || !formData.licencia) {
-      toast.error('Por favor complete todos los campos obligatorios');
+      toast.error(t('transport.driversManagement.fillRequiredFields'));
       return;
     }
 
@@ -215,7 +215,7 @@ export function GestionChoferes() {
             : c
         )
       );
-      toast.success(`✅ Chofer actualizado: ${formData.nombre} ${formData.apellido}`);
+      toast.success(`✅ ${t('transport.driversManagement.driverUpdated')}: ${formData.nombre} ${formData.apellido}`);
     } else {
       // Crear nuevo chofer
       const nuevoChofer: Chofer = {
@@ -223,7 +223,7 @@ export function GestionChoferes() {
         ...formData
       };
       setChoferes(prev => [...prev, nuevoChofer]);
-      toast.success(`✅ Chofer registrado: ${formData.nombre} ${formData.apellido}`);
+      toast.success(`✅ ${t('transport.driversManagement.driverRegistered')}: ${formData.nombre} ${formData.apellido}`);
     }
 
     setDialogOpen(false);
@@ -232,9 +232,9 @@ export function GestionChoferes() {
 
   const eliminarChofer = (id: string) => {
     const chofer = choferes.find(c => c.id === id);
-    if (window.confirm(`¿Está seguro de eliminar al chofer ${chofer?.nombre} ${chofer?.apellido}?`)) {
+    if (window.confirm(t('transport.driversManagement.confirmDelete', { name: `${chofer?.nombre} ${chofer?.apellido}` }))) {
       setChoferes(prev => prev.filter(c => c.id !== id));
-      toast.success('Chofer eliminado correctamente');
+      toast.success(t('transport.driversManagement.driverDeleted'));
     }
   };
 
@@ -253,11 +253,11 @@ export function GestionChoferes() {
   const getEstadoBadge = (estado: string) => {
     switch (estado) {
       case 'activo':
-        return <Badge className="bg-[#4CAF50] text-white"><CheckCircle className="h-3 w-3 mr-1" /> Activo</Badge>;
+        return <Badge className="bg-[#4CAF50] text-white"><CheckCircle className="h-3 w-3 mr-1" /> {t('transport.driversManagement.active')}</Badge>;
       case 'inactivo':
-        return <Badge className="bg-[#DC3545] text-white"><XCircle className="h-3 w-3 mr-1" /> Inactivo</Badge>;
+        return <Badge className="bg-[#DC3545] text-white"><XCircle className="h-3 w-3 mr-1" /> {t('transport.driversManagement.inactive')}</Badge>;
       case 'vacaciones':
-        return <Badge className="bg-[#FFC107] text-white"><Calendar className="h-3 w-3 mr-1" /> Vacaciones</Badge>;
+        return <Badge className="bg-[#FFC107] text-white"><Calendar className="h-3 w-3 mr-1" /> {t('transport.driversManagement.onVacation')}</Badge>;
       default:
         return <Badge variant="secondary">{estado}</Badge>;
     }
@@ -278,7 +278,7 @@ export function GestionChoferes() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-[#666666]">Total Choferes</p>
+                <p className="text-sm text-[#666666]">{t('transport.driversManagement.totalDrivers')}</p>
                 <p className="text-2xl font-bold text-[#1E73BE]">{estadisticas.total}</p>
               </div>
               <User className="h-8 w-8 text-[#1E73BE]" />
@@ -290,7 +290,7 @@ export function GestionChoferes() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-[#666666]">Activos</p>
+                <p className="text-sm text-[#666666]">{t('transport.driversManagement.active')}</p>
                 <p className="text-2xl font-bold text-[#4CAF50]">{estadisticas.activos}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-[#4CAF50]" />
@@ -302,7 +302,7 @@ export function GestionChoferes() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-[#666666]">En Vacaciones</p>
+                <p className="text-sm text-[#666666]">{t('transport.driversManagement.onVacation')}</p>
                 <p className="text-2xl font-bold text-[#FFC107]">{estadisticas.vacaciones}</p>
               </div>
               <Calendar className="h-8 w-8 text-[#FFC107]" />
@@ -314,7 +314,7 @@ export function GestionChoferes() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-[#666666]">Inactivos</p>
+                <p className="text-sm text-[#666666]">{t('transport.driversManagement.inactive')}</p>
                 <p className="text-2xl font-bold text-[#DC3545]">{estadisticas.inactivos}</p>
               </div>
               <XCircle className="h-8 w-8 text-[#DC3545]" />
@@ -328,14 +328,14 @@ export function GestionChoferes() {
         <CardHeader>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <CardTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
-              👨‍✈️ Gestión de Choferes
+              👨‍✈️ {t('transport.driversManagement.title')}
             </CardTitle>
             <Button
               onClick={abrirDialogNuevo}
               className="bg-[#1E73BE] hover:bg-[#1557A0]"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Agregar Chofer
+              {t('transport.driversManagement.addDriver')}
             </Button>
           </div>
 
@@ -344,7 +344,7 @@ export function GestionChoferes() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#666666]" />
               <Input
-                placeholder="Buscar por nombre, cédula o licencia..."
+                placeholder={t('transport.driversManagement.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -352,13 +352,13 @@ export function GestionChoferes() {
             </div>
             <Select value={filtroEstado} onValueChange={setFiltroEstado}>
               <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="Filtrar por estado" />
+                <SelectValue placeholder={t('transport.driversManagement.filterByStatus')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todos">Todos los estados</SelectItem>
-                <SelectItem value="activo">Activos</SelectItem>
-                <SelectItem value="vacaciones">En vacaciones</SelectItem>
-                <SelectItem value="inactivo">Inactivos</SelectItem>
+                <SelectItem value="todos">{t('transport.driversManagement.allStatuses')}</SelectItem>
+                <SelectItem value="activo">{t('transport.driversManagement.active')}</SelectItem>
+                <SelectItem value="vacaciones">{t('transport.driversManagement.onVacation')}</SelectItem>
+                <SelectItem value="inactivo">{t('transport.driversManagement.inactive')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -369,16 +369,16 @@ export function GestionChoferes() {
             <Table>
               <TableHeader className="sticky top-0 bg-white z-10">
                 <TableRow>
-                  <TableHead>Foto</TableHead>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Cédula</TableHead>
-                  <TableHead>Licencia</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Contacto</TableHead>
-                  <TableHead>Vehículo Asignado</TableHead>
-                  <TableHead>Experiencia</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Acciones</TableHead>
+                  <TableHead>{t('transport.driversManagement.photo')}</TableHead>
+                  <TableHead>{t('transport.driversManagement.name')}</TableHead>
+                  <TableHead>{t('transport.driversManagement.idCard')}</TableHead>
+                  <TableHead>{t('transport.driversManagement.license')}</TableHead>
+                  <TableHead>{t('transport.driversManagement.type')}</TableHead>
+                  <TableHead>{t('transport.driversManagement.contact')}</TableHead>
+                  <TableHead>{t('transport.driversManagement.assignedVehicle')}</TableHead>
+                  <TableHead>{t('transport.driversManagement.experience')}</TableHead>
+                  <TableHead>{t('transport.driversManagement.status')}</TableHead>
+                  <TableHead>{t('transport.driversManagement.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -416,11 +416,11 @@ export function GestionChoferes() {
                           {chofer.vehiculoAsignado}
                         </span>
                       ) : (
-                        <span className="text-sm text-[#999999]">Sin asignar</span>
+                        <span className="text-sm text-[#999999]">{t('transport.driversManagement.unassigned')}</span>
                       )}
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm">{chofer.experienciaAnios} años</span>
+                      <span className="text-sm">{chofer.experienciaAnios} {t('transport.driversManagement.years')}</span>
                     </TableCell>
                     <TableCell>{getEstadoBadge(chofer.estado)}</TableCell>
                     <TableCell>
@@ -450,7 +450,7 @@ export function GestionChoferes() {
             {choferesFiltrados.length === 0 && (
               <div className="py-12 text-center">
                 <User className="mx-auto h-12 w-12 text-[#999999]" />
-                <p className="mt-4 text-[#666666]">No se encontraron choferes</p>
+                <p className="mt-4 text-[#666666]">{t('transport.driversManagement.noDriversFound')}</p>
               </div>
             )}
           </div>
