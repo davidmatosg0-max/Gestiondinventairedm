@@ -115,10 +115,17 @@ export function inicializarDepartamentos(): void {
 }
 
 export function obtenerDepartamentos(): Departamento[] {
-  inicializarDepartamentos();
   const departamentosGuardados = localStorage.getItem(STORAGE_KEY);
-  const departamentos = departamentosGuardados ? JSON.parse(departamentosGuardados) : [];
-  return departamentos.sort((a: Departamento, b: Departamento) => a.orden - b.orden);
+  if (departamentosGuardados !== null) {
+    const departamentos = JSON.parse(departamentosGuardados);
+    return departamentos.sort((a: Departamento, b: Departamento) => a.orden - b.orden);
+  } else {
+    // Solo inicializar la primera vez
+    inicializarDepartamentos();
+    const nuevos = localStorage.getItem(STORAGE_KEY);
+    const departamentos = nuevos ? JSON.parse(nuevos) : [];
+    return departamentos.sort((a: Departamento, b: Departamento) => a.orden - b.orden);
+  }
 }
 
 export function obtenerDepartamentoPorId(id: string): Departamento | undefined {

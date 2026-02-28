@@ -156,15 +156,25 @@ export function inicializarUsuarios(): void {
 export function obtenerUsuarios(): Usuario[] {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
+    if (stored !== null) {
+      // Si existe la clave (aunque sea un array vacío), usarla
+      const usuarios = JSON.parse(stored);
+      // Si hay usuarios, ejecutar migración si es necesaria
+      if (usuarios.length > 0) {
+        migrarUsuarios();
+      }
+      return usuarios;
+    } else {
+      // Solo inicializar si NO existe la clave en localStorage (primera vez)
+      inicializarUsuarios();
+      const nuevosUsuarios = localStorage.getItem(STORAGE_KEY);
+      return nuevosUsuarios ? JSON.parse(nuevosUsuarios) : [];
     }
   } catch (error) {
     console.error('Error al cargar usuarios:', error);
   }
-  // Si no hay usuarios, inicializar y retornar
-  inicializarUsuarios();
-  return USUARIOS_PREDEFINIDOS;
+  // Retornar array vacío si hay error
+  return [];
 }
 
 // Validar credenciales de usuario
@@ -235,6 +245,18 @@ export function eliminarUsuario(id: string): boolean {
   
   console.log('❌ Usuario no encontrado:', id);
   return false;
+}
+
+// Eliminar todos los usuarios (para producción)
+export function eliminarTodosLosUsuarios(): boolean {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+    console.log('✅ Todos los usuarios eliminados');
+    return true;
+  } catch (error) {
+    console.error('Error al eliminar todos los usuarios:', error);
+    return false;
+  }
 }
 
 // Resetear a usuarios predefinidos

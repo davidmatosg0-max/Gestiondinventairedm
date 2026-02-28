@@ -160,15 +160,16 @@ const contactosIniciales: ContactoEntrepot[] = [
 export function obtenerContactosEntrepot(): ContactoEntrepot[] {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
+    if (stored !== null) {
       return JSON.parse(stored);
+    } else {
+      // Solo inicializar la primera vez avec contactos de ejemplo
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(contactosIniciales));
+      return contactosIniciales;
     }
-    // Si no hay datos, inicializar con los contactos de ejemplo
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(contactosIniciales));
-    return contactosIniciales;
   } catch (error) {
     console.error('Error al obtener contactos del entrepot:', error);
-    return contactosIniciales;
+    return [];
   }
 }
 

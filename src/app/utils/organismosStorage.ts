@@ -69,11 +69,15 @@ export function inicializarOrganismos(): void {
 // Obtener todos los organismos
 export function obtenerOrganismos(): Organismo[] {
   const data = localStorage.getItem(STORAGE_KEY);
-  if (!data) {
+  if (data !== null) {
+    // Si existe la clave (aunque sea un array vacío), usarla
+    return JSON.parse(data);
+  } else {
+    // Solo inicializar si NO existe la clave en localStorage (primera vez)
     inicializarOrganismos();
-    return organismosIniciales;
+    const nuevosOrganismos = localStorage.getItem(STORAGE_KEY);
+    return nuevosOrganismos ? JSON.parse(nuevosOrganismos) : [];
   }
-  return JSON.parse(data);
 }
 
 // Obtener un organismo por ID

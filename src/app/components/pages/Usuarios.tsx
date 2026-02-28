@@ -15,6 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { GestionRoles } from '../usuarios/GestionRoles';
 import { GestionDepartamentos } from '../usuarios/GestionDepartamentos';
 import { obtenerUsuarios, agregarUsuario, actualizarUsuario, eliminarUsuario, Usuario } from '../../utils/usuarios';
+import { rolesPredeterminados } from '../../data/rolesPermisos';
 
 export function Usuarios() {
   const { t } = useTranslation();
@@ -412,9 +413,14 @@ export function Usuarios() {
                     <SelectValue placeholder="Sélectionner un rôle" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="administrador">Administrateur</SelectItem>
-                    <SelectItem value="coordinador">Coordinateur</SelectItem>
-                    <SelectItem value="usuario">Utilisateur</SelectItem>
+                    {rolesPredeterminados.filter(rol => rol.activo).map(rol => (
+                      <SelectItem key={rol.id} value={rol.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{rol.icono}</span>
+                          <span>{rol.nombre}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

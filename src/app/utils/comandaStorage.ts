@@ -6,9 +6,12 @@ const COMANDAS_KEY = 'banco_alimentos_comandas';
 export function obtenerComandas(): Comanda[] {
   try {
     const comandasJSON = localStorage.getItem(COMANDAS_KEY);
-    return comandasJSON ? JSON.parse(comandasJSON) : [];
+    if (comandasJSON !== null) {
+      return JSON.parse(comandasJSON);
+    }
+    return [];
   } catch (error) {
-    console.error('Error al obtener comandas:', error);
+    console.error('Error al cargar comandas:', error);
     return [];
   }
 }

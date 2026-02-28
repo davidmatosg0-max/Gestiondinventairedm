@@ -9,23 +9,15 @@ const STORAGE_KEY = 'banco_alimentos_categorias';
 export function obtenerCategorias(): Categoria[] {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const categorias = JSON.parse(stored);
-      // Migración: asegurar que todas las subcategorías tengan pesoUnitario
-      const categoriasMigradas = categorias.map((cat: Categoria) => ({
-        ...cat,
-        subcategorias: cat.subcategorias?.map((sub: Subcategoria) => ({
-          ...sub,
-          pesoUnitario: sub.pesoUnitario !== undefined ? sub.pesoUnitario : 0
-        }))
-      }));
-      return categoriasMigradas;
+    if (stored !== null) {
+      return JSON.parse(stored);
+    } else {
+      // Solo inicializar la primera vez
+      guardarCategorias(categoriasIniciales);
+      return categoriasIniciales;
     }
-    // Si no hay datos, guardar las iniciales
-    guardarCategorias(categoriasIniciales);
-    return categoriasIniciales;
   } catch (error) {
-    console.error('Error al obtener categorías:', error);
+    console.error('Error al cargar categorías:', error);
     return categoriasIniciales;
   }
 }

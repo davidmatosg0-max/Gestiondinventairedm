@@ -95,8 +95,8 @@ export const permisos: Permiso[] = [
 export const rolesPredeterminados: Rol[] = [
   {
     id: 'admin',
-    nombre: 'Administrador',
-    descripcion: 'Acceso completo a todas las funciones del sistema',
+    nombre: 'Administrateur',
+    descripcion: 'Accès complet à toutes les fonctions du système',
     color: '#DC3545',
     icono: '👑',
     permisos: permisos.map(p => p.id), // Todos los permisos
@@ -106,8 +106,8 @@ export const rolesPredeterminados: Rol[] = [
   },
   {
     id: 'coordinador',
-    nombre: 'Coordinador',
-    descripcion: 'Gestión de operaciones, comandas y organismos',
+    nombre: 'Coordinateur',
+    descripcion: 'Gestion des opérations, commandes et organismes',
     color: '#1E73BE',
     icono: '📋',
     permisos: [
@@ -139,8 +139,8 @@ export const rolesPredeterminados: Rol[] = [
   },
   {
     id: 'almacenista',
-    nombre: 'Almacenista',
-    descripcion: 'Gestión de inventario y movimientos de productos',
+    nombre: 'Magasinier',
+    descripcion: 'Gestion de l\'inventaire et mouvements de produits',
     color: '#4CAF50',
     icono: '📦',
     permisos: [
@@ -165,8 +165,8 @@ export const rolesPredeterminados: Rol[] = [
   },
   {
     id: 'transportista',
-    nombre: 'Transportista',
-    descripcion: 'Gestión de rutas, entregas y transporte',
+    nombre: 'Transporteur',
+    descripcion: 'Gestion des itinéraires, livraisons et transport',
     color: '#FFC107',
     icono: '🚚',
     permisos: [
@@ -185,8 +185,8 @@ export const rolesPredeterminados: Rol[] = [
   },
   {
     id: 'auditor',
-    nombre: 'Auditor',
-    descripcion: 'Solo lectura - Acceso a reportes y visualización',
+    nombre: 'Auditeur',
+    descripcion: 'Lecture seule - Accès aux rapports et visualisation',
     color: '#9C27B0',
     icono: '📊',
     permisos: [
@@ -208,8 +208,8 @@ export const rolesPredeterminados: Rol[] = [
   },
   {
     id: 'voluntario',
-    nombre: 'Voluntario',
-    descripcion: 'Acceso limitado para voluntarios',
+    nombre: 'Bénévole',
+    descripcion: 'Accès limité pour les bénévoles',
     color: '#FF9800',
     icono: '🤝',
     permisos: [
