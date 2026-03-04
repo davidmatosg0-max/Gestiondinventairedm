@@ -1535,13 +1535,8 @@ export function EntradaDonAchat() {
                         <>
                           <Building2 className="h-4 w-4 text-[#4CAF50]" />
                           <span className="text-[#333333] font-medium">
-                            {contactoSeleccionado.nombre}
+                            {contactoSeleccionado.empresa || contactoSeleccionado.nombreEmpresa || contactoSeleccionado.nombre}
                           </span>
-                          {(contactoSeleccionado.empresa || contactoSeleccionado.nombreEmpresa) && (
-                            <Badge variant="outline" className="text-xs">
-                              {contactoSeleccionado.empresa || contactoSeleccionado.nombreEmpresa}
-                            </Badge>
-                          )}
                         </>
                       ) : (
                         <span className="text-[#555555]">
@@ -1609,12 +1604,16 @@ export function EntradaDonAchat() {
                             )}
                           >
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#4CAF50] to-[#2d9561] flex items-center justify-center text-white font-bold shrink-0">
-                              {contacto.nombre.charAt(0).toUpperCase()}
+                              {((contacto.empresa || contacto.nombreEmpresa) || contacto.nombre).charAt(0).toUpperCase()}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="font-semibold text-[#333333]">
-                                  {contacto.nombre}
+                                  {(contacto.empresa || contacto.nombreEmpresa) ? (
+                                    <>🏢 {contacto.empresa || contacto.nombreEmpresa}</>
+                                  ) : (
+                                    contacto.nombre
+                                  )}
                                 </span>
                                 {formData.donadorId === contacto.id && (
                                   <Check className="h-4 w-4 text-[#4CAF50]" />
@@ -1622,7 +1621,7 @@ export function EntradaDonAchat() {
                               </div>
                               {(contacto.empresa || contacto.nombreEmpresa) && (
                                 <p className="text-sm text-gray-600 mb-1">
-                                  🏢 {contacto.empresa || contacto.nombreEmpresa}
+                                  👤 {contacto.nombre}
                                 </p>
                               )}
                               <div className="flex flex-wrap gap-2 text-xs text-gray-500">
