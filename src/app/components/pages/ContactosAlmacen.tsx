@@ -47,7 +47,7 @@ export function ContactosAlmacen({ onNavigate }: ContactosAlmacenProps) {
       {/* Contenido principal */}
       <div className="flex-1 overflow-hidden">
         <GestionContactosDepartamento 
-          departamentoId="1"
+          departamentoId="2"
           departamentoNombre="Entrepôt"
         />
       </div>

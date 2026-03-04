@@ -91,16 +91,16 @@ export interface ContactoDepartamento {
 const STORAGE_KEY = 'contactos_departamentos';
 
 /**
- * 🛡️ VALIDACIÓN: Garantiza que donadores y fournisseurs siempre tengan departamentoId='1'
+ * 🛡️ VALIDACIÓN: Garantiza que donadores y fournisseurs siempre tengan departamentoId='2'
  */
 function validarYCorregirContacto<T extends Partial<ContactoDepartamento>>(contacto: T): T {
   const contactoValidado = { ...contacto };
   
-  // REGLA CRÍTICA: Donadores y Fournisseurs SIEMPRE deben ir a Entrepôt (ID='1')
+  // REGLA CRÍTICA: Donadores y Fournisseurs SIEMPRE deben ir a Entrepôt (ID='2')
   if (contacto.tipo === 'donador' || contacto.tipo === 'fournisseur') {
-    if (contacto.departamentoId !== '1') {
-      console.warn(`⚠️ AUTO-CORRECCIÓN: ${contacto.tipo} debe tener departamentoId='1' (Entrepôt). Corrigiendo...`);
-      (contactoValidado as any).departamentoId = '1';
+    if (contacto.departamentoId !== '2') {
+      console.warn(`⚠️ AUTO-CORRECCIÓN: ${contacto.tipo} debe tener departamentoId='2' (Entrepôt). Corrigiendo...`);
+      (contactoValidado as any).departamentoId = '2';
     }
     
     // Por defecto, activar donadores y fournisseurs

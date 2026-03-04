@@ -100,8 +100,8 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
       const cats = obtenerCategorias();
       const progs = obtenerProgramasActivos();
       
-      // 🎯 OBTENER CONTACTOS REALES: donadores y fournisseurs del departamento Entrepôt (ID='1')
-      const contactosEntrepot = obtenerContactosPorDepartamentoYTipo('1', ['donador', 'fournisseur']);
+      // 🎯 OBTENER CONTACTOS REALES: donadores y fournisseurs del departamento Entrepôt (ID='2')
+      const contactosEntrepot = obtenerContactosPorDepartamentoYTipo('2', ['donador', 'fournisseur']);
       
       setCategorias(cats.filter(c => c.activa));
       setProgramas(progs);
@@ -114,7 +114,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
   // 🔄 Escuchar cambios en contactos (cuando se agregan/editan desde Gestión de Contactos)
   useEffect(() => {
     const handleContactosActualizados = () => {
-      const contactosActualizados = obtenerContactosPorDepartamentoYTipo('1', ['donador', 'fournisseur']);
+      const contactosActualizados = obtenerContactosPorDepartamentoYTipo('2', ['donador', 'fournisseur']);
       setContactos(contactosActualizados);
       console.log('🔄 Contactos actualizados automáticamente:', contactosActualizados.length);
     };
@@ -568,53 +568,50 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                         </SelectItem>
                       ) : (
                         <>
-                          {/* Grupo: Fournisseurs */}
-                          {contactos.filter(c => c.tipo === 'fournisseur').length > 0 && (
-                            <>
-                              <div className="px-2 py-1.5 text-xs font-semibold text-[#1a4d7a] bg-blue-50">
-                                📦 Fournisseurs ({contactos.filter(c => c.tipo === 'fournisseur').length})
-                              </div>
-                              {contactos
-                                .filter(c => c.tipo === 'fournisseur')
-                                .sort((a, b) => `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`))
-                                .map(contacto => (
-                                  <SelectItem key={contacto.id} value={contacto.id}>
-                                    <div className="flex items-center gap-2">
-                                      <span>{contacto.nombre} {contacto.apellido}</span>
-                                      {contacto.telefono && (
-                                        <span className="text-xs text-gray-500">• {contacto.telefono}</span>
-                                      )}
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                            </>
-                          )}
+                          {/* Fournisseurs */}
+                          {contactos
+                            .filter(c => c.tipo === 'fournisseur')
+                            .sort((a, b) => `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`))
+                            .map((contacto, index) => (
+                              <SelectItem key={contacto.id} value={contacto.id}>
+                                {index === 0 && '📦 '}
+                                {contacto.nombre} {contacto.apellido}
+                                {contacto.telefono && ` • ${contacto.telefono}`}
+                              </SelectItem>
+                            ))}
                           
-                          {/* Grupo: Donateurs */}
-                          {contactos.filter(c => c.tipo === 'donador').length > 0 && (
-                            <>
-                              <div className="px-2 py-1.5 text-xs font-semibold text-[#2d9561] bg-green-50 mt-1">
-                                🎁 Donateurs ({contactos.filter(c => c.tipo === 'donador').length})
-                              </div>
-                              {contactos
-                                .filter(c => c.tipo === 'donador')
-                                .sort((a, b) => `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`))
-                                .map(contacto => (
-                                  <SelectItem key={contacto.id} value={contacto.id}>
-                                    <div className="flex items-center gap-2">
-                                      <span>{contacto.nombre} {contacto.apellido}</span>
-                                      {contacto.telefono && (
-                                        <span className="text-xs text-gray-500">• {contacto.telefono}</span>
-                                      )}
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                            </>
-                          )}
+                          {/* Donateurs */}
+                          {contactos
+                            .filter(c => c.tipo === 'donador')
+                            .sort((a, b) => `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`))
+                            .map((contacto, index) => (
+                              <SelectItem key={contacto.id} value={contacto.id}>
+                                {index === 0 && '🎁 '}
+                                {contacto.nombre} {contacto.apellido}
+                                {contacto.telefono && ` • ${contacto.telefono}`}
+                              </SelectItem>
+                            ))}
                         </>
                       )}
                     </SelectContent>
                   </Select>
+                  {/* Contador de contactos */}
+                  {contactos.length > 0 && (
+                    <div className="flex gap-3 text-xs text-gray-600 mt-1">
+                      {contactos.filter(c => c.tipo === 'fournisseur').length > 0 && (
+                        <span className="flex items-center gap-1">
+                          <span>📦</span>
+                          <span>{contactos.filter(c => c.tipo === 'fournisseur').length} fournisseur(s)</span>
+                        </span>
+                      )}
+                      {contactos.filter(c => c.tipo === 'donador').length > 0 && (
+                        <span className="flex items-center gap-1">
+                          <span>🎁</span>
+                          <span>{contactos.filter(c => c.tipo === 'donador').length} donateur(s)</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
