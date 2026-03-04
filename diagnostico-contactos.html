@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagnóstico Contactos - Banque Alimentaire</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a4d7a 0%, #2d9561 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    h1 {
+      color: #1a4d7a;
+      margin-bottom: 10px;
+      font-size: 28px;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    
+    .info-box {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+    
+    .warning-box {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+    
+    .error-box {
+      background: #f8d7da;
+      border-left: 4px solid #dc3545;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+    
+    .success-box {
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      border: 2px solid #e0e0e0;
+    }
+    
+    .stat-card .number {
+      font-size: 32px;
+      font-weight: bold;
+      color: #1a4d7a;
+      margin-bottom: 5px;
+    }
+    
+    .stat-card .label {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+    }
+    
+    .stat-card.error {
+      border-color: #dc3545;
+    }
+    
+    .stat-card.error .number {
+      color: #dc3545;
+    }
+    
+    .stat-card.warning {
+      border-color: #ffc107;
+    }
+    
+    .stat-card.warning .number {
+      color: #ffc107;
+    }
+    
+    .stat-card.success {
+      border-color: #28a745;
+    }
+    
+    .stat-card.success .number {
+      color: #28a745;
+    }
+    
+    .btn {
+      background: #2d9561;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 10px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+      background: #25805a;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(45, 149, 97, 0.3);
+    }
+    
+    .btn-danger {
+      background: #dc3545;
+    }
+    
+    .btn-danger:hover {
+      background: #c82333;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+    
+    th {
+      background: #1a4d7a;
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+    
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    tr:hover {
+      background: #f8f9fa;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
+    .badge-donador {
+      background: #fff3cd;
+      color: #856404;
+    }
+    
+    .badge-fournisseur {
+      background: #cfe2ff;
+      color: #084298;
+    }
+    
+    .badge-dept-ok {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .badge-dept-error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .badge-activo {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .badge-inactivo {
+      background: #e2e3e5;
+      color: #6c757d;
+    }
+    
+    .section {
+      margin-bottom: 40px;
+    }
+    
+    .section h2 {
+      color: #1a4d7a;
+      margin-bottom: 15px;
+      font-size: 20px;
+      font-weight: 600;
+      border-bottom: 2px solid #1a4d7a;
+      padding-bottom: 10px;
+    }
+    
+    pre {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 5px;
+      padding: 15px;
+      overflow-x: auto;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Diagnóstico de Contactos</h1>
+    <p class="subtitle">Sistema de Gestión - Banque Alimentaire</p>
+    
+    <div id="resultados"></div>
+    
+    <div class="section">
+      <button class="btn" onclick="ejecutarDiagnostico()">
+        🔍 Ejecutar Diagnóstico Completo
+      </button>
+    </div>
+  </div>
+  
+  <script>
+    function ejecutarDiagnostico() {
+      const resultadosDiv = document.getElementById('resultados');
+      resultadosDiv.innerHTML = '';
+      
+      // 1. Verificar si existe localStorage de contactos
+      const contactosData = localStorage.getItem('contactos_departamentos');
+      
+      if (!contactosData) {
+        resultadosDiv.innerHTML = `
+          <div class="error-box">
+            <h3>❌ No se encontraron contactos</h3>
+            <p>No existe la clave 'contactos_departamentos' en localStorage.</p>
+            <p><strong>Solución:</strong> Debes crear contactos primero en el módulo de Inventario → Gestion des Contacts Entrepôt.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      let contactos;
+      try {
+        contactos = JSON.parse(contactosData);
+      } catch (error) {
+        resultadosDiv.innerHTML = `
+          <div class="error-box">
+            <h3>❌ Error al parsear contactos</h3>
+            <p>Los datos de contactos en localStorage están corruptos.</p>
+            <p><strong>Error:</strong> ${error.message}</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // 2. Estadísticas generales
+      const totalContactos = contactos.length;
+      const donadores = contactos.filter(c => c.tipo === 'donador');
+      const fournisseurs = contactos.filter(c => c.tipo === 'fournisseur');
+      const entrepotID1 = contactos.filter(c => c.departamentoId === '1');
+      const entrepotID2 = contactos.filter(c => c.departamentoId === '2');
+      const donadoresDept1 = contactos.filter(c => c.tipo === 'donador' && c.departamentoId === '1');
+      const donadoresDept2 = contactos.filter(c => c.tipo === 'donador' && c.departamentoId === '2');
+      const fournisseursDept1 = contactos.filter(c => c.tipo === 'fournisseur' && c.departamentoId === '1');
+      const fournisseursDept2 = contactos.filter(c => c.tipo === 'fournisseur' && c.departamentoId === '2');
+      const donadoresActivos = contactos.filter(c => c.tipo === 'donador' && c.activo);
+      const fournisseursActivos = contactos.filter(c => c.tipo === 'fournisseur' && c.activo);
+      
+      // 3. Detectar problemas
+      const problemasDetectados = [];
+      
+      if (donadoresDept2.length > 0) {
+        problemasDetectados.push({
+          tipo: 'error',
+          mensaje: `Hay ${donadoresDept2.length} donadores con departamentoId='2' (incorrecto, debe ser '1')`
+        });
+      }
+      
+      if (fournisseursDept2.length > 0) {
+        problemasDetectados.push({
+          tipo: 'error',
+          mensaje: `Hay ${fournisseursDept2.length} fournisseurs con departamentoId='2' (incorrecto, debe ser '1')`
+        });
+      }
+      
+      if (donadores.length === 0 && fournisseurs.length === 0) {
+        problemasDetectados.push({
+          tipo: 'warning',
+          mensaje: 'No hay contactos tipo donador ni fournisseur en el sistema'
+        });
+      }
+      
+      if (donadoresActivos.length === 0 && fournisseursActivos.length === 0) {
+        problemasDetectados.push({
+          tipo: 'error',
+          mensaje: 'No hay contactos activos de tipo donador ni fournisseur'
+        });
+      }
+      
+      // 4. Generar reporte HTML
+      let html = '';
+      
+      // Stats principales
+      html += `
+        <div class="stats">
+          <div class="stat-card">
+            <div class="number">${totalContactos}</div>
+            <div class="label">Total Contactos</div>
+          </div>
+          <div class="stat-card ${donadoresDept1.length > 0 ? 'success' : 'error'}">
+            <div class="number">${donadoresDept1.length}</div>
+            <div class="label">Donadores (Dept 1) ✅</div>
+          </div>
+          <div class="stat-card ${donadoresDept2.length > 0 ? 'error' : ''}">
+            <div class="number">${donadoresDept2.length}</div>
+            <div class="label">Donadores (Dept 2) ❌</div>
+          </div>
+          <div class="stat-card ${fournisseursDept1.length > 0 ? 'success' : 'error'}">
+            <div class="number">${fournisseursDept1.length}</div>
+            <div class="label">Fournisseurs (Dept 1) ✅</div>
+          </div>
+          <div class="stat-card ${fournisseursDept2.length > 0 ? 'error' : ''}">
+            <div class="number">${fournisseursDept2.length}</div>
+            <div class="label">Fournisseurs (Dept 2) ❌</div>
+          </div>
+          <div class="stat-card ${donadoresActivos.length > 0 ? 'success' : 'error'}">
+            <div class="number">${donadoresActivos.length}</div>
+            <div class="label">Donadores Activos</div>
+          </div>
+        </div>
+      `;
+      
+      // Problemas detectados
+      if (problemasDetectados.length > 0) {
+        html += '<div class="section">';
+        problemasDetectados.forEach(p => {
+          html += `
+            <div class="${p.tipo}-box">
+              <p><strong>${p.tipo === 'error' ? '❌' : '⚠️'} ${p.mensaje}</strong></p>
+            </div>
+          `;
+        });
+        html += '</div>';
+      } else {
+        html += `
+          <div class="success-box">
+            <h3>✅ No se detectaron problemas</h3>
+            <p>Todos los contactos están configurados correctamente.</p>
+          </div>
+        `;
+      }
+      
+      // Tabla de donadores
+      if (donadores.length > 0) {
+        html += `
+          <div class="section">
+            <h2>🎁 Donadores Encontrados (${donadores.length})</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Empresa</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
+                  <th>Dept ID</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+        
+        donadores.forEach(d => {
+          const nombreCompleto = `${d.nombre} ${d.apellido}`.trim();
+          const deptOk = d.departamentoId === '1';
+          html += `
+            <tr>
+              <td><strong>${nombreCompleto}</strong></td>
+              <td>${d.nombreEmpresa || '-'}</td>
+              <td>${d.email}</td>
+              <td>${d.telefono}</td>
+              <td>
+                <span class="badge ${deptOk ? 'badge-dept-ok' : 'badge-dept-error'}">
+                  ${d.departamentoId} ${deptOk ? '✅' : '❌'}
+                </span>
+              </td>
+              <td>
+                <span class="badge ${d.activo ? 'badge-activo' : 'badge-inactivo'}">
+                  ${d.activo ? 'Activo' : 'Inactivo'}
+                </span>
+              </td>
+            </tr>
+          `;
+        });
+        
+        html += `
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+      
+      // Tabla de fournisseurs
+      if (fournisseurs.length > 0) {
+        html += `
+          <div class="section">
+            <h2>📦 Fournisseurs Encontrados (${fournisseurs.length})</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Empresa</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
+                  <th>Dept ID</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+        
+        fournisseurs.forEach(f => {
+          const nombreCompleto = `${f.nombre} ${f.apellido}`.trim();
+          const deptOk = f.departamentoId === '1';
+          html += `
+            <tr>
+              <td><strong>${nombreCompleto}</strong></td>
+              <td>${f.nombreEmpresa || '-'}</td>
+              <td>${f.email}</td>
+              <td>${f.telefono}</td>
+              <td>
+                <span class="badge ${deptOk ? 'badge-dept-ok' : 'badge-dept-error'}">
+                  ${f.departamentoId} ${deptOk ? '✅' : '❌'}
+                </span>
+              </td>
+              <td>
+                <span class="badge ${f.activo ? 'badge-activo' : 'badge-inactivo'}">
+                  ${f.activo ? 'Activo' : 'Inactivo'}
+                </span>
+              </td>
+            </tr>
+          `;
+        });
+        
+        html += `
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+      
+      // Soluciones recomendadas
+      html += `
+        <div class="section">
+          <h2>🔧 Soluciones Recomendadas</h2>
+      `;
+      
+      if (donadoresDept2.length > 0 || fournisseursDept2.length > 0) {
+        html += `
+          <div class="warning-box">
+            <h3>⚠️ Acción Requerida: Migrar Contactos</h3>
+            <p>Tienes contactos con el departamentoId incorrecto ('2' en lugar de '1').</p>
+            <p><strong>Solución:</strong> Usar la herramienta de migración <code>migrar-contactos-entrepot.html</code></p>
+          </div>
+          <button class="btn btn-danger" onclick="corregirAutomaticamente()">
+            🔧 Corregir Automáticamente TODOS los IDs
+          </button>
+        `;
+      } else if (donadoresActivos.length === 0 && fournisseursActivos.length === 0) {
+        html += `
+          <div class="info-box">
+            <h3>📝 Acciones Sugeridas</h3>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+              <li>Crea nuevos contactos tipo Donateur o Fournisseur</li>
+              <li>Asegúrate de que estén marcados como "Activos"</li>
+              <li>Verifica que tengan el departamentoId = '1'</li>
+            </ul>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="success-box">
+            <h3>✅ Sistema Funcionando Correctamente</h3>
+            <p>Tienes ${donadoresActivos.length} donador(es) y ${fournisseursActivos.length} fournisseur(s) activos configurados correctamente.</p>
+            <p>Estos contactos deberían aparecer en el formulario de Nueva Entrada de Producto.</p>
+          </div>
+        `;
+      }
+      
+      html += '</div>';
+      
+      // Datos raw (colapsable)
+      html += `
+        <div class="section">
+          <h2>📄 Datos Raw (JSON)</h2>
+          <button class="btn" onclick="document.getElementById('rawData').style.display = document.getElementById('rawData').style.display === 'none' ? 'block' : 'none'">
+            👁️ Mostrar/Ocultar Datos Completos
+          </button>
+          <pre id="rawData" style="display: none;">${JSON.stringify(contactos, null, 2)}</pre>
+        </div>
+      `;
+      
+      resultadosDiv.innerHTML = html;
+    }
+    
+    function corregirAutomaticamente() {
+      const confirmar = confirm(
+        '⚠️ ATENCIÓN: Esta acción corregirá automáticamente el departamentoId de TODOS los contactos tipo donador y fournisseur.\n\n' +
+        '¿Estás seguro de continuar?'
+      );
+      
+      if (!confirmar) return;
+      
+      const contactosData = localStorage.getItem('contactos_departamentos');
+      if (!contactosData) {
+        alert('❌ No se encontraron contactos');
+        return;
+      }
+      
+      const contactos = JSON.parse(contactosData);
+      let corregidos = 0;
+      
+      const contactosCorregidos = contactos.map(contacto => {
+        if ((contacto.tipo === 'donador' || contacto.tipo === 'fournisseur') && contacto.departamentoId !== '1') {
+          corregidos++;
+          return { ...contacto, departamentoId: '1' };
+        }
+        return contacto;
+      });
+      
+      localStorage.setItem('contactos_departamentos', JSON.stringify(contactosCorregidos));
+      
+      alert(`✅ Corrección completada!\n\n${corregidos} contacto(s) corregidos.\n\nRECARGA LA PÁGINA para ver los cambios.`);
+      
+      window.location.reload();
+    }
+    
+    // Auto-ejecutar al cargar
+    window.addEventListener('load', () => {
+      ejecutarDiagnostico();
+    });
+  </script>
+</body>
+</html>

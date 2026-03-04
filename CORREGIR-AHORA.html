@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🚨 CORRECCIÓN INMEDIATA - Contactos Entrepôt</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a4d7a 0%, #2d9561 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .container {
+      max-width: 800px;
+      width: 100%;
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    h1 {
+      color: #1a4d7a;
+      margin-bottom: 10px;
+      font-size: 32px;
+      font-weight: 700;
+      text-align: center;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 16px;
+      text-align: center;
+    }
+    
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 5px;
+    }
+    
+    .warning h2 {
+      color: #856404;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+    
+    .warning p {
+      color: #856404;
+      line-height: 1.6;
+    }
+    
+    .btn-giant {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+      border: none;
+      padding: 30px 50px;
+      border-radius: 15px;
+      font-size: 24px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 30px rgba(220, 53, 69, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .btn-giant:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(220, 53, 69, 0.4);
+    }
+    
+    .btn-giant:active {
+      transform: translateY(-1px);
+    }
+    
+    .instructions {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+    
+    .instructions h3 {
+      color: #0d47a1;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    
+    .instructions ol {
+      margin-left: 20px;
+      color: #1976d2;
+      line-height: 1.8;
+    }
+    
+    .instructions li {
+      margin-bottom: 8px;
+    }
+    
+    .result {
+      display: none;
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .result.success {
+      background: #d4edda;
+      border: 2px solid #28a745;
+      color: #155724;
+    }
+    
+    .result.error {
+      background: #f8d7da;
+      border: 2px solid #dc3545;
+      color: #721c24;
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    
+    .stat-card {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      border: 2px solid #e0e0e0;
+    }
+    
+    .stat-card .number {
+      font-size: 32px;
+      font-weight: bold;
+      color: #1a4d7a;
+    }
+    
+    .stat-card .label {
+      font-size: 11px;
+      color: #666;
+      margin-top: 5px;
+      text-transform: uppercase;
+    }
+    
+    code {
+      background: #f8f9fa;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      color: #d63384;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚨 CORRECCIÓN INMEDIATA</h1>
+    <p class="subtitle">Sistema de Gestión - Banque Alimentaire</p>
+    
+    <div class="warning">
+      <h2>⚠️ ATENCIÓN</h2>
+      <p>Esta herramienta corregirá <strong>INMEDIATAMENTE</strong> todos los contactos tipo <code>donador</code> y <code>fournisseur</code> que tengan el <code>departamentoId</code> incorrecto.</p>
+      <p style="margin-top: 10px;"><strong>Acción:</strong> Cambiará el ID de '2' a '1' y activará contactos inactivos.</p>
+    </div>
+    
+    <button class="btn-giant" id="btnCorregir">
+      🔧 CORREGIR AHORA
+    </button>
+    
+    <div class="instructions">
+      <h3>📋 ¿Qué hace este botón?</h3>
+      <ol>
+        <li>Busca todos los contactos en localStorage</li>
+        <li>Identifica donadores y fournisseurs con <code>departamentoId !== '1'</code></li>
+        <li>Corrige el ID automáticamente</li>
+        <li>Activa contactos inactivos</li>
+        <li>Guarda los cambios</li>
+        <li>Recarga la página</li>
+      </ol>
+    </div>
+    
+    <div id="resultado" class="result"></div>
+  </div>
+  
+  <script>
+    document.getElementById('btnCorregir').addEventListener('click', function() {
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = '⏳ CORRIGIENDO...';
+      
+      setTimeout(() => {
+        try {
+          const STORAGE_KEY = 'contactos_departamentos';
+          const contactosData = localStorage.getItem(STORAGE_KEY);
+          
+          if (!contactosData) {
+            mostrarResultado('error', '❌ No se encontraron contactos en localStorage.');
+            btn.disabled = false;
+            btn.textContent = '🔧 CORREGIR AHORA';
+            return;
+          }
+          
+          const contactos = JSON.parse(contactosData);
+          let corregidos = 0;
+          let activados = 0;
+          
+          const contactosActualizados = contactos.map(contacto => {
+            let modificado = false;
+            const contactoNuevo = { ...contacto };
+            
+            // Corregir departamentoId
+            if ((contacto.tipo === 'donador' || contacto.tipo === 'fournisseur') && 
+                contacto.departamentoId !== '1') {
+              contactoNuevo.departamentoId = '1';
+              modificado = true;
+              corregidos++;
+            }
+            
+            // Activar si está inactivo
+            if ((contacto.tipo === 'donador' || contacto.tipo === 'fournisseur') && 
+                !contacto.activo) {
+              contactoNuevo.activo = true;
+              modificado = true;
+              activados++;
+            }
+            
+            return contactoNuevo;
+          });
+          
+          if (corregidos === 0 && activados === 0) {
+            mostrarResultado('success', `✅ No se encontraron problemas. Todos los contactos están correctos.`);
+            btn.disabled = false;
+            btn.textContent = '✅ TODO CORRECTO';
+            return;
+          }
+          
+          // Guardar cambios
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(contactosActualizados));
+          
+          // Marcar corrección como ejecutada
+          localStorage.setItem('contactos_correccion_v1', 'true');
+          
+          // Disparar evento
+          window.dispatchEvent(new CustomEvent('contactos-restaurados', {
+            detail: { departamentoId: '1', auto: true }
+          }));
+          
+          // Mostrar resultado
+          mostrarResultado('success', 
+            `✅ CORRECCIÓN COMPLETADA!\n\n` +
+            `• ${corregidos} contacto(s) con departamentoId corregido\n` +
+            `• ${activados} contacto(s) activado(s)\n\n` +
+            `🔄 RECARGANDO LA PÁGINA EN 2 SEGUNDOS...`
+          );
+          
+          // Recargar página después de 2 segundos
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+          
+        } catch (error) {
+          mostrarResultado('error', `❌ Error: ${error.message}`);
+          btn.disabled = false;
+          btn.textContent = '🔧 REINTENTAR';
+        }
+      }, 500);
+    });
+    
+    function mostrarResultado(tipo, mensaje) {
+      const resultado = document.getElementById('resultado');
+      resultado.className = `result ${tipo}`;
+      resultado.textContent = mensaje;
+      resultado.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

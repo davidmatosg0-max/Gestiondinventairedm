@@ -36,6 +36,7 @@ import { inicializarConfigSupport } from './utils/supportConfig';
 import { inicializarTodosDatosEjemplo, datosEjemploInicializados } from './utils/inicializarDatosEjemplo';
 import { BalanceProvider } from '../contexts/BalanceContext';
 import { logger, showWelcomeBanner } from './utils/logger';
+import { corregirContactosEntrepotAutomaticamente } from './utils/correccionContactosEntrepot';
 
 // Sistema Integral de Gestión - Banque Alimentaire v2.1
 export default function App() {
@@ -91,6 +92,9 @@ export default function App() {
     
     // Inicializar configuración de soporte (necesaria para el sistema)
     inicializarConfigSupport();
+    
+    // 🔧 CORRECCIÓN AUTOMÁTICA: Contactos Entrepôt (departamentoId correcto)
+    corregirContactosEntrepotAutomaticamente();
     
     // LIMPIEZA ÚNICA: Borrar todos los datos de ejemplo al iniciar (solo primera vez)
     const limpiezaRealizada = localStorage.getItem('limpieza_produccion_realizada');

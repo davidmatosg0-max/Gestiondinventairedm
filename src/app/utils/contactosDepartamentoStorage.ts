@@ -90,6 +90,28 @@ export interface ContactoDepartamento {
 
 const STORAGE_KEY = 'contactos_departamentos';
 
+/**
+ * 🛡️ VALIDACIÓN: Garantiza que donadores y fournisseurs siempre tengan departamentoId='1'
+ */
+function validarYCorregirContacto<T extends Partial<ContactoDepartamento>>(contacto: T): T {
+  const contactoValidado = { ...contacto };
+  
+  // REGLA CRÍTICA: Donadores y Fournisseurs SIEMPRE deben ir a Entrepôt (ID='1')
+  if (contacto.tipo === 'donador' || contacto.tipo === 'fournisseur') {
+    if (contacto.departamentoId !== '1') {
+      console.warn(`⚠️ AUTO-CORRECCIÓN: ${contacto.tipo} debe tener departamentoId='1' (Entrepôt). Corrigiendo...`);
+      (contactoValidado as any).departamentoId = '1';
+    }
+    
+    // Por defecto, activar donadores y fournisseurs
+    if (contacto.activo === undefined) {
+      (contactoValidado as any).activo = true;
+    }
+  }
+  
+  return contactoValidado;
+}
+
 export function obtenerContactosDepartamento(departamentoId?: string): ContactoDepartamento[] {
   const contactosGuardados = localStorage.getItem(STORAGE_KEY);
   const contactos = contactosGuardados ? JSON.parse(contactosGuardados) : [];
@@ -109,7 +131,7 @@ export function obtenerContactoPorId(id: string): ContactoDepartamento | undefin
 export function guardarContacto(contacto: Omit<ContactoDepartamento, 'id'>): ContactoDepartamento {
   const contactos = obtenerContactosDepartamento();
   const nuevoContacto: ContactoDepartamento = {
-    ...contacto,
+    ...validarYCorregirContacto(contacto),
     id: `contacto-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
   };
   contactos.push(nuevoContacto);
@@ -124,7 +146,7 @@ export function actualizarContacto(id: string, contactoActualizado: Partial<Cont
   if (index !== -1) {
     contactos[index] = {
       ...contactos[index],
-      ...contactoActualizado
+      ...validarYCorregirContacto(contactoActualizado)
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(contactos));
     return true;
@@ -145,6 +167,10 @@ export function eliminarContacto(id: string): boolean {
 
 export function obtenerContactosPorTipo(departamentoId: string, tipo: TipoContacto): ContactoDepartamento[] {
   return obtenerContactosDepartamento(departamentoId).filter(c => c.tipo === tipo && c.activo);
+}
+
+export function obtenerContactosPorDepartamentoYTipo(departamentoId: string, tipos: TipoContacto[]): ContactoDepartamento[] {
+  return obtenerContactosDepartamento(departamentoId).filter(c => tipos.includes(c.tipo) && c.activo);
 }
 
 export function contarContactosPorTipo(departamentoId: string): Record<TipoContacto, number> {

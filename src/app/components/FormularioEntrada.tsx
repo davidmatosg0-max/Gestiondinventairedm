@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { guardarEntrada } from '../utils/entradaInventarioStorage';
 import { obtenerCategorias, agregarSubcategoria, obtenerPesoUnitario, actualizarPesoUnitarioSubcategoria, obtenerDatosSubcategoria } from '../utils/categoriaStorage';
 import { obtenerProgramasActivos, type ProgramaEntrada } from '../utils/programaEntradaStorage';
-import { mockUsuariosInternos } from '../data/mockData';
+import { obtenerContactosPorDepartamentoYTipo, type ContactoDepartamento } from '../utils/contactosDepartamentoStorage';
 import type { Categoria, Subcategoria } from '../data/configuracionData';
 import { generarIconoAutomatico } from '../utils/iconoUtils';
 import { useBalanceContext } from '../../contexts/BalanceContext';
@@ -61,6 +61,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
   // Estados
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [programas, setProgramas] = useState<ProgramaEntrada[]>([]);
+  const [contactos, setContactos] = useState<ContactoDepartamento[]>([]);
   const [subcategorias, setSubcategorias] = useState<Subcategoria[]>([]);
   const [dialogSubcategoria, setDialogSubcategoria] = useState(false);
   const [nuevaSubcategoria, setNuevaSubcategoria] = useState({
@@ -98,10 +99,34 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
     if (open) {
       const cats = obtenerCategorias();
       const progs = obtenerProgramasActivos();
+      
+      // 🎯 OBTENER CONTACTOS REALES: donadores y fournisseurs del departamento Entrepôt (ID='1')
+      const contactosEntrepot = obtenerContactosPorDepartamentoYTipo('1', ['donador', 'fournisseur']);
+      
       setCategorias(cats.filter(c => c.activa));
       setProgramas(progs);
+      setContactos(contactosEntrepot);
+      
+      console.log('📋 Contactos cargados:', contactosEntrepot.length, contactosEntrepot);
     }
   }, [open]);
+
+  // 🔄 Escuchar cambios en contactos (cuando se agregan/editan desde Gestión de Contactos)
+  useEffect(() => {
+    const handleContactosActualizados = () => {
+      const contactosActualizados = obtenerContactosPorDepartamentoYTipo('1', ['donador', 'fournisseur']);
+      setContactos(contactosActualizados);
+      console.log('🔄 Contactos actualizados automáticamente:', contactosActualizados.length);
+    };
+
+    window.addEventListener('contactos-actualizados', handleContactosActualizados);
+    window.addEventListener('contactos-restaurados', handleContactosActualizados);
+
+    return () => {
+      window.removeEventListener('contactos-actualizados', handleContactosActualizados);
+      window.removeEventListener('contactos-restaurados', handleContactosActualizados);
+    };
+  }, []);
 
   // Cuando cambia la categoría, actualizar subcategorías y limpiar datos heredados
   useEffect(() => {
@@ -364,7 +389,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
     const categoriaSeleccionada = categorias.find(c => c.nombre === formData.categoria);
     const subcategoriaSeleccionada = subcategorias.find(s => s.nombre === formData.subcategoria);
     const programaSeleccionado = programas.find(p => p.codigo.toLowerCase() === formData.tipoEntrada);
-    const donadorSeleccionado = mockUsuariosInternos.find(u => u.id === formData.donadorId);
+    const donadorSeleccionado = contactos.find(c => c.id === formData.donadorId);
 
     if (!categoriaSeleccionada || !subcategoriaSeleccionada) {
       toast.error('Error: categoría o subcategoría no encontrada');
@@ -385,7 +410,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
       
       // Información del donador/proveedor
       donadorId: formData.donadorId,
-      donadorNombre: donadorSeleccionado?.nombre || 'Donador no registrado',
+      donadorNombre: donadorSeleccionado ? `${donadorSeleccionado.nombre} ${donadorSeleccionado.apellido || ''}`.trim() : 'Donador no registrado',
       donadorEsCustom: false,
       
       // Información del producto
@@ -527,21 +552,67 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                 {/* Donador/Proveedor */}
                 <div className="space-y-2">
                   <Label htmlFor="donador" className="text-sm font-medium flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {t('common.donorProvider') || 'Donador/Proveedor'}
+                    {t('common.donorProvider') || 'Fournisseur / Donateur'}
                     <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Requerido</Badge>
                   </Label>
                   <Select 
                     value={formData.donadorId} 
                     onValueChange={(value) => setFormData(prev => ({ ...prev, donadorId: value }))}>
                     <SelectTrigger className="h-11 text-sm border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE]">
-                      <SelectValue placeholder="Seleccionar donador o proveedor..." />
+                      <SelectValue placeholder="Sélectionner fournisseur ou donateur..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockUsuariosInternos.map(usuario => (
-                        <SelectItem key={usuario.id} value={usuario.id}>
-                          {usuario.nombre}
+                      {contactos.length === 0 ? (
+                        <SelectItem value="__none__" disabled>
+                          Aucun contact disponible
                         </SelectItem>
-                      ))}
+                      ) : (
+                        <>
+                          {/* Grupo: Fournisseurs */}
+                          {contactos.filter(c => c.tipo === 'fournisseur').length > 0 && (
+                            <>
+                              <div className="px-2 py-1.5 text-xs font-semibold text-[#1a4d7a] bg-blue-50">
+                                📦 Fournisseurs ({contactos.filter(c => c.tipo === 'fournisseur').length})
+                              </div>
+                              {contactos
+                                .filter(c => c.tipo === 'fournisseur')
+                                .sort((a, b) => `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`))
+                                .map(contacto => (
+                                  <SelectItem key={contacto.id} value={contacto.id}>
+                                    <div className="flex items-center gap-2">
+                                      <span>{contacto.nombre} {contacto.apellido}</span>
+                                      {contacto.telefono && (
+                                        <span className="text-xs text-gray-500">• {contacto.telefono}</span>
+                                      )}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                            </>
+                          )}
+                          
+                          {/* Grupo: Donateurs */}
+                          {contactos.filter(c => c.tipo === 'donador').length > 0 && (
+                            <>
+                              <div className="px-2 py-1.5 text-xs font-semibold text-[#2d9561] bg-green-50 mt-1">
+                                🎁 Donateurs ({contactos.filter(c => c.tipo === 'donador').length})
+                              </div>
+                              {contactos
+                                .filter(c => c.tipo === 'donador')
+                                .sort((a, b) => `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`))
+                                .map(contacto => (
+                                  <SelectItem key={contacto.id} value={contacto.id}>
+                                    <div className="flex items-center gap-2">
+                                      <span>{contacto.nombre} {contacto.apellido}</span>
+                                      {contacto.telefono && (
+                                        <span className="text-xs text-gray-500">• {contacto.telefono}</span>
+                                      )}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                            </>
+                          )}
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
