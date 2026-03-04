@@ -213,7 +213,7 @@ export function GestionContactosEntrepot() {
     } else {
       // Crear nuevo contacto
       const nuevoContacto: Omit<ContactoDepartamento, 'id'> = {
-        departamentoId: '2', // Entrepôt
+        departamentoId: '1', // Entrepôt (ID correcto según departamentosStorage.ts)
         tipo: formulario.tipoContacto as TipoContacto,
         nombre: formulario.nombre,
         apellido: formulario.apellido,
