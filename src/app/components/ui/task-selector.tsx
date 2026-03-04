@@ -12,6 +12,7 @@ import {
   actualizarTareaPersonalizada,
   eliminarTareaPersonalizada,
   existeCodigoTarea,
+  guardarTareaPredeterminadaPorTipo, // NUEVO
   type TareaPersonalizada
 } from '../../utils/tareasPersonalizadasStorage';
 
@@ -24,12 +25,20 @@ interface TaskSelectorProps {
     icon: string;
     color: string;
   }>;
+  departamentoId?: string; // ID del departamento para tareas específicas
+  departamentoNombre?: string; // Nombre del departamento para mostrar
+  tipoContacto?: string; // NUEVO: Tipo de contacto (donateur, fournisseur, benevole, etc.)
+  nombreTipoContacto?: string; // NUEVO: Nombre amigable del tipo de contacto
 }
 
 export function TaskSelector({ 
   selectedTasks, 
   onChange,
-  predefinedTasks 
+  predefinedTasks,
+  departamentoId, // NUEVO
+  departamentoNombre, // NUEVO
+  tipoContacto, // NUEVO
+  nombreTipoContacto // NUEVO
 }: TaskSelectorProps) {
   const branding = useBranding();
   const [tareasPersonalizadas, setTareasPersonalizadas] = useState<TareaPersonalizada[]>([]);
@@ -53,10 +62,10 @@ export function TaskSelector({
   useEffect(() => {
     cargarTareasPersonalizadas();
     cargarTareasPredeterminadasOcultas();
-  }, []);
+  }, [departamentoId, tipoContacto]); // NUEVO: Recargar cuando cambie departamento o tipo
 
   const cargarTareasPersonalizadas = () => {
-    const tareasData = obtenerTareasPersonalizadas();
+    const tareasData = obtenerTareasPersonalizadas(departamentoId, tipoContacto); // NUEVO: Pasar tipoContacto
     setTareasPersonalizadas(tareasData);
   };
 
@@ -93,12 +102,17 @@ export function TaskSelector({
   };
 
   const handleActualizarTareaPredeterminada = (codeOriginal: string) => {
-    // Ocultar la tarea predeterminada original
-    const nuevasOcultas = [...tareasPredeterminadasOcultas, codeOriginal];
-    guardarTareasPredeterminadasOcultas(nuevasOcultas);
-    
-    // Guardar como tarea personalizada
-    guardarTareaPersonalizada(nuevaTarea);
+    // Si hay un tipo de contacto específico, guardar como predeterminada para ese tipo
+    if (tipoContacto) {
+      guardarTareaPredeterminadaPorTipo(codeOriginal, nuevaTarea, tipoContacto);
+      toast.success(`✨ Tâche système mise à jour comme prédéfinie pour tous les ${nombreTipoContacto || tipoContacto}s`);
+    } else {
+      // Comportamiento anterior: ocultar y crear personalizada
+      const nuevasOcultas = [...tareasPredeterminadasOcultas, codeOriginal];
+      guardarTareasPredeterminadasOcultas(nuevasOcultas);
+      guardarTareaPersonalizada(nuevaTarea, departamentoId);
+      toast.success('Tâche système modifiée et sauvegardée comme personnalisée');
+    }
     
     // Actualizar la selección si la tarea original estaba seleccionada
     if (selectedTasks.includes(codeOriginal)) {
@@ -108,7 +122,6 @@ export function TaskSelector({
       onChange(nuevasSeleccionadas);
     }
     
-    toast.success('Tâche système modifiée et sauvegardée comme personnalisée');
     cargarTareasPersonalizadas();
     setDialogNuevaTarea(false);
     setNuevaTarea({ code: '', label: '', icon: '', color: branding.primaryColor });
@@ -134,8 +147,8 @@ export function TaskSelector({
       return;
     }
 
-    guardarTareaPersonalizada(nuevaTarea);
-    toast.success('Tâche ajoutée avec succès');
+    guardarTareaPersonalizada(nuevaTarea, departamentoId); // NUEVO: Incluir departamentoId
+    toast.success(`Tâche ajoutée avec succès${departamentoNombre ? ` pour ${departamentoNombre}` : ''}`);
     cargarTareasPersonalizadas();
     setDialogNuevaTarea(false);
     setNuevaTarea({ code: '', label: '', icon: '', color: branding.primaryColor });
@@ -427,15 +440,69 @@ export function TaskSelector({
               <div className="mb-2 p-3 border-2 border-gray-200 rounded-lg bg-gray-50 max-h-48 overflow-y-auto">
                 <div className="grid grid-cols-8 gap-2">
                   {[
-                    '📦', '🚛', '📋', '🤝', '🏪', '👨‍🍳', '🧹', '📊',
-                    '📝', '💼', '🔧', '⚙️', '🎯', '📞', '📧', '💻',
-                    '📅', '🗓️', '⏰', '✅', '❌', '🔔', '🔍', '🔑',
-                    '📌', '📍', '🏷️', '💡', '⭐', '🎨', '📸', '🎥',
-                    '🔒', '🔓', '💰', '💳', '🎁', '🛒', '🔨', '🧰',
-                    '📱', '🖥️', '⌨️', '🖱️', '🖨️', '📡', '🌐', '🔗',
-                    '📑', '📄', '📃', '🗂️', '📂', '📁', '📓', '📔',
-                    '📕', '📗', '📘', '📙', '📚', '📖', '🔖', '✂️',
-                    '📐', '📏', '🔎', '👥', '👤', '🎓', '🏆', '🎪'
+                    // 🏢 ALMACÉN E INVENTARIO (Principal)
+                    '📦', '📋', '🏪', '🏬', '🏭', '🏗️', '🏢', '🏛️',
+                    '📊', '📈', '📉', '🗂️', '📂', '📁', '📑', '📄',
+                    '📃', '🗃️', '🗄️', '📇', '🔖', '🏷️', '📌', '📍',
+                    
+                    // 🚛 TRANSPORTE Y LOGÍSTICA
+                    '🚛', '🚚', '🚐', '🚗', '🚙', '🚕', '🚓', '🚒',
+                    '🚌', '🏎️', '🛻', '🚜', '🛺', '🚲', '🛴', '🛵',
+                    '🚁', '✈️', '🚀', '🛸', '🚢', '⛴️', '🛥️', '⚓',
+                    
+                    // 📦 PAQUETERÍA Y EMBALAJE
+                    '📮', '📪', '📫', '📬', '📭', '📯', '📱', '🎁',
+                    '🎀', '🎉', '🎊', '🛍️', '🛒', '🛎️', '📦', '📧',
+                    
+                    // 🔧 HERRAMIENTAS Y MANTENIMIENTO
+                    '🔧', '🔨', '⚒️', '🛠️', '⛏️', '🪛', '🔩', '⚙️',
+                    '🧰', '🪚', '🪓', '🔪', '🗡️', '⚔️', '🛡️', '🔑',
+                    
+                    // 👥 PERSONAS Y EQUIPO
+                    '👨‍💼', '👩‍💼', '🧑‍💼', '👨‍🔧', '👩‍🔧', '🧑‍🔧', '👨‍🏭', '👩‍🏭',
+                    '👷', '👷‍♂️', '👷‍♀️', '👨‍🚒', '👩‍🚒', '👮', '👮‍♂️', '👮‍♀️',
+                    '👥', '👤', '🧑', '👨', '👩', '🧒', '👶', '🤝',
+                    
+                    // 🍽️ COCINA Y ALIMENTOS
+                    '👨‍🍳', '👩‍🍳', '🧑‍🍳', '🍽️', '🍴', '🥄', '🥢', '🔪',
+                    '🥘', '🍲', '🥗', '🥙', '🌮', '🌯', '🥪', '🍞',
+                    '🥐', '🥖', '🧀', '🥚', '🍳', '🥓', '🥩', '🍗',
+                    '🍖', '🌭', '汉堡', '🍟', '🍕', '🥤', '☕', '🧃',
+                    
+                    // 🧹 LIMPIEZA Y MANTENIMIENTO
+                    '🧹', '🧺', '🧻', '🧼', '🧽', '🪣', '🧴', '🧪',
+                    '🧫', '🧬', '🔬', '🔭', '💧', '💦', '🚿', '🛁',
+                    
+                    // 💻 TECNOLOGÍA Y OFICINA
+                    '💻', '🖥️', '⌨️', '🖱️', '🖨️', '📠', '☎️', '📞',
+                    '📟', '📲', '💾', '💿', '📀', '🎥', '📷', '📹',
+                    '🔌', '🔋', '🔦', '💡', '🕯️', '🪔', '📡', '🔗',
+                    
+                    // ✅ ESTADOS Y ACCIONES
+                    '✅', '✔️', '☑️', '✓', '❌', '❎', '✖️', '➕',
+                    '➖', '➗', '✖️', '🆕', '🆙', '🆒', '🆓', '🆗',
+                    '🔴', '🟠', '🟡', '🟢', '🔵', '🟣', '⚫', '⚪',
+                    '🟤', '🔶', '🔷', '🔸', '🔹', '🔺', '🔻', '💠',
+                    
+                    // 📅 TIEMPO Y CALENDARIO
+                    '📅', '📆', '🗓️', '⏰', '⏱️', '⏲️', '⏳', '⌛',
+                    '🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗',
+                    
+                    // 🔔 NOTIFICACIONES Y ALERTAS
+                    '🔔', '🔕', '📣', '📢', '📯', '🔊', '🔉', '🔈',
+                    '🔇', '🚨', '🚦', '🚥', '⚠️', '⛔', '🚫', '🚷',
+                    
+                    // 🔍 BÚSQUEDA Y ANÁLISIS
+                    '🔍', '🔎', '🔬', '🔭', '🗺️', '🧭', '📐', '📏',
+                    
+                    // 💰 FINANZAS Y CONTABILIDAD
+                    '💰', '💵', '💴', '💶', '💷', '💸', '💳', '💎',
+                    '⚖️', '🧮', '📊', '📈', '📉', '💹', '💱', '💲',
+                    
+                    // 🎯 OBJETIVOS Y METAS
+                    '🎯', '🎪', '🎭', '🎨', '🎬', '🎤', '🎧', '🎼',
+                    '🏆', '🥇', '🥈', '🥉', '🏅', '🎖️', '⭐', '🌟',
+                    '✨', '⚡', '💫', '🔥', '💥', '💢', '💨', '💤'
                   ].map((icon, index) => (
                     <button
                       key={`icon-${index}-${icon}`}

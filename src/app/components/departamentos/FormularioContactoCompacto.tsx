@@ -1424,6 +1424,10 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                       <TaskSelector
                         selectedTasks={formulario.tareas || []}
                         onChange={(tareas) => setFormulario({ ...formulario, tareas })}
+                        departamentoId={departamentoId}
+                        departamentoNombre={formulario.departamentoNombre || ''}
+                        tipoContacto={formulario.tipo}
+                        nombreTipoContacto={formulario.tipo === 'donador' ? 'Donateur' : formulario.tipo === 'fournisseur' ? 'Fournisseur' : formulario.tipo === 'benevole' ? 'Bénévole' : formulario.tipo}
                         predefinedTasks={[
                           { code: 'accueil', label: 'Accueil', icon: '🤝', color: branding.primaryColor },
                           { code: 'distribution', label: 'Distribution', icon: '📦', color: branding.secondaryColor },
