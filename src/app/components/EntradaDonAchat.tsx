@@ -28,7 +28,7 @@ import { actualizarPesoUnitarioSubcategoria, actualizarPesoUnitarioVariante, obt
 import { obtenerUnidades, type Unidad, inicializarUnidades } from '../utils/unidadStorage';
 import { GestionUnidades } from './inventario/GestionUnidades';
 import { type Variante } from '../data/configuracionData';
-import { obtenerContactosDepartamento, type ContactoDepartamento } from '../utils/contactosDepartamentoStorage';
+import { obtenerContactosDepartamento, type ContactoDepartamento, eliminarFournisseursObsoletos } from '../utils/contactosDepartamentoStorage';
 import { debeRegistrarPaletasIndividuales, registrarPaletasIndividuales, type DatosEntradaPaleta } from '../utils/paletaStorage';
 
 type FormDataDonAchat = {
@@ -160,11 +160,15 @@ export function EntradaDonAchat() {
   useEffect(() => {
     if (open) {
       console.log('🚪 Diálogo abierto, cargando datos...');
+      
+      // Limpiar fournisseurs obsoletos del sistema
+      eliminarFournisseursObsoletos();
+      
       const productosActivos = obtenerProductosActivos();
       const categoriasGuardadas = obtenerCategorias();
       const programasActivos = obtenerProgramasActivos();
       const unidadesCargadas = obtenerUnidades();
-      const contactosEntrepot = obtenerContactosDepartamento('1'); // Departamento Entrepôt (ID correcto)
+      const contactosEntrepot = obtenerContactosDepartamento('2'); // Departamento Entrepôt (ID='2')
       
       console.log('📦 Productos cargados:', productosActivos.length);
       console.log('🏷️ Productos PRS:', productosActivos.filter(p => p.esPRS).length);
@@ -245,9 +249,9 @@ export function EntradaDonAchat() {
     const handleContactosRestaurados = (event: any) => {
       const { departamentoId } = event.detail || {};
       console.log('🔄 Evento contactos-restaurados recibido', { departamentoId });
-      if (departamentoId === '1' || !departamentoId) {
+      if (departamentoId === '2' || !departamentoId) {
         // Recargar contactos automáticamente
-        const contactosEntrepot = obtenerContactosDepartamento('1');
+        const contactosEntrepot = obtenerContactosDepartamento('2');
         console.log('📋 Contactos recargados:', contactosEntrepot.length);
         setContactosAlmacen(contactosEntrepot);
         toast.success('🔄 Contacts synchronisés automatiquement');
@@ -257,7 +261,7 @@ export function EntradaDonAchat() {
     const handleContactosActualizados = () => {
       // Recargar contactos cuando se crea o edita uno nuevo
       console.log('🔄 Evento contactos-actualizados recibido');
-      const contactosEntrepot = obtenerContactosDepartamento('1');
+      const contactosEntrepot = obtenerContactosDepartamento('2');
       console.log('📋 Contactos recargados:', contactosEntrepot.length);
       setContactosAlmacen(contactosEntrepot);
     };
@@ -302,15 +306,11 @@ export function EntradaDonAchat() {
   const programasActivos = programasDB;
   const programaSeleccionado = programasActivos.find(p => p.codigo.toLowerCase() === formData.tipoEntrada);
   
-  // Cambiar para usar contactosAlmacen en lugar de mockUsuariosInternos
+  // Mostrar todos los donadores y proveedores sin filtrar por tipo de entrada
   const contactosDisponibles = contactosAlmacen.filter(contacto => {
     if (!contacto.activo) return false;
-    if (formData.tipoEntrada === 'don') {
-      return contacto.tipo === 'donador';
-    } else if (formData.tipoEntrada === 'achat') {
-      return contacto.tipo === 'proveedor' || contacto.tipo === 'fournisseur';
-    }
-    return contacto.tipo === 'donador' || contacto.tipo === 'proveedor' || contacto.tipo === 'fournisseur';
+    // Mostrar donadores y fournisseurs (proveedores)
+    return contacto.tipo === 'donador' || contacto.tipo === 'fournisseur';
   });
 
   const contactoSeleccionado = contactosAlmacen.find(c => c.id === formData.donadorId);
@@ -1512,7 +1512,7 @@ export function EntradaDonAchat() {
               {contactosAlmacen.length > 0 && contactosDisponibles.length === 0 && formData.tipoEntrada && (
                 <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-xs text-blue-800">
-                    💡 Aucun {formData.tipoEntrada === 'don' ? 'donateur' : 'fournisseur'} trouvé. 
+                    💡 Aucun donateur ou fournisseur trouvé. 
                     Créez-en un dans <strong>Inventaire → Contactos</strong>
                   </p>
                 </div>
@@ -1537,9 +1537,9 @@ export function EntradaDonAchat() {
                           <span className="text-[#333333] font-medium">
                             {contactoSeleccionado.nombre}
                           </span>
-                          {contactoSeleccionado.empresa && (
+                          {(contactoSeleccionado.empresa || contactoSeleccionado.nombreEmpresa) && (
                             <Badge variant="outline" className="text-xs">
-                              {contactoSeleccionado.empresa}
+                              {contactoSeleccionado.empresa || contactoSeleccionado.nombreEmpresa}
                             </Badge>
                           )}
                         </>
@@ -1556,10 +1556,10 @@ export function EntradaDonAchat() {
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                       <Building2 className="h-5 w-5 text-[#4CAF50]" />
-                      Sélectionner un {formData.tipoEntrada === 'don' ? 'donateur' : 'fournisseur'}
+                      Sélectionner un contact
                     </DialogTitle>
                     <DialogDescription className="text-sm text-gray-600">
-                      Recherchez et sélectionnez un contact dans la liste ci-dessous
+                      Recherchez et sélectionnez un donateur ou fournisseur dans la liste ci-dessous
                     </DialogDescription>
                   </DialogHeader>
                   
@@ -1567,7 +1567,7 @@ export function EntradaDonAchat() {
                     {/* Buscador */}
                     <div className="relative">
                       <Input
-                        placeholder={`Rechercher un ${formData.tipoEntrada === 'don' ? 'donateur' : 'fournisseur'}...`}
+                        placeholder="Rechercher un donateur ou fournisseur..."
                         value={searchContactoQuery}
                         onChange={(e) => setSearchContactoQuery(e.target.value)}
                         className="pl-10"
@@ -1579,19 +1579,14 @@ export function EntradaDonAchat() {
                     <div className="border rounded-lg max-h-[400px] overflow-y-auto">
                       {contactosDisponibles
                         .filter(contacto => {
-                          // Filtrar por tipo de contacto según tipoEntrada
-                          const tipoValido = formData.tipoEntrada === 'don' 
-                            ? contacto.tipo === 'donador' 
-                            : contacto.tipo === 'proveedor' || contacto.tipo === 'fournisseur';
-                          
-                          if (!tipoValido) return false;
-                          
                           // Filtrar por búsqueda
                           if (!searchContactoQuery) return true;
                           const search = searchContactoQuery.toLowerCase();
                           return (
                             contacto.nombre.toLowerCase().includes(search) ||
+                            contacto.apellido?.toLowerCase().includes(search) ||
                             contacto.empresa?.toLowerCase().includes(search) ||
+                            contacto.nombreEmpresa?.toLowerCase().includes(search) ||
                             contacto.email?.toLowerCase().includes(search) ||
                             contacto.telefono?.toLowerCase().includes(search)
                           );
@@ -1625,9 +1620,9 @@ export function EntradaDonAchat() {
                                   <Check className="h-4 w-4 text-[#4CAF50]" />
                                 )}
                               </div>
-                              {contacto.empresa && (
+                              {(contacto.empresa || contacto.nombreEmpresa) && (
                                 <p className="text-sm text-gray-600 mb-1">
-                                  🏢 {contacto.empresa}
+                                  🏢 {contacto.empresa || contacto.nombreEmpresa}
                                 </p>
                               )}
                               <div className="flex flex-wrap gap-2 text-xs text-gray-500">
@@ -1659,19 +1654,14 @@ export function EntradaDonAchat() {
                         ))}
                       
                       {contactosDisponibles.filter(contacto => {
-                        // Filtrar por tipo de contacto según tipoEntrada
-                        const tipoValido = formData.tipoEntrada === 'don' 
-                          ? contacto.tipo === 'donador' 
-                          : contacto.tipo === 'proveedor' || contacto.tipo === 'fournisseur';
-                        
-                        if (!tipoValido) return false;
-                        
                         // Filtrar por búsqueda
                         if (!searchContactoQuery) return true;
                         const search = searchContactoQuery.toLowerCase();
                         return (
                           contacto.nombre.toLowerCase().includes(search) ||
+                          contacto.apellido?.toLowerCase().includes(search) ||
                           contacto.empresa?.toLowerCase().includes(search) ||
+                          contacto.nombreEmpresa?.toLowerCase().includes(search) ||
                           contacto.email?.toLowerCase().includes(search) ||
                           contacto.telefono?.toLowerCase().includes(search)
                         );
@@ -1682,7 +1672,7 @@ export function EntradaDonAchat() {
                           <p className="text-sm">
                             {searchContactoQuery 
                               ? "Essayez une autre recherche" 
-                              : `Créez un ${formData.tipoEntrada === 'don' ? 'donateur' : 'fournisseur'} dans Inventaire → Contactos`
+                              : "Créez un donateur ou fournisseur dans Inventaire → Contactos"
                             }
                           </p>
                         </div>

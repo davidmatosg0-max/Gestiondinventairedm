@@ -952,36 +952,6 @@ export const mockUsuariosInternos: UsuarioInterno[] = [
     tipo: 'Boulangerie'
   },
   {
-    id: '8',
-    numeroID: 'VND-2024-001',
-    nombre: 'Distribution Alimentaire QC',
-    apellido: '',
-    categoria: 'vendedor',
-    email: 'ventes@distalim-qc.ca',
-    telefono: '(514) 555-0301',
-    direccion: '3200 Boulevard Industriel, Laval, QC',
-    fechaIngreso: '2023-08-10',
-    foto: null,
-    activo: true,
-    empresa: 'Dist-Alim QC Inc.',
-    tipo: 'Distributeur en gros'
-  },
-  {
-    id: '9',
-    numeroID: 'VND-2024-002',
-    nombre: 'Aliments Secs Laval',
-    apellido: '',
-    categoria: 'vendedor',
-    email: 'commandes@aliments-secs.ca',
-    telefono: '(514) 555-0302',
-    direccion: '1800 Rue Commerciale, Laval, QC',
-    fechaIngreso: '2024-02-05',
-    foto: null,
-    activo: true,
-    empresa: 'Aliments Secs Laval',
-    tipo: 'Fournisseur alimentaire'
-  },
-  {
     id: '10',
     numeroID: 'BDV-2024-002',
     nombre: 'Luc',
