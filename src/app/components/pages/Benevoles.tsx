@@ -181,6 +181,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
   const [filterStatut, setFilterStatut] = useState('all');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedBenevoleForHistorique, setSelectedBenevoleForHistorique] = useState<number | null>(null);
+  const [filterDepartementHistorique, setFilterDepartementHistorique] = useState('all');
 
   // Edit modal state
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -577,6 +578,20 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
     const benevole = benevoles.find(b => b.id === parseInt(newFeuilleTemps.benevoleId));
     if (!benevole) return;
+
+    // NUEVA VALIDACIÓN: Verificar si el voluntario ya tiene una entrada activa sin salida registrada
+    const tieneEntradaActiva = feuillesTemps.some(f => 
+      f.benevoleId === parseInt(newFeuilleTemps.benevoleId) && 
+      f.enCours === true
+    );
+
+    if (tieneEntradaActiva) {
+      toast.error('Ce bénévole a déjà une entrée active. Veuillez enregistrer la sortie d\'abord.', {
+        description: `${benevole.prenom} ${benevole.nom} doit terminer sa session en cours`,
+        duration: 5000
+      });
+      return;
+    }
 
     // Capturar hora actual si no se ha ingresado una
     const now = new Date();
@@ -2395,7 +2410,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
           </CardHeader>
           <CardContent className="pt-6">
             {/* Formulario en línea moderno */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
               {/* Bénévole */}
               <div>
                 <Label className="text-xs font-semibold mb-1.5 flex items-center gap-1">
@@ -2410,12 +2425,17 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                     
                     // Auto-completar el departamento si el bénévole tiene uno asignado
                     if (benevoleSeleccionado && benevoleSeleccionado.departement) {
+                      // Convertir array a string si es necesario (tomar el primer departamento)
+                      const departementValue = Array.isArray(benevoleSeleccionado.departement) 
+                        ? benevoleSeleccionado.departement[0] 
+                        : benevoleSeleccionado.departement;
+                      
                       setNewFeuilleTemps({ 
                         ...newFeuilleTemps, 
                         benevoleId: value,
-                        departement: benevoleSeleccionado.departement 
+                        departement: departementValue 
                       });
-                      toast.success(`Département auto-complété: ${benevoleSeleccionado.departement}`, {
+                      toast.success(`Département auto-complété: ${departementValue}`, {
                         duration: 2000
                       });
                     } else {
@@ -2500,38 +2520,6 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-
-              {/* ARRIVÉE */}
-              <div>
-                <Label className="text-xs font-semibold mb-1.5 flex items-center gap-1">
-                  <LogIn className="w-3 h-3" style={{ color: branding.secondaryColor }} />
-                  ARRIVÉE (auto si vide)
-                </Label>
-                <Input
-                  type="time"
-                  value={newFeuilleTemps.heureDebut}
-                  onChange={(e) => setNewFeuilleTemps({ ...newFeuilleTemps, heureDebut: e.target.value })}
-                  className="h-11 text-center font-mono text-lg w-full"
-                  style={{ borderColor: branding.secondaryColor + '40' }}
-                  placeholder="--:--"
-                />
-              </div>
-
-              {/* DÉPART */}
-              <div>
-                <Label className="text-xs font-semibold mb-1.5 flex items-center gap-1">
-                  <LogOut className="w-3 h-3" style={{ color: '#DC3545' }} />
-                  DÉPART (optionnel)
-                </Label>
-                <Input
-                  type="time"
-                  value={newFeuilleTemps.heureFin}
-                  onChange={(e) => setNewFeuilleTemps({ ...newFeuilleTemps, heureFin: e.target.value })}
-                  className="h-11 text-center font-mono text-lg w-full"
-                  style={{ borderColor: '#DC354540' }}
-                  placeholder="--:--"
-                />
               </div>
             </div>
 
@@ -2946,10 +2934,16 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
   // RENDER: Historique
   const renderHistorique = () => {
-    // Filtrar feuilles de temps por bénévole si hay uno seleccionado
-    const filteredFeuillesTemps = selectedBenevoleForHistorique 
-      ? feuillesTemps.filter(f => f.benevoleId === selectedBenevoleForHistorique)
-      : feuillesTemps;
+    // Filtrar feuilles de temps por bénévole y departamento si hay filtros seleccionados
+    const filteredFeuillesTemps = feuillesTemps.filter(f => {
+      const matchBenevole = selectedBenevoleForHistorique 
+        ? f.benevoleId === selectedBenevoleForHistorique 
+        : true;
+      const matchDepartement = filterDepartementHistorique !== 'all' 
+        ? f.departement === filterDepartementHistorique 
+        : true;
+      return matchBenevole && matchDepartement;
+    });
     
     const totalHeures = filteredFeuillesTemps.reduce((sum, f) => sum + f.duree, 0);
     
@@ -2964,6 +2958,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
           onClick={() => {
             setCurrentView('liste');
             setSelectedBenevoleForHistorique(null);
+            setFilterDepartementHistorique('all');
           }} 
           titre={selectedBenevole ? `Historique - ${selectedBenevole.prenom} ${selectedBenevole.nom}` : "Historique des Heures"}
         />
@@ -2987,7 +2982,10 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                 </SelectContent>
               </Select>
 
-              <Select>
+              <Select 
+                value={filterDepartementHistorique} 
+                onValueChange={setFilterDepartementHistorique}
+              >
                 <SelectTrigger className="w-full lg:w-56">
                   <SelectValue placeholder="Tous les départements" />
                 </SelectTrigger>
