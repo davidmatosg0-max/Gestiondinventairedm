@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Package, ClipboardList, Building, TrendingUp, Clock, Users, DollarSign, AlertTriangle, Sparkles, LayoutDashboard } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { mockProductos, mockComandas, mockOrganismos, mockMovimientos } from '../../data/mockData';
 import { AlertaComandasUrgentes } from '../AlertaComandasUrgentes';
 import { EntradaDonAchat } from '../EntradaDonAchat';
@@ -76,13 +76,13 @@ export function Dashboard() {
 
   // Datos para gráfico de movimientos
   const movimientosPorDia = [
-    { dia: 'Lun', entradas: 450, salidas: 280 },
-    { dia: 'Mar', entradas: 380, salidas: 320 },
-    { dia: 'Mié', entradas: 520, salidas: 290 },
-    { dia: 'Jue', entradas: 410, salidas: 350 },
-    { dia: 'Vie', entradas: 480, salidas: 310 },
-    { dia: 'Sáb', entradas: 320, salidas: 180 },
-    { dia: 'Dom', entradas: 290, salidas: 150 }
+    { id: 'lun', dia: 'Lun', entradas: 450, salidas: 280 },
+    { id: 'mar', dia: 'Mar', entradas: 380, salidas: 320 },
+    { id: 'mie', dia: 'Mié', entradas: 520, salidas: 290 },
+    { id: 'jue', dia: 'Jue', entradas: 410, salidas: 350 },
+    { id: 'vie', dia: 'Vie', entradas: 480, salidas: 310 },
+    { id: 'sab', dia: 'Sáb', entradas: 320, salidas: 180 },
+    { id: 'dom', dia: 'Dom', entradas: 290, salidas: 150 }
   ];
 
   return (
@@ -256,13 +256,13 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={movimientosPorDia}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="dia" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="entradas" fill="#4CAF50" name={t('common.incoming')} />
-                <Bar dataKey="salidas" fill="#DC3545" name={t('common.outgoing')} />
+              <BarChart key="bar-chart-movimientos" data={movimientosPorDia}>
+                <CartesianGrid key="grid-bar" strokeDasharray="3 3" />
+                <XAxis key="xaxis-bar" dataKey="dia" />
+                <YAxis key="yaxis-bar" />
+                <Tooltip key="tooltip-bar" />
+                <Bar key="entradas-bar" dataKey="entradas" fill="#4CAF50" name={t('common.incoming')} />
+                <Bar key="salidas-bar" dataKey="salidas" fill="#DC3545" name={t('common.outgoing')} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -276,12 +276,12 @@ export function Dashboard() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={movimientosPorDia}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="dia" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="entradas" stroke="#1E73BE" strokeWidth={2} name="Stock" />
+              <LineChart key="line-chart-tendencia" data={movimientosPorDia}>
+                <CartesianGrid key="grid-line" strokeDasharray="3 3" />
+                <XAxis key="xaxis-line" dataKey="dia" />
+                <YAxis key="yaxis-line" />
+                <Tooltip key="tooltip-line" />
+                <Line key="entradas-line" type="monotone" dataKey="entradas" stroke="#1E73BE" strokeWidth={2} name="Stock" />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>

@@ -28,7 +28,7 @@ import { actualizarPesoUnitarioSubcategoria, actualizarPesoUnitarioVariante, obt
 import { obtenerUnidades, type Unidad, inicializarUnidades } from '../utils/unidadStorage';
 import { GestionUnidades } from './inventario/GestionUnidades';
 import { type Variante } from '../data/configuracionData';
-import { obtenerContactosDepartamento, type ContactoDepartamento, eliminarFournisseursObsoletos } from '../utils/contactosDepartamentoStorage';
+import { obtenerContactosDepartamento, type ContactoDepartamento, eliminarFournisseursObsoletos, diagnosticarContactos } from '../utils/contactosDepartamentoStorage';
 import { debeRegistrarPaletasIndividuales, registrarPaletasIndividuales, type DatosEntradaPaleta } from '../utils/paletaStorage';
 
 type FormDataDonAchat = {
@@ -161,6 +161,9 @@ export function EntradaDonAchat() {
     if (open) {
       console.log('🚪 Diálogo abierto, cargando datos...');
       
+      // 🔍 DIAGNÓSTICO COMPLETO DEL SISTEMA
+      diagnosticarContactos();
+      
       // Limpiar fournisseurs obsoletos del sistema
       eliminarFournisseursObsoletos();
       
@@ -173,6 +176,19 @@ export function EntradaDonAchat() {
       console.log('📦 Productos cargados:', productosActivos.length);
       console.log('🏷️ Productos PRS:', productosActivos.filter(p => p.esPRS).length);
       console.log('📋 Detalle productos PRS:', productosActivos.filter(p => p.esPRS).map(p => ({ nombre: p.nombre, peso: p.peso, pesoUnitario: p.pesoUnitario })));
+      
+      // 🔍 DIAGNÓSTICO: Log detallado de contactos cargados
+      console.log('👥 Total contactos Entrepôt cargados:', contactosEntrepot.length);
+      console.log('🔍 Desglose de contactos:');
+      contactosEntrepot.forEach(c => {
+        console.log(`  - ${c.nombre} ${c.apellido}: tipo="${c.tipo}", activo=${c.activo}, dept="${c.departamentoId}"`);
+      });
+      
+      const donadores = contactosEntrepot.filter(c => c.tipo === 'donador' && c.activo);
+      const fournisseurs = contactosEntrepot.filter(c => c.tipo === 'fournisseur' && c.activo);
+      
+      console.log(`✅ Donadores activos: ${donadores.length}`);
+      console.log(`✅ Fournisseurs activos: ${fournisseurs.length}`);
       
       setProductosDB(productosActivos);
       setCategoriasDB(categoriasGuardadas);
@@ -278,7 +294,7 @@ export function EntradaDonAchat() {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'contactos_departamentos' || e.key === null) {
         console.log('💾 Storage actualizado, recargando contactos');
-        const contactosEntrepot = obtenerContactosDepartamento('1');
+        const contactosEntrepot = obtenerContactosDepartamento('2'); // Entrepôt = ID '2' según departamentosStorage.ts
         console.log('📋 Contactos recargados desde storage:', contactosEntrepot.length);
         setContactosAlmacen(contactosEntrepot);
       }
@@ -306,12 +322,42 @@ export function EntradaDonAchat() {
   const programasActivos = programasDB;
   const programaSeleccionado = programasActivos.find(p => p.codigo.toLowerCase() === formData.tipoEntrada);
   
-  // Mostrar todos los donadores y proveedores sin filtrar por tipo de entrada
-  const contactosDisponibles = contactosAlmacen.filter(contacto => {
-    if (!contacto.activo) return false;
-    // Mostrar donadores y fournisseurs (proveedores)
-    return contacto.tipo === 'donador' || contacto.tipo === 'fournisseur';
-  });
+  // Filtrar contactos según el tipo de entrada seleccionado
+  const contactosDisponibles = React.useMemo(() => {
+    const filtrados = contactosAlmacen.filter(contacto => {
+      if (!contacto.activo) {
+        console.log(`⏭️ Contacto "${contacto.nombre} ${contacto.apellido}" excluido: activo=false`);
+        return false;
+      }
+      
+      // Si se seleccionó "Don", solo mostrar donadores
+      if (formData.tipoEntrada === 'don') {
+        const esDonador = contacto.tipo === 'donador';
+        if (!esDonador) {
+          console.log(`⏭️ Contacto "${contacto.nombre} ${contacto.apellido}" excluido en "Don": tipo="${contacto.tipo}" (esperado: "donador")`);
+        }
+        return esDonador;
+      }
+      
+      // Si se seleccionó "Achat", solo mostrar proveedores (fournisseurs)
+      if (formData.tipoEntrada === 'achat') {
+        const esFournisseur = contacto.tipo === 'fournisseur';
+        if (!esFournisseur) {
+          console.log(`⏭️ Contacto "${contacto.nombre} ${contacto.apellido}" excluido en "Achat": tipo="${contacto.tipo}" (esperado: "fournisseur")`);
+        } else {
+          console.log(`✅ Contacto fournisseur INCLUIDO: "${contacto.nombre} ${contacto.apellido}"`);
+        }
+        return esFournisseur;
+      }
+      
+      // Si no hay tipo seleccionado, no mostrar ningún contacto
+      console.log(`⏭️ Contacto "${contacto.nombre} ${contacto.apellido}" excluido: sin tipo de entrada seleccionado`);
+      return false;
+    });
+    
+    console.log(`🎯 Filtro final: ${filtrados.length} contactos disponibles para tipoEntrada="${formData.tipoEntrada}"`);
+    return filtrados;
+  }, [contactosAlmacen, formData.tipoEntrada]);
 
   const contactoSeleccionado = contactosAlmacen.find(c => c.id === formData.donadorId);
   

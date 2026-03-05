@@ -408,7 +408,7 @@ export function PlanificacionRutas() {
 
       {/* Diálogo Crear/Editar Ruta */}
       <Dialog open={rutaDialogOpen} onOpenChange={setRutaDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="ruta-dialog-description">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               {modoEdicion ? t('transport.editRoute') : t('transport.routes.newDeliveryRoute')}
@@ -615,7 +615,7 @@ export function PlanificacionRutas() {
 
       {/* Diálogo Ver Detalles */}
       <Dialog open={verDetallesDialogOpen} onOpenChange={setVerDetallesDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="ruta-detalles-description">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               {rutaSeleccionada?.nombre}

@@ -490,7 +490,7 @@ export function InventarioCocina() {
 
       {/* Modal Ajustar Stock */}
       <Dialog open={modalAjustarOpen} onOpenChange={setModalAjustarOpen}>
-        <DialogContent aria-describedby="ajustar-stock-description">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <span className="text-3xl">{productoSeleccionado?.icono}</span>
@@ -548,7 +548,7 @@ export function InventarioCocina() {
 
       {/* Modal Registrar Merma */}
       <Dialog open={modalMermaOpen} onOpenChange={setModalMermaOpen}>
-        <DialogContent aria-describedby="registrar-merma-description">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <span className="text-3xl">{productoSeleccionado?.icono}</span>
@@ -621,7 +621,7 @@ export function InventarioCocina() {
 
       {/* Modal Movimientos */}
       <Dialog open={modalMovimientosOpen} onOpenChange={setModalMovimientosOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="movimientos-historique-description">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <span className="text-3xl">{productoSeleccionado?.icono}</span>

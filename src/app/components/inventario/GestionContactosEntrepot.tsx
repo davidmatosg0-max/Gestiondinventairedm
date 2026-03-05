@@ -50,7 +50,7 @@ export function GestionContactosEntrepot() {
   const { t } = useTranslation();
   const branding = useBranding();
   const [busqueda, setBusqueda] = useState('');
-  const [filtroTipo, setFiltroTipo] = useState<'todos' | 'fournisseur' | 'donador' | 'transportista' | 'partenaire'>('todos');
+  const [filtroTipo, setFiltroTipo] = useState<'todos' | TipoContacto>('todos');
   const [dialogAbierto, setDialogAbierto] = useState(false);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [contactoEditando, setContactoEditando] = useState<string | null>(null);
@@ -89,7 +89,8 @@ export function GestionContactosEntrepot() {
     etiquetas: [],
     activo: true,
     fechaNacimiento: '',
-    genero: 'non-specifie'
+    genero: 'non-specifie',
+    departamentosAsignados: ['1'] // Por defecto: Entrepôt (ID='1' según departamentosStorage.ts)
   };
 
   const [formulario, setFormulario] = useState(formularioInicial);
@@ -102,7 +103,8 @@ export function GestionContactosEntrepot() {
   }, []);
 
   const cargarContactos = () => {
-    setContactos(obtenerContactosDepartamento());
+    // Filtrar solo contactos de Entrepôt (departamentoId='1')
+    setContactos(obtenerContactosDepartamento('1'));
   };
 
   const handleNuevoContacto = () => {
@@ -146,7 +148,8 @@ export function GestionContactosEntrepot() {
       etiquetas: contacto.etiquetas || [],
       activo: contacto.activo,
       fechaNacimiento: contacto.fechaNacimiento || '',
-      genero: contacto.genero || 'Non spécifié'
+      genero: contacto.genero || 'Non spécifié',
+      departamentosAsignados: [contacto.departamentoId] // Cargar el departamento actual
     });
     setModoEdicion(true);
     setContactoEditando(contacto.id);
@@ -213,7 +216,7 @@ export function GestionContactosEntrepot() {
     } else {
       // Crear nuevo contacto
       const nuevoContacto: Omit<ContactoDepartamento, 'id'> = {
-        departamentoId: '1', // Entrepôt (ID correcto según departamentosStorage.ts)
+        departamentoId: formulario.departamentosAsignados[0] || '1', // Por defecto: Entrepôt (ID='1' según departamentosStorage.ts)
         tipo: formulario.tipoContacto as TipoContacto,
         nombre: formulario.nombre,
         apellido: formulario.apellido,
@@ -293,7 +296,7 @@ export function GestionContactosEntrepot() {
     fournisseur: { icon: '📦', label: t('warehouse.supplier'), color: '#1E73BE' },
     donador: { icon: '🎁', label: t('warehouse.donor'), color: '#FF5722' },
     transportista: { icon: '🚚', label: t('warehouse.transporter'), color: '#4CAF50' },
-    partenaire: { icon: '🤝', label: t('warehouse.partner'), color: '#FF9800' }
+    partenaire: { icon: '⭐', label: t('warehouse.partner'), color: '#FF9800' }
   };
 
   const estadisticas = {
@@ -301,6 +304,7 @@ export function GestionContactosEntrepot() {
     fournisseurs: contactos.filter(c => c.tipo === 'fournisseur').length,
     donadores: contactos.filter(c => c.tipo === 'donador').length,
     transportistas: contactos.filter(c => c.tipo === 'transportista').length,
+    partenaires: contactos.filter(c => c.tipo === 'partenaire').length,
     activos: contactos.filter(c => c.activo).length
   };
 
@@ -336,9 +340,22 @@ export function GestionContactosEntrepot() {
         </div>
       </div>
 
+      {/* Mensaje informativo sobre tipos de contacto */}
+      <div 
+        className="p-4 rounded-lg border-l-4 bg-blue-50"
+        style={{ borderColor: branding.primaryColor }}
+      >
+        <p className="text-sm text-gray-700">
+          ℹ️ <strong>Module Entrepôt :</strong> Ce module permet de gérer les{' '}
+          <span className="font-semibold">Fournisseurs</span>,{' '}
+          <span className="font-semibold">Donateurs</span>,{' '}
+          <span className="font-semibold">Transporteurs</span> et{' '}
+          <span className="font-semibold">Partenaires</span>.
+        </p>
+      </div>
+
       {/* Estadísticas */}
-      <div className="grid grid-cols-4 gap-4">
-        <Card>
+      <div className="grid grid-cols-5 gap-4">\n        <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -394,9 +411,9 @@ export function GestionContactosEntrepot() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">{t('warehouse.active')}</p>
-                <p className="text-2xl font-bold" style={{ color: branding.secondaryColor }}>
-                  {estadisticas.activos}
+                <p className="text-sm text-gray-600">{t('warehouse.partners')}</p>
+                <p className="text-2xl font-bold" style={{ color: '#FF9800' }}>
+                  {estadisticas.partenaires}
                 </p>
               </div>
               <Star className="w-8 h-8 text-gray-400" />
@@ -459,6 +476,16 @@ export function GestionContactosEntrepot() {
               >
                 🚚 {t('warehouse.transporters')}
               </Button>
+              <Button
+                variant={filtroTipo === 'partenaire' ? 'default' : 'outline'}
+                onClick={() => setFiltroTipo('partenaire')}
+                style={{
+                  backgroundColor: filtroTipo === 'partenaire' ? '#FF9800' : undefined,
+                  color: filtroTipo === 'partenaire' ? 'white' : undefined
+                }}
+              >
+                ⭐ {t('warehouse.partners')}
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -488,6 +515,9 @@ export function GestionContactosEntrepot() {
             <TableBody>
               {contactosFiltrados.map((contacto) => {
                 const config = tipoConfig[contacto.tipo as 'fournisseur' | 'donador' | 'transportista' | 'partenaire'];
+                // Filtro defensivo: si el tipo no está en la configuración, no renderizar
+                if (!config) return null;
+                
                 return (
                   <TableRow key={contacto.id}>
                     <TableCell>

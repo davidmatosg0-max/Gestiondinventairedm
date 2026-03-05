@@ -129,8 +129,8 @@ export function FormularioEntradaProductoCompacto({
   // Cargar contactos al abrir el diálogo
   React.useEffect(() => {
     if (abierto) {
-      // Obtener contactos del departamento Entrepôt (ID: '1')
-      const todosContactos = obtenerContactosDepartamento('1');
+      // Obtener contactos del departamento Entrepôt (ID='2' según departamentosStorage.ts)
+      const todosContactos = obtenerContactosDepartamento('2');
       // Filtrar solo proveedores (fournisseur) y donadores (donador)
       const contactosFiltrados = todosContactos.filter(
         c => c.tipo === 'fournisseur' || c.tipo === 'donador'
@@ -143,9 +143,9 @@ export function FormularioEntradaProductoCompacto({
   React.useEffect(() => {
     const handleContactosRestaurados = (event: any) => {
       const { departamentoId } = event.detail || {};
-      if (departamentoId === '1') {
-        // Recargar contactos automáticamente
-        const todosContactos = obtenerContactosDepartamento('1');
+      if (departamentoId === '2') {
+        // Recargar contactos automáticamente (Entrepôt = ID '2' según departamentosStorage.ts)
+        const todosContactos = obtenerContactosDepartamento('2');
         const contactosFiltrados = todosContactos.filter(
           c => c.tipo === 'fournisseur' || c.tipo === 'donador'
         );
@@ -196,8 +196,7 @@ export function FormularioEntradaProductoCompacto({
   return (
     <Dialog open={abierto} onOpenChange={onCerrar}>
       <DialogContent 
-        className="!max-w-none !w-[95vw] !max-h-[95vh] !h-[95vh] overflow-hidden p-0 m-0 rounded-xl" 
-        aria-describedby="product-entry-form-description"
+        className="!max-w-none !w-[95vw] !max-h-[95vh] !h-[95vh] overflow-hidden p-0 m-0 rounded-xl"
       >
         <div className="h-full flex flex-col">
           <DialogHeader className="sticky top-0 z-10 bg-white border-b-2 border-[#E0E0E0] px-6 py-3 shadow-sm">
@@ -750,7 +749,7 @@ export function FormularioEntradaProductoCompacto({
 
       {/* Diálogo de selección de contactos */}
       <Dialog open={dialogContactos} onOpenChange={setDialogContactos}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col" aria-describedby="select-contact-description">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               <Users className="w-5 h-5 inline mr-2" />

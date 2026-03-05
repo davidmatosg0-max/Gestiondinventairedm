@@ -192,7 +192,7 @@ export function TransformarProductoDialog({ open, onOpenChange, productoInicial 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" aria-describedby="transformar-description">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
             <div className="flex items-center gap-2">

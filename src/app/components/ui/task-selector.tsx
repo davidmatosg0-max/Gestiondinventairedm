@@ -388,7 +388,7 @@ export function TaskSelector({
           setNuevaTarea({ code: '', label: '', icon: '', color: branding.primaryColor });
         }
       }}>
-        <DialogContent className="max-w-md" aria-describedby="new-task-description">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
               {tareaEditando ? (
@@ -629,7 +629,7 @@ export function TaskSelector({
 
       {/* Dialog Gestión de Tareas */}
       <Dialog open={dialogGestionTareas} onOpenChange={setDialogGestionTareas}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto" aria-describedby="manage-tasks-description">
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
               <Settings className="w-5 h-5 inline mr-2" style={{ color: branding.secondaryColor }} />

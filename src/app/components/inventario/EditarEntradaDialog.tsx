@@ -121,7 +121,7 @@ export function EditarEntradaDialog({ entrada, open, onOpenChange, onActualizar 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="editar-entrada-description">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <Edit2 className="h-5 w-5 text-[#1E73BE]" />

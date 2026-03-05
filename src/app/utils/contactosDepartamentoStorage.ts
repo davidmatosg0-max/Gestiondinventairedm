@@ -91,21 +91,32 @@ export interface ContactoDepartamento {
 const STORAGE_KEY = 'contactos_departamentos';
 
 /**
- * 🛡️ VALIDACIÓN: Garantiza que donadores y fournisseurs siempre tengan departamentoId='2'
+ * 🛡️ VALIDACIÓN: Garantiza que los contactos vayan al departamento correcto
  */
 function validarYCorregirContacto<T extends Partial<ContactoDepartamento>>(contacto: T): T {
   const contactoValidado = { ...contacto };
   
-  // REGLA CRÍTICA: Donadores y Fournisseurs SIEMPRE deben ir a Entrepôt (ID='2')
-  if (contacto.tipo === 'donador' || contacto.tipo === 'fournisseur') {
+  // REGLA 1: Donadores, Fournisseurs, Transportistas y Partenaires van a Entrepôt (ID='2')
+  if (contacto.tipo === 'donador' || contacto.tipo === 'fournisseur' || 
+      contacto.tipo === 'transportista' || contacto.tipo === 'partenaire') {
     if (contacto.departamentoId !== '2') {
       console.warn(`⚠️ AUTO-CORRECCIÓN: ${contacto.tipo} debe tener departamentoId='2' (Entrepôt). Corrigiendo...`);
       (contactoValidado as any).departamentoId = '2';
+      (contactoValidado as any).departamentoIds = ['2'];
     }
     
-    // Por defecto, activar donadores y fournisseurs
+    // Por defecto, activar contactos de Entrepôt
     if (contacto.activo === undefined) {
       (contactoValidado as any).activo = true;
+    }
+  }
+  
+  // REGLA 2: Bénévoles y Employés van a Comptoir (ID='1')
+  if (contacto.tipo === 'benevole' || contacto.tipo === 'employe') {
+    if (contacto.departamentoId !== '1') {
+      console.warn(`⚠️ AUTO-CORRECCIÓN: ${contacto.tipo} debe tener departamentoId='1' (Comptoir). Corrigiendo...`);
+      (contactoValidado as any).departamentoId = '1';
+      (contactoValidado as any).departamentoIds = ['1'];
     }
   }
   
@@ -893,7 +904,11 @@ export function eliminarFournisseursObsoletos(): number {
   
   // Filtrar eliminando los contactos con esos emails específicos
   const contactosFiltrados = todosContactos.filter(contacto => {
-    return !emailsAEliminar.includes(contacto.email.toLowerCase());
+    const debeEliminar = emailsAEliminar.includes(contacto.email.toLowerCase());
+    if (debeEliminar) {
+      console.log(`🗑️ Eliminando fournisseur obsoleto: ${contacto.nombre} ${contacto.apellido} (${contacto.email})`);
+    }
+    return !debeEliminar;
   });
   
   const contactosEliminados = contactosAntesCount - contactosFiltrados.length;
@@ -906,4 +921,53 @@ export function eliminarFournisseursObsoletos(): number {
   }
   
   return contactosEliminados;
+}
+
+/**
+ * 🔍 FUNCIÓN DE DIAGNÓSTICO: Diagnosticar problemas con contactos fournisseur
+ * Muestra información detallada sobre todos los contactos en el sistema
+ */
+export function diagnosticarContactos(): void {
+  console.log('🔍 ===== DIAGNÓSTICO DE CONTACTOS =====');
+  
+  const todosContactos = obtenerContactosDepartamento();
+  console.log(`📊 Total contactos en sistema: ${todosContactos.length}`);
+  
+  // Agrupar por departamento
+  const porDepartamento = todosContactos.reduce((acc, c) => {
+    acc[c.departamentoId] = acc[c.departamentoId] || [];
+    acc[c.departamentoId].push(c);
+    return acc;
+  }, {} as Record<string, ContactoDepartamento[]>);
+  
+  console.log('📁 Contactos por departamento:');
+  Object.keys(porDepartamento).forEach(deptId => {
+    console.log(`  Dept ${deptId}: ${porDepartamento[deptId].length} contactos`);
+  });
+  
+  // Agrupar por tipo
+  const porTipo = todosContactos.reduce((acc, c) => {
+    acc[c.tipo] = acc[c.tipo] || [];
+    acc[c.tipo].push(c);
+    return acc;
+  }, {} as Record<string, ContactoDepartamento[]>);
+  
+  console.log('🏷️ Contactos por tipo:');
+  Object.keys(porTipo).forEach(tipo => {
+    const activos = porTipo[tipo].filter(c => c.activo).length;
+    console.log(`  ${tipo}: ${porTipo[tipo].length} total (${activos} activos)`);
+  });
+  
+  // Detalles de fournisseurs
+  const fournisseurs = todosContactos.filter(c => c.tipo === 'fournisseur');
+  console.log(`\n🏢 FOURNISSEURS (${fournisseurs.length} total):`);
+  fournisseurs.forEach(f => {
+    console.log(`  - ${f.nombre} ${f.apellido}`);
+    console.log(`    Email: ${f.email}`);
+    console.log(`    Activo: ${f.activo}`);
+    console.log(`    Departamento: ${f.departamentoId}`);
+    console.log(`    Tipo: "${f.tipo}"`);
+  });
+  
+  console.log('🔍 ===== FIN DIAGNÓSTICO =====');
 }

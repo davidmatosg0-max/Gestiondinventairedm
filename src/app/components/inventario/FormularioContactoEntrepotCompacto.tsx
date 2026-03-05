@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useBranding } from '../../../hooks/useBranding';
 import {
   User,
@@ -23,7 +23,7 @@ import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 interface FormContactoEntrepotData {
-  tipoContacto: 'proveedor' | 'donador' | 'transportista' | 'otro';
+  tipoContacto: 'fournisseur' | 'donador' | 'transportista' | 'partenaire';
   nombre: string;
   apellido: string;
   numeroID: string;
@@ -56,6 +56,7 @@ interface FormContactoEntrepotData {
   activo: boolean;
   fechaNacimiento: string;
   genero: string;
+  departamentosAsignados: string[]; // IDs de departamentos asignados
 }
 
 interface FormularioContactoEntrepotCompactoProps {
@@ -78,6 +79,17 @@ export function FormularioContactoEntrepotCompacto({
   const branding = useBranding();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Sincronizar departamento automáticamente cuando cambia el tipo de contacto
+  useEffect(() => {
+    const departamentoAuto = obtenerDepartamentoSegunTipo(formulario.tipoContacto);
+    if (!formulario.departamentosAsignados.includes(departamentoAuto)) {
+      setFormulario(prev => ({
+        ...prev,
+        departamentosAsignados: [departamentoAuto]
+      }));
+    }
+  }, [formulario.tipoContacto]);
+
   const handleImagenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -90,10 +102,10 @@ export function FormularioContactoEntrepotCompacto({
   };
 
   const tiposContacto = [
-    { value: 'proveedor', label: 'Fournisseur', icon: '📦', color: '#1E73BE' },
+    { value: 'fournisseur', label: 'Fournisseur', icon: '📦', color: '#1E73BE' },
     { value: 'donador', label: 'Donateur', icon: '🎁', color: '#FF5722' },
     { value: 'transportista', label: 'Transporteur', icon: '🚚', color: '#4CAF50' },
-    { value: 'otro', label: 'Partenaire', icon: '⭐', color: '#FF9800' }
+    { value: 'partenaire', label: 'Partenaire', icon: '⭐', color: '#FF9800' }
   ];
 
   const temperaturasEspecializadas = [
@@ -128,11 +140,29 @@ export function FormularioContactoEntrepotCompacto({
     }
   };
 
+  // Departamentos disponibles para asignar
+  const departamentosDisponibles = [
+    { id: '1', nombre: 'Entrepôt', color: '#1E73BE', icon: '📦' },
+    { id: '2', nombre: 'Comptoir', color: '#2d9561', icon: '🏪' },
+    { id: '3', nombre: 'Cuisine', color: '#FF9800', icon: '👨‍🍳' },
+    { id: '4', nombre: 'Liaison', color: '#9C27B0', icon: '🤝' },
+    { id: '5', nombre: 'PTC', color: '#795548', icon: '💼' },
+    { id: '6', nombre: 'Maintien', color: '#607D8B', icon: '🔧' },
+    { id: '7', nombre: 'Recrutement', color: '#E91E63', icon: '👥' }
+  ];
+
+  // Obtener el departamento asignado automáticamente según el tipo de contacto
+  const obtenerDepartamentoSegunTipo = (tipo: string): string => {
+    // Según la lógica v3:
+    // - Donateurs, Fournisseurs, Transporteurs, Partenaires → '1' (Entrepôt)
+    // Solo estos 4 tipos están disponibles en este formulario
+    return '1'; // Entrepôt
+  };
+
   return (
     <Dialog open={abierto} onOpenChange={onCerrar}>
       <DialogContent 
-        className="!max-w-none !w-[95vw] !max-h-[95vh] !h-[95vh] overflow-hidden p-0 m-0 rounded-xl" 
-        aria-describedby="contact-warehouse-form-description"
+        className="!max-w-none !w-[95vw] !max-h-[95vh] !h-[95vh] overflow-hidden p-0 m-0 rounded-xl"
       >
         <div className="h-full flex flex-col bg-[#F5F5F5]">
           {/* Header compacto */}
@@ -320,7 +350,7 @@ export function FormularioContactoEntrepotCompacto({
                     </div>
                     
                     {/* Fila 2: Date de Naissance, Genre, Téléphone */}
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-3 gap-4 mb-6">
                       <div>
                         <Label htmlFor="fechaNacimiento" className="text-xs font-medium text-[#374151] mb-1.5 block">
                           Date de Naissance
@@ -364,6 +394,75 @@ export function FormularioContactoEntrepotCompacto({
                           placeholder="(514) 555-0123"
                           className="h-10 text-sm bg-white border-gray-300"
                         />
+                      </div>
+                    </div>
+
+                    {/* Sección Départements Assignés */}
+                    <div className="bg-[#E8F4FF] border border-[#1E73BE] rounded-lg p-5">
+                      <div className="flex items-center gap-2 mb-4">
+                        <span 
+                          className="w-2 h-2 rounded-full" 
+                          style={{ backgroundColor: branding.primaryColor }}
+                        />
+                        <h4 className="text-sm font-semibold text-[#374151]">
+                          Départements Assignés
+                        </h4>
+                        <span 
+                          className="ml-auto px-2 py-0.5 rounded text-xs font-medium text-white" 
+                          style={{ backgroundColor: branding.primaryColor }}
+                        >
+                          {formulario.departamentosAsignados.length} sélectionné{formulario.departamentosAsignados.length > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      
+                      <p className="text-xs text-[#6B7280] mb-4 italic">
+                        * Obligatoire - Sélectionnez au moins un département ou laissez l'assignation par défaut
+                      </p>
+
+                      <div className="flex flex-wrap gap-2">
+                        {departamentosDisponibles.map((dept) => {
+                          const isSelected = formulario.departamentosAsignados.includes(dept.id);
+                          const isAutoAssigned = dept.id === obtenerDepartamentoSegunTipo(formulario.tipoContacto);
+                          
+                          return (
+                            <button
+                              key={dept.id}
+                              type="button"
+                              disabled={isAutoAssigned}
+                              onClick={() => {
+                                if (!isAutoAssigned) {
+                                  setFormulario({
+                                    ...formulario,
+                                    departamentosAsignados: toggleArrayValue(formulario.departamentosAsignados, dept.id)
+                                  });
+                                }
+                              }}
+                              className={`
+                                px-4 py-2 rounded-md text-xs font-medium transition-all
+                                ${isSelected 
+                                  ? 'text-white shadow-md' 
+                                  : 'bg-white text-gray-700 border border-gray-300 hover:border-gray-400'
+                                }
+                                ${isAutoAssigned ? 'cursor-not-allowed opacity-100' : 'cursor-pointer'}
+                              `}
+                              style={{
+                                backgroundColor: isSelected ? dept.color : undefined
+                              }}
+                            >
+                              <span className="mr-1.5">{dept.icon}</span>
+                              {dept.nombre}
+                              {isAutoAssigned && (
+                                <span className="ml-1.5 text-[10px] opacity-90">(Auto)</span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="mt-4 pt-4 border-t border-[#C2D9F0]">
+                        <p className="text-xs text-[#1E73BE]">
+                          <strong>Note:</strong> Le département &quot;Entrepôt&quot; est assigné automatiquement pour les contacts de type Fournisseur, Donateur, Transporteur et Partenaire.
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -556,7 +655,7 @@ export function FormularioContactoEntrepotCompacto({
                       </div>
                     </div>
 
-                    {formulario.tipoContacto === 'proveedor' && (
+                    {formulario.tipoContacto === 'fournisseur' && (
                       <div className="mt-6 pt-6 border-t border-gray-200">
                         <h4 className="text-sm font-semibold text-[#374151] mb-4">Informations bancaires</h4>
                         <div className="grid grid-cols-3 gap-4">

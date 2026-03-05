@@ -464,7 +464,7 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
               <Users className="w-4 h-4 sm:w-5 sm:h-5 inline mr-2" />
               {modoEdicion ? 'Modifier le contact' : 'Enregistrer un nouveau contact'}
             </DialogTitle>
-            <DialogDescription className="text-xs text-gray-500 mt-1">
+            <DialogDescription id="contact-form-description" className="text-xs text-gray-500 mt-1">
               {modoEdicion ? 'Modifier les informations du contact' : 'Formulaire d\'enregistrement d\'un nouveau contact'}
             </DialogDescription>
           </DialogHeader>

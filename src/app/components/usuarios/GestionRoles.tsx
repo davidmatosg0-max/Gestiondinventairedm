@@ -281,7 +281,7 @@ export function GestionRoles() {
 
       {/* Diálogo Crear/Editar Rol */}
       <Dialog open={rolDialogOpen} onOpenChange={setRolDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="gestion-rol-description">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               {modoEdicion ? 'Editar Rol' : 'Nuevo Rol'}
@@ -440,7 +440,7 @@ export function GestionRoles() {
 
       {/* Diálogo Ver Permisos */}
       <Dialog open={verPermisosDialogOpen} onOpenChange={setVerPermisosDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="ver-permisos-description">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               Permisos de {rolSeleccionado?.nombre}

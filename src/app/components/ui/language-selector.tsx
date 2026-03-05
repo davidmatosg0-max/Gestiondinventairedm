@@ -289,7 +289,7 @@ export function LanguageSelector({
           setNuevoIdioma({ code: '', label: '', flag: '', color: branding.primaryColor });
         }
       }}>
-        <DialogContent className="max-w-md" aria-describedby="new-language-description">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
               {idiomaEditando ? (

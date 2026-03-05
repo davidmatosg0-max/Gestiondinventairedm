@@ -95,10 +95,10 @@ export function inicializarTodosDatosEjemplo(): void {
       const diasSemana = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
       
       const contactosDepartamento = [
-        // BÉNÉVOLES (Voluntarios)
+        // BÉNÉVOLES (Voluntarios) - Asignados a Comptoir (ID='1')
         ...benevoles.map(b => ({
           id: b.id,
-          departamentoId: '1', // Departamento Entrepôt (ID correcto)
+          departamentoId: '1', // Departamento Comptoir (ID='1' según departamentosStorage.ts)
           departamentoIds: ['1'],
           tipo: 'benevole' as const,
           nombre: b.nombre,
@@ -128,10 +128,10 @@ export function inicializarTodosDatosEjemplo(): void {
           foto: b.foto || ''
         })),
         
-        // EMPLOYÉS (Empleados)
+        // EMPLOYÉS (Empleados) - Asignados a Comptoir (ID='1')
         ...empleados.map(e => ({
           id: e.id,
-          departamentoId: '1', // Departamento Entrepôt
+          departamentoId: '1', // Departamento Comptoir (ID='1' según departamentosStorage.ts)
           departamentoIds: ['1'],
           tipo: 'employe' as const,
           nombre: e.nombre,
@@ -164,8 +164,8 @@ export function inicializarTodosDatosEjemplo(): void {
         // DONATEURS (Donadores)
         ...donadores.map(d => ({
           id: d.id,
-          departamentoId: '1', // Departamento Entrepôt
-          departamentoIds: ['1'],
+          departamentoId: '2', // Departamento Entrepôt (ID='2' según departamentosStorage.ts)
+          departamentoIds: ['2'],
           tipo: 'donador' as const,
           nombre: d.nombre,
           apellido: d.apellido || '',
@@ -196,8 +196,8 @@ export function inicializarTodosDatosEjemplo(): void {
         // FOURNISSEURS (Vendedores)
         ...vendedores.map(v => ({
           id: v.id,
-          departamentoId: '1', // Departamento Entrepôt
-          departamentoIds: ['1'],
+          departamentoId: '2', // Departamento Entrepôt (ID='2' según departamentosStorage.ts)
+          departamentoIds: ['2'],
           tipo: 'fournisseur' as const,
           nombre: v.nombre,
           apellido: v.apellido || '',

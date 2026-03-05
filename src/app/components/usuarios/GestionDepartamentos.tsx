@@ -238,7 +238,7 @@ export function GestionDepartamentos() {
               {t('departments.new')}
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl" aria-describedby="department-description">
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                 {modoEdicion ? t('departments.edit') : t('departments.new')}

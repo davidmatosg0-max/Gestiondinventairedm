@@ -1,18 +1,24 @@
 /**
- * 🔧 CORRECCIÓN AUTOMÁTICA DE CONTACTOS ENTREPÔT
+ * 🔧 CORRECCIÓN AUTOMÁTICA DE CONTACTOS - ASIGNACIÓN CORRECTA POR DEPARTAMENTO
  * 
  * Esta función se ejecuta al cargar la aplicación y corrige automáticamente:
- * 1. departamentoId incorrecto ('2' debe ser '1' para Entrepôt)
- * 2. Contactos donadores/fournisseurs inactivos por defecto
+ * 1. Contactos de Entrepôt (donador, fournisseur, transportista, partenaire) → departamentoId='2'
+ * 2. Contactos de Comptoir (benevole, employe) → departamentoId='1'
+ * 3. Activar contactos de Entrepôt por defecto
  * 
- * GARANTIZA que todos los contactos tipo donador y fournisseur:
- * - Tengan departamentoId = '1' (Entrepôt correcto)
- * - Estén activos para aparecer en formularios
+ * GARANTIZA la correcta asignación de departamentos:
+ * - Entrepôt (ID='2'): donador, fournisseur, transportista, partenaire
+ * - Comptoir (ID='1'): benevole, employe
+ * - Contactos activos y disponibles en formularios
  */
 
 export function corregirContactosEntrepotAutomaticamente(): void {
   const STORAGE_KEY = 'contactos_departamentos';
-  const CORRECCION_VERSION_KEY = 'contactos_correccion_v1';
+  const CORRECCION_VERSION_KEY = 'contactos_correccion_v3'; // v3 incluye corrección de bénévoles y employés
+  
+  // Limpiar versiones anteriores para forzar la re-ejecución
+  localStorage.removeItem('contactos_correccion_v1');
+  localStorage.removeItem('contactos_correccion_v2');
   
   // Verificar si ya se ejecutó esta corrección
   const correccionRealizada = localStorage.getItem(CORRECCION_VERSION_KEY);
@@ -37,16 +43,28 @@ export function corregirContactosEntrepotAutomaticamente(): void {
       let modificado = false;
       const contactoNuevo = { ...contacto };
       
-      // Corregir departamentoId para donadores y fournisseurs
-      if ((contacto.tipo === 'donador' || contacto.tipo === 'fournisseur') && 
-          contacto.departamentoId !== '1') {
-        contactoNuevo.departamentoId = '1'; // ✅ ID CORRECTO de Entrepôt
+      // REGLA 1: Donadores, Fournisseurs, Transportistas y Partenaires van a Entrepôt (ID='2')
+      if ((contacto.tipo === 'donador' || contacto.tipo === 'fournisseur' || 
+           contacto.tipo === 'transportista' || contacto.tipo === 'partenaire') && 
+          contacto.departamentoId !== '2') {
+        contactoNuevo.departamentoId = '2'; // ✅ ID CORRECTO de Entrepôt
+        contactoNuevo.departamentoIds = ['2'];
         modificado = true;
         contactosCorregidos++;
-        console.log(`✅ Corregido departamentoId: ${contacto.nombre} ${contacto.apellido} (${contacto.tipo})`);
+        console.log(`✅ Corregido a Entrepôt: ${contacto.nombre} ${contacto.apellido} (${contacto.tipo})`);
       }
       
-      // Activar contactos donadores/fournisseurs si están inactivos
+      // REGLA 2: Bénévoles y Employés van a Comptoir (ID='1')
+      if ((contacto.tipo === 'benevole' || contacto.tipo === 'employe') && 
+          contacto.departamentoId !== '1') {
+        contactoNuevo.departamentoId = '1'; // ✅ ID CORRECTO de Comptoir
+        contactoNuevo.departamentoIds = ['1'];
+        modificado = true;
+        contactosCorregidos++;
+        console.log(`✅ Corregido a Comptoir: ${contacto.nombre} ${contacto.apellido} (${contacto.tipo})`);
+      }
+      
+      // REGLA 3: Activar contactos donadores/fournisseurs si están inactivos
       if ((contacto.tipo === 'donador' || contacto.tipo === 'fournisseur') && 
           contacto.activo === false) {
         contactoNuevo.activo = true; // ✅ Activar por defecto
@@ -67,7 +85,7 @@ export function corregirContactosEntrepotAutomaticamente(): void {
       
       // Disparar evento para sincronizar otros componentes
       window.dispatchEvent(new CustomEvent('contactos-restaurados', {
-        detail: { departamentoId: '1', auto: true }
+        detail: { departamentoId: '2', auto: true }
       }));
     }
     
@@ -89,16 +107,28 @@ export function corregirContactosEntrepotAutomaticamente(): void {
 export function validarContactoEntrepot(contacto: any): any {
   const contactoValidado = { ...contacto };
   
-  // REGLA 1: Donadores y Fournisseurs SIEMPRE deben ir a Entrepôt (ID='1')
-  if (contacto.tipo === 'donador' || contacto.tipo === 'fournisseur') {
-    if (contacto.departamentoId !== '1') {
-      console.warn(`⚠️ Corrigiendo departamentoId: ${contacto.tipo} debe tener departamentoId='1'`);
-      contactoValidado.departamentoId = '1';
+  // REGLA 1: Donadores, Fournisseurs, Transportistas y Partenaires van a Entrepôt (ID='2')
+  if (contacto.tipo === 'donador' || contacto.tipo === 'fournisseur' || 
+      contacto.tipo === 'transportista' || contacto.tipo === 'partenaire') {
+    if (contacto.departamentoId !== '2') {
+      console.warn(`⚠️ Corrigiendo departamentoId: ${contacto.tipo} debe tener departamentoId='2' (Entrepôt)`);
+      contactoValidado.departamentoId = '2';
+      contactoValidado.departamentoIds = ['2'];
     }
   }
   
-  // REGLA 2: Donadores y Fournisseurs deben estar activos por defecto
-  if ((contacto.tipo === 'donador' || contacto.tipo === 'fournisseur') && 
+  // REGLA 2: Bénévoles y Employés van a Comptoir (ID='1')
+  if (contacto.tipo === 'benevole' || contacto.tipo === 'employe') {
+    if (contacto.departamentoId !== '1') {
+      console.warn(`⚠️ Corrigiendo departamentoId: ${contacto.tipo} debe tener departamentoId='1' (Comptoir)`);
+      contactoValidado.departamentoId = '1';
+      contactoValidado.departamentoIds = ['1'];
+    }
+  }
+  
+  // REGLA 3: Contactos de Entrepôt deben estar activos por defecto
+  if ((contacto.tipo === 'donador' || contacto.tipo === 'fournisseur' || 
+       contacto.tipo === 'transportista' || contacto.tipo === 'partenaire') && 
       contacto.activo === undefined) {
     contactoValidado.activo = true;
   }
@@ -142,9 +172,9 @@ export function obtenerEstadisticasContactosEntrepot(): {
       total: contactos.length,
       donadores: donadores.length,
       fournisseurs: fournisseurs.length,
-      donadoresActivos: donadores.filter((c: any) => c.activo && c.departamentoId === '1').length,
-      fournisseursActivos: fournisseurs.filter((c: any) => c.activo && c.departamentoId === '1').length,
-      conDepartamentoIncorrecto: [...donadores, ...fournisseurs].filter((c: any) => c.departamentoId !== '1').length
+      donadoresActivos: donadores.filter((c: any) => c.activo && c.departamentoId === '2').length,
+      fournisseursActivos: fournisseurs.filter((c: any) => c.activo && c.departamentoId === '2').length,
+      conDepartamentoIncorrecto: [...donadores, ...fournisseurs].filter((c: any) => c.departamentoId !== '2').length
     };
   } catch (error) {
     console.error('❌ Error al obtener estadísticas:', error);

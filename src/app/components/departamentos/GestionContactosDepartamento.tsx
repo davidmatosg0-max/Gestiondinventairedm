@@ -156,8 +156,9 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
 
   // NUEVO: Definir tipos de contacto disponibles según el departamento
   const getTiposPermitidos = (): TipoContacto[] => {
-    // TODOS los departamentos ahora tienen acceso a TODOS los tipos de contacto
-    return ['donador', 'fournisseur', 'benevole', 'responsable-sante', 'partenaire', 'visiteur', 'employe'];
+    // TODOS los departamentos tienen acceso a todos los tipos EXCEPTO bénévoles
+    // Los bénévoles solo se pueden crear en el módulo de Recrutement
+    return ['donador', 'fournisseur', 'responsable-sante', 'partenaire', 'visiteur', 'employe', 'transportista'];
   };
 
   const tiposPermitidos = getTiposPermitidos();
@@ -165,7 +166,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
   const [formulario, setFormulario] = useState<Omit<ContactoDepartamento, 'id'>>({
     departamentoId,
     departamentoIds: [departamentoId], // Inicializar con el departamento actual seleccionado
-    tipo: 'benevole',
+    tipo: 'employe', // Cambiado de 'benevole' - Los bénévoles solo se crean en Recrutement
     nombre: '',
     apellido: '',
     fechaNacimiento: '',
@@ -334,7 +335,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
     setFormulario({
       departamentoId,
       departamentoIds: [departamentoId],
-      tipo: 'benevole',
+      tipo: 'employe', // Cambiado de 'benevole' - Los bénévoles solo se crean en Recrutement
       nombre: '',
       apellido: '',
       fechaNacimiento: '',
@@ -567,23 +568,32 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
               Gérez tous les contacts du département ({contactos.length} contacts)
             </p>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              onClick={abrirDialogoAsignarBenevole}
-              className="text-white"
-              style={{ backgroundColor: branding.primaryColor }}
-            >
-              <Link className="w-4 h-4 mr-2" />
-              Assigner un bénévole
-            </Button>
-            <Button
-              onClick={abrirDialogoNuevo}
-              className="text-white"
-              style={{ backgroundColor: branding.secondaryColor }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Nouveau Contact
-            </Button>
+          <div className="space-y-2">
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                onClick={abrirDialogoAsignarBenevole}
+                className="text-white"
+                style={{ backgroundColor: branding.primaryColor }}
+              >
+                <Link className="w-4 h-4 mr-2" />
+                Assigner un bénévole
+              </Button>
+              <Button
+                onClick={abrirDialogoNuevo}
+                className="text-white"
+                style={{ backgroundColor: branding.secondaryColor }}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nouveau Contact
+              </Button>
+            </div>
+            <div className="flex items-start gap-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+              <span className="text-blue-600 text-sm">ℹ️</span>
+              <p className="text-xs text-blue-800">
+                <strong>Note:</strong> La création de bénévoles est disponible uniquement dans le module <strong>Recrutement</strong>. 
+                Vous pouvez assigner des bénévoles existants à ce département en utilisant le bouton "Assigner un bénévole".
+              </p>
+            </div>
           </div>
         </div>
 

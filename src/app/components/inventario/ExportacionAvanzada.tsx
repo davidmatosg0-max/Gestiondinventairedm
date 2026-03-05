@@ -134,7 +134,7 @@ export function ExportacionAvanzada({ open, onOpenChange }: ExportacionAvanzadaP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="exportacion-description">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
             <Download className="h-6 w-6 text-[#1E73BE]" />

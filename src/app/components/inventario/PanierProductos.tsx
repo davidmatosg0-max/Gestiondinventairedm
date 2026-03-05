@@ -369,7 +369,6 @@ export function PanierProductos({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className="max-w-7xl max-h-[90vh] overflow-hidden flex flex-col"
-        aria-describedby="panier-description"
       >
         <DialogHeader>
           <DialogTitle 
@@ -618,7 +617,7 @@ export function PanierProductos({
       
       {/* Diálogo de Generar Comanda */}
       <Dialog open={generarComandaOpen} onOpenChange={setGenerarComandaOpen}>
-        <DialogContent className="max-w-2xl" aria-describedby="generar-comanda-description">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle 
               className="flex items-center gap-2" 

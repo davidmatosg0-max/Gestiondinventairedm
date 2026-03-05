@@ -137,7 +137,7 @@ export function ValidacionEntradasDialog({ open, onOpenChange }: ValidacionEntra
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh]" aria-describedby="validacion-entradas-description">
+      <DialogContent className="max-w-6xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
             <AlertTriangle className="h-6 w-6 text-[#FFC107]" />
