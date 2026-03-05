@@ -1,3 +1,4 @@
+// Module Bénévoles - Version 2.1 (Fix: Support pour statut 'en attente')
 import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBranding } from '../../../hooks/useBranding';
@@ -161,6 +162,7 @@ interface FeuilleTemps {
   heureFin: string;
   duree: number;
   notes: string;
+  enCours?: boolean; // Nueva propiedad para indicar si la entrada está en progreso
 }
 
 type BenevoleView = 'liste' | 'fiche' | 'feuilles-temps' | 'historique' | 'repartition' | 'rapports';
@@ -483,14 +485,25 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     return `${heuresEntier}h ${minutes}min`;
   };
 
+  // Helper: Render status badge with proper colors
   const getStatusBadge = (statut: string) => {
-    const config = {
-      actif: { label: 'Actif', color: 'bg-[#4CAF50] text-white' },
-      inactif: { label: 'Inactif', color: 'bg-[#999999] text-white' },
-      'en pause': { label: 'En pause', color: 'bg-[#FFC107] text-[#333333]' }
+    // Todos los estados posibles de bénévoles
+    const statusConfigurations: Record<string, { label: string; color: string }> = {
+      'actif': { label: 'Actif', color: 'bg-[#4CAF50] text-white' },
+      'inactif': { label: 'Inactif', color: 'bg-[#999999] text-white' },
+      'en pause': { label: 'En pause', color: 'bg-[#FFC107] text-[#333333]' },
+      'en attente': { label: 'En attente', color: 'bg-[#FF9800] text-white' }
     };
-    const { label, color } = config[statut as keyof typeof config];
-    return <Badge className={color}>{label}</Badge>;
+    
+    const config = statusConfigurations[statut];
+    
+    // Si el estado no existe, mostrar badge genérico
+    if (!config) {
+      console.warn(`Estado desconocido: ${statut}`);
+      return <Badge className="bg-gray-400 text-white">{statut || 'N/A'}</Badge>;
+    }
+    
+    return <Badge className={config.color}>{config.label}</Badge>;
   };
 
   const calculateDuree = (debut: string, fin: string): number => {
@@ -553,6 +566,94 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     });
 
     toast.success(`Feuille de temps enregistrée: ${formatHeures(duree)}`);
+  };
+
+  // NUEVA FUNCIÓN: Registrar solo la entrada (sin salida)
+  const handleRegistrarEntrada = () => {
+    if (!newFeuilleTemps.benevoleId || !newFeuilleTemps.departement) {
+      toast.error('Veuillez sélectionner un bénévole et un département');
+      return;
+    }
+
+    const benevole = benevoles.find(b => b.id === parseInt(newFeuilleTemps.benevoleId));
+    if (!benevole) return;
+
+    // Capturar hora actual si no se ha ingresado una
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const heureDebut = newFeuilleTemps.heureDebut || `${hours}:${minutes}`;
+
+    const nouvelleFeuille: FeuilleTemps = {
+      id: Date.now(), // Usar timestamp para ID único
+      benevoleId: parseInt(newFeuilleTemps.benevoleId),
+      benevoleName: `${benevole.prenom} ${benevole.nom}`,
+      departement: newFeuilleTemps.departement,
+      date: newFeuilleTemps.date,
+      heureDebut: heureDebut,
+      heureFin: '', // Vacío porque aún no ha terminado
+      duree: 0, // Duración 0 porque aún no ha terminado
+      notes: newFeuilleTemps.notes,
+      enCours: true // Marcado como en progreso
+    };
+
+    setFeuillesTemps([nouvelleFeuille, ...feuillesTemps]);
+
+    setNewFeuilleTemps({
+      benevoleId: '',
+      departement: '',
+      date: new Date().toISOString().split('T')[0],
+      heureDebut: '',
+      heureFin: '',
+      notes: ''
+    });
+
+    toast.success(`Entrée enregistrée pour ${benevole.prenom} ${benevole.nom} à ${heureDebut}`, {
+      description: 'Vous pourrez enregistrer la sortie plus tard',
+      duration: 4000
+    });
+  };
+
+  // NUEVA FUNCIÓN: Registrar la salida de una entrada existente
+  const handleRegistrarSalida = (feuilleId: number) => {
+    const feuille = feuillesTemps.find(f => f.id === feuilleId);
+    if (!feuille || !feuille.enCours) return;
+
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const heureFin = `${hours}:${minutes}`;
+
+    const duree = calculateDuree(feuille.heureDebut, heureFin);
+    
+    if (duree <= 0) {
+      toast.error('L\'heure de sortie doit être après l\'heure d\'entrée');
+      return;
+    }
+
+    // Actualizar la feuille de temps
+    setFeuillesTemps(prev => prev.map(f => 
+      f.id === feuilleId 
+        ? { ...f, heureFin, duree, enCours: false }
+        : f
+    ));
+
+    // Actualizar las horas totales del bénévole
+    setBenevoles(prev => prev.map(b => {
+      if (b.id === feuille.benevoleId) {
+        return {
+          ...b,
+          heuresTotal: b.heuresTotal + duree,
+          heuresMois: b.heuresMois + duree
+        };
+      }
+      return b;
+    }));
+
+    toast.success(`Sortie enregistrée: ${formatHeures(duree)} de travail`, {
+      description: `${feuille.benevoleName} - ${feuille.heureDebut} à ${heureFin}`,
+      duration: 4000
+    });
   };
 
   // Funciones para edición de feuille de temps
@@ -2304,7 +2405,23 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                 <Select 
                   value={newFeuilleTemps.benevoleId} 
                   onValueChange={(value) => {
-                    setNewFeuilleTemps({ ...newFeuilleTemps, benevoleId: value });
+                    // Buscar el bénévole seleccionado
+                    const benevoleSeleccionado = benevoles.find(b => b.id === parseInt(value));
+                    
+                    // Auto-completar el departamento si el bénévole tiene uno asignado
+                    if (benevoleSeleccionado && benevoleSeleccionado.departement) {
+                      setNewFeuilleTemps({ 
+                        ...newFeuilleTemps, 
+                        benevoleId: value,
+                        departement: benevoleSeleccionado.departement 
+                      });
+                      toast.success(`Département auto-complété: ${benevoleSeleccionado.departement}`, {
+                        duration: 2000
+                      });
+                    } else {
+                      setNewFeuilleTemps({ ...newFeuilleTemps, benevoleId: value });
+                    }
+                    
                     setSearchBenevole(''); // Limpiar búsqueda al seleccionar
                   }}
                 >
@@ -2385,65 +2502,36 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                 </Select>
               </div>
 
-              {/* IN - Hora de entrada */}
+              {/* ARRIVÉE */}
               <div>
                 <Label className="text-xs font-semibold mb-1.5 flex items-center gap-1">
                   <LogIn className="w-3 h-3" style={{ color: branding.secondaryColor }} />
-                  ARRIVÉE
+                  ARRIVÉE (auto si vide)
                 </Label>
-                <div className="flex gap-2">
-                  <Input
-                    type="time"
-                    value={newFeuilleTemps.heureDebut}
-                    onChange={(e) => setNewFeuilleTemps({ ...newFeuilleTemps, heureDebut: e.target.value })}
-                    className="h-11 text-center font-mono text-lg flex-1"
-                    style={{ borderColor: branding.secondaryColor + '40' }}
-                  />
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      const now = new Date();
-                      const hours = String(now.getHours()).padStart(2, '0');
-                      const minutes = String(now.getMinutes()).padStart(2, '0');
-                      setNewFeuilleTemps({ ...newFeuilleTemps, heureDebut: `${hours}:${minutes}` });
-                      toast.success('Heure d\'arrivée capturée');
-                    }}
-                    className="h-11 px-3 text-white shadow-md hover:shadow-lg transition-all"
-                    style={{ backgroundColor: branding.secondaryColor }}
-                  >
-                    <Clock className="w-4 h-4" />
-                  </Button>
-                </div>
+                <Input
+                  type="time"
+                  value={newFeuilleTemps.heureDebut}
+                  onChange={(e) => setNewFeuilleTemps({ ...newFeuilleTemps, heureDebut: e.target.value })}
+                  className="h-11 text-center font-mono text-lg w-full"
+                  style={{ borderColor: branding.secondaryColor + '40' }}
+                  placeholder="--:--"
+                />
               </div>
 
-              {/* DÉPART - Hora de salida */}
+              {/* DÉPART */}
               <div>
                 <Label className="text-xs font-semibold mb-1.5 flex items-center gap-1">
                   <LogOut className="w-3 h-3" style={{ color: '#DC3545' }} />
-                  DÉPART
+                  DÉPART (optionnel)
                 </Label>
-                <div className="flex gap-2">
-                  <Input
-                    type="time"
-                    value={newFeuilleTemps.heureFin}
-                    onChange={(e) => setNewFeuilleTemps({ ...newFeuilleTemps, heureFin: e.target.value })}
-                    className="h-11 text-center font-mono text-lg flex-1"
-                    style={{ borderColor: '#DC354540' }}
-                  />
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      const now = new Date();
-                      const hours = String(now.getHours()).padStart(2, '0');
-                      const minutes = String(now.getMinutes()).padStart(2, '0');
-                      setNewFeuilleTemps({ ...newFeuilleTemps, heureFin: `${hours}:${minutes}` });
-                      toast.success('Heure de départ capturée');
-                    }}
-                    className="h-11 px-3 bg-[#DC3545] hover:bg-[#BB2D3B] text-white shadow-md hover:shadow-lg transition-all"
-                  >
-                    <Clock className="w-4 h-4" />
-                  </Button>
-                </div>
+                <Input
+                  type="time"
+                  value={newFeuilleTemps.heureFin}
+                  onChange={(e) => setNewFeuilleTemps({ ...newFeuilleTemps, heureFin: e.target.value })}
+                  className="h-11 text-center font-mono text-lg w-full"
+                  style={{ borderColor: '#DC354540' }}
+                  placeholder="--:--"
+                />
               </div>
             </div>
 
@@ -2502,20 +2590,129 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                 />
               </div>
 
-              {/* Bouton d'enregistrement */}
-              <div>
+              {/* Boutons d'enregistrement */}
+              <div className="flex gap-2">
                 <Button 
-                  className="w-full h-11 text-white shadow-lg hover:shadow-xl transition-all"
+                  className="flex-1 h-11 text-white shadow-lg hover:shadow-xl transition-all"
                   style={{ backgroundColor: branding.secondaryColor }}
-                  onClick={handleAddFeuilleTemps}
+                  onClick={handleRegistrarEntrada}
+                  disabled={!newFeuilleTemps.benevoleId || !newFeuilleTemps.departement}
+                  title="Enregistrer l'arrivée maintenant (heure automatique si vide)"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Enregistrer
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Entrée
+                </Button>
+                <Button 
+                  className="flex-1 h-11 text-white shadow-lg hover:shadow-xl transition-all"
+                  style={{ backgroundColor: branding.primaryColor }}
+                  onClick={handleAddFeuilleTemps}
+                  disabled={!newFeuilleTemps.benevoleId || !newFeuilleTemps.departement || !newFeuilleTemps.heureDebut || !newFeuilleTemps.heureFin}
+                  title="Enregistrer l'arrivée ET le départ (session complète)"
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  Complet
                 </Button>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Sección de entradas en progreso */}
+        {feuillesTemps.filter(f => f.enCours).length > 0 && (
+          <Card className="border-0 shadow-lg">
+            <CardHeader 
+              className="pb-3"
+              style={{ 
+                background: `linear-gradient(135deg, ${branding.warningColor}15 0%, ${branding.warningColor}10 100%)`
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2" style={{ color: branding.warningColor }}>
+                  <Timer className="w-5 h-5" />
+                  Sessions en cours ({feuillesTemps.filter(f => f.enCours).length})
+                </CardTitle>
+                <Badge 
+                  className="text-xs px-3 py-1 animate-pulse"
+                  style={{ 
+                    backgroundColor: branding.warningColor,
+                    color: 'white'
+                  }}
+                >
+                  En attente de sortie
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="space-y-3">
+                {feuillesTemps
+                  .filter(f => f.enCours)
+                  .map(feuille => {
+                    const tempsEcoule = (() => {
+                      const now = new Date();
+                      const hours = String(now.getHours()).padStart(2, '0');
+                      const minutes = String(now.getMinutes()).padStart(2, '0');
+                      return calculateDuree(feuille.heureDebut, `${hours}:${minutes}`);
+                    })();
+
+                    return (
+                      <div 
+                        key={feuille.id}
+                        className="p-4 rounded-lg border-2 bg-white hover:shadow-md transition-all"
+                        style={{ borderColor: branding.warningColor + '40' }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3">
+                              <div 
+                                className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
+                                style={{ backgroundColor: branding.primaryColor }}
+                              >
+                                {feuille.benevoleName.split(' ').map(n => n[0]).join('')}
+                              </div>
+                              <div>
+                                <p className="font-bold text-lg">{feuille.benevoleName}</p>
+                                <p className="text-sm text-gray-600">
+                                  {feuille.departement} • {feuille.date}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="mt-3 flex items-center gap-4">
+                              <div className="flex items-center gap-2">
+                                <LogIn className="w-4 h-4" style={{ color: branding.secondaryColor }} />
+                                <span className="font-mono text-lg font-bold" style={{ color: branding.secondaryColor }}>
+                                  {feuille.heureDebut}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Timer className="w-4 h-4" style={{ color: branding.warningColor }} />
+                                <span className="font-mono text-sm" style={{ color: branding.warningColor }}>
+                                  {formatHeures(tempsEcoule)} écoulé
+                                </span>
+                              </div>
+                              {feuille.notes && (
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <FileText className="w-3 h-3" />
+                                  {feuille.notes}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            onClick={() => handleRegistrarSalida(feuille.id)}
+                            className="ml-4 h-12 px-6 text-white shadow-lg hover:shadow-xl transition-all"
+                            style={{ backgroundColor: '#DC3545' }}
+                          >
+                            <LogOut className="w-5 h-5 mr-2" />
+                            Enregistrer Sortie
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tabla moderna de entradas recientes */}
         <Card className="border-0 shadow-lg">
@@ -2556,7 +2753,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                 </span>
               </div>
             )}
-            {feuillesTemps.length > 0 ? (
+            {feuillesTemps.filter(f => !f.enCours).length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -2590,7 +2787,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {feuillesTemps.slice(0, 10).map((feuille, index) => {
+                    {feuillesTemps.filter(f => !f.enCours).slice(0, 10).map((feuille, index) => {
                       const isEditing = puedeCorregir && editingFeuilleId === feuille.id;
                       const currentData = isEditing && editFeuilleTemps ? editFeuilleTemps : feuille;
 
