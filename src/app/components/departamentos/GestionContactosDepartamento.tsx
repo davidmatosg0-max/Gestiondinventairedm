@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useBranding } from '../../../hooks/useBranding';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { validateImageFile, readFileAsDataURL } from '../../utils/fileValidation';
 import {
   Users,
   Plus,
@@ -422,15 +424,25 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
 
   const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setFotoPreview(result);
-        setFormulario({ ...formulario, foto: result });
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // ✅ Validar archivo usando utilidad centralizada
+    if (!validateImageFile(file)) {
+      e.target.value = ''; // Limpiar input
+      return;
     }
+
+    // ✅ Leer archivo con utilidad centralizada
+    readFileAsDataURL(
+      file,
+      (dataUrl) => {
+        setFotoPreview(dataUrl);
+        setFormulario({ ...formulario, foto: dataUrl });
+      },
+      () => {
+        e.target.value = ''; // Limpiar input en caso de error
+      }
+    );
   };
 
   const handleGuardar = () => {
@@ -839,7 +851,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                       <div className="flex items-start gap-3">
                         <div className="w-12 h-12 rounded-full overflow-hidden border-2 flex-shrink-0" style={{ borderColor: config.color }}>
                           {contacto.foto ? (
-                            <img src={contacto.foto} alt={`${contacto.nombre} ${contacto.apellido}`} className="w-full h-full object-cover" />
+                            <ImageWithFallback src={contacto.foto} alt={`${contacto.nombre} ${contacto.apellido}`} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: config.bgColor }}>
                               <User className="w-6 h-6" style={{ color: config.color }} />
@@ -990,7 +1002,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 rounded-full overflow-hidden border-4" style={{ borderColor: getTipoConfig(contactoSeleccionado.tipo).color }}>
                   {contactoSeleccionado.foto ? (
-                    <img src={contactoSeleccionado.foto} alt="Foto" className="w-full h-full object-cover" />
+                    <ImageWithFallback src={contactoSeleccionado.foto} alt="Foto" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gray-100">
                       <User className="w-10 h-10 text-gray-400" />
@@ -1142,7 +1154,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full overflow-hidden border-2 flex-shrink-0" style={{ borderColor: branding.primaryColor }}>
                           {(benevole.photo || benevole.foto) ? (
-                            <img src={benevole.photo || benevole.foto} alt={`${benevole.nom || benevole.nombre} ${benevole.prenom || benevole.apellido}`} className="w-full h-full object-cover" />
+                            <ImageWithFallback src={benevole.photo || benevole.foto} alt={`${benevole.nom || benevole.nombre} ${benevole.prenom || benevole.apellido}`} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gray-100">
                               <User className="w-6 h-6 text-gray-400" />

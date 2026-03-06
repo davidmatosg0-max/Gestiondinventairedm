@@ -12,6 +12,7 @@ export interface Departamento {
     email: string;
     telefono: string;
     cargo: string;
+    foto?: string;
   };
 }
 

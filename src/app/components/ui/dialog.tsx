@@ -65,34 +65,29 @@ const DialogContent = React.forwardRef<
   // Check if children contains a DialogDescription
   const hasDescription = React.useMemo(() => {
     let found = false;
-    React.Children.forEach(children, (child) => {
-      if (React.isValidElement(child)) {
-        // Check DialogHeader children
-        if (child.type === DialogHeader) {
-          React.Children.forEach(child.props.children, (headerChild) => {
-            if (React.isValidElement(headerChild) && 
-                (headerChild.type === DialogDescription || 
-                 headerChild.type === DialogPrimitive.Description)) {
-              found = true;
-            }
-          });
+    const checkChildren = (children: React.ReactNode): void => {
+      React.Children.forEach(children, (child) => {
+        if (React.isValidElement(child)) {
+          // Check if it's a DialogDescription
+          if (child.type === DialogDescription || 
+              child.type === DialogPrimitive.Description) {
+            found = true;
+            return;
+          }
+          // Recursively check children
+          if (child.props && child.props.children) {
+            checkChildren(child.props.children);
+          }
         }
-        // Check direct DialogDescription
-        if (child.type === DialogDescription || 
-            child.type === DialogPrimitive.Description) {
-          found = true;
-        }
-      }
-    });
+      });
+    };
+    checkChildren(children);
     return found;
   }, [children]);
 
-  // Only set aria-describedby if explicitly provided or if there's a DialogDescription
-  const ariaDescribedBy = props["aria-describedby"] !== undefined 
-    ? props["aria-describedby"]
-    : hasDescription 
-    ? descriptionId 
-    : undefined;
+  // Set aria-describedby:
+  // If there's a description, use the descriptionId; otherwise undefined to avoid warning
+  const ariaDescribedBy = hasDescription ? descriptionId : undefined;
   
   return (
     <DialogDescriptionContext.Provider value={{ descriptionId, setDescriptionId: () => {} }}>

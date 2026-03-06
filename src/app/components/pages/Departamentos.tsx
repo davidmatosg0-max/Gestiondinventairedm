@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBranding } from '../../../hooks/useBranding';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { 
   Building2, 
   Plus, 
@@ -27,7 +28,8 @@ import {
   User,
   Mail,
   Phone,
-  Briefcase as BriefcaseIcon
+  Briefcase as BriefcaseIcon,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
@@ -63,7 +65,8 @@ const iconosDisponibles: Record<string, React.ElementType> = {
   DollarSign,
   BarChart,
   Building2,
-  ChefHat
+  ChefHat,
+  ImageIcon
 };
 
 export function Departamentos({ onNavigate }: { onNavigate?: (page: string) => void }) {
@@ -88,7 +91,8 @@ export function Departamentos({ onNavigate }: { onNavigate?: (page: string) => v
       nombre: '',
       email: '',
       telefono: '',
-      cargo: ''
+      cargo: '',
+      foto: ''
     }
   });
 
@@ -114,7 +118,8 @@ export function Departamentos({ onNavigate }: { onNavigate?: (page: string) => v
         nombre: '',
         email: '',
         telefono: '',
-        cargo: ''
+        cargo: '',
+        foto: ''
       }
     });
     setModoEdicion(false);
@@ -139,7 +144,8 @@ export function Departamentos({ onNavigate }: { onNavigate?: (page: string) => v
         nombre: '',
         email: '',
         telefono: '',
-        cargo: ''
+        cargo: '',
+        foto: ''
       }
     });
     setDepartamentoSeleccionado(departamento);
@@ -195,352 +201,411 @@ export function Departamentos({ onNavigate }: { onNavigate?: (page: string) => v
 
   if (mostrarGestion) {
     return (
-      <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
-            <Button
-              onClick={() => setMostrarGestion(false)}
-              className="text-white text-sm sm:text-base"
-              style={{ backgroundColor: branding.primaryColor }}
-              size="sm"
-            >
-              <Home className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-              {t('common.back')}
-            </Button>
-            <div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#333333]">{t('departments.management')}</h1>
-              <p className="text-xs sm:text-sm text-[#666666] mt-1">{t('departments.managementSubtitle')}</p>
-            </div>
-          </div>
-          <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
-            <Button 
-              onClick={abrirDialogoNuevo}
-              className="text-white flex-1 sm:flex-none text-sm sm:text-base"
-              style={{ backgroundColor: branding.secondaryColor }}
-              size="sm"
-            >
-              <Plus className="w-4 h-4 mr-1 sm:mr-2" />
-              {t('departments.addDepartment')}
-            </Button>
-          </div>
+      <div className="min-h-screen relative">
+        {/* Fondo degradado fijo con glassmorphism */}
+        <div 
+          className="fixed inset-0 -z-10"
+          style={{
+            background: `linear-gradient(135deg, ${branding.primaryColor}15 0%, ${branding.secondaryColor}10 50%, ${branding.primaryColor}08 100%)`
+          }}
+        />
+        
+        {/* Formas decorativas animadas */}
+        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div 
+            className="absolute -top-40 -right-40 w-96 h-96 rounded-full opacity-20 blur-3xl animate-pulse"
+            style={{ background: `radial-gradient(circle, ${branding.secondaryColor} 0%, transparent 70%)` }}
+          />
+          <div 
+            className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full opacity-20 blur-3xl animate-pulse"
+            style={{ 
+              background: `radial-gradient(circle, ${branding.primaryColor} 0%, transparent 70%)`,
+              animationDelay: '1s'
+            }}
+          />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          {departamentos.map((departamento, index) => {
-            // Alternar entre colores del branding
-            const cardColor = index % 2 === 0 ? branding.primaryColor : branding.secondaryColor;
-            
-            return (
-              <Card key={departamento.id} className="p-3 sm:p-4 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                    <div 
-                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center text-white flex-shrink-0"
-                      style={{ 
-                        background: `linear-gradient(135deg, ${cardColor} 0%, ${cardColor}dd 100%)`,
-                        boxShadow: `0 4px 12px ${cardColor}30`
-                      }}
-                    >
-                      {renderIcono(departamento.icono, 'w-5 h-5 sm:w-6 sm:h-6')}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-sm sm:text-base text-[#333333] truncate">{departamento.nombre}</h3>
-                      <p className="text-xs sm:text-sm text-[#666666] truncate">{departamento.codigo}</p>
-                      {departamento.descripcion && (
-                        <p className="text-xs text-[#999999] truncate mt-0.5">{departamento.descripcion}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex gap-1 sm:gap-2 flex-shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => abrirDialogoEditar(departamento)}
-                      className="p-1.5 sm:p-2"
-                    >
-                      <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: branding.primaryColor }} />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setDepartamentoSeleccionado(departamento);
-                        setDialogEliminar(true);
-                      }}
-                      className="p-1.5 sm:p-2"
-                    >
-                      <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: '#c23934' }} />
-                    </Button>
-                  </div>
+        {/* Contenedor principal */}
+        <div className="relative z-10 p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
+          {/* Header con glassmorphism */}
+          <div className="backdrop-blur-xl bg-white/90 rounded-2xl shadow-xl p-4 sm:p-6 border border-white/60">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+                <Button
+                  onClick={() => setMostrarGestion(false)}
+                  className="text-white text-sm sm:text-base"
+                  style={{ backgroundColor: branding.primaryColor }}
+                  size="sm"
+                >
+                  <Home className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                  {t('common.back')}
+                </Button>
+                <div>
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
+                    {t('departments.management')}
+                  </h1>
+                  <p className="text-xs sm:text-sm text-[#666666] mt-1">{t('departments.managementSubtitle')}</p>
                 </div>
-                
-                {/* Información de contacto */}
-                {departamento.contacto && departamento.contacto.nombre && (
-                  <div className="mt-3 pt-3 border-t border-gray-200">
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <User className="w-3.5 h-3.5" style={{ color: cardColor }} />
-                      <span className="text-xs font-semibold" style={{ color: cardColor }}>Contact</span>
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="flex items-start gap-2">
-                        <User className="w-3 h-3 mt-0.5 text-[#666666] flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs text-[#333333] font-medium truncate">{departamento.contacto.nombre}</p>
-                          {departamento.contacto.cargo && (
-                            <p className="text-xs text-[#999999] truncate">{departamento.contacto.cargo}</p>
-                          )}
-                        </div>
+              </div>
+              <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
+                <Button 
+                  onClick={abrirDialogoNuevo}
+                  className="text-white flex-1 sm:flex-none text-sm sm:text-base"
+                  style={{ backgroundColor: branding.secondaryColor }}
+                  size="sm"
+                >
+                  <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+                  {t('departments.addDepartment')}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Grid de departamentos */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {departamentos.map((departamento, index) => {
+              // Alternar entre colores del branding
+              const cardColor = index % 2 === 0 ? branding.primaryColor : branding.secondaryColor;
+              
+              return (
+                <Card key={departamento.id} className="p-3 sm:p-4 hover:shadow-lg transition-shadow">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                      <div 
+                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center text-white flex-shrink-0"
+                        style={{ 
+                          background: `linear-gradient(135deg, ${cardColor} 0%, ${cardColor}dd 100%)`,
+                          boxShadow: `0 4px 12px ${cardColor}30`
+                        }}
+                      >
+                        {renderIcono(departamento.icono, 'w-5 h-5 sm:w-6 sm:h-6')}
                       </div>
-                      {departamento.contacto.email && (
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-3 h-3 text-[#666666] flex-shrink-0" />
-                          <a 
-                            href={`mailto:${departamento.contacto.email}`}
-                            className="text-xs text-[#666666] hover:underline truncate"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {departamento.contacto.email}
-                          </a>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-sm sm:text-base text-[#333333] truncate">{departamento.nombre}</h3>
+                        <p className="text-xs sm:text-sm text-[#666666] truncate">{departamento.codigo}</p>
+                        {departamento.descripcion && (
+                          <p className="text-xs text-[#999999] truncate mt-0.5">{departamento.descripcion}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => abrirDialogoEditar(departamento)}
+                        className="p-1.5 sm:p-2"
+                      >
+                        <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: branding.primaryColor }} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setDepartamentoSeleccionado(departamento);
+                          setDialogEliminar(true);
+                        }}
+                        className="p-1.5 sm:p-2"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: '#c23934' }} />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Información de contacto */}
+                  {departamento.contacto && departamento.contacto.nombre && (
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <User className="w-3.5 h-3.5" style={{ color: cardColor }} />
+                        <span className="text-xs font-semibold" style={{ color: cardColor }}>Contact</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex items-start gap-2">
+                          <User className="w-3 h-3 mt-0.5 text-[#666666] flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-[#333333] font-medium truncate">{departamento.contacto.nombre}</p>
+                            {departamento.contacto.cargo && (
+                              <p className="text-xs text-[#999999] truncate">{departamento.contacto.cargo}</p>
+                            )}
+                          </div>
                         </div>
-                      )}
-                      {departamento.contacto.telefono && (
-                        <div className="flex items-center gap-2">
-                          <Phone className="w-3 h-3 text-[#666666] flex-shrink-0" />
-                          <a 
-                            href={`tel:${departamento.contacto.telefono}`}
-                            className="text-xs text-[#666666] hover:underline"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {departamento.contacto.telefono}
-                          </a>
-                        </div>
-                      )}
+                        {departamento.contacto.email && (
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-3 h-3 text-[#666666] flex-shrink-0" />
+                            <a 
+                              href={`mailto:${departamento.contacto.email}`}
+                              className="text-xs text-[#666666] hover:underline truncate"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {departamento.contacto.email}
+                            </a>
+                          </div>
+                        )}
+                        {departamento.contacto.telefono && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="w-3 h-3 text-[#666666] flex-shrink-0" />
+                            <a 
+                              href={`tel:${departamento.contacto.telefono}`}
+                              className="text-xs text-[#666666] hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {departamento.contacto.telefono}
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Dialog Crear/Editar */}
+          <Dialog open={dialogAbierto} onOpenChange={setDialogAbierto}>
+            <DialogContent className="max-w-md mx-3 sm:mx-auto max-h-[90vh] overflow-y-auto scrollbar-thin">
+              <DialogHeader>
+                <DialogTitle className="text-base sm:text-lg">
+                  {modoEdicion ? t('departments.editDepartment') : t('departments.newDepartment')}
+                </DialogTitle>
+                <DialogDescription className="text-xs sm:text-sm">
+                  {t('departments.formDescription')}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 py-4">
+                <div>
+                  <Label htmlFor="codigo">{t('departments.departmentCode')} *</Label>
+                  <Input
+                    id="codigo"
+                    value={formulario.codigo}
+                    onChange={(e) => setFormulario({ ...formulario, codigo: e.target.value.toUpperCase() })}
+                    placeholder="ENTREPOT"
+                    className="font-mono"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="nombre">{t('departments.departmentName')} *</Label>
+                  <Input
+                    id="nombre"
+                    value={formulario.nombre}
+                    onChange={(e) => setFormulario({ ...formulario, nombre: e.target.value })}
+                    placeholder="Entrepôt"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="icono">{t('departments.icon')}</Label>
+                  <Select
+                    value={formulario.icono}
+                    onValueChange={(value) => setFormulario({ ...formulario, icono: value })}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select an icon">{formulario.icono}</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(iconosDisponibles).map((icono) => (
+                        <SelectItem key={icono} value={icono}>{icono}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="orden">{t('departments.order')}</Label>
+                  <Input
+                    id="orden"
+                    type="number"
+                    value={formulario.orden}
+                    onChange={(e) => setFormulario({ ...formulario, orden: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+
+                {/* Sección de contacto - Solo para ciertos departamentos */}
+                {(formulario.codigo === 'ENTREPOT' || formulario.codigo === 'COMPTOIR' || 
+                  formulario.codigo === 'CUISINE' || formulario.codigo === 'RECRUTEMENT' || 
+                  formulario.codigo === 'LIAISON') && (
+                  <div className="border-t pt-4 mt-4">
+                    <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: branding.primaryColor }}>
+                      <User className="w-4 h-4" />
+                      Informations de contact
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="contacto-nombre" className="flex items-center gap-1.5">
+                          <User className="w-3.5 h-3.5" />
+                          Nom du responsable
+                        </Label>
+                        <Input
+                          id="contacto-nombre"
+                          value={formulario.contacto.nombre}
+                          onChange={(e) => setFormulario({ 
+                            ...formulario, 
+                            contacto: { ...formulario.contacto, nombre: e.target.value }
+                          })}
+                          placeholder="Jean Dupont"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="contacto-cargo" className="flex items-center gap-1.5">
+                          <BriefcaseIcon className="w-3.5 h-3.5" />
+                          Poste
+                        </Label>
+                        <Select
+                          value={formulario.contacto.cargo || ''}
+                          onValueChange={(value) => setFormulario({ 
+                            ...formulario, 
+                            contacto: { ...formulario.contacto, cargo: value }
+                          })}
+                        >
+                          <SelectTrigger id="contacto-cargo">
+                            <SelectValue placeholder="Sélectionner un rôle" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Directeur">Directeur</SelectItem>
+                            <SelectItem value="Coordinateur">Coordinateur</SelectItem>
+                            <SelectItem value="Responsable">Responsable</SelectItem>
+                            <SelectItem value="Chef d'équipe">Chef d'équipe</SelectItem>
+                            <SelectItem value="Superviseur">Superviseur</SelectItem>
+                            <SelectItem value="Assistant">Assistant</SelectItem>
+                            <SelectItem value="Gestionnaire">Gestionnaire</SelectItem>
+                            <SelectItem value="Administrateur">Administrateur</SelectItem>
+                            <SelectItem value="Bénévole">Bénévole</SelectItem>
+                            <SelectItem value="Volontaire">Volontaire</SelectItem>
+                            <SelectItem value="Stagiaire">Stagiaire</SelectItem>
+                            <SelectItem value="Conseiller">Conseiller</SelectItem>
+                            <SelectItem value="Technicien">Technicien</SelectItem>
+                            <SelectItem value="Spécialiste">Spécialiste</SelectItem>
+                            <SelectItem value="Analyste">Analyste</SelectItem>
+                            <SelectItem value="Autre">Autre</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="contacto-email" className="flex items-center gap-1.5">
+                          <Mail className="w-3.5 h-3.5" />
+                          Email
+                        </Label>
+                        <Input
+                          id="contacto-email"
+                          type="email"
+                          value={formulario.contacto.email}
+                          onChange={(e) => setFormulario({ 
+                            ...formulario, 
+                            contacto: { ...formulario.contacto, email: e.target.value }
+                          })}
+                          placeholder="jean.dupont@email.com"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="contacto-telefono" className="flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5" />
+                          Téléphone
+                        </Label>
+                        <Input
+                          id="contacto-telefono"
+                          type="tel"
+                          value={formulario.contacto.telefono}
+                          onChange={(e) => setFormulario({ 
+                            ...formulario, 
+                            contacto: { ...formulario.contacto, telefono: e.target.value }
+                          })}
+                          placeholder="(514) 555-0123"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="contacto-foto" className="flex items-center gap-1.5">
+                          <ImageIcon className="w-3.5 h-3.5" />
+                          Photo de profil (URL)
+                        </Label>
+                        <Input
+                          id="contacto-foto"
+                          type="url"
+                          value={formulario.contacto.foto}
+                          onChange={(e) => setFormulario({ 
+                            ...formulario, 
+                            contacto: { ...formulario.contacto, foto: e.target.value }
+                          })}
+                          placeholder="https://exemple.com/photo.jpg"
+                        />
+                        {formulario.contacto.foto && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <div className="w-12 h-12 rounded-full overflow-hidden border-2" style={{ borderColor: branding.primaryColor }}>
+                              <ImageWithFallback 
+                                src={formulario.contacto.foto} 
+                                alt="Aperçu" 
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <span className="text-xs text-[#666666]">Aperçu de la photo</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Dialog Crear/Editar */}
-        <Dialog open={dialogAbierto} onOpenChange={setDialogAbierto}>
-          <DialogContent className="max-w-md mx-3 sm:mx-auto max-h-[90vh] overflow-y-auto scrollbar-thin">
-            <DialogHeader>
-              <DialogTitle className="text-base sm:text-lg">
-                {modoEdicion ? t('departments.editDepartment') : t('departments.newDepartment')}
-              </DialogTitle>
-              <DialogDescription className="text-xs sm:text-sm">
-                {t('departments.formDescription')}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 py-4">
-              <div>
-                <Label htmlFor="codigo">{t('departments.departmentCode')} *</Label>
-                <Input
-                  id="codigo"
-                  value={formulario.codigo}
-                  onChange={(e) => setFormulario({ ...formulario, codigo: e.target.value.toUpperCase() })}
-                  placeholder="ENTREPOT"
-                  className="font-mono"
-                />
               </div>
 
-              <div>
-                <Label htmlFor="nombre">{t('departments.departmentName')} *</Label>
-                <Input
-                  id="nombre"
-                  value={formulario.nombre}
-                  onChange={(e) => setFormulario({ ...formulario, nombre: e.target.value })}
-                  placeholder="Entrepôt"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="icono">{t('departments.icon')}</Label>
-                <Select
-                  id="icono"
-                  value={formulario.icono}
-                  onValueChange={(value) => setFormulario({ ...formulario, icono: value })}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDialogAbierto(false);
+                    limpiarFormulario();
+                  }}
                 >
-                  <SelectTrigger className="w-full border border-gray-300 rounded-md px-3 py-2">
-                    <SelectValue placeholder="Select an icon">{formulario.icono}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="w-full border border-gray-300 rounded-md px-3 py-2">
-                    {Object.keys(iconosDisponibles).map((icono) => (
-                      <SelectItem key={icono} value={icono}>{icono}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  onClick={handleGuardar}
+                  className="text-white"
+                  style={{ backgroundColor: branding.secondaryColor }}
+                >
+                  {t('common.save')}
+                </Button>
               </div>
+            </DialogContent>
+          </Dialog>
 
-              <div>
-                <Label htmlFor="orden">{t('departments.order')}</Label>
-                <Input
-                  id="orden"
-                  type="number"
-                  value={formulario.orden}
-                  onChange={(e) => setFormulario({ ...formulario, orden: parseInt(e.target.value) || 0 })}
-                />
+          {/* Dialog Eliminar */}
+          <Dialog open={dialogEliminar} onOpenChange={setDialogEliminar}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2" style={{ color: '#c23934' }}>
+                  <Trash2 className="w-5 h-5" />
+                  {t('departments.confirmDelete')}
+                </DialogTitle>
+                <DialogDescription>
+                  {t('departments.confirmDeleteMessage')}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDialogEliminar(false);
+                    setDepartamentoSeleccionado(null);
+                  }}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  onClick={handleEliminar}
+                  className="text-white"
+                  style={{ backgroundColor: '#c23934' }}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {t('common.delete')}
+                </Button>
               </div>
-
-              {/* Sección de contacto - Solo para ciertos departamentos */}
-              {(formulario.codigo === 'ENTREPOT' || formulario.codigo === 'COMPTOIR' || 
-                formulario.codigo === 'CUISINE' || formulario.codigo === 'RECRUTEMENT' || 
-                formulario.codigo === 'LIAISON') && (
-                <div className="border-t pt-4 mt-4">
-                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: branding.primaryColor }}>
-                    <User className="w-4 h-4" />
-                    Informations de contact
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <Label htmlFor="contacto-nombre" className="flex items-center gap-1.5">
-                        <User className="w-3.5 h-3.5" />
-                        Nom du responsable
-                      </Label>
-                      <Input
-                        id="contacto-nombre"
-                        value={formulario.contacto.nombre}
-                        onChange={(e) => setFormulario({ 
-                          ...formulario, 
-                          contacto: { ...formulario.contacto, nombre: e.target.value }
-                        })}
-                        placeholder="Jean Dupont"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="contacto-cargo" className="flex items-center gap-1.5">
-                        <BriefcaseIcon className="w-3.5 h-3.5" />
-                        Poste
-                      </Label>
-                      <Select
-                        value={formulario.contacto.cargo || ''}
-                        onValueChange={(value) => setFormulario({ 
-                          ...formulario, 
-                          contacto: { ...formulario.contacto, cargo: value }
-                        })}
-                      >
-                        <SelectTrigger id="contacto-cargo">
-                          <SelectValue placeholder="Sélectionner un rôle" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Directeur">Directeur</SelectItem>
-                          <SelectItem value="Coordinateur">Coordinateur</SelectItem>
-                          <SelectItem value="Responsable">Responsable</SelectItem>
-                          <SelectItem value="Chef d'équipe">Chef d'équipe</SelectItem>
-                          <SelectItem value="Superviseur">Superviseur</SelectItem>
-                          <SelectItem value="Assistant">Assistant</SelectItem>
-                          <SelectItem value="Gestionnaire">Gestionnaire</SelectItem>
-                          <SelectItem value="Administrateur">Administrateur</SelectItem>
-                          <SelectItem value="Bénévole">Bénévole</SelectItem>
-                          <SelectItem value="Volontaire">Volontaire</SelectItem>
-                          <SelectItem value="Stagiaire">Stagiaire</SelectItem>
-                          <SelectItem value="Conseiller">Conseiller</SelectItem>
-                          <SelectItem value="Technicien">Technicien</SelectItem>
-                          <SelectItem value="Spécialiste">Spécialiste</SelectItem>
-                          <SelectItem value="Analyste">Analyste</SelectItem>
-                          <SelectItem value="Autre">Autre</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="contacto-email" className="flex items-center gap-1.5">
-                        <Mail className="w-3.5 h-3.5" />
-                        Email
-                      </Label>
-                      <Input
-                        id="contacto-email"
-                        type="email"
-                        value={formulario.contacto.email}
-                        onChange={(e) => setFormulario({ 
-                          ...formulario, 
-                          contacto: { ...formulario.contacto, email: e.target.value }
-                        })}
-                        placeholder="jean.dupont@email.com"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="contacto-telefono" className="flex items-center gap-1.5">
-                        <Phone className="w-3.5 h-3.5" />
-                        Téléphone
-                      </Label>
-                      <Input
-                        id="contacto-telefono"
-                        type="tel"
-                        value={formulario.contacto.telefono}
-                        onChange={(e) => setFormulario({ 
-                          ...formulario, 
-                          contacto: { ...formulario.contacto, telefono: e.target.value }
-                        })}
-                        placeholder="(514) 555-0123"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setDialogAbierto(false);
-                  limpiarFormulario();
-                }}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button
-                onClick={handleGuardar}
-                className="text-white"
-                style={{ backgroundColor: branding.secondaryColor }}
-              >
-                {t('common.save')}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Dialog Eliminar */}
-        <Dialog open={dialogEliminar} onOpenChange={setDialogEliminar}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2" style={{ color: '#c23934' }}>
-                <Trash2 className="w-5 h-5" />
-                {t('departments.confirmDelete')}
-              </DialogTitle>
-              <DialogDescription>
-                {t('departments.confirmDeleteMessage')}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="flex justify-end gap-3 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setDialogEliminar(false);
-                  setDepartamentoSeleccionado(null);
-                }}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button
-                onClick={handleEliminar}
-                className="text-white"
-                style={{ backgroundColor: '#c23934' }}
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                {t('common.delete')}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
     );
   }
@@ -610,7 +675,7 @@ export function Departamentos({ onNavigate }: { onNavigate?: (page: string) => v
                 style={{ borderColor: branding.primaryColor }}
               >
                 {branding.logo ? (
-                  <img 
+                  <ImageWithFallback 
                     src={branding.logo} 
                     alt="Logo" 
                     className="h-full w-full rounded-full"

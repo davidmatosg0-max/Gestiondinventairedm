@@ -26,6 +26,7 @@ import { Login } from './components/pages/Login';
 import { CommunicationInterne } from './components/CommunicationInterne';
 import { CuisinePage } from './components/pages/CuisinePage';
 import { ContactosAlmacen } from './components/pages/ContactosAlmacen';
+import { SystemDiagnostics } from './components/SystemDiagnostics';
 import { Toaster } from './components/ui/sonner';
 import { crearOfertasEjemplo } from './utils/ofertaStorage';
 import { inicializarUnidades } from './utils/unidadStorage';
@@ -265,6 +266,8 @@ export default function App() {
         return <CuisinePage onNavigate={setCurrentPage} />;
       case 'contactos-almacen':
         return <ContactosAlmacen />;
+      case 'diagnosticos':
+        return <SystemDiagnostics />;
       default:
         return <Dashboard />;
     }

@@ -48,6 +48,7 @@ import { AddressAutocomplete } from '../ui/address-autocomplete';
 import { Checkbox } from '../ui/checkbox';
 import { LanguageSelector } from '../ui/language-selector';
 import { toast } from 'sonner';
+import { validateDocumentFile } from '../../utils/fileValidation';
 import {
   type ContactoDepartamento,
   type TipoContacto,
@@ -324,19 +325,10 @@ export function FormularioContactoCompacto({
     const validFiles: File[] = [];
 
     Array.from(files).forEach((file) => {
-      // Validar tipo de archivo
-      if (!allowedTypes.includes(file.type)) {
-        toast.error(`Le fichier "${file.name}" n'est pas un format accepté (PDF, JPG, PNG)`);
-        return;
+      // ✅ Validar usando utilidad centralizada
+      if (validateDocumentFile(file, allowedTypes)) {
+        validFiles.push(file);
       }
-
-      // Validar tamaño (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`Le fichier "${file.name}" dépasse la taille maximale de 5MB`);
-        return;
-      }
-
-      validFiles.push(file);
     });
 
     if (validFiles.length > 0) {
@@ -1639,7 +1631,7 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                           Ajouter PDF
                         </Button>
                         <p className="text-[10px] text-gray-400 mt-2">
-                          Formats: PDF, JPG, PNG • Taille max: 5MB
+                          Formats: PDF, JPG, PNG • Taille max: 2MB
                         </p>
                         <input
                           ref={documentInputRef}

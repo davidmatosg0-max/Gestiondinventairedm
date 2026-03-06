@@ -89,7 +89,7 @@ export interface ContactoDepartamento {
 }
 
 const STORAGE_KEY = 'contactos_departamento'; // ✅ CORREGIDO: usar la misma clave que en el resto del código
-const MAX_FOTO_SIZE = 100 * 1024; // 100KB max por foto
+const MAX_FOTO_SIZE = 500 * 1024; // 500KB max por foto (incrementado para evitar pérdida de datos)
 const MAX_DOCUMENT_SIZE = 200 * 1024; // 200KB max por documento
 
 /**
@@ -100,13 +100,21 @@ function optimizarImagen(base64: string, maxSize: number = MAX_FOTO_SIZE): strin
   
   // Calcular tamaño aproximado (base64 es ~1.37x el tamaño original)
   const sizeInBytes = (base64.length * 3) / 4;
+  const sizeMB = sizeInBytes / 1024;
   
-  // Si es muy grande, retornar string vacío (la foto se perderá pero el sistema seguirá funcionando)
-  if (sizeInBytes > maxSize) {
-    console.warn(`⚠️ Foto demasiado grande (${Math.round(sizeInBytes / 1024)}KB), se eliminará para ahorrar espacio`);
+  // Si es menor al tamaño máximo, retornar sin cambios
+  if (sizeInBytes <= maxSize) {
+    return base64;
+  }
+  
+  // Si es extremadamente grande (más de 2MB), eliminar
+  if (sizeMB > 2048) {
+    console.warn(`⚠️ Foto demasiado grande (${Math.round(sizeMB)}KB). Las fotos deben ser menores a 2MB. Foto eliminada.`);
     return '';
   }
   
+  // Si es grande pero manejable, advertir pero mantener
+  console.warn(`⚠️ Foto grande (${Math.round(sizeMB)}KB) detectada. Se recomienda usar fotos de menos de 500KB para mejor rendimiento.`);
   return base64;
 }
 

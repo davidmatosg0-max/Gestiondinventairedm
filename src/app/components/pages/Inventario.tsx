@@ -1245,9 +1245,32 @@ export function Inventario() {
   const totalSeleccionados = productosSeleccionados.filter(p => p.seleccionado).length;
 
   return (
-    <div className="h-[calc(100vh-56px)] sm:h-[calc(100vh-64px)] flex flex-col overflow-hidden -my-3 sm:-my-4 lg:-my-6 -mx-3 sm:-mx-4 lg:-mx-6">
-      <Card className="border-none shadow-none flex-1 flex flex-col overflow-hidden rounded-none w-full">
-        <CardHeader className="border-b card-glass flex-shrink-0 py-4">
+    <div className="relative h-[calc(100vh-56px)] sm:h-[calc(100vh-64px)] flex flex-col overflow-hidden -my-3 sm:-my-4 lg:-my-6 -mx-3 sm:-mx-4 lg:-mx-6">
+      {/* Fondo degradado fijo con glassmorphism */}
+      <div 
+        className="fixed inset-0 -z-10"
+        style={{
+          background: `linear-gradient(135deg, ${branding.primaryColor}15 0%, ${branding.secondaryColor}10 50%, ${branding.primaryColor}08 100%)`
+        }}
+      />
+      
+      {/* Formas decorativas animadas */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div 
+          className="absolute -top-40 -right-40 w-96 h-96 rounded-full opacity-20 blur-3xl animate-pulse"
+          style={{ background: `radial-gradient(circle, ${branding.secondaryColor} 0%, transparent 70%)` }}
+        />
+        <div 
+          className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full opacity-20 blur-3xl animate-pulse"
+          style={{ 
+            background: `radial-gradient(circle, ${branding.primaryColor} 0%, transparent 70%)`,
+            animationDelay: '1s'
+          }}
+        />
+      </div>
+
+      <Card className="border-none shadow-none flex-1 flex flex-col overflow-hidden rounded-none w-full relative z-10">
+        <CardHeader className="border-b backdrop-blur-xl bg-white/90 flex-shrink-0 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div 
