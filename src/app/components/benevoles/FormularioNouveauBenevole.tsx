@@ -67,6 +67,7 @@ interface FormData {
   departement: string[];
   dateNaissance: string;
   sexe: 'Homme' | 'Femme' | 'Autre' | 'Non spécifié';
+  statut: 'actif' | 'inactif' | 'en pause' | 'en attente'; // AGREGADO
   adresse?: string;
   ville?: string;
   codePostal?: string;

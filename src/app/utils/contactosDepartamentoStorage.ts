@@ -88,14 +88,108 @@ export interface ContactoDepartamento {
   imagen?: string | null; // Imagen/foto del contacto
 }
 
-const STORAGE_KEY = 'contactos_departamentos';
+const STORAGE_KEY = 'contactos_departamento'; // ✅ CORREGIDO: usar la misma clave que en el resto del código
+const MAX_FOTO_SIZE = 100 * 1024; // 100KB max por foto
+const MAX_DOCUMENT_SIZE = 200 * 1024; // 200KB max por documento
 
 /**
- * 🛡️ VALIDACIÓN: Garantiza que los contactos vayan al departamento correcto
+ * 🗜️ OPTIMIZACIÓN: Comprime y optimiza imágenes base64 grandes
+ */
+function optimizarImagen(base64: string, maxSize: number = MAX_FOTO_SIZE): string {
+  if (!base64 || !base64.startsWith('data:image')) return base64;
+  
+  // Calcular tamaño aproximado (base64 es ~1.37x el tamaño original)
+  const sizeInBytes = (base64.length * 3) / 4;
+  
+  // Si es muy grande, retornar string vacío (la foto se perderá pero el sistema seguirá funcionando)
+  if (sizeInBytes > maxSize) {
+    console.warn(`⚠️ Foto demasiado grande (${Math.round(sizeInBytes / 1024)}KB), se eliminará para ahorrar espacio`);
+    return '';
+  }
+  
+  return base64;
+}
+
+/**
+ * 🗜️ OPTIMIZACIÓN: Limpia y optimiza un contacto antes de guardarlo
+ */
+function optimizarContacto(contacto: ContactoDepartamento): ContactoDepartamento {
+  const optimizado = { ...contacto };
+  
+  // Optimizar foto
+  if (optimizado.foto) {
+    optimizado.foto = optimizarImagen(optimizado.foto, MAX_FOTO_SIZE);
+  }
+  
+  // Optimizar imagen alternativa
+  if (optimizado.imagen) {
+    optimizado.imagen = optimizarImagen(optimizado.imagen, MAX_FOTO_SIZE);
+  }
+  
+  // Optimizar documentos
+  if (optimizado.documents && optimizado.documents.length > 0) {
+    optimizado.documents = optimizado.documents.map(doc => ({
+      ...doc,
+      url: optimizarImagen(doc.url, MAX_DOCUMENT_SIZE)
+    })).filter(doc => doc.url); // Eliminar documentos sin URL
+  }
+  
+  return optimizado;
+}
+
+/**
+ * 💾 MANEJO DE CUOTA: Intenta guardar en localStorage con manejo de errores
+ */
+function guardarEnLocalStorage(key: string, data: any): boolean {
+  try {
+    const jsonString = JSON.stringify(data);
+    const sizeInMB = (jsonString.length / 1024 / 1024).toFixed(2);
+    console.log(`📦 Intentando guardar ${sizeInMB}MB en localStorage...`);
+    
+    localStorage.setItem(key, jsonString);
+    console.log(`✅ Guardado exitoso (${sizeInMB}MB)`);
+    return true;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'QuotaExceededError') {
+      console.error('❌ QuotaExceededError: localStorage lleno');
+      
+      // Intentar limpiar datos antiguos
+      const contactos = data as ContactoDepartamento[];
+      const contactosOptimizados = contactos.map(optimizarContacto);
+      
+      try {
+        localStorage.setItem(key, JSON.stringify(contactosOptimizados));
+        console.log('✅ Guardado exitoso después de optimizar');
+        return true;
+      } catch (secondError) {
+        console.error('❌ No se pudo guardar ni después de optimizar');
+        alert('⚠️ Espacio de almacenamiento lleno. Por favor, elimine algunos contactos o sus fotos/documentos para liberar espacio.');
+        return false;
+      }
+    }
+    console.error('❌ Error al guardar:', error);
+    return false;
+  }
+}
+
+/**
+ * 🛡️ VALIDACIÓN: Garantiza que los contactos tengan el campo 'activo' definido
+ * NOTA: Las reglas de auto-corrección de departamento están DESACTIVADAS para permitir
+ * que cualquier tipo de contacto pueda ser asignado a cualquier departamento
  */
 function validarYCorregirContacto<T extends Partial<ContactoDepartamento>>(contacto: T): T {
   const contactoValidado = { ...contacto };
   
+  // 🔥 CRÍTICO: Garantizar que TODOS los contactos tengan el campo 'activo' definido
+  if (contacto.activo === undefined) {
+    (contactoValidado as any).activo = true;
+  }
+  
+  // REGLAS DE AUTO-CORRECCIÓN DE DEPARTAMENTO - DESACTIVADAS
+  // Cualquier departamento puede tener cualquier tipo de contacto
+  // Las reglas anteriores limitaban innecesariamente la flexibilidad del sistema
+  
+  /*
   // REGLA 1: Donadores, Fournisseurs, Transportistas y Partenaires van a Entrepôt (ID='2')
   if (contacto.tipo === 'donador' || contacto.tipo === 'fournisseur' || 
       contacto.tipo === 'transportista' || contacto.tipo === 'partenaire') {
@@ -103,11 +197,6 @@ function validarYCorregirContacto<T extends Partial<ContactoDepartamento>>(conta
       console.warn(`⚠️ AUTO-CORRECCIÓN: ${contacto.tipo} debe tener departamentoId='2' (Entrepôt). Corrigiendo...`);
       (contactoValidado as any).departamentoId = '2';
       (contactoValidado as any).departamentoIds = ['2'];
-    }
-    
-    // Por defecto, activar contactos de Entrepôt
-    if (contacto.activo === undefined) {
-      (contactoValidado as any).activo = true;
     }
   }
   
@@ -119,6 +208,7 @@ function validarYCorregirContacto<T extends Partial<ContactoDepartamento>>(conta
       (contactoValidado as any).departamentoIds = ['1'];
     }
   }
+  */
   
   return contactoValidado;
 }
@@ -141,12 +231,27 @@ export function obtenerContactoPorId(id: string): ContactoDepartamento | undefin
 
 export function guardarContacto(contacto: Omit<ContactoDepartamento, 'id'>): ContactoDepartamento {
   const contactos = obtenerContactosDepartamento();
-  const nuevoContacto: ContactoDepartamento = {
+  const nuevoContacto: ContactoDepartamento = optimizarContacto({
     ...validarYCorregirContacto(contacto),
     id: `contacto-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-  };
+  } as ContactoDepartamento);
+  
+  console.log('💾 DEBUG - Guardando nuevo contacto:', nuevoContacto);
+  console.log('  - Nombre:', nuevoContacto.nombre, nuevoContacto.apellido);
+  console.log('  - Tipo:', nuevoContacto.tipo);
+  console.log('  - Activo:', nuevoContacto.activo);
+  console.log('  - DepartamentoId:', nuevoContacto.departamentoId);
+  
   contactos.push(nuevoContacto);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(contactos));
+  
+  // Guardar con manejo de cuota
+  const guardadoExitoso = guardarEnLocalStorage(STORAGE_KEY, contactos);
+  if (!guardadoExitoso) {
+    // Si falla, intentar sin el nuevo contacto
+    throw new Error('No se pudo guardar el contacto por falta de espacio');
+  }
+  
+  console.log('✅ DEBUG - Contacto guardado. Total contactos en sistema:', contactos.length);
   return nuevoContacto;
 }
 
@@ -155,12 +260,12 @@ export function actualizarContacto(id: string, contactoActualizado: Partial<Cont
   const index = contactos.findIndex(c => c.id === id);
   
   if (index !== -1) {
-    contactos[index] = {
+    contactos[index] = optimizarContacto({
       ...contactos[index],
       ...validarYCorregirContacto(contactoActualizado)
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(contactos));
-    return true;
+    } as ContactoDepartamento);
+    
+    return guardarEnLocalStorage(STORAGE_KEY, contactos);
   }
   return false;
 }
@@ -170,8 +275,7 @@ export function eliminarContacto(id: string): boolean {
   const contactosFiltrados = contactos.filter(c => c.id !== id);
   
   if (contactosFiltrados.length < contactos.length) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(contactosFiltrados));
-    return true;
+    return guardarEnLocalStorage(STORAGE_KEY, contactosFiltrados);
   }
   return false;
 }
@@ -674,6 +778,72 @@ export function migrarContactosDesdeEntrepot(): { migrados: number; errores: num
   }
 }
 
+// ===== FUNCIÓN DE DIAGNÓSTICO =====
+export function diagnosticarContactos(): void {
+  console.log('\n🔍 ===== DIAGNÓSTICO DE CONTACTOS =====\n');
+  
+  const todosContactos = obtenerContactosDepartamento();
+  console.log(`📊 Total de contactos en el sistema: ${todosContactos.length}`);
+  
+  // Agrupar por departamento
+  const porDepartamento: { [key: string]: ContactoDepartamento[] } = {};
+  todosContactos.forEach(c => {
+    const deptId = c.departamentoId || 'sin-departamento';
+    if (!porDepartamento[deptId]) {
+      porDepartamento[deptId] = [];
+    }
+    porDepartamento[deptId].push(c);
+  });
+  
+  console.log('\n📂 Contactos por Departamento:');
+  Object.entries(porDepartamento).forEach(([deptId, contactos]) => {
+    const nombresDepts: { [key: string]: string } = {
+      '1': 'Direction',
+      '2': 'Entrepôt',
+      '3': 'Achats',
+      '4': 'Comptoir',
+      '5': 'Finance',
+      '6': 'Communication',
+      '7': 'Recrutement',
+      '8': 'Transport',
+      '9': 'Qualité',
+      '10': 'IT'
+    };
+    const nombreDept = nombresDepts[deptId] || `Dept ${deptId}`;
+    console.log(`\n  📁 ${nombreDept} (ID: ${deptId}) - ${contactos.length} contactos:`);
+    contactos.forEach(c => {
+      console.log(`    • ${c.nombre} ${c.apellido} (tipo: ${c.tipo}, activo: ${c.activo}, email: ${c.email})`);
+    });
+  });
+  
+  // Verificar contactos con problemas
+  console.log('\n⚠️  Verificación de problemas:');
+  const sinActivo = todosContactos.filter(c => c.activo === undefined);
+  const inactivos = todosContactos.filter(c => c.activo === false);
+  const sinDepartamento = todosContactos.filter(c => !c.departamentoId);
+  
+  if (sinActivo.length > 0) {
+    console.log(`  ⚠️  ${sinActivo.length} contactos sin campo 'activo' definido:`);
+    sinActivo.forEach(c => console.log(`    - ${c.nombre} ${c.apellido} (${c.id})`));
+  }
+  
+  if (inactivos.length > 0) {
+    console.log(`  🚫 ${inactivos.length} contactos marcados como inactivos:`);
+    inactivos.forEach(c => console.log(`    - ${c.nombre} ${c.apellido} (${c.id})`));
+  }
+  
+  if (sinDepartamento.length > 0) {
+    console.log(`  ⚠️  ${sinDepartamento.length} contactos sin departamento asignado:`);
+    sinDepartamento.forEach(c => console.log(`    - ${c.nombre} ${c.apellido} (${c.id})`));
+  }
+  
+  if (sinActivo.length === 0 && inactivos.length === 0 && sinDepartamento.length === 0) {
+    console.log('  ✅ No se detectaron problemas');
+  }
+  
+  console.log('\n🔍 ===== FIN DEL DIAGNÓSTICO =====\n');
+}
+
 // ===== FUNCIONES PARA GESTIÓN DE DONADORES PRS =====
 
 /**
@@ -888,6 +1058,88 @@ export function buscarDonadoresPRS(criterios: {
   return resultados;
 }
 
+// ===== FUNCIONES DE UTILIDAD Y MANTENIMIENTO =====
+
+/**
+ * 📊 Obtener información sobre el uso de localStorage
+ */
+export function obtenerInfoAlmacenamiento(): {
+  totalContactos: number;
+  tamañoMB: number;
+  contactosConFotos: number;
+  contactosConDocumentos: number;
+  totalDocumentos: number;
+} {
+  const contactos = obtenerContactosDepartamento();
+  const jsonString = JSON.stringify(contactos);
+  const tamañoBytes = jsonString.length;
+  const tamañoMB = tamañoBytes / 1024 / 1024;
+  
+  const contactosConFotos = contactos.filter(c => c.foto || c.imagen).length;
+  const contactosConDocumentos = contactos.filter(c => c.documents && c.documents.length > 0).length;
+  const totalDocumentos = contactos.reduce((sum, c) => sum + (c.documents?.length || 0), 0);
+  
+  return {
+    totalContactos: contactos.length,
+    tamañoMB: parseFloat(tamañoMB.toFixed(2)),
+    contactosConFotos,
+    contactosConDocumentos,
+    totalDocumentos
+  };
+}
+
+/**
+ * 🗑️ Eliminar todas las fotos de los contactos (para liberar espacio)
+ */
+export function eliminarTodasLasFotos(): number {
+  const contactos = obtenerContactosDepartamento();
+  let fotosEliminadas = 0;
+  
+  contactos.forEach(contacto => {
+    if (contacto.foto || contacto.imagen) {
+      fotosEliminadas++;
+      contacto.foto = '';
+      contacto.imagen = null;
+    }
+  });
+  
+  if (fotosEliminadas > 0) {
+    guardarEnLocalStorage(STORAGE_KEY, contactos);
+  }
+  
+  return fotosEliminadas;
+}
+
+/**
+ * 🗑️ Eliminar todos los documentos de los contactos (para liberar espacio)
+ */
+export function eliminarTodosLosDocumentos(): number {
+  const contactos = obtenerContactosDepartamento();
+  let documentosEliminados = 0;
+  
+  contactos.forEach(contacto => {
+    if (contacto.documents && contacto.documents.length > 0) {
+      documentosEliminados += contacto.documents.length;
+      contacto.documents = [];
+    }
+  });
+  
+  if (documentosEliminados > 0) {
+    guardarEnLocalStorage(STORAGE_KEY, contactos);
+  }
+  
+  return documentosEliminados;
+}
+
+/**
+ * 🗜️ Optimizar todos los contactos existentes
+ */
+export function optimizarTodosLosContactos(): void {
+  const contactos = obtenerContactosDepartamento();
+  const contactosOptimizados = contactos.map(optimizarContacto);
+  guardarEnLocalStorage(STORAGE_KEY, contactosOptimizados);
+}
+
 /**
  * FUNCIÓN DE LIMPIEZA: Eliminar contactos fournisseur obsoletos
  * Elimina los contactos "Distribution Alimentaire QC" y "Aliments Secs Laval"
@@ -924,50 +1176,52 @@ export function eliminarFournisseursObsoletos(): number {
 }
 
 /**
- * 🔍 FUNCIÓN DE DIAGNÓSTICO: Diagnosticar problemas con contactos fournisseur
- * Muestra información detallada sobre todos los contactos en el sistema
+ * FUNCIÓN DE REPARACIÓN: Corregir contactos con problemas
+ * Garantiza que todos los contactos tengan el campo 'activo' definido
  */
-export function diagnosticarContactos(): void {
-  console.log('🔍 ===== DIAGNÓSTICO DE CONTACTOS =====');
+export function repararContactosConProblemas(): { reparados: number; errores: number } {
+  console.log('\n🔧 ===== INICIANDO REPARACIÓN DE CONTACTOS =====\n');
   
   const todosContactos = obtenerContactosDepartamento();
-  console.log(`📊 Total contactos en sistema: ${todosContactos.length}`);
+  let reparados = 0;
+  let errores = 0;
   
-  // Agrupar por departamento
-  const porDepartamento = todosContactos.reduce((acc, c) => {
-    acc[c.departamentoId] = acc[c.departamentoId] || [];
-    acc[c.departamentoId].push(c);
-    return acc;
-  }, {} as Record<string, ContactoDepartamento[]>);
+  console.log(`📊 Total de contactos a verificar: ${todosContactos.length}`);
   
-  console.log('📁 Contactos por departamento:');
-  Object.keys(porDepartamento).forEach(deptId => {
-    console.log(`  Dept ${deptId}: ${porDepartamento[deptId].length} contactos`);
+  const contactosReparados = todosContactos.map(contacto => {
+    let necesitaReparacion = false;
+    const contactoReparado = { ...contacto };
+    
+    // REPARACIÓN 1: Garantizar campo 'activo'
+    if (contacto.activo === undefined) {
+      console.log(`⚠️  Reparando contacto sin campo 'activo': ${contacto.nombre} ${contacto.apellido}`);
+      contactoReparado.activo = true;
+      necesitaReparacion = true;
+    }
+    
+    // REPARACIÓN 2: Garantizar departamentoId
+    if (!contacto.departamentoId) {
+      console.log(`⚠️  Reparando contacto sin departamentoId: ${contacto.nombre} ${contacto.apellido}`);
+      contactoReparado.departamentoId = '1'; // Asignar a Direction por defecto
+      necesitaReparacion = true;
+    }
+    
+    if (necesitaReparacion) {
+      reparados++;
+      console.log(`✅ Contacto reparado: ${contactoReparado.nombre} ${contactoReparado.apellido}`);
+    }
+    
+    return contactoReparado;
   });
   
-  // Agrupar por tipo
-  const porTipo = todosContactos.reduce((acc, c) => {
-    acc[c.tipo] = acc[c.tipo] || [];
-    acc[c.tipo].push(c);
-    return acc;
-  }, {} as Record<string, ContactoDepartamento[]>);
+  if (reparados > 0) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(contactosReparados));
+    console.log(`\n✅ Reparación completada: ${reparados} contactos reparados`);
+  } else {
+    console.log('\n✅ No se encontraron contactos que necesiten reparación');
+  }
   
-  console.log('🏷️ Contactos por tipo:');
-  Object.keys(porTipo).forEach(tipo => {
-    const activos = porTipo[tipo].filter(c => c.activo).length;
-    console.log(`  ${tipo}: ${porTipo[tipo].length} total (${activos} activos)`);
-  });
+  console.log('\n🔧 ===== FIN DE LA REPARACIÓN =====\n');
   
-  // Detalles de fournisseurs
-  const fournisseurs = todosContactos.filter(c => c.tipo === 'fournisseur');
-  console.log(`\n🏢 FOURNISSEURS (${fournisseurs.length} total):`);
-  fournisseurs.forEach(f => {
-    console.log(`  - ${f.nombre} ${f.apellido}`);
-    console.log(`    Email: ${f.email}`);
-    console.log(`    Activo: ${f.activo}`);
-    console.log(`    Departamento: ${f.departamentoId}`);
-    console.log(`    Tipo: "${f.tipo}"`);
-  });
-  
-  console.log('🔍 ===== FIN DIAGNÓSTICO =====');
+  return { reparados, errores };
 }

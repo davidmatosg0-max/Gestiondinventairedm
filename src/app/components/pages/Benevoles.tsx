@@ -122,7 +122,7 @@ interface Benevole {
   departement: string;
   disponibilites: string;
   disponibilidadesSemanal?: DisponibilidadDiaBenevole[]; // NUEVO - Disponibilidades estructuradas
-  statut: 'actif' | 'inactif' | 'en pause';
+  statut: 'actif' | 'inactif' | 'en pause' | 'en attente';
   heuresTotal: number;
   heuresMois: number;
   dateInscription: string;
@@ -203,7 +203,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       { jour: 'Samedi', am: false, pm: false },
       { jour: 'Dimanche', am: false, pm: false }
     ],
-    statut: 'actif' as 'actif' | 'inactif' | 'en pause',
+    statut: 'actif' as 'actif' | 'inactif' | 'en pause' | 'en attente',
     sexe: 'Non spécifié' as 'Homme' | 'Femme' | 'Autre' | 'Non spécifié',
     dateInscription: new Date().toISOString().split('T')[0],
     dateNaissance: '',
@@ -247,7 +247,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       { jour: 'Samedi', am: false, pm: false },
       { jour: 'Dimanche', am: false, pm: false }
     ],
-    statut: 'actif' as 'actif' | 'inactif' | 'en pause',
+    statut: 'actif' as 'actif' | 'inactif' | 'en pause' | 'en attente',
     sexe: 'Non spécifié' as 'Homme' | 'Femme' | 'Autre' | 'Non spécifié',
     dateInscription: new Date().toISOString().split('T')[0],
     dateNaissance: '',
@@ -998,7 +998,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       prenom: '',
       email: '',
       telephone: '',
-      departement: '',
+      departement: [] as string[],
       disponibilites: '',
       disponibilidadesSemanal: [
         { jour: 'Lundi', am: false, pm: false },
@@ -1009,8 +1009,8 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         { jour: 'Samedi', am: false, pm: false },
         { jour: 'Dimanche', am: false, pm: false }
       ],
-      statut: 'actif',
-      sexe: 'Non spécifié',
+      statut: 'actif' as 'actif' | 'inactif' | 'en pause' | 'en attente',
+      sexe: 'Non spécifié' as 'Homme' | 'Femme' | 'Autre' | 'Non spécifié',
       dateInscription: new Date().toISOString().split('T')[0],
       dateNaissance: '',
       langues: [],
@@ -2182,6 +2182,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                   <SelectItem value="all">Tous les statuts</SelectItem>
                   <SelectItem value="actif">Actif</SelectItem>
                   <SelectItem value="en pause">En pause</SelectItem>
+                  <SelectItem value="en attente">En attente</SelectItem>
                   <SelectItem value="inactif">Inactif</SelectItem>
                 </SelectContent>
               </Select>
@@ -3116,7 +3117,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         case 'departement':
           return ['tous', ...departements];
         case 'statut':
-          return ['tous', 'actif', 'inactif', 'en pause'];
+          return ['tous', 'actif', 'inactif', 'en pause', 'en attente'];
         default:
           return ['tous'];
       }
@@ -3779,7 +3780,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         case 'departement':
           return ['tous', ...departements];
         case 'statut':
-          return ['tous', 'actif', 'inactif', 'en pause'];
+          return ['tous', 'actif', 'inactif', 'en pause', 'en attente'];
         case 'benevole':
           return ['tous', ...benevoles.map(b => `${b.prenom} ${b.nom}`)];
         default:

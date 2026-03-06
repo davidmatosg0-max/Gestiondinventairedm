@@ -101,6 +101,7 @@ interface FormularioContactoCompactoProps {
   updateDisponibilidad: (index: number, field: 'am' | 'pm', value: boolean) => void;
   tiposPermitidos: TipoContacto[];
   departamentoId?: string; // Nuevo: para identificar el departamento
+  departamentoNombre?: string; // Nuevo: nombre del departamento para mostrar
 }
 
 // Mapeo de iconos
@@ -124,7 +125,8 @@ export function FormularioContactoCompacto({
   getTipoConfig,
   updateDisponibilidad,
   tiposPermitidos,
-  departamentoId // Nuevo parámetro
+  departamentoId, // Nuevo parámetro
+  departamentoNombre = 'Département' // Nuevo parámetro con valor por defecto
 }: FormularioContactoCompactoProps) {
   const branding = useBranding();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -457,6 +459,7 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
     <Dialog open={abierto} onOpenChange={onCerrar}>
       <DialogContent 
         className="w-full h-full sm:w-screen sm:h-screen md:w-screen md:h-screen max-w-none overflow-hidden p-0 m-0 rounded-none"
+        aria-describedby="contact-form-description"
       >
         <div className="h-screen w-screen flex flex-col overflow-hidden">
           <DialogHeader className="flex-none bg-white border-b-2 border-[#E0E0E0] px-3 sm:px-4 md:px-6 py-2 sm:py-3 shadow-sm z-10">
@@ -1043,8 +1046,23 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                       />
                     </div>
 
-                    {/* 🎯 DÉPARTEMENTS - Sección destacada y visible */}
-                    {(formulario.tipo === 'benevole' || formulario.tipo === 'employe' || formulario.tipo === 'responsable-sante' || formulario.tipo === 'partenaire') && (
+                    {/* 📍 INFORMACIÓN DE DEPARTAMENTO - Muestra dónde se guardará el contacto */}
+                    <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-3" style={{ borderColor: branding.primaryColor }}>
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-5 h-5" style={{ color: branding.primaryColor }} />
+                        <div className="flex-1">
+                          <p className="text-xs font-semibold text-[#333333]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                            Département assigné automatiquement:
+                          </p>
+                          <p className="text-sm font-bold mt-1" style={{ color: branding.primaryColor, fontFamily: 'Montserrat, sans-serif' }}>
+                            {departamentoNombre}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 🎯 DÉPARTEMENTS - OCULTADO: El departamento se asigna automáticamente según el módulo actual */}
+                    {false && (formulario.tipo === 'benevole' || formulario.tipo === 'employe' || formulario.tipo === 'responsable-sante' || formulario.tipo === 'partenaire') && (
                       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 rounded-xl p-4" style={{ borderColor: branding.primaryColor }}>
                         <div className="flex items-center gap-2 mb-3">
                           <Building2 className="w-5 h-5" style={{ color: branding.primaryColor }} />
@@ -1662,10 +1680,10 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
 
       {/* Dialog: Gestión de Tipos */}
       <Dialog open={dialogGestionTipos} onOpenChange={setDialogGestionTipos}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby="gestion-tipos-description">
           <DialogHeader>
             <DialogTitle>Gestion des Types de Contact</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="gestion-tipos-description">
               Créez, modifiez ou supprimez des types de contact personnalisés. Tous les types sont sauvegardés de manière permanente.
             </DialogDescription>
           </DialogHeader>
@@ -1736,10 +1754,10 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
         setDialogEditarTipo(open);
         if (!open) limpiarFormularioTipo();
       }}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-xl" aria-describedby="editar-tipo-description">
           <DialogHeader>
             <DialogTitle>{tipoEditando ? 'Modifier le type' : 'Créer un nouveau type'}</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="editar-tipo-description">
               Définissez les propriétés du type de contact
             </DialogDescription>
           </DialogHeader>
@@ -1845,10 +1863,10 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
 
       {/* Dialog: Gestión de Tipos de Documentos */}
       <Dialog open={dialogGestionDocumentos} onOpenChange={setDialogGestionDocumentos}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto" aria-describedby="gestion-documentos-description">
           <DialogHeader>
             <DialogTitle>Gestion des Types de Documents</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="gestion-documentos-description">
               Créez, modifiez ou supprimez des types de documents estandarizados. 
               Les modifications affecteront tous les documents de ce type dans tous les contacts.
             </DialogDescription>
@@ -1941,12 +1959,12 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
         setDialogEditarDocumento(open);
         if (!open) limpiarFormularioTipoDocumento();
       }}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-xl" aria-describedby="editar-documento-description">
           <DialogHeader>
             <DialogTitle>
               {documentoEditando ? 'Modifier le type de document' : 'Créer un nouveau type de document'}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="editar-documento-description">
               Définissez les propriétés du type de document. 
               {documentoEditando && ' Les modifications affecteront tous les documents de ce type.'}
             </DialogDescription>
@@ -2063,10 +2081,10 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
 
       {/* Dialog: Seleccionar Tipo de Documento */}
       <Dialog open={dialogSeleccionarTipo} onOpenChange={setDialogSeleccionarTipo}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="seleccionar-tipo-description">
           <DialogHeader>
             <DialogTitle>Sélectionner le type de document</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="seleccionar-tipo-description">
               Choisissez le type de document pour {archivosPendientes.length} fichier(s)
             </DialogDescription>
           </DialogHeader>
@@ -2115,10 +2133,10 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
 
       {/* Dialog: Exportar/Importar Tipos */}
       <Dialog open={dialogExportarImportar} onOpenChange={setDialogExportarImportar}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="exportar-importar-description">
           <DialogHeader>
             <DialogTitle>Exporter / Importer Types de Contact</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="exportar-importar-description">
               Sauvegardez ou restaurez vos types de contact personnalisés
             </DialogDescription>
           </DialogHeader>

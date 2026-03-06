@@ -32,7 +32,9 @@ import {
   Settings,
   Link,
   RefreshCw,
-  Shield
+  Shield,
+  Database,
+  HardDrive
 } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
@@ -54,6 +56,12 @@ import {
   eliminarContacto,
   contarContactosPorTipo,
   migrarContactosDesdeEntrepot,
+  diagnosticarContactos,
+  repararContactosConProblemas,
+  obtenerInfoAlmacenamiento,
+  eliminarTodasLasFotos,
+  eliminarTodosLosDocumentos,
+  optimizarTodosLosContactos,
   type ContactoDepartamento,
   type TipoContacto,
   type IdiomaContacto,
@@ -102,7 +110,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
   const [dialogNuevoIdioma, setDialogNuevoIdioma] = useState(false);
   const [nuevoIdioma, setNuevoIdioma] = useState({ code: '', label: '', flag: '', color: branding.primaryColor });
 
-  // Estados para asignación de voluntarios existentes
+  // Estados para asignación de voluntarios existents
   const [dialogAsignarBenevole, setDialogAsignarBenevole] = useState(false);
   const [busquedaBenevole, setBusquedaBenevole] = useState('');
   const [benevolesDisponibles, setBenevolesDisponibles] = useState<any[]>([]);
@@ -111,7 +119,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
   const [dialogEditarDepartamentos, setDialogEditarDepartamentos] = useState(false);
   const [departamentosEditando, setDepartamentosEditando] = useState<string[]>([]);
 
-  // NUEVO: Estados para asignar rol y acceso al sistema
+  // NUEVO: Estados para asignar rol y acceso al système
   const [dialogAsignarRolOpen, setDialogAsignarRolOpen] = useState(false);
   const [contactoParaRol, setContactoParaRol] = useState<{
     id: string;
@@ -124,9 +132,24 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
     modulo: 'organismo' | 'benevole' | 'donador' | 'vendedor';
   } | null>(null);
 
+  // Estados para modal de diagnóstico
+  const [dialogDiagnostico, setDialogDiagnostico] = useState(false);
+  const [diagnosticoResultado, setDiagnosticoResultado] = useState<{
+    total: number;
+    porDepartamento: { [key: string]: any[] };
+    problemas: {
+      sinActivo: any[];
+      inactivos: any[];
+      sinDepartamento: any[];
+    };
+  } | null>(null);
+
+  // Estados para modal de información de almacenamiento
+  const [dialogAlmacenamiento, setDialogAlmacenamiento] = useState(false);
+
   const diasSemana = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
-  // Roles disponibles del sistema
+  // Roles disponibles du système
   const rolesDisponibles = [
     {
       id: 'admin',
@@ -154,10 +177,10 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
     }
   ];
 
-  // NUEVO: Definir tipos de contacto disponibles según el departamento
+  // NUEVO: Definir types de contacto disponibles selon le département
   const getTiposPermitidos = (): TipoContacto[] => {
-    // TODOS los departamentos tienen acceso a todos los tipos EXCEPTO bénévoles
-    // Los bénévoles solo se pueden crear en el módulo de Recrutement
+    // TODOS les départements ont accès à tous les types EXCEPTO bénévoles
+    // Les bénévoles ne peuvent être créés que dans le module de Recrutement
     return ['donador', 'fournisseur', 'responsable-sante', 'partenaire', 'visiteur', 'employe', 'transportista'];
   };
 
@@ -165,8 +188,8 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
 
   const [formulario, setFormulario] = useState<Omit<ContactoDepartamento, 'id'>>({
     departamentoId,
-    departamentoIds: [departamentoId], // Inicializar con el departamento actual seleccionado
-    tipo: 'employe', // Cambiado de 'benevole' - Los bénévoles solo se crean en Recrutement
+    departamentoIds: [departamentoId], // Initialiser avec le département actuel sélectionné
+    tipo: 'employe', // Changé de 'benevole' - Les bénévoles ne sont créés que dans Recrutement
     nombre: '',
     apellido: '',
     fechaNacimiento: '',
@@ -195,8 +218,8 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
   });
 
   useEffect(() => {
-    // Inicializar tipos de contacto predeterminados (si es primera vez)
-    obtenerTiposContacto(); // Esto ejecuta la función de inicialización automáticamente
+    // Initialiser les types de contact par défaut (si première fois)
+    obtenerTiposContacto(); // Cela exécute la fonction d'initialisation automatiquement
     cargarContactos();
     cargarIdiomasPersonalizados();
     cargarBenevolesDisponibles();
@@ -204,7 +227,29 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
 
   const cargarContactos = () => {
     const contactosData = obtenerContactosDepartamento(departamentoId);
+    console.log('🔍 DEBUG - Contactos cargados pour département', departamentoId, ':', contactosData);
+    console.log('🔍 DEBUG - Total contactos:', contactosData.length);
+    contactosData.forEach(c => {
+      console.log(`  - ${c.nombre} ${c.apellido} (tipo: ${c.tipo}, activo: ${c.activo}, deptId: ${c.departamentoId})`);
+    });
     setContactos(contactosData);
+    
+    // 🚨 DIAGNÓSTICO ADICIONAL: Verificar localStorage directamente
+    const allContactosRaw = localStorage.getItem('contactos_departamento');
+    if (allContactosRaw) {
+      const allContactos = JSON.parse(allContactosRaw);
+      console.log(`📦 DEBUG - Total contactos en localStorage: ${allContactos.length}`);
+      console.log('📦 DEBUG - Contactos por departamento:');
+      const byDept: any = {};
+      allContactos.forEach((c: any) => {
+        if (!byDept[c.departamentoId]) byDept[c.departamentoId] = [];
+        byDept[c.departamentoId].push(`${c.nombre} ${c.apellido} (${c.tipo}, activo:${c.activo})`);
+      });
+      Object.entries(byDept).forEach(([dept, contacts]: [string, any]) => {
+        console.log(`  📁 Dept ${dept}: ${contacts.length} contactos`);
+        contacts.forEach((c: any) => console.log(`    ${c}`));
+      });
+    }
   };
 
   const cargarIdiomasPersonalizados = () => {
@@ -213,29 +258,29 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
   };
 
   const cargarBenevolesDisponibles = () => {
-    // Obtener voluntarios desde localStorage (donde se guardan en le módulo Benevoles)
+    // Obtenir les bénévoles depuis localStorage (où ils sont stockés dans le module Benevoles)
     const benevolesData = localStorage.getItem('benevoles');
     if (benevolesData) {
       try {
         const benevoles = JSON.parse(benevolesData);
         setBenevolesDisponibles(benevoles);
       } catch (error) {
-        console.error('Error al cargar benevoles:', error);
+        console.error('Erreur lors du chargement des bénévoles:', error);
       }
     }
   };
 
-  // Función para obtener en qué departamentos está asignado un voluntario
+  // Fonction pour obtenir dans quels départements un bénévole est assigné
   const obtenerDepartamentosAsignados = (email: string): string[] => {
     const departamentosAsignados: string[] = [];
     
-    // Buscar en todos les departamentos
+    // Rechercher dans tous les départements
     const departamentosIds = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
     departamentosIds.forEach(deptId => {
       const contactosDept = obtenerContactosDepartamento(deptId);
       const yaAsignado = contactosDept.some(c => c.email === email && c.tipo === 'benevole');
       if (yaAsignado) {
-        // Obtener le nom du département
+        // Obtenir le nom du département
         const nombresDepts: { [key: string]: string } = {
           '1': 'Direction',
           '2': 'Entrepôt',
@@ -262,7 +307,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
   };
 
   const asignarBenevoleExistente = (benevole: any) => {
-    // Verificar si el voluntario ya está asignado a este departamento
+    // Vérifier si le bénévole est déjà assigné à ce département
     const yaAsignado = contactos.some(c => 
       c.email === benevole.email && c.tipo === 'benevole'
     );
@@ -272,7 +317,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       return;
     }
 
-    // Crear contacto basado en le voluntario existente
+    // Créer un contact basé sur le bénévole existant
     const nuevoContacto: Omit<ContactoDepartamento, 'id'> = {
       departamentoId,
       tipo: 'benevole',
@@ -307,10 +352,18 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       documents: benevole.documents || []
     };
 
-    guardarContacto(nuevoContacto);
-    toast.success(`Bénévole ${benevole.nom || benevole.nombre} ${benevole.prenom || benevole.apellido} assigné avec succès`);
-    cargarContactos();
-    setDialogAsignarBenevole(false);
+    try {
+      const contactoGuardado = guardarContacto(nuevoContacto);
+      toast.success(`Bénévole ${benevole.nom || benevole.nombre} ${benevole.prenom || benevole.apellido} assigné avec succès`);
+      
+      // ✅ SOLUCIÓN DEFINITIVA: Agregar el contacto inmediatamente al estado
+      setContactos(prevContactos => [...prevContactos, contactoGuardado]);
+      
+      setDialogAsignarBenevole(false);
+    } catch (error) {
+      console.error('❌ Error al asignar bénévole:', error);
+      toast.error('Espace de stockage insuffisant. Veuillez supprimer des contacts, photos ou documents.');
+    }
   };
 
   const abrirDialogoNuevo = () => {
@@ -335,7 +388,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
     setFormulario({
       departamentoId,
       departamentoIds: [departamentoId],
-      tipo: 'employe', // Cambiado de 'benevole' - Los bénévoles solo se crean en Recrutement
+      tipo: 'employe', // Changé de 'benevole' - Les bénévoles ne sont créés que dans Recrutement
       nombre: '',
       apellido: '',
       fechaNacimiento: '',
@@ -386,36 +439,45 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       return;
     }
 
-    // Validar que al menos un departamento esté seleccionado
-    if (!formulario.departamentoIds || formulario.departamentoIds.length === 0) {
-      toast.error('⚠️ Vous devez sélectionner au moins un département');
-      return;
-    }
+    console.log('🚀 DEBUG - Iniciando guardado de contacto...');
+    console.log('  - Modo edición:', modoEdicion);
+    console.log('  - Formulario completo:', formulario);
+    console.log('  - Departamento actual (forzado):', departamentoId);
 
     if (modoEdicion && contactoSeleccionado) {
       actualizarContacto(contactoSeleccionado.id, formulario);
       toast.success('Contact mis à jour avec succès');
+      cargarContactos();
     } else {
-      // Si el contacto tiene departamentoIds (múltiples departamentos seleccionados)
-      if (formulario.departamentoIds && formulario.departamentoIds.length > 0) {
-        // Guardar el contacto en cada departamento seleccionado
-        formulario.departamentoIds.forEach((deptId) => {
-          const contactoParaDept = {
-            ...formulario,
-            departamentoId: deptId, // Asignar el departamento específico
-            departamentoIds: formulario.departamentoIds // Mantener la lista de todos los departamentos
-          };
-          guardarContacto(contactoParaDept);
+      // 🔒 FORZAR EL DEPARTAMENTO ACTUAL - No permitir cambios
+      const contactoParaGuardar = {
+        ...formulario,
+        departamentoId: departamentoId, // ✅ FORZAR el departamento actual
+        departamentoIds: [departamentoId], // ✅ FORZAR el departamento actual
+        activo: true // ✅ GARANTIZAR que el campo activo esté definido
+      };
+      
+      console.log('📝 DEBUG - Guardando contacto en departamento actual:', contactoParaGuardar);
+      
+      try {
+        const contactoGuardado = guardarContacto(contactoParaGuardar);
+        console.log(`✅ DEBUG - Contacto guardado con ID: ${contactoGuardado.id}`);
+        
+        // ✅ SOLUCIÓN DEFINITIVA: Agregar el contacto inmediatamente al estado
+        setContactos(prevContactos => {
+          const nuevosContactos = [...prevContactos, contactoGuardado];
+          console.log('✅ Estado actualizado con nuevo contacto. Total:', nuevosContactos.length);
+          return nuevosContactos;
         });
-        toast.success(`Contact créé dans ${formulario.departamentoIds.length} département(s)`);
-      } else {
-        // Si no hay departamentoIds, guardar normalmente en el departamento actual
-        guardarContacto(formulario);
+        
         toast.success('Contact créé avec succès');
+      } catch (error) {
+        console.error('❌ Error al guardar contacto:', error);
+        toast.error('Espace de stockage insuffisant. Veuillez supprimer des photos ou documents.');
+        return; // No cerrar el diálogo para que el usuario pueda modificar
       }
     }
 
-    cargarContactos();
     setDialogAbierto(false);
     limpiarFormulario();
   };
@@ -424,31 +486,37 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
     if (contactoSeleccionado) {
       eliminarContacto(contactoSeleccionado.id);
       toast.success('Contact supprimé avec succès');
-      cargarContactos();
+      
+      // ✅ SOLUCIÓN DEFINITIVA: Actualizar el estado inmediatamente
+      setContactos(prevContactos => prevContactos.filter(c => c.id !== contactoSeleccionado.id));
+      
       setDialogEliminar(false);
       setContactoSeleccionado(null);
     }
   };
 
   const toggleIdioma = (idioma: IdiomaContacto) => {
-    const idiomasActuales = formulario.idiomas || [];
-    const nuevosIdiomas = idiomasActuales.includes(idioma)
-      ? idiomasActuales.filter(i => i !== idioma)
-      : [...idiomasActuales, idioma];
-    setFormulario({ ...formulario, idiomas: nuevosIdiomas });
+    const idiomasActuels = formulario.idiomas || [];
+    const nouveauxIdiomas = idiomasActuels.includes(idioma)
+      ? idiomasActuels.filter(i => i !== idioma)
+      : [...idiomasActuels, idioma];
+    setFormulario({ ...formulario, idiomas: nouveauxIdiomas });
   };
 
   const updateDisponibilidad = (index: number, field: 'am' | 'pm', value: boolean) => {
     setFormulario(prev => {
-      const nuevasDisponibilidades = [...(prev.disponibilidades || [])];
-      nuevasDisponibilidades[index] = { ...nuevasDisponibilidades[index], [field]: value };
-      return { ...prev, disponibilidades: nuevasDisponibilidades };
+      const nouvellesDisponibilites = [...(prev.disponibilidades || [])];
+      nouvellesDisponibilites[index] = { ...nouvellesDisponibilites[index], [field]: value };
+      return { ...prev, disponibilidades: nouvellesDisponibilites };
     });
   };
 
   const contactosFiltrados = contactos.filter(contacto => {
-    // Filtrar solo contactos activos
-    if (!contacto.activo) return false;
+    // Filtrer seulement les contacts actifs (ou sans le champ activo défini pour la compatibilité)
+    if (contacto.activo === false) {
+      console.log(`❌ Filtrado contacto inactivo: ${contacto.nombre} ${contacto.apellido}`);
+      return false;
+    }
     
     const searchText = busqueda.toLowerCase();
     const matchBusqueda = busqueda === '' || 
@@ -459,13 +527,23 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
     
     const matchTipo = tipoFiltro === 'todos' || contacto.tipo === tipoFiltro;
     
+    if (!matchBusqueda) {
+      console.log(`❌ Filtrado por búsqueda: ${contacto.nombre} ${contacto.apellido} (búsqueda: "${busqueda}")`);
+    }
+    if (!matchTipo) {
+      console.log(`❌ Filtrado por tipo: ${contacto.nombre} ${contacto.apellido} (tipo: ${contacto.tipo}, filtro: ${tipoFiltro})`);
+    }
+    
     return matchBusqueda && matchTipo;
   });
+  
+  // Log final de resultados filtrados
+  console.log(`✅ Contactos después de filtros: ${contactosFiltrados.length}/${contactos.length}`);
 
   const estadisticas = contarContactosPorTipo(departamentoId);
 
   const getTipoConfig = (tipo: TipoContacto) => {
-    // Primero buscar en tipos personalizados creados por el usuario
+    // D'abord rechercher dans les types personnalisés créés par l'utilisateur
     const tiposPersonalizados = obtenerTiposContacto();
     const tipoPersonalizado = tiposPersonalizados.find(t => t.code === tipo);
     
@@ -479,7 +557,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       };
     }
     
-    // Si no existe en personalizados, usar configuración predeterminada
+    // Si n'existe pas dans les personnalisés, utiliser la configuration par défaut
     const configs = {
       donador: { 
         color: '#FCD34D', 
@@ -540,7 +618,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         cargarContactos();
         toast.success(`✅ Migration réussie! ${resultado.migrados} contact(s) migré(s).`);
         
-        // Disparer evento personalizado
+        // Déclencher un événement personnalisé
         window.dispatchEvent(new CustomEvent('contactos-migrados', { 
           detail: { departamentoId, migrados: resultado.migrados } 
         }));
@@ -556,7 +634,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
 
   return (
     <div className="space-y-6">
-      {/* Header con estadísticas */}
+      {/* Header avec statistiques */}
       <div className="card-glass rounded-2xl shadow-xl p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
@@ -586,6 +664,70 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                 <Plus className="w-4 h-4 mr-2" />
                 Nouveau Contact
               </Button>
+              <Button
+                onClick={() => {
+                  // Ejecutar diagnóstico
+                  const todosContactos = obtenerContactosDepartamento();
+                  
+                  // Agrupar par département
+                  const porDepartamento: { [key: string]: any[] } = {};
+                  todosContactos.forEach(c => {
+                    const deptId = c.departamentoId || 'sin-departamento';
+                    if (!porDepartamento[deptId]) {
+                      porDepartamento[deptId] = [];
+                    }
+                    porDepartamento[deptId].push(c);
+                  });
+                  
+                  // Verificar problemas
+                  const sinActivo = todosContactos.filter(c => c.activo === undefined);
+                  const inactivos = todosContactos.filter(c => c.activo === false);
+                  const sinDepartamento = todosContactos.filter(c => !c.departamentoId);
+                  
+                  setDiagnosticoResultado({
+                    total: todosContactos.length,
+                    porDepartamento,
+                    problemas: {
+                      sinActivo,
+                      inactivos,
+                      sinDepartamento
+                    }
+                  });
+                  
+                  setDialogDiagnostico(true);
+                  diagnosticarContactos(); // También imprimir en consola
+                }}
+                variant="outline"
+                title="Diagnostic du système de contacts"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                🔍 Diagnostic
+              </Button>
+              <Button
+                onClick={() => {
+                  const resultado = repararContactosConProblemas();
+                  if (resultado.reparados > 0) {
+                    toast.success(`🔧 ${resultado.reparados} contact(s) réparé(s) avec succès!`);
+                    cargarContactos(); // Recargar la lista
+                  } else {
+                    toast.info('✅ Aucun contact à réparer');
+                  }
+                }}
+                variant="outline"
+                title="Réparer les contacts avec problèmes"
+                style={{ borderColor: branding.secondaryColor, color: branding.secondaryColor }}
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                🔧 Réparer
+              </Button>
+              <Button
+                onClick={() => setDialogAlmacenamiento(true)}
+                variant="outline"
+                title="Information sur le stockage"
+              >
+                <HardDrive className="w-4 h-4 mr-2" />
+                💾 Stockage
+              </Button>
             </div>
             <div className="flex items-start gap-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
               <span className="text-blue-600 text-sm">ℹ️</span>
@@ -597,7 +739,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
           </div>
         </div>
 
-        {/* Estadísticas */}
+        {/* Statistiques */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {Object.entries(estadisticas)
             .filter(([tipo]) => tiposPermitidos.includes(tipo as TipoContacto))
@@ -621,7 +763,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         </div>
       </div>
 
-      {/* Tabs: Lista y Calendario */}
+      {/* Tabs: Liste et Calendrier */}
       <Tabs defaultValue="liste" className="w-full">
         <div className="card-glass rounded-2xl shadow-xl p-4 mb-4">
           <TabsList className="grid w-full grid-cols-2 max-w-md">
@@ -638,7 +780,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
 
         {/* Tab Liste */}
         <TabsContent value="liste" className="space-y-4 mt-0">
-          {/* Búsqueda y filtros */}
+          {/* Recherche et filtres */}
           <div className="card-glass rounded-2xl shadow-xl p-4">
             <div className="flex flex-col lg:flex-row gap-3">
               <div className="relative flex-1">
@@ -679,7 +821,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
             </div>
           </div>
 
-          {/* Lista de contactos */}
+          {/* Liste de contacts */}
           <div className="card-glass rounded-2xl shadow-xl p-6">
             {contactosFiltrados.length === 0 ? (
               <div className="text-center py-12">
@@ -716,7 +858,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                               {config.label.split(' ')[0]}
                             </Badge>
                           </div>
-                          {/* Mostrar persona de contacto si es empresa */}
+                          {/* Afficher la personne de contact si c'est une entreprise */}
                           {(contacto.tipo === 'donador' || contacto.tipo === 'fournisseur') && contacto.nombreEmpresa && (contacto.nombre || contacto.apellido) && (
                             <p className="text-xs text-[#666666] mb-1 flex items-center gap-1">
                               <User className="w-3 h-3" />
@@ -803,7 +945,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
           </div>
         </TabsContent>
 
-        {/* Tab Calendario */}
+        {/* Tab Calendrier */}
         <TabsContent value="calendrier" className="mt-0">
           <CalendarioContactos
             contactos={contactos}
@@ -814,7 +956,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         </TabsContent>
       </Tabs>
 
-      {/* Dialog Crear/Editar - FORMULARIO COMPACTO */}
+      {/* Dialog Créer/Éditer - FORMULAIRE COMPACT */}
       <FormularioContactoCompacto
         abierto={dialogAbierto}
         onCerrar={() => {
@@ -831,9 +973,10 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         updateDisponibilidad={updateDisponibilidad}
         tiposPermitidos={tiposPermitidos}
         departamentoId={departamentoId}
+        departamentoNombre={departamentoNombre}
       />
 
-      {/* Dialog Detalles */}
+      {/* Dialog Détails */}
       <Dialog open={dialogDetalle} onOpenChange={setDialogDetalle}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="contact-detail-description">
           <DialogHeader>
@@ -924,7 +1067,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         </DialogContent>
       </Dialog>
 
-      {/* Dialog Eliminar */}
+      {/* Dialog Supprimer */}
       <Dialog open={dialogEliminar} onOpenChange={setDialogEliminar}>
         <DialogContent aria-describedby="delete-confirmation-description">
           <DialogHeader>
@@ -945,21 +1088,21 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         </DialogContent>
       </Dialog>
 
-      {/* Dialog Asignar Bénévole Existente */}
+      {/* Dialog Assigner Bénévole Existant */}
       <Dialog open={dialogAsignarBenevole} onOpenChange={setDialogAsignarBenevole}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="assign-benevole-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               <Link className="w-6 h-6" style={{ color: branding.primaryColor }} />
               Assigner un bénévole existant
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="assign-benevole-description">
               Sélectionnez un bénévole enregistré dans le système pour l'assigner à ce département
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Búsqueda */}
+            {/* Recherche */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#666666]" />
               <Input
@@ -970,7 +1113,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
               />
             </div>
 
-            {/* Lista de voluntarios */}
+            {/* Liste de bénévoles */}
             <div className="space-y-2 max-h-[500px] overflow-y-auto">
               {benevolesDisponibles.length === 0 ? (
                 <div className="text-center py-12">
@@ -1081,7 +1224,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         </DialogContent>
       </Dialog>
 
-      {/* Dialog: Asignar Rol a Contacto */}
+      {/* Dialog: Assigner Rol à Contact */}
       {contactoParaRol && (
         <AsignarRolContacto
           open={dialogAsignarRolOpen}
@@ -1095,6 +1238,294 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
           }}
         />
       )}
+
+      {/* Dialog: Diagnostic du Système */}
+      <Dialog open={dialogDiagnostico} onOpenChange={setDialogDiagnostico}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="diagnostic-description">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCw className="w-6 h-6" style={{ color: branding.primaryColor }} />
+              Diagnostic du Système de Contacts
+            </DialogTitle>
+            <DialogDescription id="diagnostic-description">
+              Analyse complète de tous les contacts dans le système
+            </DialogDescription>
+          </DialogHeader>
+
+          {diagnosticoResultado && (
+            <div className="space-y-6">
+              {/* Résumé */}
+              <Card className="p-4 border-l-4" style={{ borderLeftColor: branding.primaryColor }}>
+                <h3 className="font-bold text-lg mb-2" style={{ color: branding.primaryColor }}>
+                  📊 Résumé Général
+                </h3>
+                <p className="text-2xl font-bold">{diagnosticoResultado.total} contacts au total</p>
+              </Card>
+
+              {/* Contacts par département */}
+              <div>
+                <h3 className="font-bold text-lg mb-3">📂 Contacts par Département</h3>
+                <div className="space-y-2">
+                  {Object.entries(diagnosticoResultado.porDepartamento).map(([deptId, contactos]) => {
+                    const nombresDepts: { [key: string]: string } = {
+                      '1': 'Direction',
+                      '2': 'Entrepôt',
+                      '3': 'Achats',
+                      '4': 'Comptoir',
+                      '5': 'Finance',
+                      '6': 'Communication',
+                      '7': 'Recrutement',
+                      '8': 'Transport',
+                      '9': 'Qualité',
+                      '10': 'IT'
+                    };
+                    const nombreDept = nombresDepts[deptId] || `Département ${deptId}`;
+                    const esEsteDept = deptId === departamentoId;
+                    
+                    return (
+                      <Card 
+                        key={deptId} 
+                        className={`p-3 ${esEsteDept ? 'border-2' : ''}`}
+                        style={esEsteDept ? { borderColor: branding.secondaryColor } : {}}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Building className="w-4 h-4" style={{ color: branding.primaryColor }} />
+                            <span className="font-semibold">
+                              {nombreDept} {esEsteDept && <Badge className="ml-2" style={{ backgroundColor: branding.secondaryColor }}>Actuel</Badge>}
+                            </span>
+                          </div>
+                          <Badge variant="outline">{contactos.length} contacts</Badge>
+                        </div>
+                        <div className="mt-2 pl-6 space-y-1">
+                          {contactos.slice(0, 5).map((c: any) => (
+                            <div key={c.id} className="text-sm text-[#666666] flex items-center gap-2">
+                              <User className="w-3 h-3" />
+                              <span>{c.nombre} {c.apellido}</span>
+                              <Badge variant="outline" className="text-xs">{c.tipo}</Badge>
+                              {c.activo === undefined && <Badge variant="destructive" className="text-xs">⚠️ Pas de champ activo</Badge>}
+                              {c.activo === false && <Badge variant="secondary" className="text-xs">Inactif</Badge>}
+                            </div>
+                          ))}
+                          {contactos.length > 5 && (
+                            <p className="text-xs text-[#999999] pl-5">... et {contactos.length - 5} autres</p>
+                          )}
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Problèmes détectés */}
+              <div>
+                <h3 className="font-bold text-lg mb-3">⚠️ Problèmes Détectés</h3>
+                
+                {diagnosticoResultado.problemas.sinActivo.length > 0 && (
+                  <Card className="p-4 mb-3 border-l-4 border-yellow-500 bg-yellow-50">
+                    <h4 className="font-semibold text-yellow-800 mb-2">
+                      ⚠️ {diagnosticoResultado.problemas.sinActivo.length} contacts sans champ 'activo'
+                    </h4>
+                    <div className="space-y-1">
+                      {diagnosticoResultado.problemas.sinActivo.map((c: any) => (
+                        <p key={c.id} className="text-sm text-yellow-700">
+                          • {c.nombre} {c.apellido} - {c.email}
+                        </p>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
+                {diagnosticoResultado.problemas.inactivos.length > 0 && (
+                  <Card className="p-4 mb-3 border-l-4 border-gray-500 bg-gray-50">
+                    <h4 className="font-semibold text-gray-800 mb-2">
+                      🚫 {diagnosticoResultado.problemas.inactivos.length} contacts inactifs
+                    </h4>
+                    <div className="space-y-1">
+                      {diagnosticoResultado.problemas.inactivos.map((c: any) => (
+                        <p key={c.id} className="text-sm text-gray-700">
+                          • {c.nombre} {c.apellido} - {c.email}
+                        </p>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
+                {diagnosticoResultado.problemas.sinDepartamento.length > 0 && (
+                  <Card className="p-4 mb-3 border-l-4 border-red-500 bg-red-50">
+                    <h4 className="font-semibold text-red-800 mb-2">
+                      ⚠️ {diagnosticoResultado.problemas.sinDepartamento.length} contacts sans département
+                    </h4>
+                    <div className="space-y-1">
+                      {diagnosticoResultado.problemas.sinDepartamento.map((c: any) => (
+                        <p key={c.id} className="text-sm text-red-700">
+                          • {c.nombre} {c.apellido} - {c.email}
+                        </p>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+
+                {diagnosticoResultado.problemas.sinActivo.length === 0 && 
+                 diagnosticoResultado.problemas.inactivos.length === 0 && 
+                 diagnosticoResultado.problemas.sinDepartamento.length === 0 && (
+                  <Card className="p-4 border-l-4 border-green-500 bg-green-50">
+                    <p className="text-green-800 font-semibold">✅ Aucun problème détecté</p>
+                  </Card>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Información de Almacenamiento */}
+      <Dialog open={dialogAlmacenamiento} onOpenChange={setDialogAlmacenamiento}>
+        <DialogContent className="max-w-2xl" aria-describedby="almacenamiento-description">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <HardDrive className="w-6 h-6" style={{ color: branding.primaryColor }} />
+              Information sur le Stockage
+            </DialogTitle>
+            <DialogDescription id="almacenamiento-description">
+              Gérez l'espace de stockage utilisé par les contacts
+            </DialogDescription>
+          </DialogHeader>
+
+          {(() => {
+            const info = obtenerInfoAlmacenamiento();
+            const limiteEstimado = 5; // 5MB est une estimation sûre pour localStorage
+            const porcentajeUsado = (info.tamañoMB / limiteEstimado) * 100;
+            
+            return (
+              <div className="space-y-6">
+                {/* Información general */}
+                <Card className="p-4 border-l-4" style={{ borderLeftColor: branding.primaryColor }}>
+                  <h4 className="font-semibold text-[#333333] mb-3 flex items-center gap-2">
+                    <Database className="w-5 h-5" />
+                    Résumé du Stockage
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-[#666666]">Total de contacts</p>
+                      <p className="text-2xl font-bold text-[#333333]">{info.totalContactos}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-[#666666]">Espace utilisé</p>
+                      <p className="text-2xl font-bold text-[#333333]">{info.tamañoMB} MB</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-[#666666]">Contacts avec photos</p>
+                      <p className="text-2xl font-bold text-[#333333]">{info.contactosConFotos}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-[#666666]">Total documents</p>
+                      <p className="text-2xl font-bold text-[#333333]">{info.totalDocumentos}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Barre de progression */}
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-[#666666]">Utilisation estimée</span>
+                      <span className="text-sm font-semibold" style={{ 
+                        color: porcentajeUsado > 80 ? '#dc2626' : porcentajeUsado > 60 ? '#f59e0b' : branding.secondaryColor 
+                      }}>
+                        {porcentajeUsado.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full transition-all duration-300"
+                        style={{ 
+                          width: `${Math.min(porcentajeUsado, 100)}%`,
+                          backgroundColor: porcentajeUsado > 80 ? '#dc2626' : porcentajeUsado > 60 ? '#f59e0b' : branding.secondaryColor
+                        }}
+                      />
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Alertas */}
+                {porcentajeUsado > 80 && (
+                  <Card className="p-4 border-l-4 border-red-500 bg-red-50">
+                    <p className="text-red-800 font-semibold">
+                      ⚠️ Espace de stockage critique! Veuillez libérer de l'espace.
+                    </p>
+                  </Card>
+                )}
+
+                {porcentajeUsado > 60 && porcentajeUsado <= 80 && (
+                  <Card className="p-4 border-l-4 border-orange-500 bg-orange-50">
+                    <p className="text-orange-800 font-semibold">
+                      ⚠️ Espace de stockage limité. Considérez libérer de l'espace.
+                    </p>
+                  </Card>
+                )}
+
+                {/* Acciones de limpieza */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-[#333333]">Actions de Nettoyage</h4>
+                  
+                  <Button
+                    onClick={() => {
+                      if (confirm('⚠️ Cela va supprimer TOUTES les photos des contacts.\n\nCette action est irréversible. Continuer?')) {
+                        const fotosEliminadas = eliminarTodasLasFotos();
+                        toast.success(`🗑️ ${fotosEliminadas} photo(s) supprimée(s)`);
+                        setDialogAlmacenamiento(false);
+                      }
+                    }}
+                    variant="outline"
+                    className="w-full justify-start"
+                    style={{ borderColor: '#f59e0b', color: '#f59e0b' }}
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    Supprimer toutes les photos ({info.contactosConFotos} contacts)
+                  </Button>
+
+                  <Button
+                    onClick={() => {
+                      if (confirm('⚠️ Cela va supprimer TOUS les documents des contacts.\n\nCette action est irréversible. Continuer?')) {
+                        const docsEliminados = eliminarTodosLosDocumentos();
+                        toast.success(`🗑️ ${docsEliminados} document(s) supprimé(s)`);
+                        setDialogAlmacenamiento(false);
+                      }
+                    }}
+                    variant="outline"
+                    className="w-full justify-start"
+                    style={{ borderColor: '#dc2626', color: '#dc2626' }}
+                  >
+                    <FileUp className="w-4 h-4 mr-2" />
+                    Supprimer tous les documents ({info.totalDocumentos} documents)
+                  </Button>
+
+                  <Button
+                    onClick={() => {
+                      optimizarTodosLosContactos();
+                      toast.success('✅ Contacts optimisés avec succès');
+                      setDialogAlmacenamiento(false);
+                    }}
+                    variant="outline"
+                    className="w-full justify-start"
+                    style={{ borderColor: branding.secondaryColor, color: branding.secondaryColor }}
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Optimiser tous les contacts
+                  </Button>
+                </div>
+
+                {/* Información adicional */}
+                <Card className="p-4 bg-blue-50 border-l-4 border-blue-500">
+                  <p className="text-sm text-blue-800">
+                    <strong>💡 Conseil:</strong> Les photos et documents volumineux peuvent rapidement remplir l'espace de stockage. 
+                    Limitez la taille des fichiers à moins de 200KB chacun.
+                  </p>
+                </Card>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
