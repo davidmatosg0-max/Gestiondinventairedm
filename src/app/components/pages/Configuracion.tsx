@@ -3584,7 +3584,7 @@ export function Configuracion() {
 
       {/* Dialog Eliminar Subcategoría */}
       <Dialog open={dialogEliminarSubcategoria} onOpenChange={setDialogEliminarSubcategoria}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="eliminar-subcategoria-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', color: '#DC3545' }}>
               <div className="flex items-center gap-2">
@@ -3592,7 +3592,7 @@ export function Configuracion() {
                 {t('configuration.deleteSubcategory')}
               </div>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="eliminar-subcategoria-description">
               Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
@@ -3657,7 +3657,7 @@ export function Configuracion() {
 
       {/* Dialog Crear Variante */}
       <Dialog open={varianteDialogOpen} onOpenChange={setVarianteDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="variante-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', color: '#1E73BE' }}>
               <div className="flex items-center gap-2">
@@ -3665,7 +3665,7 @@ export function Configuracion() {
                 {t('configuration.createVariant') || 'Crear Variante de Producto'}
               </div>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="variante-description">
               {t('configuration.variantDescription') || 'Crea una variante basada en un producto existente'}
             </DialogDescription>
           </DialogHeader>
@@ -3910,7 +3910,7 @@ export function Configuracion() {
           setSubcategoriaBase(null);
         }
       }}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="variante-subcategoria-description">
           <DialogHeader className="pb-4 border-b">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#9C27B0] to-[#7B1FA2] flex items-center justify-center text-white text-2xl">
@@ -3920,7 +3920,7 @@ export function Configuracion() {
                 <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }} className="text-xl">
                   {editandoVariante ? 'Editar Variante' : 'Nueva Variante de Subcategoría'}
                 </DialogTitle>
-                <DialogDescription className="text-sm mt-1">
+                <DialogDescription id="variante-subcategoria-description" className="text-sm mt-1">
                   {editandoVariante ? 'Editando' : 'Creando'} variante para: <span className="font-medium text-[#9C27B0]">{subcategoriaBase?.subcategoria.nombre}</span>
                 </DialogDescription>
               </div>
@@ -4235,7 +4235,7 @@ export function Configuracion() {
 
       {/* Diálogo de Configuración de Email */}
       <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="email-config-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               <div className="flex items-center gap-2">
@@ -4243,7 +4243,7 @@ export function Configuracion() {
                 Configuration du Service de Messagerie
               </div>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="email-config-description">
               Configurez votre service de messagerie pour envoyer des emails aux organismes
             </DialogDescription>
           </DialogHeader>

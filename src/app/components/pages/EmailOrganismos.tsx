@@ -1706,6 +1706,7 @@ export function EmailOrganismos({ onNavigate }: { onNavigate?: (page: string) =>
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent 
           className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin"
+          aria-describedby="email-modal-description"
         >
           <DialogHeader>
             <DialogTitle className="text-xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
@@ -1716,7 +1717,7 @@ export function EmailOrganismos({ onNavigate }: { onNavigate?: (page: string) =>
                   : t('liaison.sendGroupEmailTitle')}
               </div>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="email-modal-description">
               {emailType === 'individual' 
                 ? t('liaison.emailModalIndividualDescription') 
                 : t('liaison.emailModalGroupDescription')}
@@ -1837,12 +1838,13 @@ export function EmailOrganismos({ onNavigate }: { onNavigate?: (page: string) =>
       <Dialog open={organismoDialogOpen} onOpenChange={setOrganismoDialogOpen}>
         <DialogContent 
           className="!max-w-none !w-screen !h-screen !top-0 !left-0 !translate-x-0 !translate-y-0 !rounded-none overflow-y-auto p-0 m-0"
+          aria-describedby="organismo-dialog-description"
         >
           <DialogHeader className="sticky top-0 z-10 bg-white border-b px-6 py-4 shadow-sm">
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '1.5rem' }}>
               {t('organisms.newOrganismForm')}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="organismo-dialog-description">
               {t('organisms.formDescription')}
             </DialogDescription>
           </DialogHeader>
@@ -2567,13 +2569,13 @@ export function EmailOrganismos({ onNavigate }: { onNavigate?: (page: string) =>
 
       {/* Diálogo de Clave Generada */}
       <Dialog open={claveGeneradaDialog} onOpenChange={setClaveGeneradaDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="clave-generada-description">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-[#4CAF50] flex items-center gap-2">
               <Check className="w-6 h-6" />
               Organisme Créé avec Succès!
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="clave-generada-description">
               L'organisme a été enregistré et une clé d'accès unique a été générée
             </DialogDescription>
           </DialogHeader>

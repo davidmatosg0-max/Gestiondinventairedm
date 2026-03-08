@@ -88,8 +88,11 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
     ? `${usuarioActual.nombre} ${usuarioActual.apellido}` 
     : 'Usuario';
   
+  // Usar el nombre de la empresa (branding.systemName) para mostrar en el header
+  const nombreMostrar = branding.systemName || nombreCompleto;
+  
   const iniciales = usuarioActual 
-    ? `${usuarioActual.nombre[0]}${usuarioActual.apellido[0]}`.toUpperCase() 
+    ? `${usuarioActual.nombre[0]}${usuarioActual.apellido?.[0] || ''}`.toUpperCase() 
     : 'U';
   
   // Mapeo de roles a francés
@@ -307,7 +310,7 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
                 )}
                 <div className="flex items-center gap-2">
                   <h1 className="font-bold truncate text-sm sm:text-base md:text-xl lg:text-2xl text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {branding.systemName}
+                    {nombreMostrar}
                   </h1>
                   <Sparkles className="w-4 h-4 text-white/80 hidden sm:block" />
                 </div>
@@ -322,7 +325,7 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
               <div className="hidden md:flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2">
                 <div className="text-right">
                   <p className="text-xs sm:text-sm text-white font-semibold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {nombreCompleto}
+                    {branding.systemName}
                   </p>
                   <p className="text-xs text-white/80">{rolTraducido}</p>
                 </div>

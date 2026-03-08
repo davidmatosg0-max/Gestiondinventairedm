@@ -175,7 +175,7 @@ export function inicializarTodosDatosEjemplo(): void {
           activo: d.activo !== false,
           numeroEmpleado: d.numeroID || '',
           direccion: d.direccion || '',
-          empresa: d.empresa || d.nombre,
+          nombreEmpresa: d.empresa || d.nombre, // ✅ CORREGIDO: usar nombreEmpresa en lugar de empresa
           cargo: d.tipo || 'Donateur',
           disponibilidad: 'Dons réguliers',
           disponibilidades: diasSemana.map(jour => ({ jour, am: false, pm: false })),
@@ -207,7 +207,7 @@ export function inicializarTodosDatosEjemplo(): void {
           activo: v.activo !== false,
           numeroEmpleado: v.numeroID || '',
           direccion: v.direccion || '',
-          empresa: v.empresa || v.nombre,
+          nombreEmpresa: v.empresa || v.nombre, // ✅ CORREGIDO: usar nombreEmpresa en lugar de empresa
           cargo: v.tipo || 'Fournisseur',
           disponibilidad: 'Livraison régulière',
           disponibilidades: diasSemana.map(jour => ({ jour, am: true, pm: false })),

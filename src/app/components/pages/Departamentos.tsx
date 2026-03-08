@@ -362,12 +362,12 @@ export function Departamentos({ onNavigate }: { onNavigate?: (page: string) => v
 
           {/* Dialog Crear/Editar */}
           <Dialog open={dialogAbierto} onOpenChange={setDialogAbierto}>
-            <DialogContent className="max-w-md mx-3 sm:mx-auto max-h-[90vh] overflow-y-auto scrollbar-thin">
+            <DialogContent className="max-w-md mx-3 sm:mx-auto max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="departamento-dialog-description">
               <DialogHeader>
                 <DialogTitle className="text-base sm:text-lg">
                   {modoEdicion ? t('departments.editDepartment') : t('departments.newDepartment')}
                 </DialogTitle>
-                <DialogDescription className="text-xs sm:text-sm">
+                <DialogDescription id="departamento-dialog-description" className="text-xs sm:text-sm">
                   {t('departments.formDescription')}
                 </DialogDescription>
               </DialogHeader>
@@ -573,13 +573,13 @@ export function Departamentos({ onNavigate }: { onNavigate?: (page: string) => v
 
           {/* Dialog Eliminar */}
           <Dialog open={dialogEliminar} onOpenChange={setDialogEliminar}>
-            <DialogContent>
+            <DialogContent aria-describedby="eliminar-departamento-description">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2" style={{ color: '#c23934' }}>
                   <Trash2 className="w-5 h-5" />
                   {t('departments.confirmDelete')}
                 </DialogTitle>
-                <DialogDescription>
+                <DialogDescription id="eliminar-departamento-description">
                   {t('departments.confirmDeleteMessage')}
                 </DialogDescription>
               </DialogHeader>

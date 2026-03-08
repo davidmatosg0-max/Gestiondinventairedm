@@ -128,6 +128,27 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
     };
   }, []);
 
+  // Limpiar donadorId cuando cambia el tipo de entrada y el contacto seleccionado ya no es válido
+  useEffect(() => {
+    if (formData.tipoEntrada && formData.donadorId) {
+      const contactoSeleccionado = contactos.find(c => c.id === formData.donadorId);
+      
+      // Si el contacto seleccionado no es del tipo permitido, limpiarlo
+      if (contactoSeleccionado) {
+        const tipoPermitido = 
+          formData.tipoEntrada.toLowerCase() === 'ach' || formData.tipoEntrada.toLowerCase() === 'achat'
+            ? 'fournisseur'
+            : formData.tipoEntrada.toLowerCase() === 'don'
+              ? 'donador'
+              : null;
+        
+        if (tipoPermitido && contactoSeleccionado.tipo !== tipoPermitido) {
+          setFormData(prev => ({ ...prev, donadorId: '' }));
+        }
+      }
+    }
+  }, [formData.tipoEntrada, formData.donadorId, contactos]);
+
   // Cuando cambia la categoría, actualizar subcategorías y limpiar datos heredados
   useEffect(() => {
     if (formData.categoria) {
@@ -410,7 +431,9 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
       
       // Información del donador/proveedor
       donadorId: formData.donadorId,
-      donadorNombre: donadorSeleccionado ? `${donadorSeleccionado.nombre} ${donadorSeleccionado.apellido || ''}`.trim() : 'Donador no registrado',
+      donadorNombre: donadorSeleccionado 
+        ? (donadorSeleccionado.nombreEmpresa || `${donadorSeleccionado.nombre} ${donadorSeleccionado.apellido || ''}`.trim())
+        : 'Donador no registrado',
       donadorEsCustom: false,
       
       // Información del producto
@@ -477,12 +500,44 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
   const categoriaSeleccionada = categorias.find(c => c.nombre === formData.categoria);
   const programaSeleccionado = programas.find(p => p.codigo.toLowerCase() === formData.tipoEntrada);
 
+  // Determinar qué tipos de contactos mostrar según el programa de entrada
+  const tipoContactoPermitido = useMemo(() => {
+    if (!formData.tipoEntrada) return null;
+    
+    // ACH/ACHAT → solo fournisseurs
+    if (formData.tipoEntrada.toLowerCase() === 'ach' || formData.tipoEntrada.toLowerCase() === 'achat') {
+      return 'fournisseur';
+    }
+    
+    // DON → solo donadores
+    if (formData.tipoEntrada.toLowerCase() === 'don') {
+      return 'donador';
+    }
+    
+    // CPN → ambos tipos (donadores y fournisseurs)
+    if (formData.tipoEntrada.toLowerCase() === 'cpn') {
+      return null; // null = mostrar todos
+    }
+    
+    // Otros programas → mostrar ambos
+    return null;
+  }, [formData.tipoEntrada]);
+
+  // Filtrar contactos según el tipo de entrada
+  const contactosFiltrados = useMemo(() => {
+    if (!tipoContactoPermitido) return contactos;
+    return contactos.filter(c => c.tipo === tipoContactoPermitido);
+  }, [contactos, tipoContactoPermitido]);
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col p-0 bg-gradient-to-br from-white to-gray-50">
           {/* Header Moderno */}
           <DialogHeader className="px-8 pt-6 pb-4 border-b bg-white/80 backdrop-blur-sm shrink-0">
+            <DialogDescription className="sr-only">
+              Formulario para registrar nuevas entradas de inventario en el almacén
+            </DialogDescription>
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#1E73BE] to-[#1557a0] flex items-center justify-center shadow-lg">
                 <PackagePlus className="h-6 w-6 text-white" />
@@ -491,9 +546,9 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                 <DialogTitle className="text-2xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
                   {t('inventory.newEntry') || 'Nueva Entrada de Inventario'}
                 </DialogTitle>
-                <DialogDescription className="text-sm text-[#666666] mt-1" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                <p className="text-sm text-[#666666] mt-1" style={{ fontFamily: 'Roboto, sans-serif' }}>
                   Registra productos recibidos en el almacén
-                </DialogDescription>
+                </p>
               </div>
             </div>
           </DialogHeader>
@@ -552,42 +607,50 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                 {/* Donador/Proveedor */}
                 <div className="space-y-2">
                   <Label htmlFor="donador" className="text-sm font-medium flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {t('common.donorProvider') || 'Fournisseur / Donateur'}
+                    {tipoContactoPermitido === 'fournisseur' 
+                      ? '📦 Fournisseur' 
+                      : tipoContactoPermitido === 'donador' 
+                        ? '🎁 Donateur' 
+                        : (t('common.donorProvider') || 'Fournisseur / Donateur')}
                     <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Requerido</Badge>
                   </Label>
                   <Select 
                     value={formData.donadorId} 
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, donadorId: value }))}>
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, donadorId: value }))}
+                    disabled={!formData.tipoEntrada}
+                  >
                     <SelectTrigger className="h-11 text-sm border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE]">
-                      <SelectValue placeholder="Sélectionner fournisseur ou donateur..." />
+                      <SelectValue placeholder={
+                        !formData.tipoEntrada 
+                          ? "Sélectionner d'abord un type d'entrée..."
+                          : tipoContactoPermitido === 'fournisseur'
+                            ? "Sélectionner un fournisseur..."
+                            : tipoContactoPermitido === 'donador'
+                              ? "Sélectionner un donateur..."
+                              : "Sélectionner fournisseur ou donateur..."
+                      } />
                     </SelectTrigger>
                     <SelectContent>
-                      {contactos.length === 0 ? (
+                      {contactosFiltrados.length === 0 ? (
                         <SelectItem value="__none__" disabled>
-                          Aucun contact disponible
+                          {tipoContactoPermitido === 'fournisseur' 
+                            ? 'Aucun fournisseur disponible'
+                            : tipoContactoPermitido === 'donador'
+                              ? 'Aucun donateur disponible'
+                              : 'Aucun contact disponible'}
                         </SelectItem>
                       ) : (
                         <>
-                          {/* Fournisseurs */}
-                          {contactos
-                            .filter(c => c.tipo === 'fournisseur')
-                            .sort((a, b) => `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`))
+                          {contactosFiltrados
+                            .sort((a, b) => {
+                              const nombreA = a.nombreEmpresa || `${a.nombre} ${a.apellido}`;
+                              const nombreB = b.nombreEmpresa || `${b.nombre} ${b.apellido}`;
+                              return nombreA.localeCompare(nombreB);
+                            })
                             .map((contacto, index) => (
                               <SelectItem key={contacto.id} value={contacto.id}>
-                                {index === 0 && '📦 '}
-                                {contacto.nombre} {contacto.apellido}
-                                {contacto.telefono && ` • ${contacto.telefono}`}
-                              </SelectItem>
-                            ))}
-                          
-                          {/* Donateurs */}
-                          {contactos
-                            .filter(c => c.tipo === 'donador')
-                            .sort((a, b) => `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`))
-                            .map((contacto, index) => (
-                              <SelectItem key={contacto.id} value={contacto.id}>
-                                {index === 0 && '🎁 '}
-                                {contacto.nombre} {contacto.apellido}
+                                {index === 0 && (contacto.tipo === 'fournisseur' ? '📦 ' : '🎁 ')}
+                                {contacto.nombreEmpresa || `${contacto.nombre} ${contacto.apellido}`}
                                 {contacto.telefono && ` • ${contacto.telefono}`}
                               </SelectItem>
                             ))}
@@ -596,20 +659,19 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                     </SelectContent>
                   </Select>
                   {/* Contador de contactos */}
-                  {contactos.length > 0 && (
+                  {formData.tipoEntrada && contactosFiltrados.length > 0 && (
                     <div className="flex gap-3 text-xs text-gray-600 mt-1">
-                      {contactos.filter(c => c.tipo === 'fournisseur').length > 0 && (
-                        <span className="flex items-center gap-1">
-                          <span>📦</span>
-                          <span>{contactos.filter(c => c.tipo === 'fournisseur').length} fournisseur(s)</span>
-                        </span>
-                      )}
-                      {contactos.filter(c => c.tipo === 'donador').length > 0 && (
-                        <span className="flex items-center gap-1">
-                          <span>🎁</span>
-                          <span>{contactos.filter(c => c.tipo === 'donador').length} donateur(s)</span>
-                        </span>
-                      )}
+                      <span className="flex items-center gap-1">
+                        {tipoContactoPermitido === 'fournisseur' && <span>📦</span>}
+                        {tipoContactoPermitido === 'donador' && <span>🎁</span>}
+                        <span>{contactosFiltrados.length} {tipoContactoPermitido === 'fournisseur' ? 'fournisseur(s)' : 'donateur(s)'} disponible(s)</span>
+                      </span>
+                    </div>
+                  )}
+                  {formData.tipoEntrada && contactosFiltrados.length === 0 && (
+                    <div className="flex gap-2 text-xs text-orange-600 mt-1 bg-orange-50 p-2 rounded border border-orange-200">
+                      <span>⚠️</span>
+                      <span>Aucun {tipoContactoPermitido === 'fournisseur' ? 'fournisseur' : 'donateur'} disponible. Veuillez ajouter un contact dans Gestion de Contactos.</span>
                     </div>
                   )}
                 </div>
@@ -1087,6 +1149,9 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
       <Dialog open={dialogSubcategoria} onOpenChange={setDialogSubcategoria}>
         <DialogContent className="max-w-2xl bg-gradient-to-br from-white to-gray-50">
           <DialogHeader className="pb-4">
+            <DialogDescription className="sr-only">
+              Formulario para crear una nueva subcategoría en {categoriaSeleccionada?.nombre}
+            </DialogDescription>
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#4CAF50] to-[#388E3C] flex items-center justify-center shadow-lg">
                 <Plus className="h-6 w-6 text-white" />
@@ -1095,9 +1160,9 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                 <DialogTitle className="text-xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
                   Crear Nueva Subcategoría
                 </DialogTitle>
-                <DialogDescription className="text-sm">
+                <p className="text-sm text-[#666666]">
                   Añadir una nueva subcategoría a: <span className="font-medium text-[#1E73BE]">{categoriaSeleccionada?.nombre}</span>
-                </DialogDescription>
+                </p>
               </div>
             </div>
           </DialogHeader>
