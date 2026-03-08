@@ -260,8 +260,8 @@ export function DashboardPredictivo() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="actual" fill={branding.primaryColor} name="Demanda Actual" />
-                <Bar dataKey="prediccion" fill={branding.secondaryColor} name="Predicción Próximo Mes" />
+                <Bar key="bar-actual" dataKey="actual" fill={branding.primaryColor} name="Demanda Actual" />
+                <Bar key="bar-prediccion" dataKey="prediccion" fill={branding.secondaryColor} name="Predicción Próximo Mes" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

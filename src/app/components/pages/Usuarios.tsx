@@ -14,9 +14,13 @@ import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { GestionRoles } from '../usuarios/GestionRoles';
 import { GestionDepartamentos } from '../usuarios/GestionDepartamentos';
-import { obtenerUsuarios, agregarUsuario, actualizarUsuario, eliminarUsuario, Usuario } from '../../utils/usuarios';
-import { rolesPredeterminados } from '../../data/rolesPermisos';
+import { agregarUsuario, actualizarUsuario, obtenerUsuarios, eliminarUsuario } from '../../utils/usuarios';
+import { esRolValido, tienePermiso } from '../../utils/permisos';
+import { obtenerRoles } from '../../utils/rolesStorage';
 import { useBranding } from '../../../hooks/useBranding';
+import { obtenerDepartamentos } from '../../utils/departamentosStorage';
+import { copiarAlPortapapeles } from '../../utils/clipboard';
+import { rolesPredeterminados } from '../../data/rolesPermisos';
 
 export function Usuarios() {
   const { t } = useTranslation();
@@ -226,7 +230,7 @@ export function Usuarios() {
     }
     
     try {
-      await navigator.clipboard.writeText(formUsuario.password);
+      await copiarAlPortapapeles(formUsuario.password);
       toast.success('Mot de passe copié', {
         description: 'Le mot de passe a été copié dans le presse-papier'
       });

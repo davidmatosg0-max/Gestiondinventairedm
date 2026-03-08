@@ -8,6 +8,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import { copiarAlPortapapeles } from '../../utils/clipboard';
 import {
   CheckCircle2,
   AlertCircle,
@@ -305,7 +306,7 @@ export function TextCorrector() {
   // Copiar texto corregido
   const handleCopy = () => {
     if (result?.correctedText) {
-      navigator.clipboard.writeText(result.correctedText);
+      copiarAlPortapapeles(result.correctedText);
       toast.success(t('textCorrector.copied', 'Texto copiado al portapapeles'));
     }
   };
@@ -493,7 +494,7 @@ export function TextCorrector() {
               <Button
                 onClick={() => {
                   if (result?.structuredText) {
-                    navigator.clipboard.writeText(result.structuredText);
+                    copiarAlPortapapeles(result.structuredText);
                     toast.success(t('textCorrector.copiedStructured', 'Texto estructurado copiado al portapapeles'));
                   }
                 }}

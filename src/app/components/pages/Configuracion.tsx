@@ -13,6 +13,7 @@ import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { toast } from 'sonner';
 import { Textarea } from '../ui/textarea';
+import { copiarAlPortapapeles } from '../../utils/clipboard';
 import { mockProductos } from '../../data/mockData';
 import { ICONOS_PRINCIPALES, ICONOS_SUBCATEGORIAS } from '../../data/iconosAlimentos';
 import { 
@@ -2829,7 +2830,7 @@ export function Configuracion() {
                                 onClick={() => {
                                   // Copiar información del producto al portapapeles
                                   const info = `Produit PRS: ${producto.nombre}\nCode: ${producto.codigo}\nCatégorie: ${producto.categoria} → ${producto.subcategoria}\nPoids: ${producto.peso} kg/${producto.unidad}`;
-                                  navigator.clipboard.writeText(info);
+                                  copiarAlPortapapeles(info);
                                   toast.success('✅ Information copiée au presse-papiers', { duration: 2000 });
                                 }}
                                 className="border-pink-300 text-pink-700 hover:bg-pink-50"

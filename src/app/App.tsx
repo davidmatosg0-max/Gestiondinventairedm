@@ -29,6 +29,7 @@ import { ContactosAlmacen } from './components/pages/ContactosAlmacen';
 import { SystemDiagnostics } from './components/SystemDiagnostics';
 import { APIKeysPage } from './components/pages/APIKeysPage';
 import { DashboardPredictivo } from './components/pages/DashboardPredictivo';
+import { GestionAutenticacion } from './components/pages/GestionAutenticacion';
 import { Toaster } from './components/ui/sonner';
 // MODO PRODUCCIÓN: Funciones de limpieza de datos de ejemplo
 import './utils/limpiarDatosProduccion';
@@ -40,43 +41,15 @@ import { cerrarSesionUsuario } from './utils/sesionStorage';
 import { inicializarConfigSupport } from './utils/supportConfig';
 import { inicializarTodosDatosEjemplo, datosEjemploInicializados } from './utils/inicializarDatosEjemplo';
 import { BalanceProvider } from '../contexts/BalanceContext';
+import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { logger, showWelcomeBanner } from './utils/logger';
 import { corregirContactosEntrepotAutomaticamente } from './utils/correccionContactosEntrepot';
 
-// Sistema Integral de Gestión - Banque Alimentaire v2.1
-export default function App() {
-  const [currentPage, setCurrentPage] = useState('departamentos');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+// Componente interno que usa el contexto de autenticación
+function AppContent() {
+  const [currentPage, setCurrentPage] = useState('dashboard');
+  const { isAuthenticated, isLoading, logout: logoutAuth } = useAuth();
   const { i18n } = useTranslation();
-
-  // Verificar si hay sesión guardada al cargar
-  useEffect(() => {
-    const checkAuth = () => {
-      const localAuth = localStorage.getItem('isAuthenticated');
-      const sessionAuth = sessionStorage.getItem('isAuthenticated');
-      const authTimestamp = localStorage.getItem('authTimestamp');
-      
-      // Si hay auth en localStorage, verificar que no haya expirado (30 días)
-      if (localAuth === 'true' && authTimestamp) {
-        const daysSinceLogin = (Date.now() - parseInt(authTimestamp)) / (1000 * 60 * 60 * 24);
-        if (daysSinceLogin < 30) {
-          setIsAuthenticated(true);
-          return;
-        } else {
-          // Expiró, limpiar localStorage
-          localStorage.removeItem('isAuthenticated');
-          localStorage.removeItem('authTimestamp');
-        }
-      }
-      
-      // Si hay auth en sessionStorage
-      if (sessionAuth === 'true') {
-        setIsAuthenticated(true);
-      }
-    };
-    
-    checkAuth();
-  }, []);
 
   // Crear ofertas de ejemplo e inicializar unidades al cargar la app
   useEffect(() => {
@@ -183,6 +156,8 @@ export default function App() {
         return <IDDigital />;
       case 'api-keys':
         return <APIKeysPage />;
+      case 'gestion-autenticacion':
+        return <GestionAutenticacion />;
       case 'panel-marca':
         return <PanelMarca />;
       case 'configuracion':
@@ -240,8 +215,7 @@ export default function App() {
       <>
         <Login 
           onLogin={() => {
-            setIsAuthenticated(true);
-            setCurrentPage('departamentos');
+            setCurrentPage('dashboard');
           }}
           onAccessPublic={(page) => {
             setCurrentPage(page);
@@ -258,7 +232,7 @@ export default function App() {
         currentPage={currentPage} 
         onNavigate={setCurrentPage}
         onLogout={() => {
-          setIsAuthenticated(false);
+          logoutAuth();
           cerrarSesionUsuario();
         }}
         hideSidebar={currentPage === 'departamentos'}
@@ -267,5 +241,14 @@ export default function App() {
       </Layout>
       <Toaster position="top-right" />
     </BalanceProvider>
+  );
+}
+
+// Sistema Integral de Gestión - Banque Alimentaire v5.0 PRO (JWT + API Keys)
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

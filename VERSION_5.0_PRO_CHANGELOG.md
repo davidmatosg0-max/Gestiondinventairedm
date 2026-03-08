@@ -3,6 +3,37 @@
 
 ---
 
+## 🎉 **NUEVO: SISTEMA HÍBRIDO JWT + API KEYS** ✅
+
+### **Autenticación Modernizada**
+
+El sistema ahora implementa un modelo híbrido profesional:
+
+#### 🔐 JWT (JSON Web Tokens) - Para Usuarios Humanos
+- ✅ **Access Token**: Válido 15 minutos
+- ✅ **Refresh Token**: Válido 7 días
+- ✅ **Auto-refresh**: Renovación automática antes de expirar
+- ✅ **Gestión de sesiones**: Contexto React unificado
+- ✅ **Portal Organismos**: Login con clave de acceso JWT
+
+#### 🔑 API Keys - Para Integraciones Máquina-a-Máquina
+- ✅ Permisos granulares por recurso
+- ✅ Rate limiting configurable
+- ✅ IP whitelist opcional
+- ✅ Sin expiración (configurable)
+
+**Archivos nuevos:**
+- `/src/app/utils/jwtManager.ts` - Gestor de JWT
+- `/src/contexts/AuthContext.tsx` - Contexto de autenticación
+- `/src/app/components/JWTSessionInfo.tsx` - Componente de sesión
+- `/src/app/components/pages/GestionAutenticacion.tsx` - Panel híbrido
+
+**Documentación:**
+- `/SISTEMA_AUTENTICACION_HIBRIDO.md` - Manual completo
+- `/IMPLEMENTACION_JWT_HIBRIDO_COMPLETADA.md` - Resumen ejecutivo
+
+---
+
 ## ✅ **ERRORES CORREGIDOS**
 
 ### 1. Imports de módulos predictivos
@@ -13,10 +44,11 @@
 ### 2. Rutas de navegación
 - ✅ Agregada ruta `dashboard-predictivo` en App.tsx
 - ✅ Agregada ruta `api-keys` en App.tsx
+- ✅ Agregada ruta `gestion-autenticacion` en App.tsx
 - ✅ Integración completa en menú de navegación (Layout.tsx)
 
 ### 3. Componentes UI
-- ✅ Imports de iconos (Brain, Zap, Key) en Layout.tsx
+- ✅ Imports de iconos (Brain, Zap, Key, Shield) en Layout.tsx
 - ✅ Configuración de permisos (solo desarrolladores para API Keys)
 
 ---

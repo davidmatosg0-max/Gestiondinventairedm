@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBranding } from '../../../hooks/useBranding';
-import { Lock, User, LogIn, AlertCircle, Sparkles, Clock } from 'lucide-react';
+import { Lock, User, LogIn, AlertCircle, Sparkles, Clock, Shield } from 'lucide-react';
 import { LanguageSelector } from '../LanguageSelector';
 import { toast } from 'sonner';
-import { guardarUsuarioSesion } from '../../utils/sesionStorage';
-import { validarCredenciales, inicializarUsuarios } from '../../utils/usuarios';
+import { useAuth } from '../../../contexts/AuthContext';
+import { inicializarUsuarios } from '../../utils/usuarios';
 
 interface LoginProps {
   onLogin: () => void;
@@ -15,6 +15,7 @@ interface LoginProps {
 export function Login({ onLogin, onAccessPublic }: LoginProps) {
   const { t } = useTranslation();
   const branding = useBranding();
+  const { login } = useAuth();
   const [usuario, setUsuario] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [recordarme, setRecordarme] = useState(false);
@@ -52,10 +53,10 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
     // Simular un petit délai pour animation
     await new Promise(resolve => setTimeout(resolve, 800));
 
-    // Validar credenciales contre la base de données de utilisateurs
-    const usuarioValidado = validarCredenciales(usuario, contrasena);
+    // Login usando el contexto de autenticación JWT
+    const exito = await login(usuario, contrasena, recordarme);
     
-    if (!usuarioValidado) {
+    if (!exito) {
       setError('Nom d\'utilisateur ou mot de passe incorrect');
       toast.error('❌ Authentification échouée', {
         description: 'Vérifiez vos identifiants et réessayez'
@@ -64,33 +65,12 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
       return;
     }
 
-    // Login exitoso
-    toast.success(`✅ Bienvenue ${usuarioValidado.nombre}!`, {
-      description: usuarioValidado.descripcion || 'Connexion réussie',
-      duration: 3000
+    // Login exitoso con JWT
+    toast.success(`✅ Bienvenue ${usuario}!`, {
+      description: '🔐 Connexion sécurisée par JWT',
+      duration: 3000,
+      icon: <Shield className="text-green-600" />
     });
-    
-    // Garder l'état de session en localStorage si "Recordarme" est activé
-    if (recordarme) {
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('authTimestamp', Date.now().toString());
-    } else {
-      sessionStorage.setItem('isAuthenticated', 'true');
-    }
-    
-    // Créer un utilisateur de session avec les données validées
-    const usuarioSesion = {
-      id: usuarioValidado.id,
-      nombre: usuarioValidado.nombre,
-      apellido: usuarioValidado.apellido,
-      email: usuarioValidado.email,
-      rol: usuarioValidado.rol,
-      permisos: usuarioValidado.permisos,
-      foto: usuarioValidado.foto
-    };
-    
-    // Garder l'utilisateur en session
-    guardarUsuarioSesion(usuarioSesion);
     
     setTimeout(() => {
       onLogin();

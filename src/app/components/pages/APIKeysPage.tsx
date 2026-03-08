@@ -1,37 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Key, 
-  Plus, 
-  Copy, 
-  Trash2, 
-  Eye, 
-  EyeOff, 
-  Shield,
-  Activity,
-  Clock,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  Download,
-  Code,
-  BarChart3,
-  Zap
-} from 'lucide-react';
-import { Button } from '../ui/button';
+import { Key, Plus, Trash2, Copy, Eye, EyeOff, RefreshCw, Download, Shield, Activity, Clock, Globe, CheckCircle, Zap, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { toast } from 'sonner';
-import { useBranding } from '../../../hooks/useBranding';
-import {
-  APIKey,
-  APIPermission,
-  crearAPIKey,
-  obtenerAPIKeys,
-  revocarAPIKey,
+import { Label } from '../ui/label';
+import { Badge } from '../ui/badge';
+import { 
+  crearAPIKey, 
+  obtenerAPIKeys, 
+  revocarAPIKey, 
+  actualizarAPIKey,
+  exportarDocumentacionAPI,
   eliminarAPIKey,
   obtenerEstadisticasAPI,
-  exportarDocumentacionAPI
+  type APIKey,
+  type Permiso
 } from '../../utils/apiKeyManager';
+import { toast } from 'sonner';
+import { useBranding } from '../../../hooks/useBranding';
+import { copiarAlPortapapeles } from '../../utils/clipboard';
 
 export function APIKeysPage() {
   const branding = useBranding();
@@ -45,7 +32,7 @@ export function APIKeysPage() {
     name: '',
     description: '',
     expiresInDays: 365,
-    permissions: [] as APIPermission[],
+    permissions: [] as Permiso[],
   });
 
   useEffect(() => {
@@ -92,7 +79,7 @@ export function APIKeysPage() {
   };
 
   const handleCopiarKey = (key: string) => {
-    navigator.clipboard.writeText(key);
+    copiarAlPortapapeles(key);
     toast.success('API Key copiada al portapapeles');
   };
 
@@ -112,7 +99,7 @@ export function APIKeysPage() {
     }
   };
 
-  const togglePermission = (permission: APIPermission) => {
+  const togglePermission = (permission: Permiso) => {
     setFormData(prev => ({
       ...prev,
       permissions: prev.permissions.includes(permission)
@@ -121,7 +108,7 @@ export function APIKeysPage() {
     }));
   };
 
-  const permissionsAvailable: { value: APIPermission; label: string; color: string }[] = [
+  const permissionsAvailable: { value: Permiso; label: string; color: string }[] = [
     { value: 'read:inventory', label: 'Leer Inventario', color: '#4CAF50' },
     { value: 'write:inventory', label: 'Escribir Inventario', color: '#FF9800' },
     { value: 'read:orders', label: 'Leer Comandas', color: '#2196F3' },

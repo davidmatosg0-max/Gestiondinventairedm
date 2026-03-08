@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { toast } from 'sonner';
+import { copiarAlPortapapeles } from '../utils/clipboard';
 import { GuiaCommunicationInterne } from './GuiaCommunicationInterne';
 import { GuiaCompletaApp } from './GuiaCompletaApp';
 import { GuideCompletModules } from './GuideCompletModules';
@@ -410,7 +411,7 @@ export function CommunicationInterne() {
   };
 
   const handleCopyMessage = (content: string) => {
-    navigator.clipboard.writeText(content);
+    copiarAlPortapapeles(content);
     toast.success('Message copié dans le presse-papiers');
   };
 

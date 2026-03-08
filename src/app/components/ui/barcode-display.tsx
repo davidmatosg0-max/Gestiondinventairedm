@@ -4,6 +4,7 @@ import { Card } from './card';
 import { Button } from './button';
 import { Download, Printer, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { copiarAlPortapapeles } from '../../utils/clipboard';
 
 interface BarcodeDisplayProps {
   value: string;
@@ -74,7 +75,7 @@ export function BarcodeDisplay({
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(value);
+      await copiarAlPortapapeles(value);
       setCopied(true);
       toast.success('Código copiado al portapapeles');
       setTimeout(() => setCopied(false), 2000);

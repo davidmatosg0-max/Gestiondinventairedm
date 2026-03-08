@@ -484,7 +484,7 @@ export function DashboardMetricas() {
               <XAxis dataKey="fecha" stroke="#666666" style={{ fontSize: '12px' }} />
               <YAxis stroke="#666666" style={{ fontSize: '12px' }} />
               <Tooltip />
-              <Area type="monotone" dataKey="actividad" stroke="#1a4d7a" fillOpacity={1} fill="url(#colorActividad)" />
+              <Area key="area-actividad" type="monotone" dataKey="actividad" stroke="#1a4d7a" fillOpacity={1} fill="url(#colorActividad)" />
             </AreaChart>
           </ResponsiveContainer>
         </motion.div>
@@ -508,8 +508,8 @@ export function DashboardMetricas() {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey="entradas" fill="#2d9561" name="Entrées" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="salidas" fill="#DC3545" name="Sorties" radius={[8, 8, 0, 0]} />
+              <Bar key="bar-entradas" dataKey="entradas" fill="#2d9561" name="Entrées" radius={[8, 8, 0, 0]} />
+              <Bar key="bar-salidas" dataKey="salidas" fill="#DC3545" name="Sorties" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
@@ -563,6 +563,7 @@ export function DashboardMetricas() {
               <Tooltip />
               <Legend />
               <Line 
+                key="line-comandas"
                 type="monotone" 
                 dataKey="comandas" 
                 stroke="#FFC107" 
@@ -571,6 +572,7 @@ export function DashboardMetricas() {
                 dot={{ fill: '#FFC107', r: 6 }}
               />
               <Line 
+                key="line-completadas"
                 type="monotone" 
                 dataKey="completadas" 
                 stroke="#2d9561" 

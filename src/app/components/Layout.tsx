@@ -200,7 +200,7 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
     { id: 'communication', label: 'Messagerie', icon: <MessageSquare className="w-5 h-5" /> },
     { id: 'recrutement', label: t('nav.recruitment'), icon: <UserPlus className="w-5 h-5" /> },
     { id: 'usuarios', label: t('nav.users'), icon: <Users className="w-5 h-5" /> },
-    { id: 'id-digital', label: t('nav.digitalID'), icon: <Apple className="w-5 h-5" /> },
+    { id: 'id-digital', label: t('nav.digitalID'), icon: <Scale className="w-5 h-5" /> },
     { id: 'api-keys', label: '🚀 API Keys PRO', icon: <Key className="w-5 h-5" />, soloDesarrollador: true },
     { id: 'panel-marca', label: t('nav.branding'), icon: <Palette className="w-5 h-5" />, soloDesarrollador: true },
     { id: 'configuracion', label: t('nav.configuration'), icon: <Settings className="w-5 h-5" /> }

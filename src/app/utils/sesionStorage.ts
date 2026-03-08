@@ -4,8 +4,9 @@ export type PermisoModulo = 'administrador_liaison' | 'coordinador' | 'almacenis
 
 export interface UsuarioSesion {
   id: string;
+  username?: string;
   nombre: string;
-  apellido: string;
+  apellido?: string;
   email: string;
   rol: 'administrador' | 'coordinador' | 'almacenista' | 'transportista';
   permisos: PermisoModulo[];
@@ -17,9 +18,9 @@ const STORAGE_KEY = 'usuario_sesion_banco_alimentos';
 /**
  * Guarda el usuario actual en la sesión
  */
-export function guardarUsuarioSesion(usuario: UsuarioSesion): void;
+export function guardarUsuarioSesion(usuario: UsuarioSesion | any): void;
 export function guardarUsuarioSesion(username: string, recordarme: boolean): void;
-export function guardarUsuarioSesion(usuarioOUsername: UsuarioSesion | string, recordarme?: boolean): void {
+export function guardarUsuarioSesion(usuarioOUsername: UsuarioSesion | string | any, recordarme?: boolean): void {
   try {
     let usuario: UsuarioSesion;
     
@@ -27,17 +28,33 @@ export function guardarUsuarioSesion(usuarioOUsername: UsuarioSesion | string, r
       // Crear usuario demo basado en el username
       usuario = {
         id: '1',
+        username: usuarioOUsername,
         nombre: 'Administrateur',
         apellido: 'Système',
         email: `${usuarioOUsername.toLowerCase()}@banquealimentaire.ca`,
         rol: 'administrador',
-        permisos: ['administrador_general'],
+        permisos: ['administrador_general', 'desarrollador', 'acceso_total'],
         foto: undefined
       };
     } else {
-      usuario = usuarioOUsername;
+      // Si viene del JWT, adaptar el formato
+      if (usuarioOUsername.userId || usuarioOUsername.permissions || usuarioOUsername.role) {
+        usuario = {
+          id: usuarioOUsername.userId || usuarioOUsername.id || '1',
+          username: usuarioOUsername.username,
+          nombre: usuarioOUsername.username || usuarioOUsername.nombre || 'Usuario',
+          apellido: '',
+          email: usuarioOUsername.email || 'usuario@banquealimentaire.ca',
+          rol: (usuarioOUsername.role || usuarioOUsername.rol || 'administrador').toLowerCase() as any,
+          permisos: (usuarioOUsername.permissions || usuarioOUsername.permisos || ['administrador_general', 'desarrollador', 'acceso_total']) as any,
+          foto: usuarioOUsername.foto
+        };
+      } else {
+        usuario = usuarioOUsername;
+      }
     }
     
+    console.log('💾 Guardando usuario en sesión:', usuario);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(usuario));
   } catch (error) {
     console.error('Error al guardar usuario en sesión:', error);

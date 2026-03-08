@@ -6,6 +6,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
 import { toast } from 'sonner';
+import { copiarAlPortapapeles } from '../../utils/clipboard';
 import { obtenerUsuarios, guardarUsuarios } from '../../utils/usuarios';
 
 interface GestionPasswordDialogProps {
@@ -42,7 +43,7 @@ export function GestionPasswordDialog({
 
   const handleCopy = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      await copiarAlPortapapeles(text);
       setCopied(true);
       toast.success('Mot de passe copié dans le presse-papiers');
       setTimeout(() => setCopied(false), 2000);
