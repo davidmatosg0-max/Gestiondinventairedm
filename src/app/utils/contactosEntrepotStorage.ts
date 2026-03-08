@@ -42,119 +42,11 @@ export interface ContactoEntrepot {
   ultimoContacto?: string;
   fechaNacimiento?: string;
   genero?: string;
+  ultActivo?: boolean; // Nuevo campo: si está actualmente activo en PTC
 }
 
-// Datos de ejemplo iniciales
-const contactosIniciales: ContactoEntrepot[] = [
-  {
-    id: '1',
-    tipoContacto: 'proveedor',
-    nombre: 'Jean',
-    apellido: 'Dupont',
-    numeroID: 'PRV-2024-001',
-    imagen: null,
-    nombreEmpresa: 'Aliments Frais Inc.',
-    tipoEmpresa: 'inc',
-    numeroRegistro: '1234567890 RC',
-    numeroTVA: '123456789 TQ',
-    emailPrincipal: 'jean.dupont@aliments-frais.com',
-    emailSecundario: '',
-    telefonoPrincipal: '+1 (514) 123-4567',
-    telefonoSecundario: '',
-    sitioWeb: 'https://www.aliments-frais.com',
-    direccion: '123 Rue Principale',
-    ciudad: 'Montréal',
-    provincia: 'QC',
-    codigoPostal: 'H2X 3Y7',
-    pais: 'CA',
-    banco: 'Banque Nationale',
-    numeroCuenta: '1234567',
-    numeroRuta: '12345-001',
-    categoriaProductos: ['fruits', 'legumes'],
-    temperaturaEspecializada: ['fresco', 'refrigerado'],
-    horarioDisponible: '8h00 - 17h00',
-    diasOperacion: ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'],
-    tiempoEntrega: '24-48 heures',
-    metodoPago: ['transferencia', 'cheque'],
-    notas: 'Fournisseur fiable avec livraisons ponctuelles',
-    etiquetas: ['vip', 'fiable', 'bio'],
-    activo: true,
-    fechaCreacion: '2024-01-15',
-    ultimoContacto: '2024-02-10'
-  },
-  {
-    id: '2',
-    tipoContacto: 'transportista',
-    nombre: 'Marie',
-    apellido: 'Tremblay',
-    numeroID: 'TRP-2024-001',
-    imagen: null,
-    nombreEmpresa: 'Transport Éclair Ltée',
-    tipoEmpresa: 'ltee',
-    numeroRegistro: '9876543210 RC',
-    numeroTVA: '987654321 TQ',
-    emailPrincipal: 'marie@transport-eclair.com',
-    emailSecundario: '',
-    telefonoPrincipal: '+1 (514) 987-6543',
-    telefonoSecundario: '+1 (514) 987-6544',
-    sitioWeb: 'https://www.transport-eclair.com',
-    direccion: '456 Avenue du Transport',
-    ciudad: 'Laval',
-    provincia: 'QC',
-    codigoPostal: 'H7L 5M2',
-    pais: 'CA',
-    banco: '',
-    numeroCuenta: '',
-    numeroRuta: '',
-    categoriaProductos: [],
-    temperaturaEspecializada: ['refrigerado', 'congelado'],
-    horarioDisponible: '6h00 - 22h00',
-    diasOperacion: ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'],
-    tiempoEntrega: '2-4 heures',
-    metodoPago: ['transferencia'],
-    notas: 'Service rapide et efficace',
-    etiquetas: ['rapide', 'refrigere'],
-    activo: true,
-    fechaCreacion: '2024-02-01',
-    ultimoContacto: '2024-02-15'
-  },
-  {
-    id: '3',
-    tipoContacto: 'donador',
-    nombre: 'Pierre',
-    apellido: 'Lavoie',
-    numeroID: 'DON-2024-001',
-    imagen: null,
-    nombreEmpresa: 'Fondation Bon Coeur',
-    tipoEmpresa: 'obnl',
-    numeroRegistro: '5555555555 RC',
-    numeroTVA: '',
-    emailPrincipal: 'pierre.lavoie@boncoeur.org',
-    emailSecundario: 'info@boncoeur.org',
-    telefonoPrincipal: '+1 (514) 555-1234',
-    telefonoSecundario: '',
-    sitioWeb: 'https://www.boncoeur.org',
-    direccion: '789 Boulevard Solidaire',
-    ciudad: 'Montréal',
-    provincia: 'QC',
-    codigoPostal: 'H3A 1B2',
-    pais: 'CA',
-    banco: '',
-    numeroCuenta: '',
-    numeroRuta: '',
-    categoriaProductos: ['conserves', 'produits-secs'],
-    temperaturaEspecializada: ['ambiente'],
-    horarioDisponible: '9h00 - 16h00',
-    diasOperacion: ['lunes', 'miercoles', 'viernes'],
-    tiempoEntrega: 'Sur rendez-vous',
-    metodoPago: [],
-    notas: 'Donateur régulier de produits non périssables',
-    etiquetas: ['donateur', 'regulier', 'fiable'],
-    activo: true,
-    fechaCreacion: '2024-01-20',
-    ultimoContacto: '2024-02-18'
-  }
-];
+// Datos iniciales - MODO PRODUCCIÓN (vacío)
+const contactosIniciales: ContactoEntrepot[] = [];
 
 // Obtener todos les contactos
 export function obtenerContactosEntrepot(): ContactoEntrepot[] {
@@ -163,7 +55,7 @@ export function obtenerContactosEntrepot(): ContactoEntrepot[] {
     if (stored !== null) {
       return JSON.parse(stored);
     } else {
-      // Solo inicializar la primera vez avec contactos de ejemplo
+      // Inicializar vacío en producción
       localStorage.setItem(STORAGE_KEY, JSON.stringify(contactosIniciales));
       return contactosIniciales;
     }

@@ -8,8 +8,9 @@ import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { mockProductos, mockComandas, mockOrganismos } from '../../data/mockData';
+import { mockProductos, mockOrganismos } from '../../data/mockData';
 import { toast } from 'sonner';
+import { obtenerComandas } from '../../utils/comandaStorage';
 import { 
   exportarInventarioPDF, 
   exportarComandasPDF, 
@@ -50,7 +51,7 @@ export function Reportes() {
     { mes: 'Ene', comandas: 42 }
   ];
 
-  const datosOrganismos = mockOrganismos.map(org => ({
+  const datosOrganismos = mockOrganismos.map((org, index) => ({
     nombre: org.nombre.length > 15 ? org.nombre.substring(0, 15) + '...' : org.nombre,
     beneficiarios: org.beneficiarios
   }));
@@ -66,6 +67,8 @@ export function Reportes() {
   const COLORS = ['#1E73BE', '#4CAF50', '#FFC107', '#DC3545', '#9C27B0', '#00BCD4'];
 
   const handleGenerarReporte = (formato: 'pdf' | 'excel') => {
+    const comandas = obtenerComandas();
+    
     try {
       switch (tipoReporte) {
         case 'inventario':
@@ -78,9 +81,9 @@ export function Reportes() {
         
         case 'comandas':
           if (formato === 'pdf') {
-            exportarComandasPDF(mockComandas);
+            exportarComandasPDF(comandas);
           } else {
-            exportarComandasExcel(mockComandas);
+            exportarComandasExcel(comandas);
           }
           break;
         
@@ -97,7 +100,7 @@ export function Reportes() {
           const estadisticas = {
             totalProductos: mockProductos.length,
             totalStock: mockProductos.reduce((sum, p) => sum + p.stockActual, 0),
-            totalComandas: mockComandas.length,
+            totalComandas: comandas.length,
             totalOrganismos: mockOrganismos.filter(o => o.activo).length,
             valorTotal: 25450.75,
             periodo: `${fechaInicio} - ${fechaFin}`,
@@ -115,7 +118,7 @@ export function Reportes() {
                 Stock: p.stockActual,
                 Unidad: p.unidad,
               })),
-              comandas: mockComandas.map(c => ({
+              comandas: comandas.map(c => ({
                 'N° Comanda': c.numero,
                 Organismo: c.organismo?.nombre || 'N/A',
                 Fecha: new Date(c.fecha).toLocaleDateString('es-ES'),
@@ -279,7 +282,7 @@ export function Reportes() {
               <div className="backdrop-blur-lg bg-white/80 rounded-xl shadow-lg p-4 sm:p-6 border-l-4 border-l-[#4CAF50]">
                 <p className="text-xs sm:text-sm text-gray-600">{t('reports.ordersMonth')}</p>
                 <p className="text-2xl sm:text-3xl font-bold text-[#4CAF50] mt-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  {mockComandas.length}
+                  {obtenerComandas().length}
                 </p>
               </div>
 
@@ -367,8 +370,8 @@ export function Reportes() {
                       fill="#8884d8"
                       dataKey="stock"
                     >
-                      {datosInventario.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      {datosInventario.map((entry) => (
+                        <Cell key={entry.categoria} fill={COLORS[datosInventario.indexOf(entry) % COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip />

@@ -14,7 +14,7 @@ export interface Usuario {
   descripcion?: string;
 }
 
-// Lista de usuarios predefinidos
+// Lista de usuarios predefinidos - MODO PRODUCCIÓN
 const USUARIOS_PREDEFINIDOS: Usuario[] = [
   {
     id: '1',
@@ -36,79 +36,24 @@ const USUARIOS_PREDEFINIDOS: Usuario[] = [
   {
     id: '2',
     username: 'admin',
-    password: 'Demo2024!',
+    password: 'Admin2024!',
     nombre: 'Administrateur',
     apellido: 'Système',
     email: 'admin@banque-alimentaire.org',
     rol: 'administrador',
-    permisos: ['administrador_general', 'administrador_liaison'],
-    descripcion: 'Administrateur Démo - Accès Administrateur Complet (Sans Développeur)'
-  },
-  {
-    id: '3',
-    username: 'liaison',
-    password: 'liaison123',
-    nombre: 'Admin',
-    apellido: 'Liaison',
-    email: 'liaison@banque-alimentaire.org',
-    rol: 'administrador',
-    permisos: ['administrador_liaison'],
-    descripcion: 'Administrateur Liaison - Gestion des Organismes'
-  },
-  {
-    id: '4',
-    username: 'coordinador',
-    password: 'coord123',
-    nombre: 'Coordinateur',
-    apellido: 'Principal',
-    email: 'coordinateur@banque-alimentaire.org',
-    rol: 'coordinador',
-    permisos: ['coordinador'],
-    descripcion: 'Coordinateur - Accès en Lecture Seule'
-  },
-  {
-    id: '5',
-    username: 'transport',
-    password: 'Transport2024!',
-    nombre: 'Marc',
-    apellido: 'Transporteur',
-    email: 'transport@banque-alimentaire.org',
-    rol: 'usuario',
     permisos: [
-      'transporte.ver',
-      'transporte.editar',
-      'transporte.entregar',
-      'transporte.vehiculos',
-      'comandas.ver',
-      'organismos.ver',
-      'dashboard.ver'
+      'administrador_general', 
+      'acceso_total',
+      'administrador_liaison',
+      'coordinador'
     ],
-    descripcion: 'Responsable Transport - Gestion des Livraisons et Véhicules'
-  },
-  {
-    id: '6',
-    username: 'Louise',
-    password: 'Louise2024!',
-    nombre: 'Louise',
-    apellido: 'Durand',
-    email: 'louise.durand@banque-alimentaire.org',
-    rol: 'usuario',
-    permisos: [
-      'transporte.ver',
-      'transporte.editar',
-      'transporte.entregar',
-      'transporte.vehiculos',
-      'comandas.ver',
-      'organismos.ver',
-      'dashboard.ver'
-    ],
-    descripcion: 'Transporteuse - Gestion des Livraisons'
+    descripcion: 'Administrateur Principal - Accès Total au Système'
   }
 ];
 
 const STORAGE_KEY = 'banque_alimentaire_usuarios';
 const VERSION_KEY = 'banque_alimentaire_usuarios_version';
-const CURRENT_VERSION = '3.1'; // Versión con usuario Louise agregado
+const CURRENT_VERSION = '4.1-production'; // Versión producción - David + admin
 
 // Migrar usuarios existentes para actualizar permisos del usuario admin
 export function migrarUsuarios(): void {
@@ -118,47 +63,10 @@ export function migrarUsuarios(): void {
       return; // Ya está actualizado
     }
 
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const usuarios: Usuario[] = JSON.parse(stored);
-      
-      // Actualizar usuario admin (id: 2) para remover acceso_total
-      const adminIndex = usuarios.findIndex(u => u.id === '2' || u.username.toLowerCase() === 'admin');
-      if (adminIndex !== -1) {
-        usuarios[adminIndex] = {
-          ...usuarios[adminIndex],
-          permisos: ['administrador_general', 'administrador_liaison'],
-          descripcion: 'Administrateur Démo - Accès Administrateur Complet (Sans Développeur)'
-        };
-        console.log('✅ Usuario admin actualizado: permisos de desarrollador removidos');
-      }
-      
-      // Agregar usuario de transporte si no existe
-      const transportIndex = usuarios.findIndex(u => u.username.toLowerCase() === 'transport');
-      if (transportIndex === -1) {
-        const nuevoUsuarioTransporte = USUARIOS_PREDEFINIDOS.find(u => u.username === 'transport');
-        if (nuevoUsuarioTransporte) {
-          usuarios.push(nuevoUsuarioTransporte);
-          console.log('✅ Usuario de transporte agregado');
-        }
-      }
-      
-      // Agregar usuario Louise si no existe
-      const louiseIndex = usuarios.findIndex(u => u.username.toLowerCase() === 'louise');
-      if (louiseIndex === -1) {
-        const nuevoUsuarioLouise = USUARIOS_PREDEFINIDOS.find(u => u.username === 'Louise');
-        if (nuevoUsuarioLouise) {
-          usuarios.push(nuevoUsuarioLouise);
-          console.log('✅ Usuario Louise agregado');
-        }
-      }
-      
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(usuarios));
-      
-      // Marcar como actualizado
-      localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
-      console.log('✅ Migración de usuarios completada - Versión', CURRENT_VERSION);
-    }
+    // MODO PRODUCCIÓN: Limpiar usuarios de ejemplo y mantener solo admin
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(USUARIOS_PREDEFINIDOS));
+    localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
+    console.log('✅ Modo Producción - Solo usuario administrador principal');
   } catch (error) {
     console.error('Error al migrar usuarios:', error);
   }

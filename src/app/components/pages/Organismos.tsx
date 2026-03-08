@@ -10,8 +10,8 @@ import { Label } from '../ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { mockComandas } from '../../data/mockData';
 import { toast } from 'sonner';
+import { obtenerComandas } from '../../utils/comandaStorage';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import { PerfilOrganismoDialog } from '../organismos/PerfilOrganismoDialog';
@@ -1660,7 +1660,7 @@ export function Organismos() {
         {/* Organismos Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {organismosFiltrados.map(organismo => {
-          const comandasOrganismo = mockComandas.filter(c => c.organismoId === organismo.id);
+          const comandasOrganismo = obtenerComandas().filter(c => c.organismoId === organismo.id);
 
           return (
             <Card key={organismo.id} className="hover:shadow-lg transition-shadow">

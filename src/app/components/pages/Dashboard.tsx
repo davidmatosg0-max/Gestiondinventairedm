@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Package, ClipboardList, Building, TrendingUp, Clock, Users, DollarSign, AlertTriangle, Sparkles, LayoutDashboard } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { mockProductos, mockComandas, mockOrganismos, mockMovimientos } from '../../data/mockData';
+import { mockOrganismos, mockMovimientos } from '../../data/mockData';
 import { AlertaComandasUrgentes } from '../AlertaComandasUrgentes';
+import { obtenerComandas } from '../../utils/comandaStorage';
 import { EntradaDonAchat } from '../EntradaDonAchat';
 import { VerificacionesRecientes } from '../VerificacionesRecientes';
 import { AlertasInteligentes } from '../inventario/AlertasInteligentes';
@@ -40,8 +41,8 @@ export function Dashboard() {
   const cargarDatos = () => {
     // Obtener datos de localStorage
     const productos = obtenerProductosActivos();
-    const comandas = mockComandas; // Temporal: usar mockComandas hasta implementar obtenerComandas
-    const organismos = mockOrganismos; // Temporal: usar mockOrganismos hasta implementar obtenerOrganismos
+    const comandas = obtenerComandas();
+    const organismos = mockOrganismos;
 
     // Calcular estadísticas
     const totalStock = productos.reduce((sum, p) => sum + p.stockActual, 0);

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBranding } from '../../../hooks/useBranding';
-import { Lock, User, LogIn, AlertCircle, Sparkles, Shield, Copy, Check, Clock } from 'lucide-react';
+import { Lock, User, LogIn, AlertCircle, Sparkles, Clock } from 'lucide-react';
 import { LanguageSelector } from '../LanguageSelector';
 import { toast } from 'sonner';
 import { guardarUsuarioSesion } from '../../utils/sesionStorage';
@@ -20,38 +20,11 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
   const [recordarme, setRecordarme] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [copiedUser, setCopiedUser] = useState(false);
-  const [copiedPass, setCopiedPass] = useState(false);
 
   // Inicializar usuarios al montar el componente
   React.useEffect(() => {
     inicializarUsuarios();
   }, []);
-
-  const handleCopy = async (text: string, type: 'user' | 'pass') => {
-    try {
-      await navigator.clipboard.writeText(text);
-      if (type === 'user') {
-        setCopiedUser(true);
-        setTimeout(() => setCopiedUser(false), 2000);
-      } else {
-        setCopiedPass(true);
-        setTimeout(() => setCopiedPass(false), 2000);
-      }
-      toast.success('Copié!', { duration: 1500 });
-    } catch (err) {
-      toast.error('Erreur de copie');
-    }
-  };
-
-  const handleUseDemo = () => {
-    setUsuario('admin');
-    setContrasena('Demo2024!');
-    toast.info('Identifiants démo chargés', { 
-      description: 'Cliquez sur "Connexion" pour continuer',
-      duration: 2500 
-    });
-  };
 
   const handleDeveloperAccess = () => {
     setUsuario('David');
@@ -76,10 +49,10 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
       return;
     }
 
-    // Simular un pequeño delay pour animación
+    // Simular un petit délai pour animation
     await new Promise(resolve => setTimeout(resolve, 800));
 
-    // Validar credenciales contra la base de données de usuarios
+    // Validar credenciales contre la base de données de utilisateurs
     const usuarioValidado = validarCredenciales(usuario, contrasena);
     
     if (!usuarioValidado) {
@@ -97,7 +70,7 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
       duration: 3000
     });
     
-    // Guardar estado de sesión en localStorage si "Recordarme" está activado
+    // Garder l'état de session en localStorage si "Recordarme" est activé
     if (recordarme) {
       localStorage.setItem('isAuthenticated', 'true');
       localStorage.setItem('authTimestamp', Date.now().toString());
@@ -105,7 +78,7 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
       sessionStorage.setItem('isAuthenticated', 'true');
     }
     
-    // Crear usuario de sesión avec les données validées
+    // Créer un utilisateur de session avec les données validées
     const usuarioSesion = {
       id: usuarioValidado.id,
       nombre: usuarioValidado.nombre,
@@ -116,7 +89,7 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
       foto: usuarioValidado.foto
     };
     
-    // Guardar usuario en sesión
+    // Garder l'utilisateur en session
     guardarUsuarioSesion(usuarioSesion);
     
     setTimeout(() => {
@@ -132,7 +105,7 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
         background: `linear-gradient(135deg, ${branding.primaryColor}15 0%, ${branding.secondaryColor}10 100%)`,
       }}
     >
-      {/* Formas decorativas de fondo */}
+      {/* Formas décoratives de fond */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div 
           className="absolute -top-24 -left-24 w-96 h-96 rounded-full opacity-20 blur-3xl"
@@ -144,17 +117,17 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
         />
       </div>
 
-      {/* Selector de idioma en la esquina superior derecha */}
+      {/* Selector de idioma en la esquina supérieure droite */}
       <div className="absolute top-4 sm:top-6 right-4 sm:right-6 z-20">
         <LanguageSelector />
       </div>
 
-      {/* Contenedor del formulario */}
+      {/* Conteneur du formulaire */}
       <div className="w-full max-w-md relative z-10">
-        {/* Logo y título con animación */}
+        {/* Logo et titre avec animation */}
         <div className="text-center mb-8 animate-fadeIn">
           <div className="relative inline-block mb-6">
-            {/* Glow effect detrás del logo */}
+            {/* Effet de lumière derrière le logo */}
             <div 
               className="absolute inset-0 rounded-full blur-2xl opacity-30 animate-pulse"
               style={{ backgroundColor: branding.primaryColor }}
@@ -203,7 +176,7 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
           </p>
         </div>
 
-        {/* Tarjeta de login con glassmorphism */}
+        {/* Carte de login avec glassmorphism */}
         <div 
           className="backdrop-blur-xl bg-white/80 rounded-2xl shadow-2xl p-6 sm:p-8 border border-white/50"
           style={{
@@ -224,7 +197,7 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Campo de usuario */}
+            {/* Champ d'utilisateur */}
             <div className="space-y-2">
               <label 
                 htmlFor="usuario" 
@@ -254,23 +227,10 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
                   }}
                   placeholder={t('login.usernamePlaceholder')}
                 />
-                <button
-                  type="button"
-                  onClick={() => handleCopy(usuario, 'user')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 transition-colors duration-200"
-                  style={{ color: '#9CA3AF' }}
-                >
-                  <Copy size={20} />
-                </button>
-                {copiedUser && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 transition-colors duration-200">
-                    <Check size={20} style={{ color: '#4CAF50' }} />
-                  </div>
-                )}
               </div>
             </div>
 
-            {/* Campo de contraseña */}
+            {/* Champ de mot de passe */}
             <div className="space-y-2">
               <label 
                 htmlFor="contrasena" 
@@ -300,23 +260,10 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
                   }}
                   placeholder={t('login.passwordPlaceholder')}
                 />
-                <button
-                  type="button"
-                  onClick={() => handleCopy(contrasena, 'pass')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 transition-colors duration-200"
-                  style={{ color: '#9CA3AF' }}
-                >
-                  <Copy size={20} />
-                </button>
-                {copiedPass && (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 transition-colors duration-200">
-                    <Check size={20} style={{ color: '#4CAF50' }} />
-                  </div>
-                )}
               </div>
             </div>
 
-            {/* Recordarme y olvidaste contraseña */}
+            {/* Recordarme et mot de passe oublié */}
             <div className="flex items-center justify-between pt-1">
               <label className="flex items-center cursor-pointer group">
                 <div className="relative">
@@ -344,7 +291,7 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
               </a>
             </div>
 
-            {/* Botón de inicio de sesión */}
+            {/* Bouton de connexion */}
             <button
               type="submit"
               disabled={isLoading}
@@ -367,7 +314,7 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
               )}
             </button>
 
-            {/* Mensaje de error */}
+            {/* Message d'erreur */}
             {error && (
               <div className="flex items-center gap-3 p-4 bg-red-50/80 backdrop-blur-sm border-2 border-red-200 rounded-xl animate-fadeIn">
                 <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
@@ -379,151 +326,32 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
           </form>
         </div>
 
-        {/* Tarjeta de credenciales demo */}
-        <div 
-          className="backdrop-blur-xl bg-white/70 rounded-2xl shadow-xl p-5 sm:p-6 border border-white/50 mt-4 animate-fadeIn"
-          style={{
-            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
-            animationDelay: '0.2s'
-          }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <Shield size={18} style={{ color: branding.secondaryColor }} />
-            <h3 
-              className="font-bold text-base sm:text-lg" 
-              style={{ 
-                fontFamily: 'Montserrat, sans-serif',
-                color: '#333333' 
-              }}
-            >
-              Accès Administrateur Démo
-            </h3>
-          </div>
-
-          <div className="space-y-3">
-            {/* Usuario demo */}
-            <div className="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-gray-200/50">
-              <div className="flex items-center gap-3">
-                <div 
-                  className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: `${branding.primaryColor}15` }}
-                >
-                  <User size={16} style={{ color: branding.primaryColor }} />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    Utilisateur
-                  </p>
-                  <p className="text-sm font-bold" style={{ color: '#333333', fontFamily: 'Montserrat, sans-serif' }}>
-                    admin
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => handleCopy('admin', 'user')}
-                className="p-2 hover:bg-white/80 rounded-lg transition-all"
-                title="Copier"
-              >
-                {copiedUser ? (
-                  <Check size={16} style={{ color: branding.secondaryColor }} />
-                ) : (
-                  <Copy size={16} style={{ color: '#9CA3AF' }} />
-                )}
-              </button>
-            </div>
-
-            {/* Contraseña demo */}
-            <div className="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-gray-200/50">
-              <div className="flex items-center gap-3">
-                <div 
-                  className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: `${branding.primaryColor}15` }}
-                >
-                  <Lock size={16} style={{ color: branding.primaryColor }} />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    Mot de passe
-                  </p>
-                  <p className="text-sm font-bold" style={{ color: '#333333', fontFamily: 'Montserrat, sans-serif' }}>
-                    Demo2024!
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => handleCopy('Demo2024!', 'pass')}
-                className="p-2 hover:bg-white/80 rounded-lg transition-all"
-                title="Copier"
-              >
-                {copiedPass ? (
-                  <Check size={16} style={{ color: branding.secondaryColor }} />
-                ) : (
-                  <Copy size={16} style={{ color: '#9CA3AF' }} />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Botón usar credenciales */}
-          <button
-            onClick={handleUseDemo}
-            className="w-full mt-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 border-2 hover:shadow-md transform hover:-translate-y-0.5"
-            style={{ 
-              backgroundColor: 'white',
-              borderColor: branding.primaryColor,
-              color: branding.primaryColor,
-              fontFamily: 'Montserrat, sans-serif',
-            }}
-          >
-            <Sparkles size={16} />
-            Utiliser ces identifiants
-          </button>
-
-          {/* Info adicional */}
-          <div 
-            className="mt-4 p-3 rounded-lg flex items-start gap-2"
-            style={{ backgroundColor: `${branding.secondaryColor}10` }}
-          >
-            <Shield size={14} style={{ color: branding.secondaryColor, marginTop: '2px', flexShrink: 0 }} />
-            <p className="text-xs text-gray-600" style={{ fontFamily: 'Roboto, sans-serif' }}>
-              <span className="font-semibold">Accès administrateur:</span> Gestion complète du système (sans accès développeur)
-            </p>
-          </div>
-        </div>
-
         {/* Botón de acceso público a Feuilles de Temps */}
         {onAccessPublic && (
-          <div 
-            className="backdrop-blur-xl bg-gradient-to-br from-white/60 to-white/40 rounded-2xl shadow-xl p-5 sm:p-6 border border-white/50 mt-4 animate-fadeIn overflow-hidden relative group cursor-pointer hover:shadow-2xl transition-all duration-300"
-            style={{
-              boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)',
-              animationDelay: '0.4s'
-            }}
-            onClick={() => onAccessPublic('benevoles-public')}
-          >
-            {/* Efecto glow animado */}
-            <div 
-              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          <div className="mt-6 animate-fadeIn" style={{ animationDelay: '0.3s' }}>
+            <button
+              onClick={() => onAccessPublic('benevoles-public')}
+              className="w-full backdrop-blur-xl bg-gradient-to-r from-white/70 to-white/50 rounded-xl shadow-lg p-4 border border-white/60 group hover:shadow-xl hover:from-white/80 hover:to-white/60 transition-all duration-300 transform hover:-translate-y-1"
               style={{
-                background: `radial-gradient(circle at center, ${branding.secondaryColor}15 0%, transparent 70%)`
+                boxShadow: '0 4px 24px 0 rgba(31, 38, 135, 0.08)',
               }}
-            />
-            
-            <div className="relative">
-              {/* Header del botón */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  {/* Icono */}
                   <div 
-                    className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300"
+                    className="w-12 h-12 rounded-lg flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300"
                     style={{ 
-                      background: `linear-gradient(135deg, ${branding.secondaryColor} 0%, ${branding.secondaryColor}CC 100%)` 
+                      background: `linear-gradient(135deg, ${branding.secondaryColor} 0%, ${branding.secondaryColor}DD 100%)` 
                     }}
                   >
-                    <Clock size={24} className="text-white" />
+                    <Clock size={22} className="text-white" />
                   </div>
-                  <div>
+                  
+                  {/* Texto */}
+                  <div className="text-left">
                     <h3 
-                      className="font-bold text-lg" 
+                      className="font-bold text-base sm:text-lg mb-0.5" 
                       style={{ 
                         fontFamily: 'Montserrat, sans-serif',
                         color: '#333333' 
@@ -531,18 +359,20 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
                     >
                       Feuilles de Temps
                     </h3>
-                    <p className="text-xs text-gray-600 font-medium" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                      Accès public sans connexion
+                    <p className="text-xs sm:text-sm text-gray-600 font-medium" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                      Enregistrement rapide • Accès libre
                     </p>
                   </div>
                 </div>
+
+                {/* Flecha */}
                 <div 
-                  className="w-8 h-8 rounded-full flex items-center justify-center group-hover:translate-x-1 transition-transform duration-300"
+                  className="w-10 h-10 rounded-full flex items-center justify-center group-hover:translate-x-1 transition-transform duration-300"
                   style={{ backgroundColor: `${branding.secondaryColor}15` }}
                 >
                   <svg 
-                    width="16" 
-                    height="16" 
+                    width="18" 
+                    height="18" 
                     viewBox="0 0 16 16" 
                     fill="none"
                     style={{ color: branding.secondaryColor }}
@@ -557,100 +387,26 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
                   </svg>
                 </div>
               </div>
-
-              {/* Descripción */}
-              <div 
-                className="p-4 rounded-xl border-2 border-dashed mb-3"
-                style={{ 
-                  backgroundColor: `${branding.secondaryColor}08`,
-                  borderColor: `${branding.secondaryColor}30`
-                }}
-              >
-                <p className="text-sm text-gray-700 leading-relaxed" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                  <span className="font-semibold" style={{ color: branding.secondaryColor }}>Enregistrement des heures:</span> Accès direct pour les bénévoles. Enregistrez vos heures ARRIVÉE/DÉPART rapidement sans authentification.
-                </p>
-              </div>
-
-              {/* Características */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: `${branding.secondaryColor}20` }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path 
-                        d="M2 6L5 9L10 3" 
-                        stroke={branding.secondaryColor} 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                  <p className="text-xs text-gray-600" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                    Enregistrement rapide avec boutons ARRIVÉE/DÉPART
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: `${branding.secondaryColor}20` }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path 
-                        d="M2 6L5 9L10 3" 
-                        stroke={branding.secondaryColor} 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                  <p className="text-xs text-gray-600" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                    Calcul automatique du temps travaillé
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: `${branding.secondaryColor}20` }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path 
-                        d="M2 6L5 9L10 3" 
-                        stroke={branding.secondaryColor} 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                  <p className="text-xs text-gray-600" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                    Interface simple et intuitive
-                  </p>
-                </div>
-              </div>
-
-              {/* Badge "Accès libre" */}
-              <div className="mt-4 flex justify-center">
+              
+              {/* Badge decorativo */}
+              <div className="mt-3 flex justify-center">
                 <div 
-                  className="px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-md"
+                  className="px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1.5"
                   style={{ 
-                    backgroundColor: branding.secondaryColor,
-                    color: 'white',
+                    backgroundColor: `${branding.secondaryColor}15`,
+                    color: branding.secondaryColor,
                     fontFamily: 'Montserrat, sans-serif'
                   }}
                 >
-                  <Sparkles size={12} />
-                  Accès Libre • Sans Connexion
+                  <Sparkles size={11} />
+                  Pour Bénévoles
                 </div>
               </div>
-            </div>
+            </button>
           </div>
         )}
 
-        {/* Footer */}
+        {/* Pied de page */}
         <div className="text-center mt-6 text-sm text-gray-600">
           <p className="font-light">
             © 2024 {branding.systemName}. {t('login.allRightsReserved') || 'Todos los derechos reservados'}

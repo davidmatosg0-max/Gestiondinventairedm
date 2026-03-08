@@ -37,7 +37,9 @@ import {
   ChefHat,
   Sparkles,
   Activity,
-  BookOpen
+  BookOpen,
+  Brain,
+  Zap
 } from 'lucide-react';
 import { LanguageSelector } from './LanguageSelector';
 import { CentroNotificaciones } from './CentroNotificaciones';
@@ -67,6 +69,13 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [expandedMenus, setExpandedMenus] = React.useState<string[]>([]);
   const [showGuideComplete, setShowGuideComplete] = React.useState(false);
+  
+  // Estados para botón draggable del Guide Complet
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [position, setPosition] = React.useState({ x: 0, y: 0 });
+  const [dragStart, setDragStart] = React.useState({ x: 0, y: 0 });
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
+  
   const { t } = useTranslation();
   const branding = useBranding();
 
@@ -95,6 +104,48 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
   const rolTraducido = usuarioActual?.rol 
     ? rolesTraduccion[usuarioActual.rol] || usuarioActual.rol 
     : 'Utilisateur';
+  
+  // Funciones para drag del botón Guide Complet
+  const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (e.button !== 0) return; // Solo botón izquierdo
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    });
+  };
+
+  const handleMouseMove = React.useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    const newX = e.clientX - dragStart.x;
+    const newY = e.clientY - dragStart.y;
+    
+    // Limitar dentro de la ventana
+    const maxX = window.innerWidth - (buttonRef.current?.offsetWidth || 200);
+    const maxY = window.innerHeight - (buttonRef.current?.offsetHeight || 64);
+    
+    setPosition({
+      x: Math.max(0, Math.min(newX, maxX)),
+      y: Math.max(0, Math.min(newY, maxY))
+    });
+  }, [isDragging, dragStart]);
+
+  const handleMouseUp = React.useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // Agregar event listeners
+  React.useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const handleLogout = () => {
     if (onLogout) {
@@ -126,6 +177,7 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
       children: [
         { id: 'dashboard', label: 'Tableau de Bord Standard', icon: <LayoutDashboard className="w-4 h-4" /> },
         { id: 'dashboard-metricas', label: 'Métriques en Temps Réel', icon: <Activity className="w-4 h-4" /> },
+        { id: 'dashboard-predictivo', label: '🚀 Dashboard Predictivo IA', icon: <Brain className="w-4 h-4" /> },
       ]
     },
     { 
@@ -149,6 +201,7 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
     { id: 'recrutement', label: t('nav.recruitment'), icon: <UserPlus className="w-5 h-5" /> },
     { id: 'usuarios', label: t('nav.users'), icon: <Users className="w-5 h-5" /> },
     { id: 'id-digital', label: t('nav.digitalID'), icon: <Apple className="w-5 h-5" /> },
+    { id: 'api-keys', label: '🚀 API Keys PRO', icon: <Key className="w-5 h-5" />, soloDesarrollador: true },
     { id: 'panel-marca', label: t('nav.branding'), icon: <Palette className="w-5 h-5" />, soloDesarrollador: true },
     { id: 'configuracion', label: t('nav.configuration'), icon: <Settings className="w-5 h-5" /> }
   ];
@@ -435,17 +488,33 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
         </span>
       </button>
 
-      {/* Botón flotante de Guide Complet - Global para todos los módulos */}
+      {/* Botón flotante de Guide Complet - DRAGGABLE */}
       <button
-        onClick={() => setShowGuideComplete(true)}
-        className="fixed bottom-80 sm:bottom-96 right-4 sm:right-6 text-white rounded-full p-3 sm:p-4 shadow-2xl transition-all hover:scale-110 z-40 flex items-center gap-2 backdrop-blur-xl border-2 border-white/30 group"
-        style={{ 
-          background: `linear-gradient(135deg, ${branding.primaryColor} 0%, ${branding.primaryColor}dd 100%)`
+        ref={buttonRef}
+        onMouseDown={handleMouseDown}
+        onClick={(e) => {
+          // Solo abrir el modal si no estamos arrastrando
+          if (!isDragging) {
+            setShowGuideComplete(true);
+          }
         }}
-        title="Guide Complet du Système"
+        className={`text-white rounded-full p-3 sm:p-4 shadow-2xl hover:scale-110 z-40 flex items-center gap-2 backdrop-blur-xl border-2 border-white/30 group ${
+          isDragging ? 'cursor-grabbing scale-110' : 'cursor-grab'
+        }`}
+        style={{ 
+          position: 'fixed',
+          bottom: position.y === 0 ? '20rem' : 'auto',
+          right: position.y === 0 ? '1rem' : 'auto',
+          top: position.y !== 0 ? `${position.y}px` : 'auto',
+          left: position.x !== 0 ? `${position.x}px` : 'auto',
+          background: `linear-gradient(135deg, ${branding.primaryColor} 0%, ${branding.primaryColor}dd 100%)`,
+          transition: isDragging ? 'none' : 'all 0.3s ease',
+          userSelect: 'none'
+        }}
+        title="Guide Complet du Système (Déplaçable)"
       >
-        <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-12 transition-transform" />
-        <span className="hidden md:inline text-sm font-semibold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+        <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-12 transition-transform pointer-events-none" />
+        <span className="hidden md:inline text-sm font-semibold pointer-events-none" style={{ fontFamily: 'Montserrat, sans-serif' }}>
           Guide Complet
         </span>
       </button>

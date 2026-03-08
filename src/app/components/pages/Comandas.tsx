@@ -9,11 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from '../ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
-import { mockComandas, mockOrganismos, mockProductos } from '../../data/mockData';
+import { mockOrganismos, mockProductos } from '../../data/mockData';
 import { toast } from 'sonner';
 import { Checkbox } from '../ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { ModeloComanda } from './ModeloComanda';
+import { obtenerComandas } from '../../utils/comandaStorage';
 import { AlertaComandasUrgentes } from '../AlertaComandasUrgentes';
 import { EtiquetaComanda } from '../comandas/EtiquetaComanda';
 import { ComandaCompletaImprimible } from '../comandas/ComandaCompletaImprimible';
@@ -73,6 +74,18 @@ export function Comandas() {
   
   // Obtener ofertas actualizadas
   const ofertas = obtenerOfertas();
+  
+  // Estado para comandas
+  const [comandas, setComandas] = useState<Comanda[]>([]);
+  
+  // Cargar comandas desde localStorage
+  useEffect(() => {
+    const cargarComandas = () => {
+      const comandasCargadas = obtenerComandas();
+      setComandas(comandasCargadas);
+    };
+    cargarComandas();
+  }, []);
 
   // useEffect para leer el tab guardado desde CuisinePage
   useEffect(() => {
@@ -193,7 +206,7 @@ export function Comandas() {
     setMostrarModeloComanda(false);
   };
 
-  const comandasPendientes = mockComandas.filter(c => c.estado === 'pendiente' || c.estado === 'completada');
+  const comandasPendientes = comandas.filter(c => c.estado === 'pendiente' || c.estado === 'completada');
   
   const toggleComandaSeleccionada = (comandaId: string) => {
     setComandasSeleccionadas(prev => 
@@ -236,7 +249,7 @@ export function Comandas() {
     console.log('QR escaneado:', data);
     
     // Buscar la comanda por número
-    const comandaEncontrada = mockComandas.find(c => 
+    const comandaEncontrada = comandas.find(c => 
       (c.numero && c.numero === data.comanda) || c.id === data.comanda
     );
     
@@ -412,7 +425,7 @@ export function Comandas() {
     );
   };
 
-  const comandasFiltradas = mockComandas.filter(comanda => {
+  const comandasFiltradas = comandas.filter(comanda => {
     const organismo = mockOrganismos.find(o => o.id === comanda.organismoId);
     const cumpleBusqueda = filterByThreeLettersMultiple(
       [comanda.id, organismo?.nombre || ''],
@@ -422,10 +435,10 @@ export function Comandas() {
     return cumpleBusqueda && cumpleEstado;
   });
 
-  const totalComandas = mockComandas.length;
-  const comandasActivas = mockComandas.filter(c => c.estado !== 'anulada' && c.estado !== 'entregada').length;
-  const comandasPendientesCount = mockComandas.filter(c => c.estado === 'pendiente').length;
-  const comandasCompletadas = mockComandas.filter(c => c.estado === 'entregada').length;
+  const totalComandas = comandas.length;
+  const comandasActivas = comandas.filter(c => c.estado !== 'anulada' && c.estado !== 'entregada').length;
+  const comandasPendientesCount = comandas.filter(c => c.estado === 'pendiente').length;
+  const comandasCompletadas = comandas.filter(c => c.estado === 'entregada').length;
 
   if (mostrarModeloComanda && comandaSeleccionada) {
     const organismo = mockOrganismos.find(o => o.id === comandaSeleccionada.organismoId);

@@ -27,7 +27,11 @@ import { CommunicationInterne } from './components/CommunicationInterne';
 import { CuisinePage } from './components/pages/CuisinePage';
 import { ContactosAlmacen } from './components/pages/ContactosAlmacen';
 import { SystemDiagnostics } from './components/SystemDiagnostics';
+import { APIKeysPage } from './components/pages/APIKeysPage';
+import { DashboardPredictivo } from './components/pages/DashboardPredictivo';
 import { Toaster } from './components/ui/sonner';
+// MODO PRODUCCIÓN: Funciones de limpieza de datos de ejemplo
+import './utils/limpiarDatosProduccion';
 import { crearOfertasEjemplo } from './utils/ofertaStorage';
 import { inicializarUnidades } from './utils/unidadStorage';
 import { inicializarDepartamentos } from './utils/departamentosStorage';
@@ -97,73 +101,6 @@ export default function App() {
     // 🔧 CORRECCIÓN AUTOMÁTICA: Contactos Entrepôt (departamentoId correcto)
     corregirContactosEntrepotAutomaticamente();
     
-    // LIMPIEZA ÚNICA: Borrar todos los datos de ejemplo al iniciar (solo primera vez)
-    const limpiezaRealizada = localStorage.getItem('limpieza_produccion_realizada');
-    if (!limpiezaRealizada) {
-      // Limpiar contactos de ejemplo
-      localStorage.removeItem('banque_alimentaire_contactos_departamento');
-      localStorage.removeItem('contactos_version');
-      
-      // Limpiar productos de ejemplo
-      localStorage.removeItem('productos_banco_alimentos');
-      
-      // Limpiar personas responsables de ejemplo
-      localStorage.removeItem('personas_responsables_banco_alimentos');
-      
-      // Limpiar recetas de ejemplo
-      localStorage.removeItem('recetas_banco_alimentos');
-      
-      // Limpiar comandas de ejemplo
-      localStorage.removeItem('comandas_banco_alimentos');
-      
-      // Limpiar bénévoles de ejemplo
-      localStorage.removeItem('benevoles');
-      localStorage.removeItem('feuilles_temps');
-      
-      // Limpiar transportes de ejemplo
-      localStorage.removeItem('transporte_banco_alimentos');
-      
-      // Limpiar ofertas de ejemplo
-      localStorage.removeItem('ofertas_sistema');
-      
-      // Limpiar organismos de ejemplo
-      localStorage.removeItem('organismos_banco_alimentos');
-      
-      // NO LIMPIAR: departamentos, unidades (necesarios para el funcionamiento)
-      
-      // Marcar limpieza como realizada
-      localStorage.setItem('limpieza_produccion_realizada', 'v1.0');
-      showWelcomeBanner('╔══════════════════════════════════════════════════════════╗');
-      showWelcomeBanner('║  ✅ SYSTÈME PRÊT POUR LA PRODUCTION                     ║');
-      showWelcomeBanner('║                                                          ║');
-      showWelcomeBanner('║  📋 Données d\'exemple supprimées:                       ║');
-      showWelcomeBanner('║     • Contacts                                           ║');
-      showWelcomeBanner('║     • Produits                                           ║');
-      showWelcomeBanner('║     • Personnes responsables                             ║');
-      showWelcomeBanner('║     • Recettes                                           ║');
-      showWelcomeBanner('║     • Commandes                                          ║');
-      showWelcomeBanner('║     • Bénévoles                                          ║');
-      showWelcomeBanner('║     • Feuilles de temps                                  ║');
-      showWelcomeBanner('║     • Transports                                         ║');
-      showWelcomeBanner('║     • Offres                                             ║');
-      showWelcomeBanner('║     • Organismes                                         ║');
-      showWelcomeBanner('║                                                          ║');
-      showWelcomeBanner('║  💾 Données conservées:                                  ║');
-      showWelcomeBanner('║     • Départements                                       ║');
-      showWelcomeBanner('║     • Unités de mesure                                   ║');
-      showWelcomeBanner('║     • Configuration du système                           ║');
-      showWelcomeBanner('║                                                          ║');
-      showWelcomeBanner('║  🚀 Le système est maintenant prêt à recevoir            ║');
-      showWelcomeBanner('║     vos données réelles!                                 ║');
-      showWelcomeBanner('╚══════════════════════════════════════════════════════════╝');
-    }
-    
-    // LIMPIEZA: Eliminar tipos de contacto predefinidos antiguos (ahora el sistema usa tipos creados por el usuario)
-    const tiposPredefinidosAntiguo = localStorage.getItem('banque_alimentaire_tipos_contacto_predefinidos');
-    if (tiposPredefinidosAntiguo) {
-      localStorage.removeItem('banque_alimentaire_tipos_contacto_predefinidos');
-    }
-    
     // 🎯 INICIALIZAR DATOS DE EJEMPLO (solo si no se han inicializado antes)
     if (!datosEjemploInicializados()) {
       showWelcomeBanner('╔══════════════════════════════════════════════════════════╗');
@@ -222,6 +159,8 @@ export default function App() {
         return <Dashboard />;
       case 'dashboard-metricas':
         return <DashboardMetricas />;
+      case 'dashboard-predictivo':
+        return <DashboardPredictivo />;
       case 'inventario':
         return <Inventario />;
       case 'etiquetas':
@@ -242,6 +181,8 @@ export default function App() {
         return <UsuariosInternos />;
       case 'id-digital':
         return <IDDigital />;
+      case 'api-keys':
+        return <APIKeysPage />;
       case 'panel-marca':
         return <PanelMarca />;
       case 'configuracion':
