@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Edit, UserX, UserCheck, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, EyeOff, Copy } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -28,6 +28,10 @@ export function Usuarios() {
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<Usuario | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [usuarioAEliminar, setUsuarioAEliminar] = useState<Usuario | null>(null);
+  
+  // Estados para contraseñas
+  const [mostrarPassword, setMostrarPassword] = useState(false);
+  const [mostrarConfirmPassword, setMostrarConfirmPassword] = useState(false);
   
   // Estado del formulario
   const [formUsuario, setFormUsuario] = useState({
@@ -112,7 +116,9 @@ export function Usuarios() {
       toast.error('Le mot de passe est requis');
       return;
     }
-    if (!modoEdicion && formUsuario.password !== formUsuario.confirmPassword) {
+    
+    // Validar que las contraseñas coincidan (tanto en creación como en edición)
+    if (formUsuario.password && formUsuario.password !== formUsuario.confirmPassword) {
       toast.error('Les mots de passe ne correspondent pas');
       return;
     }
@@ -208,6 +214,25 @@ export function Usuarios() {
     });
     setUsuarioSeleccionado(null);
     setModoEdicion(false);
+    setMostrarPassword(false);
+    setMostrarConfirmPassword(false);
+  };
+
+  // Función para copiar contraseña al portapapeles
+  const copiarPassword = async () => {
+    if (!formUsuario.password) {
+      toast.error('Aucun mot de passe à copier');
+      return;
+    }
+    
+    try {
+      await navigator.clipboard.writeText(formUsuario.password);
+      toast.success('Mot de passe copié', {
+        description: 'Le mot de passe a été copié dans le presse-papier'
+      });
+    } catch (error) {
+      toast.error('Erreur lors de la copie');
+    }
   };
 
   const getPermisosSegunRol = (rol: string): string[] => {
@@ -427,12 +452,12 @@ export function Usuarios() {
 
         {/* Dialog Crear/Editar Usuario */}
         <Dialog open={usuarioDialogOpen} onOpenChange={setUsuarioDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="usuario-dialog-description">
             <DialogHeader>
               <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                 {modoEdicion ? 'Éditer Utilisateur' : 'Nouvel Utilisateur'}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription id="usuario-dialog-description">
                 {modoEdicion ? 'Modifier les informations de l\'utilisateur' : 'Créer un nouvel utilisateur du système'}
               </DialogDescription>
             </DialogHeader>
@@ -489,24 +514,101 @@ export function Usuarios() {
                     onChange={(e) => setFormUsuario({ ...formUsuario, email: e.target.value })} 
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Mot de passe {!modoEdicion && '*'}</Label>
-                  <Input 
-                    type="password" 
-                    placeholder={modoEdicion ? "Laisser vide pour ne pas changer" : "••••••••"} 
-                    value={formUsuario.password} 
-                    onChange={(e) => setFormUsuario({ ...formUsuario, password: e.target.value })} 
-                  />
+                
+                {/* Sección de contraseñas con botones de utilidad */}
+                <div className="col-span-2 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      🔐 Gestion du Mot de Passe
+                    </Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={copiarPassword}
+                      disabled={!formUsuario.password}
+                      className="text-xs"
+                      style={{ borderColor: branding.primaryColor, color: branding.primaryColor }}
+                    >
+                      <Copy className="w-3 h-3 mr-1" />
+                      Copier
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2 relative">
+                      <Label>Mot de passe {!modoEdicion && '*'}</Label>
+                      <div className="relative">
+                        <Input 
+                          type={mostrarPassword ? "text" : "password"} 
+                          placeholder={modoEdicion ? "Laisser vide pour ne pas changer" : "••••••••"} 
+                          value={formUsuario.password} 
+                          onChange={(e) => setFormUsuario({ ...formUsuario, password: e.target.value })} 
+                          className="pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+                          onClick={() => setMostrarPassword(!mostrarPassword)}
+                        >
+                          {mostrarPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-2 relative">
+                      <Label>Confirmer mot de passe {!modoEdicion && '*'}</Label>
+                      <div className="relative">
+                        <Input 
+                          type={mostrarConfirmPassword ? "text" : "password"} 
+                          placeholder="••••••••" 
+                          value={formUsuario.confirmPassword} 
+                          onChange={(e) => setFormUsuario({ ...formUsuario, confirmPassword: e.target.value })} 
+                          className="pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+                          onClick={() => setMostrarConfirmPassword(!mostrarConfirmPassword)}
+                        >
+                          {mostrarConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Indicador de seguridad de contraseña */}
+                  {formUsuario.password && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="flex items-start gap-2">
+                        <div className="flex-shrink-0 mt-0.5">
+                          {formUsuario.password.length >= 8 ? (
+                            <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                              <span className="text-white text-xs">✓</span>
+                            </div>
+                          ) : (
+                            <div className="w-5 h-5 rounded-full bg-yellow-500 flex items-center justify-center">
+                              <span className="text-white text-xs">!</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs font-medium text-blue-900">
+                            {formUsuario.password.length >= 8 ? 'Mot de passe sécurisé' : 'Mot de passe faible'}
+                          </p>
+                          <p className="text-xs text-blue-700 mt-1">
+                            Longueur: {formUsuario.password.length} caractères
+                            {formUsuario.password.length < 8 && ' (minimum 8 recommandé)'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <Label>Confirmer mot de passe {!modoEdicion && '*'}</Label>
-                  <Input 
-                    type="password" 
-                    placeholder="••••••••" 
-                    value={formUsuario.confirmPassword} 
-                    onChange={(e) => setFormUsuario({ ...formUsuario, confirmPassword: e.target.value })} 
-                  />
-                </div>
+                
                 <div className="space-y-2 col-span-2">
                   <Label>Description</Label>
                   <Input 

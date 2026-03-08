@@ -2184,7 +2184,7 @@ export function Inventario() {
 
       {/* Dialog: Compartir Lista de Productos */}
       <Dialog open={compartirDialogOpen} onOpenChange={setCompartirDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="compartir-dialog-description">
           {!vistaPreviewLista ? (
             <>
               <DialogHeader>
@@ -2192,7 +2192,7 @@ export function Inventario() {
                   <Share2 className="h-5 w-5 text-[#1a4d7a]" />
                   {t('inventory.shareProductList')}
                 </DialogTitle>
-                <DialogDescription>
+                <DialogDescription id="compartir-dialog-description">
                   {t('inventory.selectProductsForList')}
                 </DialogDescription>
               </DialogHeader>
@@ -2587,13 +2587,13 @@ export function Inventario() {
 
       {/* Dialog Guía de Conversiones */}
       <Dialog open={guiaConversionesOpen} onOpenChange={setGuiaConversionesOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="guia-conversiones-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               <HelpCircle className="w-6 h-6 text-[#1a4d7a]" />
               Guide des Conversions de Produits
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="guia-conversiones-description">
               Découvrez comment utiliser efficacement le système de conversion de produits
             </DialogDescription>
           </DialogHeader>
@@ -2603,13 +2603,13 @@ export function Inventario() {
 
       {/* Dialog Crear Variante de Producto */}
       <Dialog open={varianteDialogOpen} onOpenChange={setVarianteDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="variante-dialog-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               <Copy className="h-5 w-5 text-[#1a4d7a]" />
               Crear Variante de Producto
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="variante-dialog-description">
               Crea una variante basada en: {productoBase?.nombre}
             </DialogDescription>
           </DialogHeader>
@@ -2775,13 +2775,13 @@ export function Inventario() {
 
       {/* Diálogo de Localización/Deslocalización */}
       <Dialog open={dialogLocalizacionOpen} onOpenChange={setDialogLocalizacionOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="localizacion-dialog-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-[#1a4d7a]" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
               <MapPin className="h-5 w-5" />
               Gestion d'Emplacement
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="localizacion-dialog-description">
               Gérer l'emplacement du produit scanné
             </DialogDescription>
           </DialogHeader>

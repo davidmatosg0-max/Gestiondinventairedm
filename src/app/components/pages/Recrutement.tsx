@@ -24,7 +24,8 @@ import {
   Filter,
   Search,
   Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -142,6 +143,13 @@ export function Recrutement() {
       prev.map(c => c.id === candidateId ? { ...c, status: newStatus as Candidate['status'] } : c)
     );
     toast.success('Statut mis à jour avec succès');
+  };
+
+  const handleDeleteCandidate = (candidateId: number, candidateName: string) => {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer la candidature de ${candidateName}?\n\nCette action est irréversible.`)) {
+      setCandidates(prev => prev.filter(c => c.id !== candidateId));
+      toast.success('Candidature supprimée avec succès');
+    }
   };
 
   return (
@@ -484,6 +492,20 @@ export function Recrutement() {
                       >
                         <FileText className="w-4 h-4 mr-2" />
                         Voir CV
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="hover:scale-105 transition-all duration-300 hover:bg-red-50 border-2"
+                        style={{ 
+                          fontFamily: 'Montserrat, sans-serif',
+                          color: '#DC3545',
+                          borderColor: '#DC3545'
+                        }}
+                        onClick={() => handleDeleteCandidate(candidate.id, candidate.name)}
+                        title="Supprimer la candidature"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </CardContent>

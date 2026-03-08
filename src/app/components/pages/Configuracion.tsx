@@ -1650,12 +1650,12 @@ export function Configuracion() {
                         {t('configuration.newSubcategory')}
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-h-[90vh] overflow-y-auto scrollbar-thin">
+                    <DialogContent className="max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="subcategoria-dialog-description">
                       <DialogHeader>
                         <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                           {editandoSubcategoria ? t('configuration.editSubcategory') : t('configuration.newSubcategoryForm')}
                         </DialogTitle>
-                        <DialogDescription>
+                        <DialogDescription id="subcategoria-dialog-description">
                           {editandoSubcategoria ? 'Modifique los datos de la subcategoría' : 'Complete la información de la nueva subcategoría'}
                         </DialogDescription>
                       </DialogHeader>
@@ -1886,12 +1886,12 @@ export function Configuracion() {
                         {t('configuration.newCategory')}
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent aria-describedby="categoria-dialog-description">
                       <DialogHeader>
                         <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                           {editandoCategoria ? t('configuration.editCategory') : t('configuration.newCategory')}
                         </DialogTitle>
-                        <DialogDescription>
+                        <DialogDescription id="categoria-dialog-description">
                           {editandoCategoria ? 'Modifique los datos de la categoría' : 'Complete la información de la nueva categoría'}
                         </DialogDescription>
                       </DialogHeader>
@@ -2469,12 +2469,12 @@ export function Configuracion() {
                     {t('configuration.newProgram')}
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent aria-describedby="programa-dialog-description">
                   <DialogHeader>
                     <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                       {editandoPrograma ? t('configuration.editProgram') : t('configuration.newProgramForm')}
                     </DialogTitle>
-                    <DialogDescription>
+                    <DialogDescription id="programa-dialog-description">
                       {editandoPrograma ? t('configuration.modifyProgramData') : t('configuration.completeProgramInfo')}
                     </DialogDescription>
                   </DialogHeader>
@@ -2880,7 +2880,7 @@ export function Configuracion() {
           setProductoPRSDialogOpen(open);
           if (!open) resetFormProductoPRS();
         }}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="producto-prs-description">
             <DialogHeader>
               <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                 <div className="flex items-center gap-2">
@@ -2888,7 +2888,7 @@ export function Configuracion() {
                   {editandoProductoPRS ? 'Modifier le Produit PRS' : 'Nouveau Produit PRS'}
                 </div>
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription id="producto-prs-description">
                 {editandoProductoPRS 
                   ? 'Modifiez les informations du produit PRS' 
                   : 'Créez un nouveau produit pour le Programme de Récupération Spéciale'}
@@ -3513,7 +3513,7 @@ export function Configuracion() {
 
       {/* Dialog Eliminar Categoría */}
       <Dialog open={dialogEliminarCategoria} onOpenChange={setDialogEliminarCategoria}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="eliminar-categoria-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', color: '#DC3545' }}>
               <div className="flex items-center gap-2">
@@ -3521,7 +3521,7 @@ export function Configuracion() {
                 {t('configuration.deleteCategory')}
               </div>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="eliminar-categoria-description">
               Esta acción no se puede deshacer. Se eliminarán todas las subcategorías asociadas.
             </DialogDescription>
           </DialogHeader>

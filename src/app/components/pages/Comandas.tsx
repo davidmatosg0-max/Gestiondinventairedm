@@ -1062,10 +1062,10 @@ export function Comandas() {
 
       {/* Dialog de notificaciones */}
       <Dialog open={dialogNotificacionOpen} onOpenChange={setDialogNotificacionOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="notificacion-dialog-description">
           <DialogHeader>
             <DialogTitle>{t('orders.notifyPendingOrders')}</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="notificacion-dialog-description">
               Seleccione las comandas que desea notificar a los organismos
             </DialogDescription>
           </DialogHeader>
@@ -1125,12 +1125,12 @@ export function Comandas() {
 
       {/* Dialog para ver detalles de solicitud */}
       <Dialog open={dialogVerSolicitudOpen} onOpenChange={setDialogVerSolicitudOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="solicitud-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '1.5rem' }}>
               Detalles de la Solicitud
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="solicitud-dialog-description">
               Información completa de la solicitud aceptada
             </DialogDescription>
           </DialogHeader>

@@ -177,11 +177,11 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
   const [currentView, setCurrentView] = useState<BenevoleView>(isPublicAccess ? 'feuilles-temps' : 'liste');
   const [selectedBenevoleId, setSelectedBenevoleId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterDepartement, setFilterDepartement] = useState('all');
-  const [filterStatut, setFilterStatut] = useState('all');
+  const [filterDepartement, setFilterDepartement] = useState<string>('all');
+  const [filterStatut, setFilterStatut] = useState<string>('all');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedBenevoleForHistorique, setSelectedBenevoleForHistorique] = useState<number | null>(null);
-  const [filterDepartementHistorique, setFilterDepartementHistorique] = useState('all');
+  const [filterDepartementHistorique, setFilterDepartementHistorique] = useState<string>('all');
 
   // Edit modal state
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -319,7 +319,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
   // Départements - Cargar desde el sistema
   const departementosStorage = obtenerDepartamentos();
-  const departements = departementosStorage.map(d => d.nombre);
+  const departements = departementosStorage.map(d => d.nombre).filter(Boolean);
 
   // Jours de la semaine
   const joursDisponibles = [
@@ -5260,13 +5260,13 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
       {/* Dialog Asignar Bénévole a Departamentos */}
       <Dialog open={dialogAsignarDepartamentos} onOpenChange={setDialogAsignarDepartamentos}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="asignar-departamentos-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               <Link className="w-6 h-6" style={{ color: branding.primaryColor }} />
               Assigner aux départements
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="asignar-departamentos-description">
               Sélectionnez les départements où ce bénévole travaillera
             </DialogDescription>
           </DialogHeader>
