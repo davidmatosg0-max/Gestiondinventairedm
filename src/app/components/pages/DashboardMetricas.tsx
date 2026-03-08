@@ -484,7 +484,7 @@ export function DashboardMetricas() {
               <XAxis dataKey="fecha" stroke="#666666" style={{ fontSize: '12px' }} />
               <YAxis stroke="#666666" style={{ fontSize: '12px' }} />
               <Tooltip />
-              <Area key="area-actividad" type="monotone" dataKey="actividad" stroke="#1a4d7a" fillOpacity={1} fill="url(#colorActividad)" />
+              <Area type="monotone" dataKey="actividad" stroke="#1a4d7a" fillOpacity={1} fill="url(#colorActividad)" />
             </AreaChart>
           </ResponsiveContainer>
         </motion.div>
