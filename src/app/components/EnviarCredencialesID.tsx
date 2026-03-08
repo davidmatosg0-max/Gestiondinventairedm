@@ -176,12 +176,12 @@ Ayudando a las comunidades, un alimento a la vez.`;
           Enviar Credenciales
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="enviar-credenciales-description">
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
             Enviar Credenciales de ID Digital {esContacto ? '- Contacto' : '- Beneficiario'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="enviar-credenciales-description">
             Complete la información para enviar las credenciales del ID digital al destinatario
           </DialogDescription>
         </DialogHeader>

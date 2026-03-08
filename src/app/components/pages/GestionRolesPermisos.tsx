@@ -455,12 +455,12 @@ export function GestionRolesPermisos() {
                   Crear Rol
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="crear-rol-description">
                 <DialogHeader>
                   <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                     Crear Nuevo Rol
                   </DialogTitle>
-                  <DialogDescription>
+                  <DialogDescription id="crear-rol-description">
                     Define el nombre, descripción y permisos del nuevo rol
                   </DialogDescription>
                 </DialogHeader>
@@ -623,12 +623,12 @@ export function GestionRolesPermisos() {
                   Crear Usuario
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent aria-describedby="crear-usuario-description">
                 <DialogHeader>
                   <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                     Crear Nuevo Usuario
                   </DialogTitle>
-                  <DialogDescription>
+                  <DialogDescription id="crear-usuario-description">
                     Complete la información del nuevo usuario y asigne un rol
                   </DialogDescription>
                 </DialogHeader>
@@ -788,12 +788,12 @@ export function GestionRolesPermisos() {
 
       {/* Dialog: Ver/Editar Permisos de Rol */}
       <Dialog open={dialogPermisosOpen} onOpenChange={setDialogPermisosOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="permisos-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               Permisos del Rol: {rolSeleccionado?.nombre}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="permisos-dialog-description">
               {rolSeleccionado?.descripcion}
             </DialogDescription>
           </DialogHeader>

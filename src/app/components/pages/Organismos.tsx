@@ -626,12 +626,13 @@ export function Organismos() {
             </DialogTrigger>
           <DialogContent 
             className="!max-w-none !w-screen !h-screen !top-0 !left-0 !translate-x-0 !translate-y-0 !rounded-none p-0 m-0"
+            aria-describedby="new-organism-description"
           >
             <DialogHeader className="sticky top-0 z-10 text-white px-6 py-6 shadow-2xl" style={{ background: `linear-gradient(90deg, ${branding.dangerColor}, ${branding.primaryColor}, ${branding.secondaryColor})`, borderBottom: `4px solid ${branding.warningColor}` }}>
               <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, fontSize: '2rem', color: 'white', textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
                 🎨 {t('organisms.version.form.title')}
               </DialogTitle>
-              <DialogDescription className="text-white text-lg font-semibold">
+              <DialogDescription id="new-organism-description" className="text-white text-lg font-semibold">
                 ✅ {t('organisms.version.form.description')}
               </DialogDescription>
             </DialogHeader>
@@ -1791,7 +1792,7 @@ export function Organismos() {
 
       {/* Dialog de Envío de Email */}
       <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="email-dialog-description">
           <DialogHeader>
             <DialogTitle className="text-xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               <div className="flex items-center gap-2">
@@ -1801,7 +1802,7 @@ export function Organismos() {
                   : t('organisms.email.groupEmail')}
               </div>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="email-dialog-description">
               {tipoEmail === 'individual' 
                 ? 'Enviar un correo electrónico individual al organismo seleccionado' 
                 : 'Enviar un correo electrónico a múltiples organismos'}

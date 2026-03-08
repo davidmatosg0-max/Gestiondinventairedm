@@ -27,6 +27,12 @@ export function AccesoOrganismo() {
     if (organismo) {
       setOrganismoAutenticado(organismo);
       toast.success(t('organismPortal.welcomeMessage', { name: organismo.nombre }));
+      
+      // Log para verificar si el organismo participa en PRS
+      if (organismo.participaPRS) {
+        console.log('✅ Organismo PRS autenticado:', organismo.nombre);
+        console.log('🔑 Acceso al botón "Nueva Entrada" habilitado');
+      }
     } else {
       toast.error(t('organismPortal.incorrectKey'));
     }
@@ -248,12 +254,25 @@ export function AccesoOrganismo() {
                     <button
                       key={o.id}
                       onClick={() => setClaveAcceso(o.claveAcceso || '')}
-                      className="text-xs bg-gray-100 hover:bg-gray-200 p-2 rounded-lg font-mono transition-all duration-200 hover:scale-105"
+                      className="text-xs bg-gray-100 hover:bg-gray-200 p-2 rounded-lg font-mono transition-all duration-200 hover:scale-105 relative"
                       style={{
                         borderLeft: `3px solid ${branding.primaryColor}`
                       }}
                     >
-                      {o.claveAcceso}
+                      <div className="flex items-center justify-between gap-1">
+                        <span>{o.claveAcceso}</span>
+                        {o.participaPRS && (
+                          <span 
+                            className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white whitespace-nowrap"
+                            style={{ 
+                              backgroundColor: branding.secondaryColor,
+                              fontFamily: 'Montserrat, sans-serif'
+                            }}
+                          >
+                            ✓ PRS
+                          </span>
+                        )}
+                      </div>
                     </button>
                   ))}
                 </div>

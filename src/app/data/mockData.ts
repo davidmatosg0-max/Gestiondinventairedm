@@ -76,6 +76,14 @@ export const mockMovimientos: MovimientoInventario[] = [
 
 export const mockComandas: Comanda[] = [];
 
+// 🏢 ORGANISMOS DE EJEMPLO
+// Organismos participantes en PRS (Programa de Rescate Solidario):
+// - Salle Communautaire Saint-Joseph (CSJ-8K9M2P) ✓ PRS
+// - Fondation Espoir (FES-3X7N5Q) ✓ PRS
+// - Centre Communautaire Le Chêne (CER-9Y2L5D) ✓ PRS
+// - Centre d'Aide Communautaire Exemple (CAC-456ABC) ✓ PRS
+// Organismos NO participantes en PRS:
+// - Foyer pour Enfants La Paix (HLP-6T4R8W)
 export const mockOrganismos: Organismo[] = [
   {
     id: '1',
@@ -146,6 +154,23 @@ export const mockOrganismos: Organismo[] = [
     participaPRS: true, // Participa en PRS
     tipoAsistencia: 'regular',
     frecuencia: 2 // 2 veces par semaine
+  },
+  {
+    id: '5',
+    nombre: 'Centre d\'Aide Communautaire Exemple',
+    tipo: 'Centre Communautaire',
+    responsable: 'Sophie Martin',
+    telefono: '555-0105',
+    email: 'cac.exemple@email.com',
+    direccion: '1580 Boulevard des Prairies, Laval-des-Rapides, Laval, QC H7N 2W5',
+    codigoPostal: 'H7N 2W5',
+    activo: true,
+    fechaRegistro: '2024-03-10',
+    beneficiarios: 180,
+    claveAcceso: 'CAC-456ABC',
+    participaPRS: true, // Participa en PRS - Organismo de ejemplo
+    tipoAsistencia: 'regular',
+    frecuencia: 3 // 3 veces par semaine
   }
 ];
 

@@ -1,3 +1,8 @@
+// 🆕 NUEVA FUNCIONALIDAD: Botón "Nueva Entrada" para organismos PRS
+// - Solo visible para organismos con participaPRS: true
+// - Ubicado en el header junto a "Mes Demandes"
+// - Color verde (branding.secondaryColor) para distinguirlo
+// - Badge "✓ PRS" en el título del organismo cuando participa en PRS
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LogOut, Phone, Mail, MapPin, Users, Calendar, Package, History, TrendingUp, Award, CheckCircle, Eye, X, Printer, Edit2, Save, Plus, Thermometer, Download, FileText, FileSpreadsheet, Tag, ShoppingCart, Clock, AlertCircle, Minus, Trash2, Star, UserPlus, MessageSquare, Languages } from 'lucide-react';
@@ -586,9 +591,16 @@ export function VistaPublicaOrganismo({ organismo, onCerrarSesion }: VistaPublic
                 </div>
               </div>
               <div>
-                <h1 style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, fontSize: '1.75rem' }}>
-                  {organismo.nombre}
-                </h1>
+                <div className="flex items-center gap-3 mb-1">
+                  <h1 style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, fontSize: '1.75rem' }}>
+                    {organismo.nombre}
+                  </h1>
+                  {organismo.participaPRS && (
+                    <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30">
+                      ✓ PRS
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-white/90" style={{ fontFamily: 'Roboto, sans-serif' }}>
                   {organismo.tipo} • {t('organismPortal.registeredSince')} {new Date(organismo.fechaRegistro).toLocaleDateString(i18n.language, { 
                     year: 'numeric', 
@@ -599,6 +611,26 @@ export function VistaPublicaOrganismo({ organismo, onCerrarSesion }: VistaPublic
             </div>
             <div className="flex items-center gap-3">
               <LanguageSelector />
+              {organismo.participaPRS && (
+                <Button
+                  onClick={() => {
+                    toast.info('🚀 Funcionalidad en desarrollo', { 
+                      description: 'El formulario de Nueva Entrada para organismos PRS estará disponible próximamente. Podrás registrar entradas de inventario directamente desde tu portal.',
+                      duration: 5000
+                    });
+                  }}
+                  variant="outline"
+                  className="bg-white/95 hover:bg-white border-0 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                  style={{ 
+                    color: branding.secondaryColor,
+                    fontFamily: 'Montserrat, sans-serif',
+                    fontWeight: 500
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nueva Entrada
+                </Button>
+              )}
               <Button
                 onClick={() => setMostrarDemandes(true)}
                 variant="outline"

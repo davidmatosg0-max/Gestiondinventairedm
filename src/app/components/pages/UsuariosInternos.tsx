@@ -581,7 +581,7 @@ export function UsuariosInternos() {
 
       {/* Dialog Perfil Donador/Vendedor con Historial */}
       <Dialog open={perfilDialogOpen} onOpenChange={setPerfilDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="perfil-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               {usuarioSeleccionado && (
@@ -595,7 +595,7 @@ export function UsuariosInternos() {
                 </div>
               )}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="perfil-dialog-description">
               Información completa y historial del {usuarioSeleccionado?.categoria === 'donador' ? 'donador' : 'vendedor'}
             </DialogDescription>
           </DialogHeader>
@@ -735,12 +735,12 @@ export function UsuariosInternos() {
 
       {/* Dialog Nueva Transacción */}
       <Dialog open={historialDialogOpen} onOpenChange={setHistorialDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg" aria-describedby="transaccion-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               Nueva Transacción
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="transaccion-dialog-description">
               Registre una nueva transacción para este contacto
             </DialogDescription>
           </DialogHeader>
@@ -868,13 +868,13 @@ export function UsuariosInternos() {
 
       {/* Dialog Gestión de Departamentos */}
       <Dialog open={departamentosDialogOpen} onOpenChange={setDepartamentosDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="departamentos-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               <Building2 className="w-5 h-5 inline mr-2" />
               {t('contacts.manageDepartments')}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="departamentos-dialog-description">
               Configure los departamentos de la empresa
             </DialogDescription>
           </DialogHeader>
@@ -975,13 +975,13 @@ export function UsuariosInternos() {
 
       {/* Dialog Confirmación de Eliminación */}
       <Dialog open={eliminarDialogOpen} onOpenChange={setEliminarDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="eliminar-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               <Trash2 className="w-5 h-5 inline mr-2 text-[#DC3545]" />
               {t('contacts.delete')}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="eliminar-dialog-description">
               Esta acción eliminará permanentemente el contacto del sistema
             </DialogDescription>
           </DialogHeader>

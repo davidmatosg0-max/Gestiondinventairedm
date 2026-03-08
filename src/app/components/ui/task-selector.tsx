@@ -388,7 +388,7 @@ export function TaskSelector({
           setNuevaTarea({ code: '', label: '', icon: '', color: branding.primaryColor });
         }
       }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="task-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
               {tareaEditando ? (
@@ -403,7 +403,7 @@ export function TaskSelector({
                 </>
               )}
             </DialogTitle>
-            <DialogDescription id="new-task-description">
+            <DialogDescription id="task-dialog-description">
               {tareaEditando 
                 ? 'Modifiez les informations de la tâche personnalisée'
                 : 'Créez une nouvelle tâche personnalisée avec code, nom, icône et couleur'
@@ -629,7 +629,7 @@ export function TaskSelector({
 
       {/* Dialog Gestión de Tareas */}
       <Dialog open={dialogGestionTareas} onOpenChange={setDialogGestionTareas}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto" aria-describedby="manage-tasks-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
               <Settings className="w-5 h-5 inline mr-2" style={{ color: branding.secondaryColor }} />

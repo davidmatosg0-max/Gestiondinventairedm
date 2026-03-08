@@ -1465,12 +1465,12 @@ export function EntradaDonAchat() {
           {t('common.newEntry')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-none !w-[95vw] !h-[95vh] overflow-hidden !p-0">
+      <DialogContent className="max-w-none !w-[95vw] !h-[95vh] overflow-hidden !p-0" aria-describedby="entrada-don-description">
         <DialogHeader className="px-6 pt-6 pb-4 bg-gradient-to-r from-[#1E73BE] to-[#155a99]">
           <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, fontSize: '1.5rem', color: 'white' }}>
             ✨ {t('common.registerNewEntry')}
           </DialogTitle>
-          <DialogDescription className="text-white/80 text-sm mt-1">
+          <DialogDescription id="entrada-don-description" className="text-white/80 text-sm mt-1">
             {t('common.selectDonorOrProgramDescription')}
           </DialogDescription>
         </DialogHeader>
@@ -1593,13 +1593,13 @@ export function EntradaDonAchat() {
                     <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 text-[#4CAF50]" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[600px]">
+                <DialogContent className="max-w-2xl max-h-[600px]" aria-describedby="seleccionar-contacto-description">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                       <Building2 className="h-5 w-5 text-[#4CAF50]" />
                       Sélectionner un contact
                     </DialogTitle>
-                    <DialogDescription className="text-sm text-gray-600">
+                    <DialogDescription id="seleccionar-contacto-description" className="text-sm text-gray-600">
                       Recherchez et sélectionnez un donateur ou fournisseur dans la liste ci-dessous
                     </DialogDescription>
                   </DialogHeader>
@@ -2526,7 +2526,7 @@ export function EntradaDonAchat() {
 
     {/* Diálogo para Nueva Subcategoría */}
     <Dialog open={nuevaSubcategoriaDialogOpen} onOpenChange={setNuevaSubcategoriaDialogOpen}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl" aria-describedby="nueva-subcategoria-description">
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
             {categoriaSeleccionadaParaNueva ? (() => {
@@ -2534,7 +2534,7 @@ export function EntradaDonAchat() {
               return catObj ? `${catObj.icono} ${t('common.newSubcategoryIn')} ${catObj.nombre}` : t('common.newSubcategory');
             })() : t('common.newSubcategory')}
           </DialogTitle>
-          <DialogDescription className="text-sm text-[#666666]">
+          <DialogDescription id="nueva-subcategoria-description" className="text-sm text-[#666666]">
             {categoriaSeleccionadaParaNueva 
               ? t('common.newSubcategoryDescription')
               : t('common.createNewSubcategory')}
@@ -2753,7 +2753,7 @@ export function EntradaDonAchat() {
 
     {/* Diálogo Nueva Variante */}
     <Dialog open={nuevaVarianteDialogOpen} onOpenChange={setNuevaVarianteDialogOpen}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="nueva-variante-description">
         <DialogHeader className="pb-4 border-b">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#9C27B0] to-[#7B1FA2] flex items-center justify-center text-white text-2xl">
@@ -2763,7 +2763,7 @@ export function EntradaDonAchat() {
               <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }} className="text-xl">
                 {t('common.newVariant')}
               </DialogTitle>
-              <DialogDescription className="text-sm mt-1">
+              <DialogDescription id="nueva-variante-description" className="text-sm mt-1">
                 {t('common.newVariantDescription')}
               </DialogDescription>
             </div>
@@ -3078,12 +3078,12 @@ export function EntradaDonAchat() {
 
     {/* Diálogo Gestión de Unidades */}
     <Dialog open={gestionUnidadesOpen} onOpenChange={setGestionUnidadesOpen}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="gestion-unidades-description">
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
             📦 Gestión de Unidades
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="gestion-unidades-description">
             Administra las unidades de medida disponibles para el inventario
           </DialogDescription>
         </DialogHeader>

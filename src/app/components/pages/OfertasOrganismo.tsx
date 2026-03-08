@@ -471,12 +471,12 @@ export function OfertasOrganismo() {
 
       {/* Dialog Detalle de Oferta */}
       <Dialog open={dialogDetalleOpen} onOpenChange={setDialogDetalleOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="offer-detail-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
               {t('offers.offerDetailTitle')}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="offer-detail-description">
               {t('offers.offerDetailDescription')}
             </DialogDescription>
           </DialogHeader>

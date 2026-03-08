@@ -232,12 +232,12 @@ export function EntradaProducto() {
             Entrada de Producto
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="entrada-producto-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '1.5rem' }}>
               Registrar Entrada de Producto
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="entrada-producto-description">
               Complete la información del producto que está ingresando al inventario
             </DialogDescription>
           </DialogHeader>
@@ -461,12 +461,12 @@ export function EntradaProducto() {
                     <Plus className="w-5 h-5" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-md" aria-describedby="nuevo-producto-description">
                   <DialogHeader>
                     <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                       Crear Nuevo Producto
                     </DialogTitle>
-                    <DialogDescription>
+                    <DialogDescription id="nuevo-producto-description">
                       Configure la información básica del nuevo producto
                     </DialogDescription>
                   </DialogHeader>
@@ -725,12 +725,12 @@ export function EntradaProducto() {
 
       {/* Diálogo de Confirmación para Imprimir */}
       <Dialog open={imprimirDialogOpen} onOpenChange={setImprimirDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="imprimir-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               Producto Registrado Exitosamente
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="imprimir-dialog-description">
               El producto se ha registrado correctamente en el inventario
             </DialogDescription>
           </DialogHeader>
