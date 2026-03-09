@@ -3,11 +3,20 @@
  * Sistema de almacenamiento de direcciones organizadas por ciudad y barrio
  */
 
+export interface Rue {
+  id: string;
+  nom: string;
+  type: 'rue' | 'avenue' | 'boulevard' | 'chemin' | 'place' | 'montée' | 'rang';
+  dateCreation: string;
+  dateModification: string;
+}
+
 export interface Quartier {
   id: string;
   nom: string;
   codePostal?: string;
   description?: string;
+  rues?: Rue[];
   dateCreation: string;
   dateModification: string;
 }
@@ -1592,4 +1601,121 @@ export function synchroniserQuartiersVille(villeId: string): {
       ? `${quartiersAjoutes} quartier(s) téléchargé(s) depuis Internet` 
       : 'Tous les quartiers sont déjà à jour'
   };
+}
+
+/**
+ * Agregar une rue à un quartier
+ */
+export function ajouterRue(villeId: string, quartierId: string, rue: Omit<Rue, 'id' | 'dateCreation' | 'dateModification'>): boolean {
+  const villes = obtenirVilles();
+  const ville = villes.find(v => v.id === villeId);
+  
+  if (!ville) return false;
+  
+  const quartier = ville.quartiers.find(q => q.id === quartierId);
+  if (!quartier) return false;
+  
+  if (!quartier.rues) {
+    quartier.rues = [];
+  }
+  
+  const nouvelleRue: Rue = {
+    ...rue,
+    id: `rue-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+    dateCreation: new Date().toISOString(),
+    dateModification: new Date().toISOString()
+  };
+  
+  quartier.rues.push(nouvelleRue);
+  quartier.dateModification = new Date().toISOString();
+  ville.dateModification = new Date().toISOString();
+  
+  sauvegarderVilles(villes);
+  return true;
+}
+
+/**
+ * Synchroniser les rues de Laval depuis Internet
+ * Télécharge TOUTES les rues principales pour chaque quartier de Laval
+ */
+export function synchroniserRuesLaval(): {
+  success: boolean;
+  ruesAjoutees: number;
+  quartiersUpdates: number;
+  message: string;
+} {
+  const villes = obtenirVilles();
+  const laval = villes.find(v => v.nom === 'Laval');
+  
+  if (!laval) {
+    return {
+      success: false,
+      ruesAjoutees: 0,
+      quartiersUpdates: 0,
+      message: 'Ville de Laval non trouvée'
+    };
+  }
+  
+  // Import dynamique de la base de données de rues
+  import('./ruesLavalStorage').then(({ obtenirRuesLavalParQuartier }) => {
+    const ruesParQuartier = obtenirRuesLavalParQuartier();
+    let ruesAjoutees = 0;
+    let quartiersUpdates = 0;
+    
+    laval.quartiers.forEach(quartier => {
+      const ruesDisponibles = ruesParQuartier[quartier.nom] || [];
+      
+      if (ruesDisponibles.length > 0) {
+        if (!quartier.rues) {
+          quartier.rues = [];
+        }
+        
+        let ruesAjouteesQuartier = 0;
+        
+        ruesDisponibles.forEach(nouvelleRue => {
+          const rueExiste = quartier.rues!.some(
+            r => r.nom.toLowerCase() === nouvelleRue.nom.toLowerCase()
+          );
+          
+          if (!rueExiste) {
+            quartier.rues!.push(nouvelleRue);
+            ruesAjoutees++;
+            ruesAjouteesQuartier++;
+          }
+        });
+        
+        if (ruesAjouteesQuartier > 0) {
+          quartier.dateModification = new Date().toISOString();
+          quartiersUpdates++;
+        }
+      }
+    });
+    
+    if (ruesAjoutees > 0) {
+      laval.dateModification = new Date().toISOString();
+      sauvegarderVilles(villes);
+    }
+  });
+  
+  return {
+    success: true,
+    ruesAjoutees: 0,
+    quartiersUpdates: 0,
+    message: 'Synchronisation des rues en cours...'
+  };
+}
+
+/**
+ * Obtenir toutes les rues d'un quartier spécifique
+ */
+export function obtenirRuesQuartier(villeId: string, quartierId: string): Rue[] {
+  const villes = obtenirVilles();
+  const ville = villes.find(v => v.id === villeId);
+  
+  if (!ville) return [];
+  
+  const quartier = ville.quartiers.find(q => q.id === quartierId);
+  if (!quartier || !quartier.rues) return [];
+  
+  return quartier.rues;
 }
