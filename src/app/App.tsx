@@ -46,6 +46,7 @@ import { logger, showWelcomeBanner } from './utils/logger';
 import { corregirContactosEntrepotAutomaticamente } from './utils/correccionContactosEntrepot';
 import { runDataMigrations } from './utils/dataMigration';
 import { inicializarAutoBackup } from './utils/autoBackupStorage';
+import { inicializarFileSystem } from './utils/fileSystemAccess';
 
 // Componente interno que usa el contexto de autenticación
 function AppContent() {
@@ -83,13 +84,20 @@ function AppContent() {
     inicializarAutoBackup();
     logger.info('🔄 Sistema de backup automático inicializado');
     
+    // 📁 INICIALIZAR SISTEMA DE ARCHIVOS (File System Access API)
+    inicializarFileSystem().then(() => {
+      logger.info('📁 Sistema de archivos inicializado');
+    }).catch((error) => {
+      logger.warn('⚠️ No se pudo inicializar el sistema de archivos:', error);
+    });
+    
     // 🎯 INICIALIZAR DATOS DE EJEMPLO (solo si no se han inicializado antes)
     if (!datosEjemploInicializados()) {
       showWelcomeBanner('╔══════════════════════════════════════════════════════════╗');
       showWelcomeBanner('║  🎯 CARGANDO DATOS DE EJEMPLO PARA PRUEBAS...           ║');
       showWelcomeBanner('╚══════════════════════════════════════════════════════════╝');
       inicializarTodosDatosEjemplo();
-      showWelcomeBanner('╔══════════════════════════════════════════════════════════╗');
+      showWelcomeBanner('╔═════════════════════════════════════════════════════════╗');
       showWelcomeBanner('║  ✅ DATOS DE EJEMPLO CARGADOS EXITOSAMENTE              ║');
       showWelcomeBanner('║                                                          ║');
       showWelcomeBanner('║  📋 Datos disponibles:                                   ║');

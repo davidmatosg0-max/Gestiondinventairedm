@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Clock, Calendar, Download, Trash2, Play, Settings2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Zap, Clock, Calendar, Download, Trash2, Play, Settings2, ChevronDown, ChevronUp, FileText, FolderDown, PackageOpen, FolderOpen, Check, X, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
@@ -17,9 +17,19 @@ import {
   formatearFecha,
   obtenerTiempoRestante,
   limpiarBackupsAntiguos,
+  descargarBackup,
+  descargarTodosLosBackups,
   type AutoBackupConfig as AutoBackupConfigType,
   type BackupFrequency
 } from '../../utils/autoBackupStorage';
+import {
+  soportaFileSystemAccess,
+  seleccionarCarpetaBackup,
+  tieneCarpetaSeleccionada,
+  obtenerNombreCarpeta,
+  limpiarCarpetaSeleccionada,
+  inicializarFileSystem
+} from '../../utils/fileSystemAccess';
 
 export function AutoBackupConfig() {
   const [config, setConfig] = useState<AutoBackupConfigType>(obtenerConfigAutoBackup());
@@ -72,6 +82,62 @@ export function AutoBackupConfig() {
     }
   };
 
+  const handleToggleAutoDownload = () => {
+    const newConfig = { ...config, autoDownload: !config.autoDownload };
+    guardarConfigAutoBackup(newConfig);
+    setConfig(newConfig);
+    toast.info(
+      newConfig.autoDownload 
+        ? '📥 Auto-téléchargement activé' 
+        : '📥 Auto-téléchargement désactivé',
+      {
+        description: newConfig.autoDownload
+          ? 'Les backups seront téléchargés automatiquement'
+          : 'Les backups seront stockés uniquement dans le navigateur'
+      }
+    );
+  };
+
+  const handleFilePrefixChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^a-zA-Z0-9-_]/g, ''); // Solo alfanuméricos, guiones y guiones bajos
+    const newConfig = { ...config, filePrefix: value || 'backup' };
+    guardarConfigAutoBackup(newConfig);
+    setConfig(newConfig);
+  };
+
+  const handleSelectCustomFolder = async () => {
+    const result = await seleccionarCarpetaBackup();
+    
+    if (result.success) {
+      const newConfig = { 
+        ...config, 
+        customFolder: true,
+        folderName: result.folderName 
+      };
+      guardarConfigAutoBackup(newConfig);
+      setConfig(newConfig);
+      toast.success('📂 Dossier sélectionné', {
+        description: `Les backups seront sauvegardés dans: ${result.folderName}`
+      });
+    } else {
+      toast.error(result.error || 'Erreur lors de la sélection du dossier');
+    }
+  };
+
+  const handleClearCustomFolder = () => {
+    limpiarCarpetaSeleccionada();
+    const newConfig = { 
+      ...config, 
+      customFolder: false,
+      folderName: undefined 
+    };
+    guardarConfigAutoBackup(newConfig);
+    setConfig(newConfig);
+    toast.info('Dossier personnalisé supprimé', {
+      description: 'Les backups seront téléchargés normalement'
+    });
+  };
+
   const handleExecuteNow = () => {
     const success = ejecutarBackupAutomatico();
     if (success) {
@@ -94,15 +160,7 @@ export function AutoBackupConfig() {
 
   const handleDownloadBackup = (backup: any) => {
     try {
-      const blob = new Blob([backup.data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `banque-backup-${new Date(backup.timestamp).toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      descargarBackup(backup, config.filePrefix);
       toast.success('Backup téléchargé');
     } catch (error) {
       toast.error('Erreur lors du téléchargement');
@@ -114,6 +172,20 @@ export function AutoBackupConfig() {
       limpiarBackupsAntiguos();
       setBackups(obtenerBackupsAlmacenados());
       toast.success('Backups nettoyés');
+    }
+  };
+
+  const handleDownloadAll = () => {
+    if (backups.length === 0) {
+      toast.error('Aucun backup à télécharger');
+      return;
+    }
+    
+    if (confirm(`Voulez-vous télécharger ${backups.length} backup(s)?`)) {
+      const count = descargarTodosLosBackups();
+      toast.success(`${count} backup(s) en cours de téléchargement`, {
+        description: 'Les téléchargements vont commencer dans un instant'
+      });
     }
   };
 
@@ -270,6 +342,100 @@ export function AutoBackupConfig() {
                 className="bg-white border-2 border-purple-200"
               />
             </div>
+
+            {/* Auto Download */}
+            <div className="bg-gradient-to-br from-cyan-50 to-teal-50 border-2 border-cyan-200 rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-cyan-500 rounded-lg">
+                  <Download className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <Label className="font-semibold text-gray-900">Auto Téléchargement</Label>
+                  <p className="text-xs text-gray-600">Télécharger automatiquement les backups</p>
+                </div>
+              </div>
+              <Switch checked={config.autoDownload} onCheckedChange={handleToggleAutoDownload} />
+            </div>
+
+            {/* File Prefix */}
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-gray-500 rounded-lg">
+                  <FileText className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <Label className="font-semibold text-gray-900">Préfixe de Fichier</Label>
+                  <p className="text-xs text-gray-600">Définir le préfixe des fichiers de backup</p>
+                </div>
+              </div>
+              <Input
+                type="text"
+                value={config.filePrefix}
+                onChange={handleFilePrefixChange}
+                disabled={!config.enabled}
+                className="bg-white border-2 border-gray-200"
+              />
+            </div>
+
+            {/* Custom Folder */}
+            <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-amber-500 rounded-lg">
+                  <FolderOpen className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <Label className="font-semibold text-gray-900">Dossier Personnalisé</Label>
+                  <p className="text-xs text-gray-600">Choisir où sauvegarder les backups</p>
+                </div>
+              </div>
+              
+              {!soportaFileSystemAccess() ? (
+                <div className="bg-orange-100 border border-orange-300 rounded-lg p-3 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-orange-800">
+                    <p className="font-semibold mb-1">Non disponible</p>
+                    {window.self !== window.top ? (
+                      <p>Cette fonctionnalité n'est pas disponible dans Figma Make. Utilisez le téléchargement normal des backups.</p>
+                    ) : (
+                      <p>Cette fonctionnalité nécessite Chrome ou Edge moderne.</p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={handleSelectCustomFolder}
+                      size="sm"
+                      className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg flex-shrink-0"
+                    >
+                      <FolderOpen className="w-4 h-4 mr-2" />
+                      Sélectionner
+                    </Button>
+                    {config.customFolder && (
+                      <Button
+                        onClick={handleClearCustomFolder}
+                        size="sm"
+                        variant="outline"
+                        className="border-red-300 text-red-600 hover:bg-red-50 flex-shrink-0"
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        Effacer
+                      </Button>
+                    )}
+                  </div>
+                  {config.customFolder && config.folderName && (
+                    <div className="bg-green-50 border border-green-300 rounded-lg p-2 flex items-center gap-2">
+                      <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <div className="text-xs">
+                        <p className="font-semibold text-green-900">Dossier sélectionné:</p>
+                        <p className="text-green-700 font-mono truncate">{config.folderName}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Lista de Backups Automatiques */}
@@ -344,6 +510,29 @@ export function AutoBackupConfig() {
                   </ul>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Télécharger Tous les Backups */}
+          {backups.length > 0 && (
+            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <FolderDown className="w-5 h-5 text-indigo-500" />
+                  Gérer Tous les Backups ({backups.length})
+                </h4>
+                <Button
+                  onClick={handleDownloadAll}
+                  className="bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white shadow-lg"
+                  size="sm"
+                >
+                  <PackageOpen className="w-4 h-4 mr-2" />
+                  Télécharger Tous
+                </Button>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">
+                Exemple de nom: <code className="bg-gray-100 px-2 py-1 rounded text-xs">{config.filePrefix}-auto-2025-03-09-02-00-00.json</code>
+              </p>
             </div>
           )}
         </div>

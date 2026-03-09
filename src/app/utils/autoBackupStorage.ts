@@ -3,6 +3,13 @@
  * Gestiona la configuración y ejecución de backups automáticos
  */
 
+import {
+  soportaFileSystemAccess,
+  guardarArchivoEnCarpeta,
+  tieneCarpetaSeleccionada,
+  obtenerNombreCarpeta
+} from './fileSystemAccess';
+
 export type BackupFrequency = 'daily' | 'weekly' | 'monthly' | 'manual';
 
 export interface AutoBackupConfig {
@@ -12,6 +19,10 @@ export interface AutoBackupConfig {
   maxBackups: number; // Número máximo de backups a mantener
   lastBackup?: string; // ISO timestamp del último backup
   nextBackup?: string; // ISO timestamp del próximo backup
+  autoDownload: boolean; // Auto-descargar backups automáticos
+  filePrefix: string; // Prefijo personalizado para nombres de archivo
+  customFolder: boolean; // Si usa carpeta personalizada
+  folderName?: string; // Nombre de la carpeta seleccionada (solo para mostrar)
 }
 
 export interface StoredBackup {
@@ -31,6 +42,9 @@ const DEFAULT_CONFIG: AutoBackupConfig = {
   frequency: 'weekly',
   time: '02:00', // 2 AM por defecto
   maxBackups: 5,
+  autoDownload: false,
+  filePrefix: 'backup',
+  customFolder: false
 };
 
 /**
@@ -40,7 +54,12 @@ export function obtenerConfigAutoBackup(): AutoBackupConfig {
   try {
     const config = localStorage.getItem(AUTO_BACKUP_CONFIG_KEY);
     if (config) {
-      return JSON.parse(config);
+      const parsedConfig = JSON.parse(config);
+      // Asegurar compatibilidad con configuraciones antiguas
+      return {
+        ...DEFAULT_CONFIG,
+        ...parsedConfig
+      };
     }
     return DEFAULT_CONFIG;
   } catch (error) {
@@ -201,6 +220,8 @@ export function debeEjecutarBackup(): boolean {
  */
 export function ejecutarBackupAutomatico(): boolean {
   try {
+    const config = obtenerConfigAutoBackup();
+    
     // Crear backup de todo el localStorage (excepto los backups mismos)
     const backup: Record<string, any> = {};
     
@@ -215,13 +236,81 @@ export function ejecutarBackupAutomatico(): boolean {
     }
     
     const backupData = JSON.stringify(backup, null, 2);
-    guardarBackup(backupData, true);
+    const savedBackup = guardarBackup(backupData, true);
+    
+    // Auto-descargar si está configurado
+    if (config.autoDownload) {
+      descargarBackup(savedBackup, config.filePrefix);
+    }
     
     console.log('✅ Backup automático ejecutado exitosamente');
     return true;
   } catch (error) {
     console.error('❌ Error al ejecutar backup automático:', error);
     return false;
+  }
+}
+
+/**
+ * Descargar un backup específico
+ */
+export async function descargarBackup(backup: StoredBackup, customPrefix?: string): Promise<void> {
+  try {
+    const config = obtenerConfigAutoBackup();
+    const prefix = customPrefix || config.filePrefix || 'backup';
+    const fecha = new Date(backup.timestamp).toISOString().split('T')[0];
+    const hora = new Date(backup.timestamp).toTimeString().split(' ')[0].replace(/:/g, '-');
+    const tipo = backup.automatic ? 'auto' : 'manual';
+    const nombreArchivo = `${prefix}-${tipo}-${fecha}-${hora}.json`;
+    
+    // Si está configurada carpeta personalizada y es soportada, intentar guardar ahí
+    if (config.customFolder && soportaFileSystemAccess() && tieneCarpetaSeleccionada()) {
+      const resultado = await guardarArchivoEnCarpeta(nombreArchivo, backup.data);
+      
+      if (resultado.success) {
+        console.log(`✅ Backup guardado en carpeta personalizada: ${nombreArchivo}`);
+        return;
+      } else {
+        console.warn('⚠️ No se pudo guardar en carpeta personalizada, usando descarga normal');
+      }
+    }
+    
+    // Fallback: Descarga normal
+    const blob = new Blob([backup.data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = nombreArchivo;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error al descargar backup:', error);
+    throw error;
+  }
+}
+
+/**
+ * Descargar todos los backups como archivos ZIP simulado
+ * (Descarga cada uno individualmente debido a limitaciones del navegador)
+ */
+export function descargarTodosLosBackups(): number {
+  try {
+    const backups = obtenerBackupsAlmacenados();
+    const config = obtenerConfigAutoBackup();
+    
+    backups.forEach((backup, index) => {
+      // Pequeño delay entre descargas para evitar bloqueos del navegador
+      setTimeout(() => {
+        descargarBackup(backup, config.filePrefix);
+      }, index * 200);
+    });
+    
+    return backups.length;
+  } catch (error) {
+    console.error('Error al descargar todos los backups:', error);
+    return 0;
   }
 }
 
