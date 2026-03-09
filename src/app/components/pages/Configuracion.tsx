@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBranding } from '../../../hooks/useBranding';
 import { Settings, Plus, Edit, Trash2, DollarSign, Package, FolderTree, Save, Inbox, PackageSearch, Copy, Eye, ChevronDown, ChevronRight, EyeOff, Grid3x3, X, Download, Upload, RotateCcw, Database, Clock, TrendingDown, Percent, Calculator, BookmarkPlus, AlertTriangle, Mail, CheckCircle, AlertCircle, Send, Scale, MapPin, Map, LifeBuoy, HelpCircle, Info, Sparkles } from 'lucide-react';
+import '../../../styles/configuracion-elegante.css';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -32,27 +33,12 @@ import {
   actualizarProgramaEntrada, 
   eliminarProgramaEntrada 
 } from '../../utils/programaEntradaStorage';
-import { 
-  exportarConfiguracion, 
-  importarConfiguracion, 
-  resetearConfiguracion 
-} from '../../utils/exportImportConfig';
 import { GestionVariantes } from '../inventario/GestionVariantes';
-import { 
-  obtenerConfigEmail,
-  guardarConfigEmail,
-  eliminarConfigEmail,
-  validarConfigEmail,
-  probarConexionEmail,
-  OUTLOOK_CONFIG,
-  GMAIL_CONFIG,
-  type EmailConfig
-} from '../../utils/emailConfig';
 import { obtenerUnidades, type Unidad as UnidadDinamica } from '../../utils/unidadStorage';
 import { ConfigurationBalance } from '../ConfigurationBalance';
 import { GestionAdressesQuartiers } from '../GestionAdressesQuartiers';
-import { TextCorrector } from '../backup/TextCorrector';
 import { obtenerUsuarioSesion } from '../../utils/sesionStorage';
+import { BackupManager } from '../BackupManager';
 import type { Producto as ProductoTipo, Categoria as CategoriaTipo, Subcategoria as SubcategoriaTipo, Variante as VarianteTipo, Permiso } from '../../types';
 
 type Unidad = {
@@ -229,22 +215,6 @@ export function Configuracion() {
   const [productos, setProductos] = useState<ProductoCreado[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Estado para configuración de email
-  const [emailConfig, setEmailConfig] = useState<EmailConfig | null>(null);
-  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [probandoConexion, setProbandoConexion] = useState(false);
-  const [formEmail, setFormEmail] = useState({
-    provider: 'outlook' as 'outlook' | 'gmail' | 'custom',
-    email: '',
-    password: '',
-    smtpHost: OUTLOOK_CONFIG.smtpHost,
-    smtpPort: OUTLOOK_CONFIG.smtpPort,
-    useTLS: OUTLOOK_CONFIG.useTLS,
-    fromName: 'Banque Alimentaire',
-    isConfigured: false
-  });
-
   // Cargar unidades dinámicas
   useEffect(() => {
     const cargarUnidadesDinamicas = () => {
@@ -284,24 +254,6 @@ export function Configuracion() {
   useEffect(() => {
     const programasGuardados = obtenerProgramasEntrada();
     setProgramasEntrada(programasGuardados);
-  }, []);
-
-  // Cargar configuración de email al montar el componente
-  useEffect(() => {
-    const config = obtenerConfigEmail();
-    if (config) {
-      setEmailConfig(config);
-      setFormEmail({
-        provider: config.provider,
-        email: config.email,
-        password: config.password,
-        smtpHost: config.smtpHost,
-        smtpPort: config.smtpPort,
-        useTLS: config.useTLS,
-        fromName: config.fromName,
-        isConfigured: config.isConfigured
-      });
-    }
   }, []);
 
   // Sincronizar categorías a localStorage cada vez que cambien
@@ -883,63 +835,6 @@ export function Configuracion() {
     }
   };
 
-  // Funciones para Gestión de Datos
-  const handleExportarConfiguracion = () => {
-    try {
-      exportarConfiguracion();
-      toast.success(t('configuration.configurationExportedSuccess'), {
-        duration: 4000
-      });
-    } catch (error) {
-      toast.error(t('configuration.errorExportingConfiguration'));
-    }
-  };
-
-  const handleImportarConfiguracion = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    importarConfiguracion(file)
-      .then(() => {
-        toast.success(t('configuration.configurationImportedSuccess'), {
-          duration: 4000
-        });
-        // Recargar todos los datos sin refrescar la página
-        setTimeout(() => {
-          // Recargar categorías, productos y programas
-          const categoriasGuardadas = obtenerCategorias();
-          setCategorias(categoriasGuardadas);
-          const productosGuardados = obtenerProductos();
-          setProductos(productosGuardados);
-          const programasGuardados = obtenerProgramasEntrada();
-          setProgramasEntrada(programasGuardados);
-          setRefreshKey(prev => prev + 1);
-        }, 1500);
-      })
-      .catch((error) => {
-        toast.error('❌ ' + error.message);
-      });
-  };
-
-  const handleResetearConfiguracion = () => {
-    if (window.confirm('⚠️ ¿Estás seguro de que deseas restablecer toda la configuración a los valores por defecto?\n\nEsta acción eliminará todos los programas, categorías y productos personalizados.')) {
-      resetearConfiguracion();
-      toast.success('✅ Configuración restablecida - Actualizando...', {
-        duration: 3000
-      });
-      setTimeout(() => {
-        // Recargar datos sin refrescar la página
-        const categoriasGuardadas = obtenerCategorias();
-        setCategorias(categoriasGuardadas);
-        const productosGuardados = obtenerProductos();
-        setProductos(productosGuardados);
-        const programasGuardados = obtenerProgramasEntrada();
-        setProgramasEntrada(programasGuardados);
-        setRefreshKey(prev => prev + 1);
-      }, 1500);
-    }
-  };
-
   // Funciones para Productos
   const handleEditarProducto = (producto: any) => {
     setEditandoProducto(producto);
@@ -1243,76 +1138,6 @@ export function Configuracion() {
     setVarianteSubcategoriaDialogOpen(false);
   };
 
-  // Funciones para configuración de Email
-  const handleCambiarProvider = (provider: 'outlook' | 'gmail' | 'custom') => {
-    setFormEmail({
-      ...formEmail,
-      provider,
-      smtpHost: provider === 'outlook' ? OUTLOOK_CONFIG.smtpHost : 
-                provider === 'gmail' ? GMAIL_CONFIG.smtpHost : formEmail.smtpHost,
-      smtpPort: provider === 'outlook' ? OUTLOOK_CONFIG.smtpPort : 
-                provider === 'gmail' ? GMAIL_CONFIG.smtpPort : formEmail.smtpPort,
-      useTLS: provider === 'outlook' ? OUTLOOK_CONFIG.useTLS : 
-              provider === 'gmail' ? GMAIL_CONFIG.useTLS : formEmail.useTLS
-    });
-  };
-
-  const handleGuardarConfigEmail = () => {
-    const validacion = validarConfigEmail(formEmail);
-    if (!validacion.valido) {
-      toast.error(`Erreurs: ${validacion.errores.join(', ')}`);
-      return;
-    }
-
-    const config: EmailConfig = {
-      ...formEmail,
-      isConfigured: true
-    };
-
-    guardarConfigEmail(config);
-    setEmailConfig(config);
-    toast.success('✅ Configuration de messagerie enregistrée avec succès');
-    setEmailDialogOpen(false);
-  };
-
-  const handleProbarConexion = async () => {
-    setProbandoConexion(true);
-    const config: EmailConfig = {
-      ...formEmail,
-      isConfigured: false
-    };
-
-    try {
-      const resultado = await probarConexionEmail(config);
-      if (resultado.exito) {
-        toast.success(`✅ ${resultado.mensaje}`);
-      } else {
-        toast.error(`❌ ${resultado.mensaje}`);
-      }
-    } catch (error) {
-      toast.error('❌ Erreur lors du test de connexion');
-    } finally {
-      setProbandoConexion(false);
-    }
-  };
-
-  const handleEliminarConfigEmail = () => {
-    eliminarConfigEmail();
-    setEmailConfig(null);
-    setFormEmail({
-      provider: 'outlook',
-      email: '',
-      password: '',
-      smtpHost: OUTLOOK_CONFIG.smtpHost,
-      smtpPort: OUTLOOK_CONFIG.smtpPort,
-      useTLS: OUTLOOK_CONFIG.useTLS,
-      fromName: 'Banque Alimentaire',
-      isConfigured: false
-    });
-    toast.success('✅ Configuration supprimée');
-    setEmailDialogOpen(false);
-  };
-
   // Funciones para configuración de soporte
   const handleGuardarConfigSupport = () => {
     guardarConfigSupport(formSupport);
@@ -1466,14 +1291,14 @@ export function Configuracion() {
 
   return (
     <div 
-      className="min-h-screen p-3 sm:p-4 md:p-6 relative overflow-hidden" 
+      className="min-h-screen p-3 sm:p-4 md:p-6 lg:p-8 relative overflow-hidden" 
       style={{ 
         fontFamily: 'Roboto, sans-serif',
-        background: `linear-gradient(135deg, ${branding.primaryColor}15 0%, ${branding.secondaryColor}10 100%)`,
+        background: `linear-gradient(135deg, #f8fafc 0%, #e0f2fe 50%, #f1f5f9 100%)`,
       }}
     >
-      {/* Formas decorativas de fondo */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Formas decorativas de fondo mejoradas */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
         <div 
           className="absolute -top-24 -left-24 w-96 h-96 rounded-full opacity-20 blur-3xl animate-pulse"
           style={{ backgroundColor: branding.primaryColor }}
@@ -1533,120 +1358,117 @@ export function Configuracion() {
             </div>
           </div>
 
-          {/* Título con icono y efecto Sparkles */}
-          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-6 sm:mb-8">
-            <Settings 
-              className="w-6 h-6 sm:w-8 sm:h-8" 
-              style={{ color: branding.primaryColor }}
-            />
-            <h1 
-              className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight" 
-              style={{ 
-                fontFamily: 'Montserrat, sans-serif',
-                color: branding.primaryColor 
-              }}
-            >
-              {t('configuration.systemTitle')}
-            </h1>
-            <Sparkles 
-              className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" 
-              style={{ color: branding.secondaryColor }}
-            />
+          {/* Título con diseño elegante */}
+          <div className="mb-8">
+            <div className="flex items-center justify-center gap-3 sm:gap-4 mb-3">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#1a4d7a] to-[#2d9561] rounded-xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity"></div>
+                <Settings 
+                  className="relative w-7 h-7 sm:w-9 sm:h-9 text-[#1a4d7a]" 
+                />
+              </div>
+              <h1 
+                className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-[#1a4d7a] via-[#1a4d7a] to-[#2d9561] bg-clip-text text-transparent" 
+                style={{ 
+                  fontFamily: 'Montserrat, sans-serif',
+                  fontWeight: 700
+                }}
+              >
+                {t('configuration.systemTitle')}
+              </h1>
+              <Sparkles 
+                className="w-6 h-6 sm:w-7 sm:h-7 text-[#2d9561] animate-pulse" 
+              />
+            </div>
+
+            <p className="text-center text-gray-600 text-sm sm:text-base" style={{ fontFamily: 'Roboto, sans-serif' }}>
+              {t('configuration.subtitle')}
+            </p>
           </div>
 
-          <p className="text-center text-[#666666] mb-6">{t('configuration.subtitle')}</p>
-
-      {/* Tabs */}
-      <Tabs defaultValue="categorias" className="space-y-4">
-        <TabsList className="bg-white border flex-wrap h-auto gap-1 p-1">
+      {/* Tabs con diseño moderno y elegante */}
+      <Tabs defaultValue="categorias" className="space-y-6">
+        <TabsList className="inline-flex backdrop-blur-xl bg-white/70 border-2 border-white/60 shadow-2xl rounded-2xl flex-wrap h-auto gap-2 p-2">
           <TabsTrigger 
             value="categorias" 
-            className="data-[state=active]:text-white"
+            className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-[#1a4d7a] data-[state=active]:to-[#2d9561] data-[state=active]:text-white data-[state=active]:shadow-xl rounded-xl px-4 sm:px-6 py-3 transition-all duration-300 hover:scale-105 hover:shadow-lg"
             style={{ 
               fontFamily: 'Montserrat, sans-serif',
+              fontWeight: 600
             }}
-            data-primary-color={branding.primaryColor}
           >
-            <FolderTree className="w-4 h-4 mr-2" />
-            {t('configuration.categoriesAndSubcategories')}
+            <FolderTree className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+            <span className="hidden sm:inline">{t('configuration.categoriesAndSubcategories')}</span>
+            <span className="sm:hidden">Catégories</span>
           </TabsTrigger>
           <TabsTrigger 
             value="programas" 
-            className="data-[state=active]:text-white"
-            style={{ fontFamily: 'Montserrat, sans-serif' }}
+            className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-[#1a4d7a] data-[state=active]:to-[#2d9561] data-[state=active]:text-white data-[state=active]:shadow-xl rounded-xl px-4 sm:px-6 py-3 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
           >
-            <Inbox className="w-4 h-4 mr-2" />
-            {t('configuration.entryPrograms')}
+            <Inbox className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+            <span className="hidden sm:inline">{t('configuration.entryPrograms')}</span>
+            <span className="sm:hidden">Programmes</span>
           </TabsTrigger>
           <TabsTrigger 
             value="productos-prs" 
-            className="data-[state=active]:text-white"
-            style={{ fontFamily: 'Montserrat, sans-serif' }}
+            className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-[#1a4d7a] data-[state=active]:to-[#2d9561] data-[state=active]:text-white data-[state=active]:shadow-xl rounded-xl px-4 sm:px-6 py-3 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
           >
-            <Package className="w-4 h-4 mr-2" />
-            Produits PRS
+            <Package className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+            <span className="hidden sm:inline">Produits PRS</span>
+            <span className="sm:hidden">PRS</span>
           </TabsTrigger>
-          {esDesarrollador && (
-            <TabsTrigger 
-              value="datos" 
-              className="data-[state=active]:text-white"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
-            >
-              <Database className="w-4 h-4 mr-2" />
-              Gestión de Datos
-            </TabsTrigger>
-          )}
           <TabsTrigger 
-            value="messagerie" 
-            className="data-[state=active]:text-white"
-            style={{ fontFamily: 'Montserrat, sans-serif' }}
+            value="sauvegardes" 
+            className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-[#1a4d7a] data-[state=active]:to-[#2d9561] data-[state=active]:text-white data-[state=active]:shadow-xl rounded-xl px-4 sm:px-6 py-3 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
           >
-            <Mail className="w-4 h-4 mr-2" />
-            Messagerie (Email)
+            <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+            <span>Sauvegardes</span>
           </TabsTrigger>
           <TabsTrigger 
             value="balance" 
-            className="data-[state=active]:text-white"
-            style={{ fontFamily: 'Montserrat, sans-serif' }}
+            className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-[#1a4d7a] data-[state=active]:to-[#2d9561] data-[state=active]:text-white data-[state=active]:shadow-xl rounded-xl px-4 sm:px-6 py-3 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
           >
-            <Scale className="w-4 h-4 mr-2" />
-            Balance
-          </TabsTrigger>
-          <TabsTrigger 
-            value="correction" 
-            className="data-[state=active]:text-white"
-            style={{ fontFamily: 'Montserrat, sans-serif' }}
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            Correction de Texte
+            <Scale className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+            <span>Balance</span>
           </TabsTrigger>
           {esDesarrollador && (
             <TabsTrigger 
               value="adresses" 
-              className="data-[state=active]:text-white"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
+              className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-[#1a4d7a] data-[state=active]:to-[#2d9561] data-[state=active]:text-white data-[state=active]:shadow-xl rounded-xl px-4 sm:px-6 py-3 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+              style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
             >
-              <MapPin className="w-4 h-4 mr-2" />
-              Adresses et Quartiers
+              <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+              <span className="hidden lg:inline">Adresses et Quartiers</span>
+              <span className="lg:hidden">Adresses</span>
             </TabsTrigger>
           )}
         </TabsList>
 
         {/* Tab: Categorías y Subcategorías */}
-        <TabsContent value="categorias">
-          <div className="space-y-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
+        <TabsContent value="categorias" className="fade-in">
+          <div className="space-y-6">
+            <Card className="backdrop-blur-lg bg-white/80 border-2 border-white/60 shadow-2xl rounded-2xl overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-[#1a4d7a]/5 to-[#2d9561]/5 border-b border-gray-200/50 pb-4">
+                <CardTitle className="flex items-center gap-3 text-2xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, color: '#1a4d7a' }}>
+                  <div className="p-2 bg-gradient-to-br from-[#1a4d7a] to-[#2d9561] rounded-xl shadow-lg">
+                    <FolderTree className="w-6 h-6 text-white" />
+                  </div>
                   {t('configuration.productCategories')}
                 </CardTitle>
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <Dialog open={subcategoriaDialogOpen} onOpenChange={(open) => {
                     setSubcategoriaDialogOpen(open);
                     if (!open) resetFormSubcategoria();
                   }}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}>
+                      <Button 
+                        className="bg-gradient-to-r from-[#2d9561] to-[#258a54] hover:from-[#258a54] hover:to-[#1f7547] text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl"
+                        style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
+                      >
                         <Plus className="w-4 h-4 mr-2" />
                         {t('configuration.newSubcategory')}
                       </Button>
@@ -2102,74 +1924,76 @@ export function Configuracion() {
 
                 <div className="space-y-4">
                   {categoriasVisibles.map(categoria => (
-                    <div key={categoria.id} className="border rounded-lg overflow-hidden">
+                    <div key={categoria.id} className="backdrop-blur-lg bg-white/70 border-2 border-white/60 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300">
                       {/* Categoría Principal */}
                       <div 
-                        className="flex items-center justify-between p-4 bg-[#F4F4F4] cursor-pointer hover:bg-[#EEEEEE] transition-colors"
+                        className="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50/50 to-transparent cursor-pointer hover:from-gray-100/70 hover:to-transparent transition-all duration-300 group"
                         onClick={() => toggleCategoria(categoria.id)}
                       >
-                        <div className="flex items-center gap-3 flex-1">
-                          <Button variant="ghost" size="sm" className="p-0 h-auto">
+                        <div className="flex items-center gap-4 flex-1">
+                          <Button variant="ghost" size="sm" className="p-0 h-auto hover:bg-transparent group-hover:scale-110 transition-transform">
                             {categoriaExpandida === categoria.id ? (
-                              <ChevronDown className="w-5 h-5 text-[#666666]" />
+                              <ChevronDown className="w-6 h-6 text-[#1a4d7a]" />
                             ) : (
-                              <ChevronRight className="w-5 h-5 text-[#666666]" />
+                              <ChevronRight className="w-6 h-6 text-gray-400 group-hover:text-[#1a4d7a] transition-colors" />
                             )}
                           </Button>
                           <div 
-                            className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
-                            style={{ backgroundColor: categoria.color + '20', fontSize: '1.5rem' }}
+                            className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300"
+                            style={{ backgroundColor: categoria.color + '30', fontSize: '1.75rem' }}
                           >
                             {categoria.icono}
                           </div>
                           <div className="flex-1">
-                            <h4 className="font-medium text-[#333333]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                            <h4 className="font-bold text-lg text-gray-800 mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                               {categoria.nombre}
                             </h4>
-                            <p className="text-sm text-[#666666]">{categoria.descripcion}</p>
+                            <p className="text-sm text-gray-600">{categoria.descripcion}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3">
                           {categoria.descripcion?.toLowerCase().includes('prs') && (
-                            <Badge className="bg-purple-500 text-white text-xs">
+                            <Badge className="bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xs px-3 py-1 rounded-full shadow-md">
                               {t('configuration.prsBadge')}
                             </Badge>
                           )}
                           {categoria.valorPorKg && (
-                            <Badge variant="outline" className="text-[#4CAF50] border-[#4CAF50]">
+                            <Badge className="bg-gradient-to-r from-emerald-50 to-green-50 text-[#2d9561] border-2 border-[#2d9561]/30 px-3 py-1 rounded-full font-semibold shadow-sm">
                               {t('configuration.valuePerKgBadge', { value: categoria.valorPorKg.toFixed(2) })}
                             </Badge>
                           )}
                           <Button
                             variant="ghost"
                             size="sm"
+                            className="hover:bg-blue-50 hover:text-[#1a4d7a] rounded-xl transition-all duration-200"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleEditarCategoria(categoria);
                             }}
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
+                            className="hover:bg-red-50 hover:text-[#DC3545] rounded-xl transition-all duration-200"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleSolicitarEliminarCategoria(categoria);
                             }}
                           >
-                            <Trash2 className="w-4 h-4 text-[#DC3545]" />
+                            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 hover:text-[#DC3545]" />
                           </Button>
                         </div>
                       </div>
 
                       {/* Subcategorías */}
                       {categoriaExpandida === categoria.id && (
-                        <div className="p-4 bg-white border-t">
+                        <div className="p-5 bg-gradient-to-br from-gray-50/30 to-transparent border-t-2 border-gray-100/50">
                           {categoria.subcategorias.length > 0 ? (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                               {categoria.subcategorias.map(sub => (
-                                <div key={sub.id} className="p-4 bg-[#F4F4F4] rounded-lg border border-gray-200">
+                                <div key={sub.id} className="p-4 bg-white/80 backdrop-blur-sm rounded-xl border-2 border-gray-200/50 shadow-sm hover:shadow-md hover:border-[#2d9561]/30 transition-all duration-300">
                                   <div className="flex items-start justify-between mb-2">
                                     <div className="flex items-center gap-3 flex-1">
                                       {sub.icono && (
@@ -2454,10 +2278,13 @@ export function Configuracion() {
         </TabsContent>
 
         {/* Tab: Programas de Entrada */}
-        <TabsContent value="programas">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
+        <TabsContent value="programas" className="fade-in">
+          <Card className="backdrop-blur-lg bg-white/80 border-2 border-white/60 shadow-2xl rounded-2xl">
+            <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-[#1a4d7a]/5 to-[#2d9561]/5 border-b border-gray-200/50 pb-4">
+              <CardTitle className="flex items-center gap-3 text-2xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, color: '#1a4d7a' }}>
+                <div className="p-2 bg-gradient-to-br from-[#1a4d7a] to-[#2d9561] rounded-xl shadow-lg">
+                  <Inbox className="w-6 h-6 text-white" />
+                </div>
                 {t('configuration.entryPrograms')}
               </CardTitle>
               <Dialog open={programaDialogOpen} onOpenChange={(open) => {
@@ -2465,7 +2292,10 @@ export function Configuracion() {
                 if (!open) resetFormPrograma();
               }}>
                 <DialogTrigger asChild>
-                  <Button className="bg-[#1E73BE] hover:bg-[#1557A0]" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}>
+                  <Button 
+                    className="bg-gradient-to-r from-[#1a4d7a] to-[#2d9561] hover:from-[#2d9561] hover:to-[#1a4d7a] text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl"
+                    style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     {t('configuration.newProgram')}
                   </Button>
@@ -2643,22 +2473,22 @@ export function Configuracion() {
         </TabsContent>
 
         {/* Tab: Productos PRS */}
-        <TabsContent value="productos-prs">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+        <TabsContent value="productos-prs" className="fade-in">
+          <Card className="backdrop-blur-lg bg-white/80 border-2 border-white/60 shadow-2xl rounded-2xl">
+            <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-purple-50/50 to-pink-50/50 border-b border-gray-200/50 pb-4">
               <div>
-                <CardTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
-                  <div className="flex items-center gap-2">
-                    <Package className="w-6 h-6 text-[#E91E63]" />
-                    Gestion des Produits PRS
+                <CardTitle className="flex items-center gap-3 text-2xl mb-2" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, color: '#E91E63' }}>
+                  <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl shadow-lg">
+                    <Package className="w-6 h-6 text-white" />
                   </div>
+                  Gestion des Produits PRS
                 </CardTitle>
-                <p className="text-sm text-[#666666] mt-2" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                <p className="text-sm text-gray-600 ml-14" style={{ fontFamily: 'Roboto, sans-serif' }}>
                   Gérez les produits du Programme de Récupération Spéciale (PRS)
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <Badge variant="outline" className="text-sm bg-pink-50 text-pink-700 border-pink-300">
+                <Badge className="text-sm bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 border-2 border-purple-300/50 px-4 py-2 rounded-full shadow-sm">
                   {productos.filter(p => p.esPRS === true).length} produits PRS
                 </Badge>
                 <Button 
@@ -2666,8 +2496,8 @@ export function Configuracion() {
                     resetFormProductoPRS();
                     setProductoPRSDialogOpen(true);
                   }}
-                  className="bg-[#E91E63] hover:bg-[#C2185B]" 
-                  style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-pink-500 hover:to-purple-500 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl" 
+                  style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Nouveau Produit PRS
@@ -3190,288 +3020,13 @@ export function Configuracion() {
           </DialogContent>
         </Dialog>
 
-        {/* Tab: Gestión de Datos */}
-        {esDesarrollador && (
-          <TabsContent value="datos">
-            <Card>
-              <CardHeader>
-                <CardTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
-                  <div className="flex items-center gap-2">
-                    <Database className="w-6 h-6 text-[#1E73BE]" />
-                    Gestión de Datos del Sistema
-                  </div>
-                </CardTitle>
-              </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Información del Sistema */}
-              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <div className="text-3xl">💾</div>
-                  <div className="flex-1">
-                    <h3 className="font-medium text-[#333333] mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      Guardado Automático Activado
-                    </h3>
-                    <p className="text-sm text-[#666666] mb-2">
-                      Todas tus creaciones (programas de entrada, categorías, subcategorías y productos) se guardan automáticamente en el navegador. 
-                      Tus datos persisten incluso si cierras o recargas la página.
-                    </p>
-                    <ul className="text-sm text-[#666666] space-y-1 list-disc pl-5">
-                      <li>Los cambios se guardan instantáneamente al crear o editar</li>
-                      <li>Los datos se almacenan de forma segura en tu navegador</li>
-                      <li>Puedes exportar tu configuración para hacer respaldo</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              {/* Sección de Exportar */}
-              <div className="border-2 border-[#E0E0E0] rounded-lg p-4">
-                <div className="flex items-start gap-3 mb-4">
-                  <Download className="w-6 h-6 text-[#4CAF50]" />
-                  <div className="flex-1">
-                    <h3 className="font-medium text-[#333333] mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      Exportar Configuración
-                    </h3>
-                    <p className="text-sm text-[#666666] mb-3">
-                      Descarga un archivo JSON con toda tu configuración actual (programas, categorías, productos y unidades). 
-                      Úsalo como respaldo o para transferir tu configuración a otro dispositivo.
-                    </p>
-                    <Button 
-                      onClick={handleExportarConfiguracion}
-                      className="bg-[#4CAF50] hover:bg-[#45a049]"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Exportar Configuración Completa
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Sección de Importar */}
-              <div className="border-2 border-[#E0E0E0] rounded-lg p-4">
-                <div className="flex items-start gap-3 mb-4">
-                  <Upload className="w-6 h-6 text-[#1E73BE]" />
-                  <div className="flex-1">
-                    <h3 className="font-medium text-[#333333] mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      Importar Configuración
-                    </h3>
-                    <p className="text-sm text-[#666666] mb-3">
-                      Carga un archivo de configuración previamente exportado. Esto reemplazará toda la configuración actual.
-                    </p>
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
-                      <p className="text-sm text-[#856404]">
-                        ⚠️ <strong>Advertencia:</strong> Esta acción reemplazará toda tu configuración actual. 
-                        Se recomienda exportar tu configuración actual antes de importar.
-                      </p>
-                    </div>
-                    <Input
-                      type="file"
-                      accept=".json"
-                      onChange={handleImportarConfiguracion}
-                      className="max-w-md"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Sección de Resetear */}
-              <div className="border-2 border-red-200 rounded-lg p-4">
-                <div className="flex items-start gap-3 mb-4">
-                  <RotateCcw className="w-6 h-6 text-[#DC3545]" />
-                  <div className="flex-1">
-                    <h3 className="font-medium text-[#DC3545] mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      Restablecer Configuración
-                    </h3>
-                    <p className="text-sm text-[#666666] mb-3">
-                      Elimina toda la configuración personalizada y restaura los valores por defecto del sistema.
-                    </p>
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
-                      <p className="text-sm text-[#721c24]">
-                        🚨 <strong>Peligro:</strong> Esta acción es irreversible. Se perderán todos los programas, 
-                        categorías, subcategorías y productos personalizados.
-                      </p>
-                    </div>
-                    <Button 
-                      onClick={handleResetearConfiguracion}
-                      variant="destructive"
-                      className="bg-[#DC3545] hover:bg-[#c82333]"
-                    >
-                      <RotateCcw className="w-4 h-4 mr-2" />
-                      Restablecer a Valores por Defecto
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Información adicional */}
-              <div className="bg-[#F4F4F4] rounded-lg p-4">
-                <h4 className="font-medium text-[#333333] mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  📋 Información Técnica
-                </h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-[#666666]">Almacenamiento:</span>
-                    <p className="font-medium">LocalStorage del navegador</p>
-                  </div>
-                  <div>
-                    <span className="text-[#666666]">Formato de respaldo:</span>
-                    <p className="font-medium">JSON</p>
-                  </div>
-                  <div>
-                    <span className="text-[#666666]">Datos guardados:</span>
-                    <p className="font-medium">Programas, Categorías, Productos</p>
-                  </div>
-                  <div>
-                    <span className="text-[#666666]">Persistencia:</span>
-                    <p className="font-medium">Permanente en el navegador</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        )}
-
-        {/* Tab: Messagerie (Email) */}
-        <TabsContent value="messagerie">
-          <Card>
-            <CardHeader>
-              <CardTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
-                <div className="flex items-center gap-3">
-                  <Mail className="w-6 h-6 text-[#1E73BE]" />
-                  Configuration du Service de Messagerie
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Estado de configuración */}
-              <div className={`border-2 rounded-lg p-5 ${emailConfig?.isConfigured ? 'border-[#4CAF50] bg-green-50' : 'border-[#FFC107] bg-yellow-50'}`}>
-                <div className="flex items-start gap-4">
-                  {emailConfig?.isConfigured ? (
-                    <CheckCircle className="w-8 h-8 text-[#4CAF50] flex-shrink-0" />
-                  ) : (
-                    <AlertCircle className="w-8 h-8 text-[#FFC107] flex-shrink-0" />
-                  )}
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      {emailConfig?.isConfigured ? 'Service Configuré' : 'Configuration Requise'}
-                    </h3>
-                    {emailConfig?.isConfigured ? (
-                      <div className="space-y-2">
-                        <p className="text-sm text-[#666666]">
-                          Le service de messagerie est actif et prêt à envoyer des emails.
-                        </p>
-                        <div className="grid grid-cols-2 gap-4 mt-3">
-                          <div>
-                            <p className="text-xs text-[#666666]">Fournisseur</p>
-                            <p className="font-medium">{emailConfig.provider === 'outlook' ? 'Microsoft Outlook' : emailConfig.provider === 'gmail' ? 'Gmail' : 'Personnalisé'}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-[#666666]">Email configuré</p>
-                            <p className="font-medium">{emailConfig.email}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-[#666666]">Serveur SMTP</p>
-                            <p className="font-medium">{emailConfig.smtpHost}:{emailConfig.smtpPort}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-[#666666]">Nom de l'expéditeur</p>
-                            <p className="font-medium">{emailConfig.fromName}</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-3 mt-4">
-                          <Button
-                            variant="outline"
-                            onClick={() => setEmailDialogOpen(true)}
-                            className="border-[#1E73BE] text-[#1E73BE] hover:bg-blue-50"
-                          >
-                            <Edit className="w-4 h-4 mr-2" />
-                            Modifier
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={handleEliminarConfigEmail}
-                            className="border-[#DC3545] text-[#DC3545] hover:bg-red-50"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Supprimer
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="text-sm text-[#666666] mb-4">
-                          Configurez votre service de messagerie pour envoyer des emails aux organismes depuis le module Liaison.
-                        </p>
-                        <Button
-                          onClick={() => setEmailDialogOpen(true)}
-                          className="bg-[#1E73BE] hover:bg-blue-700"
-                        >
-                          <Settings className="w-4 h-4 mr-2" />
-                          Configurer Maintenant
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Información sobre Outlook */}
-              <div className="border-2 border-[#E0E0E0] rounded-lg p-5">
-                <div className="flex items-start gap-3">
-                  <Mail className="w-6 h-6 text-[#1E73BE] flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      Configuration Microsoft Outlook / Office 365
-                    </h4>
-                    <div className="text-sm text-[#666666] space-y-2">
-                      <p>
-                        Pour utiliser Outlook comme service de messagerie:
-                      </p>
-                      <ul className="list-disc list-inside space-y-1 ml-2">
-                        <li>Utilisez votre adresse email Outlook ou Office 365</li>
-                        <li>Générez un <strong>mot de passe d'application</strong> depuis les paramètres de sécurité de votre compte Microsoft</li>
-                        <li>N'utilisez jamais votre mot de passe principal pour des applications tierces</li>
-                      </ul>
-                      <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-3">
-                        <p className="text-sm"><strong>📌 Configuration SMTP Outlook:</strong></p>
-                        <ul className="text-xs mt-2 space-y-1">
-                          <li>• Serveur: smtp-mail.outlook.com</li>
-                          <li>• Port: 587</li>
-                          <li>• Sécurité: TLS/STARTTLS</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Nota importante sobre producción */}
-              <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-5">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-6 h-6 text-[#FFC107] flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold text-[#856404] mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                      ⚠️ Important - Système de Démonstration
-                    </h4>
-                    <p className="text-sm text-[#856404]">
-                      Ce système est une <strong>démonstration frontend</strong>. Dans un environnement de production réel:
-                    </p>
-                    <ul className="list-disc list-inside text-sm text-[#856404] mt-2 space-y-1 ml-2">
-                      <li>Les emails seraient envoyés depuis un <strong>serveur backend sécurisé</strong></li>
-                      <li>Les identifiants ne seraient <strong>jamais</strong> stockés dans le navigateur</li>
-                      <li>Un système d'authentification et d'autorisation sécurisé serait implémenté</li>
-                      <li>Des logs d'audit et un système de file d'attente d'emails seraient utilisés</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Tab: Sauvegardes (Backups) */}
+        <TabsContent value="sauvegardes" className="fade-in">
+          <BackupManager />
         </TabsContent>
 
         {/* Tab: Balance */}
-        <TabsContent value="balance">
+        <TabsContent value="balance" className="fade-in">
           <Card>
             <CardHeader>
               <CardTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
@@ -3487,26 +3042,9 @@ export function Configuracion() {
           </Card>
         </TabsContent>
 
-        {/* Tab: Correction de Texte */}
-        <TabsContent value="correction">
-          <Card>
-            <CardHeader>
-              <CardTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
-                <div className="flex items-center gap-3">
-                  <Sparkles className="w-6 h-6 text-[#1E73BE]" />
-                  Correction de Texte Multilingue
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <TextCorrector />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         {/* Tab: Adresses et Quartiers */}
         {esDesarrollador && (
-          <TabsContent value="adresses">
+          <TabsContent value="adresses" className="fade-in">
             <GestionAdressesQuartiers />
           </TabsContent>
         )}
@@ -4227,195 +3765,6 @@ export function Configuracion() {
               >
                 <Save className="w-4 h-4 mr-2" />
                 {editandoVariante ? 'Actualizar Variante' : 'Crear Variante'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Diálogo de Configuración de Email */}
-      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="email-config-description">
-          <DialogHeader>
-            <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
-              <div className="flex items-center gap-2">
-                <Mail className="w-5 h-5 text-[#1E73BE]" />
-                Configuration du Service de Messagerie
-              </div>
-            </DialogTitle>
-            <DialogDescription id="email-config-description">
-              Configurez votre service de messagerie pour envoyer des emails aux organismes
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-5 py-4">
-            {/* Sélection du fournisseur */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Fournisseur de messagerie *</Label>
-              <Select value={formEmail.provider} onValueChange={(value: 'outlook' | 'gmail' | 'custom') => handleCambiarProvider(value)}>
-                <SelectTrigger className="h-11">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="outlook">
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
-                      Microsoft Outlook / Office 365
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="gmail">
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
-                      Gmail / Google Workspace
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="custom">
-                    <div className="flex items-center gap-2">
-                      <Settings className="w-4 h-4" />
-                      Serveur SMTP Personnalisé
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Email */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Adresse email *</Label>
-              <Input
-                type="email"
-                placeholder={formEmail.provider === 'outlook' ? 'votre-email@outlook.com' : formEmail.provider === 'gmail' ? 'votre-email@gmail.com' : 'votre-email@exemple.com'}
-                value={formEmail.email}
-                onChange={(e) => setFormEmail({ ...formEmail, email: e.target.value })}
-                className="h-11"
-              />
-            </div>
-
-            {/* Contraseña */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">
-                {formEmail.provider === 'outlook' || formEmail.provider === 'gmail' ? 'Mot de passe d\'application *' : 'Mot de passe *'}
-              </Label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••••••"
-                  value={formEmail.password}
-                  onChange={(e) => setFormEmail({ ...formEmail, password: e.target.value })}
-                  className="h-11 pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#666666] hover:text-[#333333]"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {(formEmail.provider === 'outlook' || formEmail.provider === 'gmail') && (
-                <p className="text-xs text-[#666666] mt-1">
-                  ⚠️ Utilisez un mot de passe d'application généré depuis les paramètres de sécurité de votre compte, jamais votre mot de passe principal.
-                </p>
-              )}
-            </div>
-
-            {/* Nom de l'expéditeur */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Nom de l'expéditeur *</Label>
-              <Input
-                type="text"
-                placeholder="Banque Alimentaire"
-                value={formEmail.fromName}
-                onChange={(e) => setFormEmail({ ...formEmail, fromName: e.target.value })}
-                className="h-11"
-              />
-              <p className="text-xs text-[#666666]">
-                Ce nom apparaîtra dans les emails envoyés aux organismes
-              </p>
-            </div>
-
-            {/* Configuration SMTP avancée */}
-            <details className="border-2 border-[#E0E0E0] rounded-lg p-4">
-              <summary className="cursor-pointer font-medium text-[#333333] flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                <Settings className="w-4 h-4" />
-                Configuration SMTP Avancée
-              </summary>
-              <div className="mt-4 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Serveur SMTP *</Label>
-                    <Input
-                      type="text"
-                      value={formEmail.smtpHost}
-                      onChange={(e) => setFormEmail({ ...formEmail, smtpHost: e.target.value })}
-                      className="h-10"
-                      disabled={formEmail.provider !== 'custom'}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Port SMTP *</Label>
-                    <Input
-                      type="number"
-                      value={formEmail.smtpPort}
-                      onChange={(e) => setFormEmail({ ...formEmail, smtpPort: parseInt(e.target.value) || 587 })}
-                      className="h-10"
-                      disabled={formEmail.provider !== 'custom'}
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="useTLS"
-                    checked={formEmail.useTLS}
-                    onChange={(e) => setFormEmail({ ...formEmail, useTLS: e.target.checked })}
-                    className="w-4 h-4"
-                    disabled={formEmail.provider !== 'custom'}
-                  />
-                  <Label htmlFor="useTLS" className="text-sm mb-0 cursor-pointer">
-                    Utiliser TLS/STARTTLS (recommandé)
-                  </Label>
-                </div>
-              </div>
-            </details>
-
-            {/* Advertencia */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <p className="text-xs text-[#856404]">
-                ⚠️ <strong>Important:</strong> Dans un environnement de production, cette configuration serait gérée côté serveur de manière sécurisée. Cette démonstration stocke temporairement les données dans le navigateur.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex justify-between pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={handleProbarConexion}
-              disabled={probandoConexion}
-              className="border-[#4CAF50] text-[#4CAF50] hover:bg-green-50"
-            >
-              {probandoConexion ? (
-                <>
-                  <Clock className="w-4 h-4 mr-2 animate-spin" />
-                  Test en cours...
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4 mr-2" />
-                  Tester la connexion
-                </>
-              )}
-            </Button>
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>
-                Annuler
-              </Button>
-              <Button
-                onClick={handleGuardarConfigEmail}
-                className="bg-[#1E73BE] hover:bg-blue-700"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Enregistrer
               </Button>
             </div>
           </div>

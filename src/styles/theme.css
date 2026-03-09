@@ -271,3 +271,17 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Animación shimmer para el botón PRS */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}

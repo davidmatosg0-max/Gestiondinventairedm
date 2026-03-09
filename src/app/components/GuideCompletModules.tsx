@@ -46,7 +46,12 @@ import {
   Activity,
   Sparkles,
   Smile,
-  Pin
+  Pin,
+  Warehouse,
+  ChefHat,
+  UserPlus,
+  Gift,
+  Tag
 } from 'lucide-react';
 import { Button } from './ui/button';
 
@@ -60,12 +65,17 @@ export function GuideCompletModules({ onClose }: GuideCompletModulesProps) {
   const secciones = [
     { id: 'inicio', titulo: 'Vue d\'ensemble', icono: BookOpen },
     { id: 'dashboard', titulo: 'Tableau de Bord', icono: LayoutDashboard },
+    { id: 'entrepot', titulo: 'Entrepôt (Accordéon)', icono: Warehouse },
     { id: 'inventario', titulo: 'Inventaire', icono: Package },
     { id: 'comandas', titulo: 'Commandes', icono: ClipboardList },
     { id: 'organismos', titulo: 'Organismes', icono: Building2 },
+    { id: 'ofertas', titulo: 'Offres Organismes', icono: Gift },
     { id: 'transporte', titulo: 'Transport', icono: Truck },
     { id: 'reportes', titre: 'Rapports', icono: FileBarChart },
+    { id: 'cuisine', titre: 'Cuisine', icono: ChefHat },
+    { id: 'liaison', titre: 'Liaison', icono: Mail },
     { id: 'usuarios', titre: 'Utilisateurs/Rôles', icono: Users },
+    { id: 'recrutement', titre: 'Recrutement', icono: UserPlus },
     { id: 'comptoir', titre: 'Comptoir', icono: ShoppingCart },
     { id: 'messagerie', titre: 'Messagerie', icono: MessageSquare }
   ];
@@ -1425,6 +1435,404 @@ export function GuideCompletModules({ onClose }: GuideCompletModulesProps) {
                     Utilisez le <strong>bouton flotant orange</strong> en bas à droite pour envoyer rapidement 
                     un message groupe à plusieurs départements, ou le <strong>bouton vert</strong> pour demander 
                     un bénévole au département RH!
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ENTREPÔT (ACCORDÉON) */}
+            {seccionActiva === 'entrepot' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-indigo-600 to-blue-700 text-white rounded-2xl p-8 shadow-xl">
+                  <div className="flex items-start gap-4">
+                    <Warehouse className="w-16 h-16 flex-shrink-0" />
+                    <div>
+                      <h3 className="text-3xl font-bold mb-3">Module Entrepôt (Menu Accordéon)</h3>
+                      <p className="text-blue-50 text-lg">
+                        Hub central regroupant 8 modules essentiels pour la gestion complète de l'entrepôt et des opérations.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-md">
+                  <h4 className="font-bold text-xl mb-4 flex items-center gap-2">
+                    <Package className="w-6 h-6 text-blue-600" />
+                    Modules Intégrés
+                  </h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h5 className="font-bold text-blue-900 mb-2">📦 Inventaire</h5>
+                      <p className="text-sm text-gray-700">
+                        Gestion complète des stocks, produits, catégories, températures de conservation, entrées/sorties et alertes de stock.
+                      </p>
+                    </div>
+
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h5 className="font-bold text-blue-900 mb-2">🏷️ Étiquettes</h5>
+                      <p className="text-sm text-gray-700">
+                        Génération et impression d'étiquettes de produits avec codes-barres, QR codes et dates d'expiration.
+                      </p>
+                    </div>
+
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h5 className="font-bold text-blue-900 mb-2">🛒 Commandes</h5>
+                      <p className="text-sm text-gray-700">
+                        Gestion des commandes pour organismes avec différents états (brouillon, confirmée, préparée, livrée).
+                      </p>
+                    </div>
+
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h5 className="font-bold text-blue-900 mb-2">🏛️ Organismes</h5>
+                      <p className="text-sm text-gray-700">
+                        Administration des organismes bénéficiaires, types, clés d'accès portal, personnes responsables et PRS.
+                      </p>
+                    </div>
+
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h5 className="font-bold text-blue-900 mb-2">🎁 Offres</h5>
+                      <p className="text-sm text-gray-700">
+                        Création et gestion d'offres de dons avec produits, quantités, dates d'expiration et destinataires.
+                      </p>
+                    </div>
+
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h5 className="font-bold text-blue-900 mb-2">🚚 Transport</h5>
+                      <p className="text-sm text-gray-700">
+                        Planification des routes, gestion de la flotte, chauffeurs, suivi GPS et optimisation des livraisons.
+                      </p>
+                    </div>
+
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h5 className="font-bold text-blue-900 mb-2">📊 Rapports</h5>
+                      <p className="text-sm text-gray-700">
+                        Génération de rapports Excel/PDF personnalisés avec analyses statistiques détaillées.
+                      </p>
+                    </div>
+
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h5 className="font-bold text-blue-900 mb-2">📞 Contacts Entrepôt</h5>
+                      <p className="text-sm text-gray-700">
+                        Annuaire de contacts du département, donateurs PRS et fournisseurs partenaires.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-600 rounded-r-xl p-6">
+                  <h4 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
+                    <Lightbulb className="w-5 h-5" />
+                    Navigation Rapide
+                  </h4>
+                  <p className="text-gray-700 text-sm">
+                    Le menu accordéon Entrepôt permet d'accéder rapidement à tous ces modules sans quitter la navigation principale. Cliquez sur "Entrepôt" dans le menu latéral pour déplier toutes les options.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* OFFRES ORGANISMES */}
+            {seccionActiva === 'ofertas' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-pink-600 to-rose-700 text-white rounded-2xl p-8 shadow-xl">
+                  <div className="flex items-start gap-4">
+                    <Gift className="w-16 h-16 flex-shrink-0" />
+                    <div>
+                      <h3 className="text-3xl font-bold mb-3">Module Offres aux Organismes</h3>
+                      <p className="text-rose-50 text-lg">
+                        Créez et gérez des offres de dons de produits destinées aux organismes bénéficiaires.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-md">
+                  <h4 className="font-bold text-xl mb-4 flex items-center gap-2">
+                    <Star className="w-6 h-6 text-pink-600" />
+                    Fonctionnalités Principales
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="bg-pink-50 p-4 rounded-lg border border-pink-200">
+                      <h5 className="font-bold text-pink-900 mb-2">📝 Création d'Offres</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        <li>• Sélection de produits disponibles en inventaire</li>
+                        <li>• Définition des quantités offertes</li>
+                        <li>• Dates de validité et d'expiration</li>
+                        <li>• Choix des organismes destinataires</li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-pink-50 p-4 rounded-lg border border-pink-200">
+                      <h5 className="font-bold text-pink-900 mb-2">✅ Gestion des Demandes</h5>
+                      <ul className="text-sm text-gray-700 space-y-1">
+                        <li>• Acceptation/refus des demandes organismes</li>
+                        <li>• Suivi des quantités demandées vs disponibles</li>
+                        <li>• Notification automatique aux organismes</li>
+                        <li>• Historique complet des transactions</li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-pink-50 p-4 rounded-lg border border-pink-200">
+                      <h5 className="font-bold text-pink-900 mb-2">🔄 États des Offres</h5>
+                      <p className="text-sm text-gray-700">
+                        Les offres passent par différents états: <strong>Active</strong> (visible aux organismes), <strong>En attente</strong> (demandes reçues), <strong>Acceptée</strong> (confirmée pour livraison), <strong>Expirée</strong> (date dépassée).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-green-50 border-l-4 border-green-600 rounded-r-xl p-6">
+                  <h4 className="font-bold text-green-900 mb-3 flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5" />
+                    Connexion avec le Portal Organismes
+                  </h4>
+                  <p className="text-gray-700 text-sm">
+                    Les offres créées ici sont automatiquement visibles dans le <strong>Portal Public des Organismes</strong>. Les organismes peuvent consulter, demander et réserver les produits directement depuis leur interface.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* CUISINE */}
+            {seccionActiva === 'cuisine' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-orange-600 to-amber-700 text-white rounded-2xl p-8 shadow-xl">
+                  <div className="flex items-start gap-4">
+                    <ChefHat className="w-16 h-16 flex-shrink-0" />
+                    <div>
+                      <h3 className="text-3xl font-bold mb-3">Module Cuisine</h3>
+                      <p className="text-orange-50 text-lg">
+                        Gestion complète de la cuisine avec recettes, transformations, production et inventaire spécifique.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-md">
+                  <h4 className="font-bold text-xl mb-4 flex items-center gap-2">
+                    <ChefHat className="w-6 h-6 text-orange-600" />
+                    Sous-modules Cuisine
+                  </h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                      <h5 className="font-bold text-orange-900 mb-2">📖 Recettes</h5>
+                      <p className="text-sm text-gray-700">
+                        Création de recettes avec ingrédients, portions, temps de préparation, instructions et catégories (entrée, plat, dessert).
+                      </p>
+                    </div>
+
+                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                      <h5 className="font-bold text-orange-900 mb-2">🔄 Transformations</h5>
+                      <p className="text-sm text-gray-700">
+                        Conversion de produits frais en repas préparés avec suivi des états (planifiée, en cours, complétée).
+                      </p>
+                    </div>
+
+                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                      <h5 className="font-bold text-orange-900 mb-2">🍽️ Production</h5>
+                      <p className="text-sm text-gray-700">
+                        Planification de la production journalière, suivi des préparations et génération d'étiquettes de repas.
+                      </p>
+                    </div>
+
+                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                      <h5 className="font-bold text-orange-900 mb-2">📦 Inventaire Cuisine</h5>
+                      <p className="text-sm text-gray-700">
+                        Stock spécifique de la cuisine séparé de l'entrepôt principal pour une gestion indépendante.
+                      </p>
+                    </div>
+
+                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                      <h5 className="font-bold text-orange-900 mb-2">🎁 Offres Disponibles</h5>
+                      <p className="text-sm text-gray-700">
+                        Consultation des offres de l'entrepôt et demande de transferts de produits vers la cuisine.
+                      </p>
+                    </div>
+
+                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                      <h5 className="font-bold text-orange-900 mb-2">👥 Contacts Cuisine</h5>
+                      <p className="text-sm text-gray-700">
+                        Équipe cuisine, chefs, aide-cuisiniers avec horaires et disponibilités.
+                      </p>
+                    </div>
+
+                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                      <h5 className="font-bold text-orange-900 mb-2">📊 Statistiques</h5>
+                      <p className="text-sm text-gray-700">
+                        Repas produits, pertes, rendement des transformations, coûts et analyses de performance.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-amber-50 border-l-4 border-amber-600 rounded-r-xl p-6">
+                  <h4 className="font-bold text-amber-900 mb-3 flex items-center gap-2">
+                    <Award className="w-5 h-5" />
+                    Traçabilité Complète
+                  </h4>
+                  <p className="text-gray-700 text-sm mb-2">
+                    Le module Cuisine assure une traçabilité complète depuis l'arrivée des produits frais jusqu'à la distribution des repas préparés:
+                  </p>
+                  <ul className="text-sm text-gray-700 space-y-1">
+                    <li>• Origine des ingrédients (entrepôt ou donateurs PRS)</li>
+                    <li>• Date de transformation et lot de production</li>
+                    <li>• Température de conservation et dates limites</li>
+                    <li>• Étiquetage automatique conforme aux normes</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* LIAISON */}
+            {seccionActiva === 'liaison' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-purple-600 to-pink-700 text-white rounded-2xl p-8 shadow-xl">
+                  <div className="flex items-start gap-4">
+                    <Mail className="w-16 h-16 flex-shrink-0" />
+                    <div>
+                      <h3 className="text-3xl font-bold mb-3">Module Liaison</h3>
+                      <p className="text-purple-50 text-lg">
+                        Communication externe avec les organismes bénéficiaires par emails professionnels.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-md">
+                  <h4 className="font-bold text-xl mb-4 flex items-center gap-2">
+                    <Mail className="w-6 h-6 text-purple-600" />
+                    Fonctionnalités Principales
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                      <h5 className="font-bold text-purple-900 mb-2">📧 Emails Massifs</h5>
+                      <p className="text-sm text-gray-700">
+                        Envoyez des emails à tous les organismes ou à une sélection spécifique (par type, région, statut PRS, etc.).
+                      </p>
+                    </div>
+
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                      <h5 className="font-bold text-purple-900 mb-2">📝 Templates Personnalisés</h5>
+                      <p className="text-sm text-gray-700">
+                        Créez et sauvegardez des templates d'emails réutilisables pour les communications fréquentes (nouvelles offres, rappels, actualités).
+                      </p>
+                    </div>
+
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                      <h5 className="font-bold text-purple-900 mb-2">🔔 Notifications Automatiques</h5>
+                      <p className="text-sm text-gray-700">
+                        Configurez l'envoi automatique d'emails lors de certains événements (nouvelle offre disponible, commande prête, etc.).
+                      </p>
+                    </div>
+
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                      <h5 className="font-bold text-purple-900 mb-2">📜 Historique Communications</h5>
+                      <p className="text-sm text-gray-700">
+                        Consultez l'historique complet de tous les emails envoyés avec dates, destinataires et contenus.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-pink-50 border-l-4 border-pink-600 rounded-r-xl p-6">
+                  <h4 className="font-bold text-pink-900 mb-3 flex items-center gap-2">
+                    <Lightbulb className="w-5 h-5" />
+                    Bonnes Pratiques
+                  </h4>
+                  <ul className="text-sm text-gray-700 space-y-2">
+                    <li className="flex gap-2">
+                      <CheckCircle className="w-4 h-4 text-pink-600 mt-0.5" />
+                      Utilisez des objets clairs et descriptifs
+                    </li>
+                    <li className="flex gap-2">
+                      <CheckCircle className="w-4 h-4 text-pink-600 mt-0.5" />
+                      Personnalisez avec le nom de l'organisme
+                    </li>
+                    <li className="flex gap-2">
+                      <CheckCircle className="w-4 h-4 text-pink-600 mt-0.5" />
+                      Incluez toujours des informations de contact
+                    </li>
+                    <li className="flex gap-2">
+                      <CheckCircle className="w-4 h-4 text-pink-600 mt-0.5" />
+                      Respectez la langue préférée de chaque organisme
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* RECRUTEMENT */}
+            {seccionActiva === 'recrutement' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-2xl p-8 shadow-xl">
+                  <div className="flex items-start gap-4">
+                    <UserPlus className="w-16 h-16 flex-shrink-0" />
+                    <div>
+                      <h3 className="text-3xl font-bold mb-3">Module Recrutement & Bénévoles</h3>
+                      <p className="text-green-50 text-lg">
+                        Gestion complète des volontaires: recrutement, horaires, compétences, formations et certifications.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-md">
+                  <h4 className="font-bold text-xl mb-4 flex items-center gap-2">
+                    <Users className="w-6 h-6 text-green-600" />
+                    Fonctionnalités Principales
+                  </h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                      <h5 className="font-bold text-green-900 mb-2">👤 Profils Bénévoles</h5>
+                      <p className="text-sm text-gray-700">
+                        Informations complètes: coordonnées, compétences, langues parlées, expérience et disponibilités.
+                      </p>
+                    </div>
+
+                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                      <h5 className="font-bold text-green-900 mb-2">📅 Gestion Horaires</h5>
+                      <p className="text-sm text-gray-700">
+                        Planification des shifts, disponibilités hebdomadaires, absences et remplacements.
+                      </p>
+                    </div>
+
+                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                      <h5 className="font-bold text-green-900 mb-2">🎓 Formations</h5>
+                      <p className="text-sm text-gray-700">
+                        Suivi des formations obligatoires (hygiène, sécurité) avec dates et certifications.
+                      </p>
+                    </div>
+
+                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                      <h5 className="font-bold text-green-900 mb-2">⭐ Évaluations</h5>
+                      <p className="text-sm text-gray-700">
+                        Historique de participation, ponctualité, et notes de performance.
+                      </p>
+                    </div>
+
+                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                      <h5 className="font-bold text-green-900 mb-2">📢 Recrutement</h5>
+                      <p className="text-sm text-gray-700">
+                        Campagnes de recrutement, candidatures en ligne et processus d'intégration.
+                      </p>
+                    </div>
+
+                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                      <h5 className="font-bold text-green-900 mb-2">📊 Statistiques</h5>
+                      <p className="text-sm text-gray-700">
+                        Heures travaillées, taux de rétention, bénévoles actifs par département.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-emerald-50 border-l-4 border-emerald-600 rounded-r-xl p-6">
+                  <h4 className="font-bold text-emerald-900 mb-3 flex items-center gap-2">
+                    <Star className="w-5 h-5" />
+                    Reconnaissance & Motivation
+                  </h4>
+                  <p className="text-gray-700 text-sm">
+                    Le système permet de reconnaître les bénévoles les plus engagés avec des badges d'ancienneté, certificats de reconnaissance et statistiques de contribution. Cela aide à maintenir la motivation et la fidélité des volontaires.
                   </p>
                 </div>
               </div>

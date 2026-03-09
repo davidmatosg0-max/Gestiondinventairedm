@@ -5,7 +5,7 @@
 // - Badge "✓ PRS" en el título del organismo cuando participa en PRS
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LogOut, Phone, Mail, MapPin, Users, Calendar, Package, History, TrendingUp, Award, CheckCircle, Eye, X, Printer, Edit2, Save, Plus, Thermometer, Download, FileText, FileSpreadsheet, Tag, ShoppingCart, Clock, AlertCircle, Minus, Trash2, Star, UserPlus, MessageSquare, Languages } from 'lucide-react';
+import { LogOut, Phone, Mail, MapPin, Users, Calendar, Package, History, TrendingUp, Award, CheckCircle, Eye, X, Printer, Edit2, Save, Plus, Thermometer, Download, FileText, FileSpreadsheet, Tag, ShoppingCart, Clock, AlertCircle, Minus, Trash2, Star, UserPlus, MessageSquare, Languages, ChefHat } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -38,6 +38,9 @@ import {
   type PersonaResponsable,
   type IdiomaPersona 
 } from '../../utils/personasResponsablesStorage';
+import { obtenerProductosActivos, type ProductoCreado } from '../../utils/productStorage';
+import { guardarEntrada } from '../../utils/entradaInventarioStorage';
+import { obtenerContactosDepartamento, type ContactoDepartamento } from '../../utils/contactosDepartamentoStorage';
 
 interface VistaPublicaOrganismoProps {
   organismo: any;
@@ -188,6 +191,45 @@ export function VistaPublicaOrganismo({ organismo, onCerrarSesion }: VistaPublic
     joursDisponibles: [] as JourDisponible[],
     idiomas: [] as IdiomaPersona[]
   });
+
+  // Estados para formulario de Nueva Entrada (PRS)
+  const [dialogNuevaEntradaOpen, setDialogNuevaEntradaOpen] = useState(false);
+  const [productosPRS, setProductosPRS] = useState<ProductoCreado[]>([]);
+  const [donadoresPRS, setDonadoresPRS] = useState<ContactoDepartamento[]>([]);
+  const [formEntrada, setFormEntrada] = useState({
+    donadorId: '',
+    productoId: '',
+    cantidad: '',
+    temperatura: '' as 'ambiente' | 'refrigerado' | 'congelado' | '',
+    observaciones: ''
+  });
+
+  // Estados para botón de guía flotante
+  const [guiaVisible, setGuiaVisible] = useState(false);
+  const [guiaPosicion, setGuiaPosicion] = useState({ x: window.innerWidth - 100, y: window.innerHeight - 100 });
+  const [arrastrando, setArrastrando] = useState(false);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+
+  // Cargar datos para el formulario de Nueva Entrada
+  useEffect(() => {
+    if (dialogNuevaEntradaOpen) {
+      // Cargar productos PRS
+      const productos = obtenerProductosActivos().filter(p => p.esPRS);
+      setProductosPRS(productos);
+      
+      // Cargar donadores PRS
+      const contactosAlmacen = obtenerContactosDepartamento('2'); // Departamento Entrepôt
+      const donadores = contactosAlmacen.filter(c => 
+        c.tipo === 'donador' && 
+        c.activo && 
+        c.participaPRS === true
+      );
+      setDonadoresPRS(donadores);
+      
+      console.log('📦 Productos PRS cargados:', productos.length);
+      console.log('👥 Donadores PRS cargados:', donadores.length);
+    }
+  }, [dialogNuevaEntradaOpen]);
 
   // Cargar personas responsables
   useEffect(() => {
@@ -474,6 +516,93 @@ export function VistaPublicaOrganismo({ organismo, onCerrarSesion }: VistaPublic
   };
 
   // Funciones para reportes
+  // Función para manejar el guardado de nueva entrada PRS
+  const handleGuardarEntrada = () => {
+    // Validaciones
+    if (!formEntrada.donadorId) {
+      toast.error('Donador requerido', { description: 'Por favor seleccione un donador.' });
+      return;
+    }
+    if (!formEntrada.productoId) {
+      toast.error('Producto requerido', { description: 'Por favor seleccione un producto.' });
+      return;
+    }
+    if (!formEntrada.cantidad || parseFloat(formEntrada.cantidad) <= 0) {
+      toast.error('Cantidad inválida', { description: 'Por favor ingrese una cantidad válida.' });
+      return;
+    }
+    if (!formEntrada.temperatura) {
+      toast.error('Température requise', { description: 'Por favor seleccione la temperatura de almacenamiento.' });
+      return;
+    }
+
+    // Obtener producto y donador seleccionados
+    const producto = productosPRS.find(p => p.id === formEntrada.productoId);
+    const donador = donadoresPRS.find(d => d.id === formEntrada.donadorId);
+
+    if (!producto || !donador) {
+      toast.error('Error', { description: 'Producto o donador no encontrado.' });
+      return;
+    }
+
+    const cantidad = parseFloat(formEntrada.cantidad);
+    const pesoTotal = cantidad * (producto.pesoUnitario || producto.peso || 0);
+
+    // Crear entrada
+    const entrada = {
+      fecha: new Date().toISOString(),
+      programaNombre: 'Programme de Ramassage de Surplus',
+      programaCodigo: 'prs',
+      programaColor: branding.secondaryColor,
+      programaIcono: '🚚',
+      donadorId: formEntrada.donadorId,
+      donadorNombre: `${donador.nombre} ${donador.apellido}`,
+      donadorEsCustom: false,
+      participantePRSId: formEntrada.donadorId,
+      participantePRSNombre: `${donador.nombre} ${donador.apellido}`,
+      productoId: producto.id,
+      nombreProducto: producto.nombre,
+      categoria: producto.categoria,
+      subcategoria: producto.subcategoria,
+      productoIcono: producto.icono,
+      cantidad: cantidad,
+      unidad: producto.unidad,
+      pesoUnidad: producto.pesoUnitario || producto.peso || 0,
+      pesoTotal: pesoTotal,
+      temperatura: formEntrada.temperatura as 'ambiente' | 'refrigerado' | 'congelado',
+      observaciones: `Entrada registrada por organismo ${organismo.nombre}. ${formEntrada.observaciones || ''}`.trim(),
+      registradoPor: organismo.nombre,
+      organismoId: organismo.id
+    };
+
+    try {
+      const exito = guardarEntrada(entrada as any);
+      
+      if (exito) {
+        toast.success('✅ Entrada registrada correctamente', {
+          description: `${cantidad} ${producto.unidad} de ${producto.nombre} - ${pesoTotal.toFixed(2)} kg`,
+          duration: 5000
+        });
+        
+        // Limpiar formulario
+        setFormEntrada({
+          donadorId: '',
+          productoId: '',
+          cantidad: '',
+          temperatura: '',
+          observaciones: ''
+        });
+        
+        setDialogNuevaEntradaOpen(false);
+      } else {
+        toast.error('Error al guardar la entrada');
+      }
+    } catch (error) {
+      console.error('Error al guardar entrada:', error);
+      toast.error('Error al guardar la entrada');
+    }
+  };
+
   const handleGenerarPDF = () => {
     if (!fechaInicio || !fechaFin) {
       toast.error(t('organismPortal.selectBothDates'), {
@@ -537,6 +666,39 @@ export function VistaPublicaOrganismo({ organismo, onCerrarSesion }: VistaPublic
       duration: 4000
     });
   };
+
+  // Funciones para manejar el arrastre del botón de guía
+  const handleMouseDownGuia = (e: React.MouseEvent) => {
+    setArrastrando(true);
+    setOffset({
+      x: e.clientX - guiaPosicion.x,
+      y: e.clientY - guiaPosicion.y
+    });
+  };
+
+  const handleMouseMoveGuia = (e: MouseEvent) => {
+    if (arrastrando) {
+      const nuevaX = Math.max(0, Math.min(window.innerWidth - 80, e.clientX - offset.x));
+      const nuevaY = Math.max(0, Math.min(window.innerHeight - 80, e.clientY - offset.y));
+      setGuiaPosicion({ x: nuevaX, y: nuevaY });
+    }
+  };
+
+  const handleMouseUpGuia = () => {
+    setArrastrando(false);
+  };
+
+  // Efecto para manejar eventos de arrastre
+  useEffect(() => {
+    if (arrastrando) {
+      window.addEventListener('mousemove', handleMouseMoveGuia);
+      window.addEventListener('mouseup', handleMouseUpGuia);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMoveGuia);
+      window.removeEventListener('mouseup', handleMouseUpGuia);
+    };
+  }, [arrastrando, offset]);
 
   return (
     <>
@@ -612,24 +774,36 @@ export function VistaPublicaOrganismo({ organismo, onCerrarSesion }: VistaPublic
             <div className="flex items-center gap-3">
               <LanguageSelector />
               {organismo.participaPRS && (
-                <Button
-                  onClick={() => {
-                    toast.info('🚀 Funcionalidad en desarrollo', { 
-                      description: 'El formulario de Nueva Entrada para organismos PRS estará disponible próximamente. Podrás registrar entradas de inventario directamente desde tu portal.',
-                      duration: 5000
-                    });
-                  }}
-                  variant="outline"
-                  className="bg-white/95 hover:bg-white border-0 transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                  style={{ 
-                    color: branding.secondaryColor,
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontWeight: 500
-                  }}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nueva Entrada
-                </Button>
+                <div className="relative">
+                  {/* Efecto de pulso en el fondo */}
+                  <div 
+                    className="absolute inset-0 rounded-lg animate-pulse opacity-30 blur-md"
+                    style={{ backgroundColor: branding.primaryColor }}
+                  />
+                  <Button
+                    onClick={() => setDialogNuevaEntradaOpen(true)}
+                    className="relative text-white border-2 border-white/40 shadow-xl transition-all duration-300 hover:scale-110 hover:shadow-2xl animate-pulse h-12 px-6"
+                    style={{ 
+                      background: `linear-gradient(135deg, ${branding.primaryColor} 0%, ${branding.primaryColor}dd 100%)`,
+                      fontFamily: 'Montserrat, sans-serif',
+                      fontWeight: 700,
+                      fontSize: '1rem'
+                    }}
+                  >
+                    {/* Efecto de brillo */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer rounded-lg" />
+                    <Plus className="w-5 h-5 mr-2 relative z-10" />
+                    <span className="relative z-10">Nouvelle Entrée PRS</span>
+                    <div 
+                      className="absolute -top-1 -right-1 w-3 h-3 rounded-full animate-ping"
+                      style={{ backgroundColor: branding.secondaryColor }}
+                    />
+                    <div 
+                      className="absolute -top-1 -right-1 w-3 h-3 rounded-full"
+                      style={{ backgroundColor: branding.secondaryColor }}
+                    />
+                  </Button>
+                </div>
               )}
               <Button
                 onClick={() => setMostrarDemandes(true)}
@@ -2454,6 +2628,748 @@ export function VistaPublicaOrganismo({ organismo, onCerrarSesion }: VistaPublic
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog: Nueva Entrada PRS */}
+      <Dialog open={dialogNuevaEntradaOpen} onOpenChange={setDialogNuevaEntradaOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto backdrop-blur-xl bg-white/95 border-0 shadow-2xl" aria-describedby="nueva-entrada-description">
+          {/* Header con degradado */}
+          <div 
+            className="absolute top-0 left-0 right-0 h-32 -z-10 rounded-t-xl"
+            style={{
+              background: `linear-gradient(135deg, ${branding.secondaryColor}20 0%, ${branding.primaryColor}15 100%)`
+            }}
+          />
+          
+          <DialogHeader className="relative">
+            <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, fontSize: '1.5rem' }}>
+              <div className="flex items-center gap-3">
+                <div 
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-lg relative overflow-hidden"
+                  style={{ 
+                    background: `linear-gradient(135deg, ${branding.secondaryColor} 0%, ${branding.secondaryColor}dd 100%)`
+                  }}
+                >
+                  {/* Efecto de brillo */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent" />
+                  <Plus className="w-7 h-7 relative z-10" />
+                </div>
+                <div>
+                  <p style={{ color: branding.primaryColor }}>Nouvelle Entrée PRS</p>
+                  <p className="text-sm font-normal text-[#666666] mt-1">
+                    Programme de Ramassage de Surplus
+                  </p>
+                </div>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-5 py-4">
+            {/* Badge organismo PRS con diseño mejorado */}
+            <div 
+              className="p-4 rounded-xl border-2 backdrop-blur-sm relative overflow-hidden"
+              style={{ 
+                background: `linear-gradient(135deg, ${branding.secondaryColor}10 0%, ${branding.secondaryColor}05 100%)`,
+                borderColor: `${branding.secondaryColor}30`
+              }}
+            >
+              {/* Patrón de fondo sutil */}
+              <div className="absolute inset-0 opacity-5" style={{
+                backgroundImage: `radial-gradient(circle, ${branding.secondaryColor} 1px, transparent 1px)`,
+                backgroundSize: '20px 20px'
+              }} />
+              
+              <div className="flex items-center gap-3 relative z-10">
+                <div 
+                  className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-md"
+                  style={{ backgroundColor: branding.secondaryColor }}
+                >
+                  <span className="text-2xl">✓</span>
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-[#333333]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    {organismo.nombre}
+                  </p>
+                  <p className="text-sm text-[#666666]">
+                    Participant actif au Programme PRS
+                  </p>
+                </div>
+                <Badge 
+                  className="text-white text-xs px-3 py-1"
+                  style={{ 
+                    backgroundColor: branding.secondaryColor,
+                    fontFamily: 'Montserrat, sans-serif'
+                  }}
+                >
+                  PRS ACTIF
+                </Badge>
+              </div>
+            </div>
+
+            {/* Grid de campos principales */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Donador PRS */}
+              <div className="space-y-2.5">
+                <Label htmlFor="donador" className="flex items-center gap-2 font-medium text-[#333333]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <div 
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: `${branding.secondaryColor}15` }}
+                  >
+                    <Users className="w-4 h-4" style={{ color: branding.secondaryColor }} />
+                  </div>
+                  Donateur PRS <span className="text-red-500 ml-1">*</span>
+                </Label>
+                <Select
+                  value={formEntrada.donadorId}
+                  onValueChange={(value) => setFormEntrada({ ...formEntrada, donadorId: value })}
+                >
+                  <SelectTrigger className="border-2 h-12 bg-white hover:border-opacity-60 transition-all" style={{ borderColor: `${branding.secondaryColor}30` }}>
+                    <SelectValue placeholder="Sélectionner un donateur..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {donadoresPRS.length > 0 ? (
+                      donadoresPRS.map((donador) => (
+                        <SelectItem key={donador.id} value={donador.id}>
+                          <div className="flex items-center gap-2 py-1">
+                            <div 
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+                              style={{ backgroundColor: branding.secondaryColor }}
+                            >
+                              {donador.nombre.charAt(0)}{donador.apellido.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="font-medium">{donador.nombre} {donador.apellido}</p>
+                              {donador.nombreEmpresa && (
+                                <p className="text-xs text-gray-500">{donador.nombreEmpresa}</p>
+                              )}
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-gray-500 text-sm">
+                        <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                        Aucun donateur PRS disponible
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+                {donadoresPRS.length === 0 && (
+                  <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg">
+                    <AlertCircle className="w-4 h-4 text-orange-500 flex-shrink-0" />
+                    <p className="text-xs text-orange-700">
+                      Aucun donateur PRS configuré
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Producto PRS */}
+              <div className="space-y-2.5">
+                <Label htmlFor="producto" className="flex items-center gap-2 font-medium text-[#333333]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <div 
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: `${branding.secondaryColor}15` }}
+                  >
+                    <Package className="w-4 h-4" style={{ color: branding.secondaryColor }} />
+                  </div>
+                  Produit PRS <span className="text-red-500 ml-1">*</span>
+                </Label>
+                <Select
+                  value={formEntrada.productoId}
+                  onValueChange={(value) => setFormEntrada({ ...formEntrada, productoId: value })}
+                >
+                  <SelectTrigger className="border-2 h-12 bg-white hover:border-opacity-60 transition-all" style={{ borderColor: `${branding.secondaryColor}30` }}>
+                    <SelectValue placeholder="Sélectionner un produit..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {productosPRS.length > 0 ? (
+                      productosPRS.map((producto) => (
+                        <SelectItem key={producto.id} value={producto.id}>
+                          <div className="flex items-center gap-3 py-1">
+                            <span className="text-2xl">{producto.icono}</span>
+                            <div>
+                              <p className="font-medium">{producto.nombre}</p>
+                              <p className="text-xs text-gray-500">
+                                {producto.categoria} • {producto.unidad}
+                                {producto.pesoUnitario && ` • ${producto.pesoUnitario.toFixed(3)} kg`}
+                              </p>
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-gray-500 text-sm">
+                        <Package className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                        Aucun produit PRS disponible
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+                {productosPRS.length === 0 && (
+                  <div className="flex items-center gap-2 p-2 bg-orange-50 rounded-lg">
+                    <AlertCircle className="w-4 h-4 text-orange-500 flex-shrink-0" />
+                    <p className="text-xs text-orange-700">
+                      Aucun produit PRS configuré
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Información del producto seleccionado - Diseño mejorado */}
+            {formEntrada.productoId && productosPRS.find(p => p.id === formEntrada.productoId) && (
+              <div 
+                className="p-4 rounded-xl border-2 backdrop-blur-sm relative overflow-hidden"
+                style={{ 
+                  background: `linear-gradient(135deg, ${branding.primaryColor}08 0%, ${branding.primaryColor}03 100%)`,
+                  borderColor: `${branding.primaryColor}20`
+                }}
+              >
+                <div className="flex items-center gap-4 relative z-10">
+                  <div 
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl bg-white shadow-md"
+                    style={{ borderColor: `${branding.primaryColor}30`, borderWidth: 2 }}
+                  >
+                    {productosPRS.find(p => p.id === formEntrada.productoId)?.icono}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-lg" style={{ color: branding.primaryColor, fontFamily: 'Montserrat, sans-serif' }}>
+                      {productosPRS.find(p => p.id === formEntrada.productoId)?.nombre}
+                    </p>
+                    <p className="text-sm text-[#666666] flex items-center gap-2 mt-1">
+                      <Tag className="w-3 h-3" />
+                      {productosPRS.find(p => p.id === formEntrada.productoId)?.categoria} › {productosPRS.find(p => p.id === formEntrada.productoId)?.subcategoria}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Grid de Cantidad y Temperatura */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Cantidad */}
+              <div className="space-y-2.5">
+                <Label htmlFor="cantidad" className="flex items-center gap-2 font-medium text-[#333333]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <div 
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: `${branding.secondaryColor}15` }}
+                  >
+                    <ShoppingCart className="w-4 h-4" style={{ color: branding.secondaryColor }} />
+                  </div>
+                  Quantité <span className="text-red-500 ml-1">*</span>
+                </Label>
+                <Input
+                  id="cantidad"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formEntrada.cantidad}
+                  onChange={(e) => setFormEntrada({ ...formEntrada, cantidad: e.target.value })}
+                  placeholder="Ex: 100"
+                  className="border-2 h-12 bg-white text-lg transition-all"
+                  style={{ borderColor: `${branding.secondaryColor}30` }}
+                />
+                {formEntrada.productoId && formEntrada.cantidad && parseFloat(formEntrada.cantidad) > 0 && (
+                  <div 
+                    className="flex items-center gap-2 p-3 rounded-lg"
+                    style={{ backgroundColor: `${branding.secondaryColor}10` }}
+                  >
+                    <div 
+                      className="w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: branding.secondaryColor }}
+                    >
+                      <span className="text-white text-lg">✓</span>
+                    </div>
+                    <div>
+                      <p className="text-xs text-[#666666]">Poids total estimé</p>
+                      <p className="font-bold text-sm" style={{ color: branding.secondaryColor }}>
+                        {(parseFloat(formEntrada.cantidad) * (productosPRS.find(p => p.id === formEntrada.productoId)?.pesoUnitario || productosPRS.find(p => p.id === formEntrada.productoId)?.peso || 0)).toFixed(2)} kg
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Temperatura */}
+              <div className="space-y-2.5">
+                <Label htmlFor="temperatura" className="flex items-center gap-2 font-medium text-[#333333]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <div 
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: `${branding.secondaryColor}15` }}
+                  >
+                    <Thermometer className="w-4 h-4" style={{ color: branding.secondaryColor }} />
+                  </div>
+                  Température <span className="text-red-500 ml-1">*</span>
+                </Label>
+                <Select
+                  value={formEntrada.temperatura}
+                  onValueChange={(value) => setFormEntrada({ ...formEntrada, temperatura: value as 'ambiente' | 'refrigerado' | 'congelado' })}
+                >
+                  <SelectTrigger className="border-2 h-12 bg-white hover:border-opacity-60 transition-all" style={{ borderColor: `${branding.secondaryColor}30` }}>
+                    <SelectValue placeholder="Sélectionner la température..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ambiente">
+                      <div className="flex items-center gap-3 py-1">
+                        <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                          <span className="text-2xl">🌡️</span>
+                        </div>
+                        <div>
+                          <p className="font-medium">Ambiante</p>
+                          <p className="text-xs text-gray-500">Température ambiante</p>
+                        </div>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="refrigerado">
+                      <div className="flex items-center gap-3 py-1">
+                        <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                          <span className="text-2xl">❄️</span>
+                        </div>
+                        <div>
+                          <p className="font-medium">Réfrigéré</p>
+                          <p className="text-xs text-gray-500">0°C à 5°C</p>
+                        </div>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="congelado">
+                      <div className="flex items-center gap-3 py-1">
+                        <div className="w-10 h-10 rounded-lg bg-cyan-100 flex items-center justify-center">
+                          <span className="text-2xl">🧊</span>
+                        </div>
+                        <div>
+                          <p className="font-medium">Congelé</p>
+                          <p className="text-xs text-gray-500">-18°C ou moins</p>
+                        </div>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Observaciones */}
+            <div className="space-y-2.5">
+              <Label htmlFor="observaciones" className="flex items-center gap-2 font-medium text-[#333333]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                <div 
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: `${branding.secondaryColor}15` }}
+                >
+                  <MessageSquare className="w-4 h-4" style={{ color: branding.secondaryColor }} />
+                </div>
+                Observations
+                <span className="text-xs text-[#999999] font-normal">(optionnel)</span>
+              </Label>
+              <Textarea
+                id="observaciones"
+                value={formEntrada.observaciones}
+                onChange={(e) => setFormEntrada({ ...formEntrada, observaciones: e.target.value })}
+                placeholder="Notes additionnelles sur cette entrée..."
+                rows={4}
+                className="border-2 bg-white resize-none transition-all"
+                style={{ borderColor: `${branding.secondaryColor}30` }}
+              />
+            </div>
+
+            {/* Mensaje informativo con diseño mejorado */}
+            <div 
+              className="p-4 rounded-xl border-2 backdrop-blur-sm"
+              style={{ 
+                background: 'linear-gradient(135deg, #e8a41910 0%, #e8a41905 100%)',
+                borderColor: '#e8a41930'
+              }}
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="w-5 h-5 text-yellow-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-[#333333] mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    Information importante
+                  </p>
+                  <p className="text-sm text-[#666666] leading-relaxed">
+                    Cette entrée sera enregistrée dans le système d'inventaire et sera visible pour les administrateurs. Assurez-vous que toutes les informations sont correctes avant de soumettre.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Botones con diseño mejorado */}
+          <div className="flex justify-end gap-3 pt-6 border-t-2" style={{ borderColor: '#e0e0e0' }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDialogNuevaEntradaOpen(false);
+                setFormEntrada({
+                  donadorId: '',
+                  productoId: '',
+                  cantidad: '',
+                  temperatura: '',
+                  observaciones: ''
+                });
+              }}
+              className="h-11 px-6 hover:shadow-md transition-all duration-300 hover:scale-105"
+              style={{ 
+                fontFamily: 'Montserrat, sans-serif',
+                fontWeight: 500
+              }}
+            >
+              <X className="w-4 h-4 mr-2" />
+              Annuler
+            </Button>
+            <Button
+              onClick={handleGuardarEntrada}
+              className="h-11 px-6 text-white hover:shadow-lg transition-all duration-300 hover:scale-105"
+              style={{ 
+                background: `linear-gradient(135deg, ${branding.secondaryColor} 0%, ${branding.secondaryColor}dd 100%)`,
+                fontFamily: 'Montserrat, sans-serif',
+                fontWeight: 600,
+                opacity: (!formEntrada.donadorId || !formEntrada.productoId || !formEntrada.cantidad || parseFloat(formEntrada.cantidad) <= 0 || !formEntrada.temperatura) ? 0.5 : 1
+              }}
+              disabled={!formEntrada.donadorId || !formEntrada.productoId || !formEntrada.cantidad || parseFloat(formEntrada.cantidad) <= 0 || !formEntrada.temperatura}
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Enregistrer l'entrée
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Botón de Guía Flotante y Movible */}
+      {!mostrarDemandes && (
+        <>
+          {/* Botón Flotante */}
+          <div
+            onMouseDown={handleMouseDownGuia}
+            style={{
+              position: 'fixed',
+              left: `${guiaPosicion.x}px`,
+              top: `${guiaPosicion.y}px`,
+              cursor: arrastrando ? 'grabbing' : 'grab',
+              zIndex: 9999,
+              userSelect: 'none'
+            }}
+          >
+            <div className="relative">
+              {/* Halo pulsante */}
+              <div 
+                className="absolute inset-0 rounded-full animate-pulse opacity-20 blur-lg"
+                style={{ backgroundColor: branding.secondaryColor }}
+              />
+              {/* Botón principal */}
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setGuiaVisible(!guiaVisible);
+                }}
+                className="relative w-16 h-16 rounded-full shadow-2xl border-2 border-white/40 hover:scale-110 transition-all duration-300"
+                style={{
+                  background: `linear-gradient(135deg, ${branding.secondaryColor} 0%, ${branding.secondaryColor}dd 100%)`,
+                  pointerEvents: 'auto'
+                }}
+              >
+                <MessageSquare className="w-7 h-7 text-white relative z-10" />
+                {/* Indicador de pulso */}
+                <div 
+                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full animate-ping"
+                  style={{ backgroundColor: '#fff' }}
+                />
+                <div 
+                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full"
+                  style={{ backgroundColor: '#fff' }}
+                />
+              </Button>
+            </div>
+          </div>
+
+          {/* Panel de Guía */}
+          {guiaVisible && (
+            <div
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9998]"
+              onClick={() => setGuiaVisible(false)}
+            >
+              <div
+                className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-white/40 max-w-2xl w-full mx-4 overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header del panel */}
+                <div
+                  className="p-6 text-white relative overflow-hidden"
+                  style={{
+                    background: `linear-gradient(135deg, ${branding.primaryColor} 0%, ${branding.secondaryColor} 100%)`
+                  }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent" />
+                  <div className="relative z-10 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-lg flex items-center justify-center">
+                        <MessageSquare className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-bold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                          Guide du Portal
+                        </h2>
+                        <p className="text-sm text-white/80">Bienvenue dans votre espace organisme</p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => setGuiaVisible(false)}
+                      variant="ghost"
+                      className="text-white hover:bg-white/20 h-10 w-10 p-0 rounded-full"
+                    >
+                      <X className="w-5 h-5" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Contenido del panel */}
+                <div className="p-6 max-h-[70vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                  <div className="space-y-5">
+                    {/* Banner de bienvenida */}
+                    <div className="p-4 rounded-xl border-2 bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50" style={{ borderColor: branding.primaryColor }}>
+                      <h4 className="font-bold text-base mb-2" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
+                        🎯 Guide du Portal Organismes
+                      </h4>
+                      <p className="text-xs text-gray-600">
+                        Découvrez toutes les fonctionnalités disponibles dans votre portail
+                      </p>
+                    </div>
+
+                    {/* PORTAL ORGANISMOS */}
+                    <div className="border-l-4 pl-4" style={{ borderColor: branding.secondaryColor }}>
+                      <h3 className="font-bold text-lg mb-4" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.secondaryColor }}>
+                        📱 PORTAL ORGANISMES
+                      </h3>
+                      
+                      {/* Dashboard Principal */}
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${branding.primaryColor}20` }}>
+                            <TrendingUp className="w-4 h-4" style={{ color: branding.primaryColor }} />
+                          </div>
+                          <h4 className="font-semibold text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                            Dashboard Principal
+                          </h4>
+                        </div>
+                        <p className="text-xs text-gray-600 ml-9">
+                          • Vue d'ensemble de vos statistiques de dons<br/>
+                          • Graphique des catégories de produits reçus<br/>
+                          • Historique des commandes complétées<br/>
+                          • Total des bénéficiaires servis
+                        </p>
+                      </div>
+
+                      {/* Mes Demandes */}
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${branding.primaryColor}20` }}>
+                            <ShoppingCart className="w-4 h-4" style={{ color: branding.primaryColor }} />
+                          </div>
+                          <h4 className="font-semibold text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                            Mes Demandes
+                          </h4>
+                        </div>
+                        <p className="text-xs text-gray-600 ml-9">
+                          • Gérez toutes vos demandes d'offres<br/>
+                          • Statuts: Acceptées, En attente, Expirées<br/>
+                          • Suivez le détail de chaque demande<br/>
+                          • Annulez les demandes non traitées
+                        </p>
+                      </div>
+
+                      {/* Offres Disponibles */}
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${branding.secondaryColor}20` }}>
+                            <Star className="w-4 h-4" style={{ color: branding.secondaryColor }} />
+                          </div>
+                          <h4 className="font-semibold text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                            Offres Disponibles
+                          </h4>
+                        </div>
+                        <p className="text-xs text-gray-600 ml-9">
+                          • Consultez les offres de dons disponibles<br/>
+                          • Vérifiez quantités et dates d'expiration<br/>
+                          • Réservez les produits dont vous avez besoin<br/>
+                          • Indiquez date et personne de collecte
+                        </p>
+                      </div>
+
+                      {/* PRS (si aplica) */}
+                      {organismo.participaPRS && (
+                        <div className="space-y-2 mb-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${branding.secondaryColor}20` }}>
+                              <Plus className="w-4 h-4" style={{ color: branding.secondaryColor }} />
+                            </div>
+                            <h4 className="font-semibold text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                              Nouvelle Entrée PRS
+                            </h4>
+                          </div>
+                          <p className="text-xs text-gray-600 ml-9">
+                            • Programme de Récupération en Supermarchés<br/>
+                            • Enregistrez les produits reçus<br/>
+                            • Sélectionnez donateur, produit, quantité<br/>
+                            • Indiquez température de conservation
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Rapports */}
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${branding.primaryColor}20` }}>
+                            <FileSpreadsheet className="w-4 h-4" style={{ color: branding.primaryColor }} />
+                          </div>
+                          <h4 className="font-semibold text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                            Rapports Excel
+                          </h4>
+                        </div>
+                        <p className="text-xs text-gray-600 ml-9">
+                          • Générez des rapports détaillés<br/>
+                          • Sélectionnez une période spécifique<br/>
+                          • Exportez vos dons reçus en Excel<br/>
+                          • Analysez vos historiques
+                        </p>
+                      </div>
+
+                      {/* Profil & Personnes */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${branding.primaryColor}20` }}>
+                            <Users className="w-4 h-4" style={{ color: branding.primaryColor }} />
+                          </div>
+                          <h4 className="font-semibold text-sm" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                            Profil & Personnes Responsables
+                          </h4>
+                        </div>
+                        <p className="text-xs text-gray-600 ml-9">
+                          • Gérez votre profil d'organisme<br/>
+                          • Ajoutez des personnes autorisées<br/>
+                          • Définissez jours et heures de disponibilité<br/>
+                          • Indiquez les langues parlées
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t-2 border-dashed" style={{ borderColor: `${branding.primaryColor}30` }} />
+
+                    {/* INFORMATION GÉNÉRALE */}
+                    <div className="border-l-4 pl-4" style={{ borderColor: branding.primaryColor }}>
+                      <h3 className="font-bold text-lg mb-4" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
+                        ℹ️ À PROPOS DU SYSTÈME
+                      </h3>
+                      
+                      <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl">
+                        <p className="text-xs text-gray-700 mb-2">
+                          Ce portail fait partie d'un système intégral de gestion de la Banque Alimentaire qui permet à l'équipe interne de gérer efficacement tous les aspects des opérations:
+                        </p>
+                        <ul className="text-xs text-gray-600 space-y-1 ml-4">
+                          <li>• Gestion complète de l'inventaire et des stocks</li>
+                          <li>• Préparation et suivi des commandes</li>
+                          <li>• Coordination du transport et des livraisons</li>
+                          <li>• Génération de rapports et statistiques</li>
+                          <li>• Communication avec tous les organismes bénéficiaires</li>
+                        </ul>
+                        <p className="text-xs text-gray-700 mt-3 italic">
+                          En tant qu'organisme bénéficiaire, vous avez accès aux modules nécessaires pour gérer vos demandes et consulter vos dons reçus.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t-2 border-dashed" style={{ borderColor: `${branding.secondaryColor}30` }} />
+
+                    {/* FONCTIONNALITÉS SPÉCIALES */}
+                    <div className="border-l-4 pl-4" style={{ borderColor: branding.secondaryColor }}>
+                      <h3 className="font-bold text-base mb-3" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.secondaryColor }}>
+                        ✨ FONCTIONNALITÉS SPÉCIALES
+                      </h3>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2">
+                          <CheckCircle className="w-4 h-4 mt-0.5" style={{ color: branding.secondaryColor }} />
+                          <p className="text-xs text-gray-600">
+                            <strong>Multilingue:</strong> Français, Espagnol, Anglais, Arabe (RTL)
+                          </p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <CheckCircle className="w-4 h-4 mt-0.5" style={{ color: branding.secondaryColor }} />
+                          <p className="text-xs text-gray-600">
+                            <strong>Glassmorphism:</strong> Design moderne avec effets visuels élégants
+                          </p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <CheckCircle className="w-4 h-4 mt-0.5" style={{ color: branding.secondaryColor }} />
+                          <p className="text-xs text-gray-600">
+                            <strong>Responsive:</strong> Compatible mobile, tablette et desktop
+                          </p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <CheckCircle className="w-4 h-4 mt-0.5" style={{ color: branding.secondaryColor }} />
+                          <p className="text-xs text-gray-600">
+                            <strong>Temps réel:</strong> Synchronisation instantanée des données
+                          </p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <CheckCircle className="w-4 h-4 mt-0.5" style={{ color: branding.secondaryColor }} />
+                          <p className="text-xs text-gray-600">
+                            <strong>Monnaie:</strong> Dollars canadiens (CAD$)
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Conseils útiles */}
+                    <div className="p-4 rounded-xl border-2" style={{ borderColor: `${branding.secondaryColor}40`, backgroundColor: `${branding.secondaryColor}05` }}>
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 mt-0.5" style={{ color: branding.secondaryColor }} />
+                        <div>
+                          <h4 className="font-semibold text-sm mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                            💡 Conseils pour Organismes
+                          </h4>
+                          <ul className="text-xs text-gray-600 space-y-1.5">
+                            <li>✓ Vérifiez quotidiennement les nouvelles offres disponibles</li>
+                            <li>✓ Répondez rapidement avant expiration des offres</li>
+                            <li>✓ Maintenez votre profil et vos personnes à jour</li>
+                            <li>✓ Utilisez votre langue préférée avec le sélecteur</li>
+                            <li>✓ Consultez régulièrement vos demandes acceptées</li>
+                            {organismo.participaPRS && (
+                              <li>✓ Enregistrez vos entrées PRS le jour même</li>
+                            )}
+                            <li>✓ Générez des rapports pour votre gestion interne</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Nota movible */}
+                    <div className="p-4 rounded-xl bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border-2" style={{ borderColor: branding.primaryColor }}>
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <MessageSquare className="w-5 h-5" style={{ color: branding.secondaryColor }} />
+                        <p className="font-bold text-sm" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
+                          Guide Déplaçable
+                        </p>
+                      </div>
+                      <p className="text-xs text-center text-gray-600">
+                        Cliquez et faites glisser le bouton vert pour le déplacer où vous voulez sur l'écran
+                      </p>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="text-center pt-2 border-t" style={{ borderColor: `${branding.primaryColor}20` }}>
+                      <p className="text-xs text-gray-500">
+                        Banque Alimentaire • Système Intégral de Gestion v2.0
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
       )}
     </>

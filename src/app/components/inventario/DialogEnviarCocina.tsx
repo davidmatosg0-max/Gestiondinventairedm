@@ -119,7 +119,7 @@ export function DialogEnviarCocina({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="enviar-cocina-description">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-2xl">
             <ChefHat className="w-6 h-6 text-[#FF9800]" />

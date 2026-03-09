@@ -44,6 +44,8 @@ import { BalanceProvider } from '../contexts/BalanceContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { logger, showWelcomeBanner } from './utils/logger';
 import { corregirContactosEntrepotAutomaticamente } from './utils/correccionContactosEntrepot';
+import { runDataMigrations } from './utils/dataMigration';
+import { inicializarAutoBackup } from './utils/autoBackupStorage';
 
 // Componente interno que usa el contexto de autenticación
 function AppContent() {
@@ -53,6 +55,9 @@ function AppContent() {
 
   // Crear ofertas de ejemplo e inicializar unidades al cargar la app
   useEffect(() => {
+    // 🔒 EJECUTAR MIGRACIONES DE DATOS PRIMERO
+    runDataMigrations();
+    
     // ===== DESACTIVADO: Ofertas de ejemplo =====
     // crearOfertasEjemplo();
     
@@ -73,6 +78,10 @@ function AppContent() {
     
     // 🔧 CORRECCIÓN AUTOMÁTICA: Contactos Entrepôt (departamentoId correcto)
     corregirContactosEntrepotAutomaticamente();
+    
+    // 🔄 INICIALIZAR SISTEMA DE BACKUP AUTOMÁTICO
+    inicializarAutoBackup();
+    logger.info('🔄 Sistema de backup automático inicializado');
     
     // 🎯 INICIALIZAR DATOS DE EJEMPLO (solo si no se han inicializado antes)
     if (!datosEjemploInicializados()) {
