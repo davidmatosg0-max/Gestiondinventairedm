@@ -1811,12 +1811,12 @@ export function VistaPublicaOrganismo({ organismo, onCerrarSesion }: VistaPublic
 
       {/* Dialog para edición de perfil */}
       <Dialog open={editarPerfilOpen} onOpenChange={setEditarPerfilOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="editar-perfil-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               Editar Perfil del Organismo
             </DialogTitle>
-            <DialogDescription className="text-sm text-[#666666] mt-2">
+            <DialogDescription id="editar-perfil-description" className="text-sm text-[#666666] mt-2">
               Actualice la información de contacto de su organismo. Los cambios serán revisados por el administrador.
             </DialogDescription>
           </DialogHeader>
@@ -1920,7 +1920,7 @@ export function VistaPublicaOrganismo({ organismo, onCerrarSesion }: VistaPublic
 
       {/* Dialog para edición de ofertas */}
       <Dialog open={editarOfertaOpen} onOpenChange={setEditarOfertaOpen}>
-        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="editar-oferta-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               <div className="flex items-center gap-2">
@@ -1928,7 +1928,7 @@ export function VistaPublicaOrganismo({ organismo, onCerrarSesion }: VistaPublic
                 Solicitar Oferta Especial
               </div>
             </DialogTitle>
-            <DialogDescription className="text-sm text-[#666666] mt-2">
+            <DialogDescription id="editar-oferta-description" className="text-sm text-[#666666] mt-2">
               Seleccione los productos que desea solicitar y ajuste las cantidades según sus necesidades.
             </DialogDescription>
           </DialogHeader>
@@ -2228,7 +2228,7 @@ export function VistaPublicaOrganismo({ organismo, onCerrarSesion }: VistaPublic
 
       {/* Dialog: Formulario de Persona Responsable */}
       <Dialog open={dialogFormPersonaOpen} onOpenChange={setDialogFormPersonaOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="form-persona-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               <div className="flex items-center gap-2">
@@ -2236,7 +2236,7 @@ export function VistaPublicaOrganismo({ organismo, onCerrarSesion }: VistaPublic
                 {personaEditando ? t('organisms.profileDialog.authorizedPersons.editPerson') : t('organisms.profileDialog.authorizedPersons.addPerson')}
               </div>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="form-persona-description">
               {personaEditando 
                 ? t('organisms.profileDialog.authorizedPersons.updatePersonDescription')
                 : t('organisms.profileDialog.authorizedPersons.addPersonDescription')}

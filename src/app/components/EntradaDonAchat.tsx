@@ -1920,7 +1920,7 @@ export function EntradaDonAchat() {
                   </SelectTrigger>
                   <SelectContent className="max-h-[300px]">
                     {contactosAlmacen
-                      .filter(c => c.activo && c.tipo === 'donador')
+                      .filter(c => c.activo && c.tipo === 'donador' && c.participaPRS === true)
                       .map((contacto) => (
                         <SelectItem key={contacto.id} value={contacto.id}>
                           <div className="flex items-center gap-2">
@@ -1931,9 +1931,9 @@ export function EntradaDonAchat() {
                           </div>
                         </SelectItem>
                       ))}
-                    {contactosAlmacen.filter(c => c.activo && c.tipo === 'donador').length === 0 && (
+                    {contactosAlmacen.filter(c => c.activo && c.tipo === 'donador' && c.participaPRS === true).length === 0 && (
                       <div className="p-4 text-center text-gray-500 text-sm">
-                        Aucun donateur disponible
+                        Aucun donateur participant au PRS disponible
                       </div>
                     )}
                   </SelectContent>
