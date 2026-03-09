@@ -7,9 +7,12 @@ interface BalanceContextType {
   currentWeight: BalanceData | null;
   error: string | null;
   detectedProtocol: string;
+  connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
+  isReconnecting: boolean;
   connect: () => Promise<boolean>;
   disconnect: () => Promise<void>;
   updateConfig: (newConfig: Partial<BalanceConfig>) => void;
+  listPorts: () => Promise<SerialPort[]>;
   config: BalanceConfig;
   availablePorts: SerialPort[];
 }

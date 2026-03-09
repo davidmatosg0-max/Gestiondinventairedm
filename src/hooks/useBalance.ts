@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 const STORAGE_KEY = 'banque_alimentaire_balance_config';
 const STORAGE_LAST_PORT_KEY = 'banque_alimentaire_last_port';
+const STORAGE_WORKING_CONFIG_KEY = 'banque_alimentaire_working_config';
 
 export interface BalanceConfig {
   baudRate: number;
@@ -12,8 +13,8 @@ export interface BalanceConfig {
   protocol: 'auto' | 'pennsylvania' | 'toledo' | 'mettler' | 'avery' | 'cas' | 'ohaus' | 'digi' | 'bizerba' | 'sartorius' | 'ad' | 'generic';
   requestCommand?: string;
   continuousMode: boolean;
-  autoConnect: boolean; // Nueva opción para auto-conectar
-  reconnectInterval: number; // Intervalo de reconexión en ms
+  autoConnect: boolean;
+  reconnectInterval: number;
 }
 
 export interface BalanceData {
@@ -23,22 +24,112 @@ export interface BalanceData {
   timestamp: number;
 }
 
+// Configuraciones predefinidas para Pennsylvania Scale 7500 & 7600
+// Estas son las configuraciones más comunes según el manual
+const PENNSYLVANIA_CONFIGS: BalanceConfig[] = [
+  {
+    // Configuración más común: 9600, 8-N-1
+    baudRate: 9600,
+    dataBits: 8,
+    stopBits: 1,
+    parity: 'none',
+    flowControl: 'none',
+    protocol: 'pennsylvania',
+    continuousMode: true,
+    autoConnect: true,
+    reconnectInterval: 5000
+  },
+  {
+    // Configuración alternativa: 9600, 7-E-1
+    baudRate: 9600,
+    dataBits: 7,
+    stopBits: 1,
+    parity: 'even',
+    flowControl: 'none',
+    protocol: 'pennsylvania',
+    continuousMode: true,
+    autoConnect: true,
+    reconnectInterval: 5000
+  },
+  {
+    // Configuración: 2400, 8-N-1
+    baudRate: 2400,
+    dataBits: 8,
+    stopBits: 1,
+    parity: 'none',
+    flowControl: 'none',
+    protocol: 'pennsylvania',
+    continuousMode: true,
+    autoConnect: true,
+    reconnectInterval: 5000
+  },
+  {
+    // Configuración: 4800, 8-N-1
+    baudRate: 4800,
+    dataBits: 8,
+    stopBits: 1,
+    parity: 'none',
+    flowControl: 'none',
+    protocol: 'pennsylvania',
+    continuousMode: true,
+    autoConnect: true,
+    reconnectInterval: 5000
+  },
+  {
+    // Configuración: 19200, 8-N-1
+    baudRate: 19200,
+    dataBits: 8,
+    stopBits: 1,
+    parity: 'none',
+    flowControl: 'none',
+    protocol: 'pennsylvania',
+    continuousMode: true,
+    autoConnect: true,
+    reconnectInterval: 5000
+  }
+];
+
 // Configuración optimizada para Pennsylvania Scale 7500 & 7600
-const DEFAULT_CONFIG: BalanceConfig = {
-  baudRate: 9600, // Pennsylvania Scale usa 9600 por defecto
-  dataBits: 8,
-  stopBits: 1,
-  parity: 'none',
-  flowControl: 'none',
-  protocol: 'pennsylvania', // Pennsylvania por defecto
-  continuousMode: true,
-  autoConnect: true, // Auto-conectar habilitado
-  reconnectInterval: 5000 // Reintentar cada 5 segundos
+const DEFAULT_CONFIG: BalanceConfig = PENNSYLVANIA_CONFIGS[0];
+
+// Guardar configuración que funcionó
+const saveWorkingConfig = (config: BalanceConfig): void => {
+  try {
+    localStorage.setItem(STORAGE_WORKING_CONFIG_KEY, JSON.stringify(config));
+    console.log('✅ Configuración guardada:', {
+      baudRate: config.baudRate,
+      dataBits: config.dataBits,
+      parity: config.parity
+    });
+  } catch (error) {
+    console.error('Error saving working config:', error);
+  }
+};
+
+// Obtener configuración que funcionó anteriormente
+const getWorkingConfig = (): BalanceConfig | null => {
+  try {
+    const saved = localStorage.getItem(STORAGE_WORKING_CONFIG_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (error) {
+    console.error('Error loading working config:', error);
+  }
+  return null;
 };
 
 // Cargar configuración guardada desde localStorage
 const loadSavedConfig = (): BalanceConfig => {
   try {
+    // Primero intentar cargar la configuración que funcionó
+    const workingConfig = getWorkingConfig();
+    if (workingConfig) {
+      console.log('🔧 Usando configuración que funcionó anteriormente');
+      return workingConfig;
+    }
+    
+    // Si no, intentar la configuración guardada manualmente
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
@@ -454,39 +545,103 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
 
     try {
       setConnectionStatus('connecting');
-      const config = configRef.current;
-      
       console.log('🔌 Solicitando conexión Pennsylvania Scale...');
       
       // Solicitar puerto serial al usuario
       const port = await navigator.serial.requestPort();
       
-      // Abrir puerto con configuración optimizada para Pennsylvania
-      await port.open({
-        baudRate: config.baudRate,
-        dataBits: config.dataBits,
-        stopBits: config.stopBits,
-        parity: config.parity,
-        flowControl: config.flowControl
-      });
+      // Intentar todas las configuraciones de Pennsylvania Scale hasta que una funcione
+      let connected = false;
+      let lastError = null;
+      
+      for (let i = 0; i < PENNSYLVANIA_CONFIGS.length; i++) {
+        const testConfig = PENNSYLVANIA_CONFIGS[i];
+        
+        console.log(`🔧 Probando configuración ${i + 1}/${PENNSYLVANIA_CONFIGS.length}:`, {
+          baudRate: testConfig.baudRate,
+          dataBits: testConfig.dataBits,
+          parity: testConfig.parity
+        });
+        
+        try {
+          // Cerrar puerto si estaba abierto de un intento anterior
+          if (portRef.current) {
+            try {
+              await portRef.current.close();
+            } catch (e) {
+              // Ignorar errores al cerrar
+            }
+          }
+          
+          // Intentar abrir con esta configuración
+          await port.open({
+            baudRate: testConfig.baudRate,
+            dataBits: testConfig.dataBits,
+            stopBits: testConfig.stopBits,
+            parity: testConfig.parity,
+            flowControl: testConfig.flowControl
+          });
 
-      portRef.current = port;
-      setIsConnected(true);
-      setConnectionStatus('connected');
-      setError(null);
+          portRef.current = port;
+          configRef.current = testConfig;
+          setIsConnected(true);
+          setConnectionStatus('connected');
+          setError(null);
+          connected = true;
 
-      // Guardar información del puerto
-      const portInfo = port.getInfo();
-      saveLastPort(portInfo);
+          // Guardar esta configuración como la que funcionó
+          saveWorkingConfig(testConfig);
+          saveConfig(testConfig);
 
-      console.log('✅ Pennsylvania Scale conectado manualmente');
+          // Guardar información del puerto
+          const portInfo = port.getInfo();
+          saveLastPort(portInfo);
 
-      // Iniciar lectura de datos
-      readLoop();
+          console.log('✅ Pennsylvania Scale conectado con configuración:', {
+            baudRate: testConfig.baudRate,
+            dataBits: testConfig.dataBits,
+            parity: testConfig.parity
+          });
 
-      return true;
+          // Iniciar lectura de datos
+          readLoop();
+
+          return true;
+        } catch (err: any) {
+          lastError = err;
+          console.log(`⚠️ Configuración ${i + 1} falló: ${err.message}`);
+          
+          // Si no es el último intento, continuar
+          if (i < PENNSYLVANIA_CONFIGS.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500)); // Esperar 500ms
+            continue;
+          }
+        }
+      }
+      
+      // Si llegamos aquí, ninguna configuración funcionó
+      if (!connected) {
+        const errorMsg = `No se pudo conectar con ninguna configuración. Último error: ${lastError?.message || 'desconocido'}`;
+        console.error('❌', errorMsg);
+        setError(errorMsg);
+        setConnectionStatus('disconnected');
+        
+        // Mostrar ayuda al usuario
+        console.log('💡 AYUDA DE CONFIGURACIÓN:');
+        console.log('1. Verifica que el cable USB esté conectado correctamente');
+        console.log('2. Verifica que no haya otra aplicación usando el puerto');
+        console.log('3. Revisa los DIP switches en el Pennsylvania Scale 7500/7600');
+        console.log('4. Configuraciones comunes:');
+        console.log('   - 9600 baud, 8 data bits, No parity (más común)');
+        console.log('   - 9600 baud, 7 data bits, Even parity');
+        console.log('   - 2400 baud, 8 data bits, No parity');
+        
+        return false;
+      }
+      
+      return connected;
     } catch (err: any) {
-      console.error('❌ Error de conexión manual:', err.message);
+      console.error('❌ Error de conexión:', err.message);
       setError(`Error de conexión: ${err.message}`);
       setConnectionStatus('disconnected');
       return false;
@@ -540,11 +695,13 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
     if (config.autoConnect && isSupported && !isConnected) {
       console.log('🚀 Auto-conexión habilitada para Pennsylvania Scale');
       // Esperar 1 segundo antes de auto-conectar
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         autoConnect();
       }, 1000);
+      
+      return () => clearTimeout(timeoutId);
     }
-  }, [isSupported, autoConnect]);
+  }, [isSupported, isConnected, autoConnect]);
 
   // Monitorear desconexiones y reconectar automáticamente
   useEffect(() => {
