@@ -264,6 +264,14 @@ export function initialiserDonneesExemple(): void {
       quartiers: [
         {
           id: 'q-lav-1',
+          nom: 'Auteuil',
+          codePostal: 'H7H',
+          description: 'Secteur résidentiel avec parcs',
+          dateCreation: new Date().toISOString(),
+          dateModification: new Date().toISOString()
+        },
+        {
+          id: 'q-lav-2',
           nom: 'Chomedey',
           codePostal: 'H7W',
           description: 'Secteur central de Laval',
@@ -271,10 +279,106 @@ export function initialiserDonneesExemple(): void {
           dateModification: new Date().toISOString()
         },
         {
-          id: 'q-lav-2',
+          id: 'q-lav-3',
+          nom: 'Duvernay',
+          codePostal: 'H7A',
+          description: 'Secteur en développement',
+          dateCreation: new Date().toISOString(),
+          dateModification: new Date().toISOString()
+        },
+        {
+          id: 'q-lav-4',
+          nom: 'Fabreville-Est',
+          codePostal: 'H7P',
+          description: 'Secteur résidentiel familial de l\'est',
+          dateCreation: new Date().toISOString(),
+          dateModification: new Date().toISOString()
+        },
+        {
+          id: 'q-lav-5',
+          nom: 'Fabreville-Ouest',
+          codePostal: 'H7R',
+          description: 'Secteur résidentiel familial de l\'ouest',
+          dateCreation: new Date().toISOString(),
+          dateModification: new Date().toISOString()
+        },
+        {
+          id: 'q-lav-6',
+          nom: 'Îles-Laval',
+          codePostal: 'H7W',
+          description: 'Secteur insulaire résidentiel avec accès contrôlé',
+          dateCreation: new Date().toISOString(),
+          dateModification: new Date().toISOString()
+        },
+        {
+          id: 'q-lav-7',
+          nom: 'Laval-des-Rapides',
+          codePostal: 'H7N',
+          description: 'Secteur urbain avec métro',
+          dateCreation: new Date().toISOString(),
+          dateModification: new Date().toISOString()
+        },
+        {
+          id: 'q-lav-8',
+          nom: 'Laval-sur-le-Lac',
+          codePostal: 'H7R',
+          description: 'Secteur huppé et exclusif au bord de l\'eau',
+          dateCreation: new Date().toISOString(),
+          dateModification: new Date().toISOString()
+        },
+        {
+          id: 'q-lav-9',
+          nom: 'Laval-Ouest',
+          codePostal: 'H7R',
+          description: 'Secteur résidentiel à l\'ouest de Laval',
+          dateCreation: new Date().toISOString(),
+          dateModification: new Date().toISOString()
+        },
+        {
+          id: 'q-lav-10',
+          nom: 'Pont-Viau',
+          codePostal: 'H7G',
+          description: 'Secteur résidentiel central',
+          dateCreation: new Date().toISOString(),
+          dateModification: new Date().toISOString()
+        },
+        {
+          id: 'q-lav-11',
+          nom: 'Sainte-Dorothée',
+          codePostal: 'H7X',
+          description: 'Secteur résidentiel spacieux',
+          dateCreation: new Date().toISOString(),
+          dateModification: new Date().toISOString()
+        },
+        {
+          id: 'q-lav-12',
           nom: 'Sainte-Rose',
           codePostal: 'H7L',
-          description: 'Secteur historique de Laval',
+          description: 'Secteur historique incluant le Vieux-Sainte-Rose',
+          dateCreation: new Date().toISOString(),
+          dateModification: new Date().toISOString()
+        },
+        {
+          id: 'q-lav-13',
+          nom: 'Saint-François',
+          codePostal: 'H7B',
+          description: 'Secteur résidentiel à l\'est de Laval',
+          dateCreation: new Date().toISOString(),
+          dateModification: new Date().toISOString()
+        },
+        {
+          id: 'q-lav-14',
+          nom: 'Saint-Vincent-de-Paul',
+          codePostal: 'H7C',
+          description: 'Secteur historique et patrimonial',
+          dateCreation: new Date().toISOString(),
+          dateModification: new Date().toISOString()
+        },
+        {
+          id: 'q-lav-15',
+          nom: 'Vimont',
+          codePostal: 'H7M',
+          description: 'Secteur résidentiel dynamique',
           dateCreation: new Date().toISOString(),
           dateModification: new Date().toISOString()
         }
@@ -869,62 +973,6 @@ function obtenirTousLesQuartiersParVille(): Record<string, Quartier[]> {
     'Laval': [
       {
         id: genId(1),
-        nom: 'Chomedey',
-        codePostal: 'H7W',
-        description: 'Secteur central de Laval',
-        dateCreation: new Date().toISOString(),
-        dateModification: new Date().toISOString()
-      },
-      {
-        id: genId(2),
-        nom: 'Sainte-Rose',
-        codePostal: 'H7L',
-        description: 'Secteur historique de Laval',
-        dateCreation: new Date().toISOString(),
-        dateModification: new Date().toISOString()
-      },
-      {
-        id: genId(3),
-        nom: 'Vimont',
-        codePostal: 'H7M',
-        description: 'Secteur résidentiel dynamique',
-        dateCreation: new Date().toISOString(),
-        dateModification: new Date().toISOString()
-      },
-      {
-        id: genId(4),
-        nom: 'Duvernay',
-        codePostal: 'H7A',
-        description: 'Secteur en développement',
-        dateCreation: new Date().toISOString(),
-        dateModification: new Date().toISOString()
-      },
-      {
-        id: genId(5),
-        nom: 'Fabreville',
-        codePostal: 'H7P',
-        description: 'Secteur résidentiel familial',
-        dateCreation: new Date().toISOString(),
-        dateModification: new Date().toISOString()
-      },
-      {
-        id: genId(6),
-        nom: 'Laval-des-Rapides',
-        codePostal: 'H7N',
-        description: 'Secteur urbain avec métro',
-        dateCreation: new Date().toISOString(),
-        dateModification: new Date().toISOString()
-      },
-      {
-        id: genId(7),
-        nom: 'Pont-Viau',
-        codePostal: 'H7G',
-        description: 'Secteur résidentiel central',
-        dateCreation: new Date().toISOString(),
-        dateModification: new Date().toISOString()
-      },
-      {
-        id: genId(8),
         nom: 'Auteuil',
         codePostal: 'H7H',
         description: 'Secteur résidentiel avec parcs',
@@ -932,10 +980,114 @@ function obtenirTousLesQuartiersParVille(): Record<string, Quartier[]> {
         dateModification: new Date().toISOString()
       },
       {
-        id: genId(9),
-        nom: 'Les Îles-Laval',
+        id: genId(2),
+        nom: 'Chomedey',
+        codePostal: 'H7W',
+        description: 'Secteur central de Laval',
+        dateCreation: new Date().toISOString(),
+        dateModification: new Date().toISOString()
+      },
+      {
+        id: genId(3),
+        nom: 'Duvernay',
+        codePostal: 'H7A',
+        description: 'Secteur en développement',
+        dateCreation: new Date().toISOString(),
+        dateModification: new Date().toISOString()
+      },
+      {
+        id: genId(4),
+        nom: 'Fabreville-Est',
+        codePostal: 'H7P',
+        description: 'Secteur résidentiel familial de l\'est',
+        dateCreation: new Date().toISOString(),
+        dateModification: new Date().toISOString()
+      },
+      {
+        id: genId(5),
+        nom: 'Fabreville-Ouest',
+        codePostal: 'H7R',
+        description: 'Secteur résidentiel familial de l\'ouest',
+        dateCreation: new Date().toISOString(),
+        dateModification: new Date().toISOString()
+      },
+      {
+        id: genId(6),
+        nom: 'Îles-Laval',
         codePostal: 'H7W',
         description: 'Secteur insulaire résidentiel avec accès contrôlé',
+        dateCreation: new Date().toISOString(),
+        dateModification: new Date().toISOString()
+      },
+      {
+        id: genId(7),
+        nom: 'Laval-des-Rapides',
+        codePostal: 'H7N',
+        description: 'Secteur urbain avec métro',
+        dateCreation: new Date().toISOString(),
+        dateModification: new Date().toISOString()
+      },
+      {
+        id: genId(8),
+        nom: 'Laval-sur-le-Lac',
+        codePostal: 'H7R',
+        description: 'Secteur huppé et exclusif au bord de l\'eau',
+        dateCreation: new Date().toISOString(),
+        dateModification: new Date().toISOString()
+      },
+      {
+        id: genId(9),
+        nom: 'Laval-Ouest',
+        codePostal: 'H7R',
+        description: 'Secteur résidentiel à l\'ouest de Laval',
+        dateCreation: new Date().toISOString(),
+        dateModification: new Date().toISOString()
+      },
+      {
+        id: genId(10),
+        nom: 'Pont-Viau',
+        codePostal: 'H7G',
+        description: 'Secteur résidentiel central',
+        dateCreation: new Date().toISOString(),
+        dateModification: new Date().toISOString()
+      },
+      {
+        id: genId(11),
+        nom: 'Sainte-Dorothée',
+        codePostal: 'H7X',
+        description: 'Secteur résidentiel spacieux',
+        dateCreation: new Date().toISOString(),
+        dateModification: new Date().toISOString()
+      },
+      {
+        id: genId(12),
+        nom: 'Sainte-Rose',
+        codePostal: 'H7L',
+        description: 'Secteur historique incluant le Vieux-Sainte-Rose',
+        dateCreation: new Date().toISOString(),
+        dateModification: new Date().toISOString()
+      },
+      {
+        id: genId(13),
+        nom: 'Saint-François',
+        codePostal: 'H7B',
+        description: 'Secteur résidentiel à l\'est de Laval',
+        dateCreation: new Date().toISOString(),
+        dateModification: new Date().toISOString()
+      },
+      {
+        id: genId(14),
+        nom: 'Saint-Vincent-de-Paul',
+        codePostal: 'H7C',
+        description: 'Secteur historique et patrimonial',
+        dateCreation: new Date().toISOString(),
+        dateModification: new Date().toISOString()
+      },
+      {
+        id: genId(15),
+        nom: 'Vimont',
+        codePostal: 'H7M',
+        description: 'Secteur résidentiel dynamique',
         dateCreation: new Date().toISOString(),
         dateModification: new Date().toISOString()
       }
