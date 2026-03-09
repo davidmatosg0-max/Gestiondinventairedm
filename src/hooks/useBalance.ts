@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 const STORAGE_KEY = 'banque_alimentaire_balance_config';
+const STORAGE_LAST_PORT_KEY = 'banque_alimentaire_last_port';
 
 export interface BalanceConfig {
   baudRate: number;
@@ -9,8 +10,10 @@ export interface BalanceConfig {
   parity: 'none' | 'even' | 'odd';
   flowControl: 'none' | 'hardware';
   protocol: 'auto' | 'pennsylvania' | 'toledo' | 'mettler' | 'avery' | 'cas' | 'ohaus' | 'digi' | 'bizerba' | 'sartorius' | 'ad' | 'generic';
-  requestCommand?: string; // Comando para solicitar peso
-  continuousMode: boolean; // Modo continuo o bajo demanda
+  requestCommand?: string;
+  continuousMode: boolean;
+  autoConnect: boolean; // Nueva opción para auto-conectar
+  reconnectInterval: number; // Intervalo de reconexión en ms
 }
 
 export interface BalanceData {
@@ -20,14 +23,17 @@ export interface BalanceData {
   timestamp: number;
 }
 
+// Configuración optimizada para Pennsylvania Scale 7500 & 7600
 const DEFAULT_CONFIG: BalanceConfig = {
-  baudRate: 9600,
+  baudRate: 9600, // Pennsylvania Scale usa 9600 por defecto
   dataBits: 8,
   stopBits: 1,
   parity: 'none',
   flowControl: 'none',
-  protocol: 'auto',
-  continuousMode: true
+  protocol: 'pennsylvania', // Pennsylvania por defecto
+  continuousMode: true,
+  autoConnect: true, // Auto-conectar habilitado
+  reconnectInterval: 5000 // Reintentar cada 5 segundos
 };
 
 // Cargar configuración guardada desde localStorage
@@ -53,10 +59,33 @@ const saveConfig = (config: BalanceConfig): void => {
   }
 };
 
-// Protocolos comunes de balanzas - Expandido para mayor compatibilidad
+// Guardar información del último puerto conectado
+const saveLastPort = (portInfo: any): void => {
+  try {
+    localStorage.setItem(STORAGE_LAST_PORT_KEY, JSON.stringify(portInfo));
+  } catch (error) {
+    console.error('Error saving last port:', error);
+  }
+};
+
+// Obtener información del último puerto
+const getLastPort = (): any => {
+  try {
+    const saved = localStorage.getItem(STORAGE_LAST_PORT_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (error) {
+    console.error('Error loading last port:', error);
+  }
+  return null;
+};
+
+// Protocolos optimizados - Pennsylvania Scale como prioridad
 const SCALE_PROTOCOLS = {
-  // Pennsylvania Scale: formato flexible con peso y unidad
-  pennsylvania: /(?:[\\x02])?([+-]?[0-9]+\\.?[0-9]*)\s?(kg|g|lb|oz|KG|G|LB|OZ)(?:[\\x03\\r\\n])?/i,
+  // Pennsylvania Scale 7500/7600: Formato muy flexible
+  // Acepta múltiples formatos: "10.5 kg", "10.5kg", "  10.5 KG  ", etc.
+  pennsylvania: /(?:[\x02])?[\s]*([+-]?[0-9]+\.?[0-9]*)[\s]*(kg|g|lb|oz|KG|G|LB|OZ)?(?:[\x03\r\n])?/i,
   
   // Toledo: STX + peso + unidad + estabilidad + ETX
   toledo: /\x02([0-9\s\.\-]+)\s?(kg|g|lb|oz)\s?([*\s])\x03/i,
@@ -86,11 +115,12 @@ const SCALE_PROTOCOLS = {
   ad: /(?:ST|US)?,?\s*([0-9\.\-]+)\s?(kg|g|lb|oz)/i,
   
   // Generic format: número seguido de unidad (más flexible)
-  generic: /(?:[\x02\x03])?([+-]?[0-9]+\.?[0-9]*)\s?(kg|g|lb|oz|KG|G|LB|OZ)?(?:[\x02\x03])?/i
+  generic: /(?:[\x02\x03])?([\s]*[+-]?[0-9]+\.?[0-9]*)[\s]*(kg|g|lb|oz|KG|G|LB|OZ)?(?:[\x02\x03])?/i
 };
 
 // Comandos de solicitud de peso por marca
 const WEIGHT_REQUEST_COMMANDS = {
+  pennsylvania: 'P\r\n', // Pennsylvania Scale
   toledo: 'W\r\n',
   mettler: 'S\r\n',
   avery: 'P\r\n',
@@ -108,23 +138,28 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
   const [isSupported, setIsSupported] = useState(false);
   const [currentWeight, setCurrentWeight] = useState<BalanceData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [detectedProtocol, setDetectedProtocol] = useState<string>('unknown');
+  const [detectedProtocol, setDetectedProtocol] = useState<string>('pennsylvania'); // Pennsylvania por defecto
   const [availablePorts, setAvailablePorts] = useState<SerialPort[]>([]);
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'reconnecting'>('disconnected');
   
   const portRef = useRef<SerialPort | null>(null);
   const readerRef = useRef<ReadableStreamDefaultReader | null>(null);
   const configRef = useRef<BalanceConfig>({ ...loadSavedConfig(), ...customConfig });
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isAutoConnectingRef = useRef(false);
 
-  // Listar puertos disponibles (solo los que ya tienen permiso)
+  // Listar puertos disponibles
   const listPorts = useCallback(async () => {
     if (!('serial' in navigator)) return [];
     
     try {
       const ports = await navigator.serial.getPorts();
       setAvailablePorts(ports);
+      console.log(`📡 Pennsylvania Scale: ${ports.length} puerto(s) disponible(s)`);
       return ports;
     } catch (err: any) {
-      // Ignorar completamente errores de permisos - son normales
+      console.log('⚠️ No se pudo listar puertos (normal si no hay permisos)');
       return [];
     }
   }, []);
@@ -134,8 +169,11 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
     const supported = 'serial' in navigator;
     setIsSupported(supported);
     
-    // NO intentar listar puertos aquí - causa SecurityError
-    // Los puertos se listarán solo cuando el usuario interactúe
+    if (supported) {
+      console.log('✅ Web Serial API soportado - Pennsylvania Scale compatible');
+    } else {
+      console.warn('❌ Web Serial API no soportado - usar Chrome/Edge');
+    }
   }, []);
 
   // Parsear datos según protocolo
@@ -145,12 +183,26 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
     // Limpiar datos
     const cleanData = data.trim();
     
+    // Si el protocolo es Pennsylvania, intentarlo primero
+    if (config.protocol === 'pennsylvania' || config.protocol === 'auto') {
+      const pennsylvaniaRegex = SCALE_PROTOCOLS.pennsylvania;
+      const match = cleanData.match(pennsylvaniaRegex);
+      if (match) {
+        if (config.protocol === 'auto') {
+          setDetectedProtocol('pennsylvania');
+        }
+        return extractWeightData(match, 'pennsylvania');
+      }
+    }
+    
     // Intentar detectar protocolo automáticamente
     if (config.protocol === 'auto') {
       for (const [protocolName, regex] of Object.entries(SCALE_PROTOCOLS)) {
+        if (protocolName === 'pennsylvania') continue; // Ya lo intentamos
         const match = cleanData.match(regex);
         if (match) {
           setDetectedProtocol(protocolName);
+          console.log(`🔍 Protocolo detectado: ${protocolName}`);
           return extractWeightData(match, protocolName);
         }
       }
@@ -177,9 +229,10 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
 
       switch (protocol) {
         case 'pennsylvania':
-          weight = parseFloat(match[1]);
+          weight = parseFloat(match[1].trim());
+          // Pennsylvania Scale 7500/7600 puede o no enviar unidad
           unit = (match[2]?.toLowerCase() as any) || 'kg';
-          stable = true;
+          stable = true; // Pennsylvania siempre envía peso estable
           break;
           
         case 'toledo':
@@ -218,7 +271,7 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
           break;
           
         case 'bizerba':
-          stable = match[0].startsWith('N'); // N = Net/Stable, G = Gross
+          stable = match[0].startsWith('N');
           weight = parseFloat(match[1]);
           unit = (match[2]?.toLowerCase() as any) || 'kg';
           break;
@@ -236,7 +289,7 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
           break;
           
         default: // generic
-          weight = parseFloat(match[1]);
+          weight = parseFloat(match[1].trim());
           unit = (match[2]?.toLowerCase() as any) || 'kg';
           stable = true;
           break;
@@ -267,6 +320,7 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
     let buffer = '';
 
     try {
+      console.log('🔄 Iniciando lectura de datos Pennsylvania Scale...');
       while (true) {
         const { value, done } = await readerRef.current.read();
         if (done) break;
@@ -283,13 +337,20 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
             if (weightData) {
               setCurrentWeight(weightData);
               setError(null);
+              setConnectionStatus('connected');
+              console.log(`⚖️ Peso: ${weightData.weight} ${weightData.unit} ${weightData.stable ? '✓' : '~'}`);
             }
           }
         }
       }
     } catch (err: any) {
       if (err.name !== 'NetworkError') {
+        console.error('❌ Error de lectura:', err.message);
         setError(`Error de lectura: ${err.message}`);
+      }
+      // Intentar reconectar automáticamente
+      if (configRef.current.autoConnect) {
+        scheduleReconnect();
       }
     } finally {
       readerRef.current?.releaseLock();
@@ -297,20 +358,48 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
     }
   }, [parseScaleData]);
 
-  // Conectar a la balanza
-  const connect = useCallback(async () => {
-    if (!isSupported) {
-      setError('Web Serial API no está soportado en este navegador');
-      return false;
+  // Programar reconexión automática
+  const scheduleReconnect = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
     }
 
+    const config = configRef.current;
+    if (!config.autoConnect) return;
+
+    setIsReconnecting(true);
+    setConnectionStatus('reconnecting');
+    console.log(`🔄 Intentando reconectar en ${config.reconnectInterval / 1000}s...`);
+
+    reconnectTimeoutRef.current = setTimeout(async () => {
+      console.log('🔌 Intentando reconexión automática...');
+      await autoConnect();
+    }, config.reconnectInterval);
+  }, []);
+
+  // Auto-conectar al último puerto conocido
+  const autoConnect = useCallback(async () => {
+    if (!isSupported || isAutoConnectingRef.current) return false;
+    
+    isAutoConnectingRef.current = true;
+    setConnectionStatus('connecting');
+
     try {
+      const ports = await navigator.serial.getPorts();
+      
+      if (ports.length === 0) {
+        console.log('📡 No hay puertos autorizados. Usuario debe dar permiso.');
+        setConnectionStatus('disconnected');
+        isAutoConnectingRef.current = false;
+        return false;
+      }
+
+      // Intentar conectar al primer puerto disponible (generalmente el Pennsylvania Scale)
+      const port = ports[0];
       const config = configRef.current;
       
-      // Solicitar puerto serial
-      const port = await navigator.serial.requestPort();
+      console.log('🔌 Conectando a Pennsylvania Scale...');
       
-      // Abrir puerto con configuración
       await port.open({
         baudRate: config.baudRate,
         dataBits: config.dataBits,
@@ -321,14 +410,85 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
 
       portRef.current = port;
       setIsConnected(true);
+      setIsReconnecting(false);
+      setConnectionStatus('connected');
       setError(null);
+
+      // Guardar información del puerto
+      const portInfo = port.getInfo();
+      saveLastPort(portInfo);
+
+      console.log('✅ Pennsylvania Scale conectado exitosamente');
+      console.log('📊 Configuración:', {
+        baudRate: config.baudRate,
+        protocol: config.protocol,
+        dataBits: config.dataBits
+      });
+
+      // Iniciar lectura de datos
+      readLoop();
+
+      isAutoConnectingRef.current = false;
+      return true;
+    } catch (err: any) {
+      console.error('❌ Error de auto-conexión:', err.message);
+      setError(`Error de auto-conexión: ${err.message}`);
+      setConnectionStatus('disconnected');
+      isAutoConnectingRef.current = false;
+      
+      // Programar reconexión
+      if (configRef.current.autoConnect) {
+        scheduleReconnect();
+      }
+      
+      return false;
+    }
+  }, [isSupported, readLoop, scheduleReconnect]);
+
+  // Conectar manualmente (solicitar puerto al usuario)
+  const connect = useCallback(async () => {
+    if (!isSupported) {
+      setError('Web Serial API no está soportado en este navegador');
+      return false;
+    }
+
+    try {
+      setConnectionStatus('connecting');
+      const config = configRef.current;
+      
+      console.log('🔌 Solicitando conexión Pennsylvania Scale...');
+      
+      // Solicitar puerto serial al usuario
+      const port = await navigator.serial.requestPort();
+      
+      // Abrir puerto con configuración optimizada para Pennsylvania
+      await port.open({
+        baudRate: config.baudRate,
+        dataBits: config.dataBits,
+        stopBits: config.stopBits,
+        parity: config.parity,
+        flowControl: config.flowControl
+      });
+
+      portRef.current = port;
+      setIsConnected(true);
+      setConnectionStatus('connected');
+      setError(null);
+
+      // Guardar información del puerto
+      const portInfo = port.getInfo();
+      saveLastPort(portInfo);
+
+      console.log('✅ Pennsylvania Scale conectado manualmente');
 
       // Iniciar lectura de datos
       readLoop();
 
       return true;
     } catch (err: any) {
+      console.error('❌ Error de conexión manual:', err.message);
       setError(`Error de conexión: ${err.message}`);
+      setConnectionStatus('disconnected');
       return false;
     }
   }, [isSupported, readLoop]);
@@ -336,6 +496,12 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
   // Desconectar balanza
   const disconnect = useCallback(async () => {
     try {
+      // Cancelar reconexión automática
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+
       if (readerRef.current) {
         await readerRef.current.cancel();
         readerRef.current = null;
@@ -347,10 +513,14 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
       }
 
       setIsConnected(false);
+      setIsReconnecting(false);
+      setConnectionStatus('disconnected');
       setCurrentWeight(null);
-      setDetectedProtocol('unknown');
       setError(null);
+      
+      console.log('🔌 Pennsylvania Scale desconectado');
     } catch (err: any) {
+      console.error('❌ Error al desconectar:', err.message);
       setError(`Error al desconectar: ${err.message}`);
     }
   }, []);
@@ -360,11 +530,49 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
     const updatedConfig = { ...configRef.current, ...newConfig };
     configRef.current = updatedConfig;
     saveConfig(updatedConfig);
+    console.log('⚙️ Configuración actualizada:', newConfig);
   }, []);
+
+  // Auto-conectar al cargar si está habilitado
+  useEffect(() => {
+    const config = configRef.current;
+    
+    if (config.autoConnect && isSupported && !isConnected) {
+      console.log('🚀 Auto-conexión habilitada para Pennsylvania Scale');
+      // Esperar 1 segundo antes de auto-conectar
+      setTimeout(() => {
+        autoConnect();
+      }, 1000);
+    }
+  }, [isSupported, autoConnect]);
+
+  // Monitorear desconexiones y reconectar automáticamente
+  useEffect(() => {
+    if (!isSupported || !configRef.current.autoConnect) return;
+
+    const handleDisconnect = async (event: Event) => {
+      console.log('⚠️ Pennsylvania Scale desconectado, intentando reconectar...');
+      setIsConnected(false);
+      setConnectionStatus('reconnecting');
+      scheduleReconnect();
+    };
+
+    // Esta característica no está disponible en todos los navegadores
+    if ('serial' in navigator && (navigator.serial as any).addEventListener) {
+      (navigator.serial as any).addEventListener('disconnect', handleDisconnect);
+      
+      return () => {
+        (navigator.serial as any).removeEventListener('disconnect', handleDisconnect);
+      };
+    }
+  }, [isSupported, scheduleReconnect]);
 
   // Limpiar al desmontar
   useEffect(() => {
     return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
       if (portRef.current) {
         disconnect();
       }
@@ -377,9 +585,12 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
     currentWeight,
     error,
     detectedProtocol,
+    connectionStatus,
+    isReconnecting,
     connect,
     disconnect,
     updateConfig,
+    listPorts,
     config: configRef.current,
     availablePorts
   };
