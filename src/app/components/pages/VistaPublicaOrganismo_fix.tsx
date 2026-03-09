@@ -2661,6 +2661,9 @@ export function VistaPublicaOrganismo({ organismo, onCerrarSesion }: VistaPublic
                 </div>
               </div>
             </DialogTitle>
+            <DialogDescription id="nueva-entrada-description" className="sr-only">
+              Créer une nouvelle entrée pour le Programme de Ramassage de Surplus
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-5 py-4">
