@@ -212,21 +212,41 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
   }, [formData.categoria, formData.subcategoria, categorias]);
 
   // Auto-capturar peso de balanza cuando la unidad es PLT
+  // El peso capturado se considera como PESO UNITARIO (peso de 1 paleta)
+  // Si hay cantidad, se multiplica automáticamente
   useEffect(() => {
-    if (formData.unidad === 'PLT' && isConnected && currentWeight && currentWeight.stable) {
+    if (formData.unidad === 'PLT' && isConnected && currentWeight && currentWeight.stable && currentWeight.weight > 0) {
+      // Calcular el peso total esperado basado en la cantidad
+      const pesoUnitarioBalanza = currentWeight.weight;
+      const cantidadActual = formData.cantidad > 0 ? formData.cantidad : 1;
+      const pesoTotalCalculado = pesoUnitarioBalanza * cantidadActual;
+      
       // Solo actualizar si el peso cambió significativamente (más de 0.01 kg de diferencia = 10g)
-      const diferencia = Math.abs(formData.peso - currentWeight.weight);
+      const diferencia = Math.abs(formData.peso - pesoTotalCalculado);
       if (diferencia > 0.01) {
-        setFormData(prev => ({ 
-          ...prev, 
-          peso: parseFloat(currentWeight.weight.toFixed(3)) 
-        }));
-        toast.success(`⚖️ Peso capturado automáticamente: ${currentWeight.weight.toFixed(3)} kg`, {
-          duration: 2000
+        setFormData(prev => {
+          // Si no hay cantidad, establecer 1 paleta por defecto
+          const nuevaCantidad = prev.cantidad > 0 ? prev.cantidad : 1;
+          
+          return {
+            ...prev,
+            cantidad: nuevaCantidad,
+            peso: parseFloat(pesoTotalCalculado.toFixed(3))
+          };
         });
+        
+        if (cantidadActual === 1) {
+          toast.success(`⚖️ Peso unitario capturado: ${pesoUnitarioBalanza.toFixed(3)} kg/PLT`, {
+            duration: 2000
+          });
+        } else {
+          toast.success(`⚖️ Peso capturado: ${pesoUnitarioBalanza.toFixed(3)} kg × ${cantidadActual} PLT = ${pesoTotalCalculado.toFixed(3)} kg`, {
+            duration: 3000
+          });
+        }
       }
     }
-  }, [formData.unidad, isConnected, currentWeight?.stable, currentWeight?.weight]);
+  }, [formData.unidad, isConnected, currentWeight?.stable, currentWeight?.weight, formData.cantidad]);
 
   // Auto-calcular peso cuando cambia la cantidad (si existe peso unitario)
   // ⚠️ EXCEPCIÓN: NO auto-calcular para PALETA (PLT)
@@ -532,10 +552,10 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col p-0 bg-gradient-to-br from-white to-gray-50">
+        <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col p-0 bg-gradient-to-br from-white to-gray-50" aria-describedby="formulario-entrada-description">
           {/* Header Moderno */}
           <DialogHeader className="px-8 pt-6 pb-4 border-b bg-white/80 backdrop-blur-sm shrink-0">
-            <DialogDescription className="sr-only">
+            <DialogDescription id="formulario-entrada-description" className="sr-only">
               Formulario para registrar nuevas entradas de inventario en el almacén
             </DialogDescription>
             <div className="flex items-center gap-4">
@@ -918,11 +938,11 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                 {/* Peso */}
                 <div className="space-y-2">
                   <Label htmlFor="peso" className="text-sm font-medium flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {t('common.weight') || 'Peso'}
+                    {formData.unidad === 'PLT' ? 'Peso Total' : (t('common.weight') || 'Peso')}
                     <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Requerido</Badge>
                     {formData.unidad === 'PLT' && isConnected && currentWeight && currentWeight.stable && (
                       <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200 animate-pulse">
-                        ⚖️ Captura automática: {currentWeight.weight.toFixed(3)} kg
+                        ⚖️ Peso unitario: {currentWeight.weight.toFixed(3)} kg/PLT
                       </Badge>
                     )}
                     {formData.unidad === 'PLT' && isConnected && currentWeight && !currentWeight.stable && (
@@ -939,9 +959,10 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                       step="0.001"
                       value={formData.peso || ''}
                       onChange={(e) => setFormData(prev => ({ ...prev, peso: parseFloat(e.target.value) || 0 }))}
-                      placeholder={formData.unidad === 'PLT' ? 'Captura automática desde balanza...' : '0.000'}
-                      className="h-11 text-sm pr-10 border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE]"
+                      placeholder={formData.unidad === 'PLT' ? 'Peso calculado automáticamente...' : '0.000'}
+                      className="h-11 text-sm pr-10 border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE] bg-white"
                       readOnly={formData.unidad === 'PLT' && isConnected && currentWeight?.stable}
+                      style={formData.unidad === 'PLT' && isConnected && currentWeight?.stable ? { backgroundColor: '#f0fdf4' } : {}}
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#999999] text-xs font-medium pointer-events-none">
                       kg
@@ -961,7 +982,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                             <div className="flex items-center gap-2 text-xs text-gray-600 ml-5">
                               <Scale className="h-3 w-3" />
                               <span>
-                                Poids actuel: <strong className="text-green-700">{currentWeight.weight.toFixed(3)} {currentWeight.unit}</strong>
+                                Poids unitaire (1 PLT): <strong className="text-green-700">{currentWeight.weight.toFixed(3)} {currentWeight.unit}</strong>
                                 {currentWeight.stable ? (
                                   <span className="ml-2 text-green-600">✓ Stable</span>
                                 ) : (
@@ -970,8 +991,9 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                               </span>
                             </div>
                           )}
-                          <div className="text-xs text-gray-500 ml-5">
-                            💡 Le poids se capture automatiquement lorsque la balance est stable
+                          <div className="text-xs text-gray-500 ml-5 space-y-1">
+                            <div>💡 Le poids unitaire se capture automatiquement depuis la balance</div>
+                            <div className="ml-4">→ Poids total = Poids unitaire × Quantité de palettes</div>
                           </div>
                         </div>
                       ) : (
@@ -999,9 +1021,14 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                 <div className="mt-4 p-3 bg-purple-50 rounded-lg border border-purple-100">
                   <div className="flex items-center gap-2">
                     <span className="text-purple-600">💡</span>
-                    <span className="text-xs text-purple-700 font-medium">
-                      Peso unitario: {(formData.peso / formData.cantidad).toFixed(1)} kg/{formData.unidad || 'unidad'}
-                    </span>
+                    <div className="text-xs text-purple-700 font-medium space-y-1">
+                      <div>Peso unitario: {(formData.peso / formData.cantidad).toFixed(3)} kg/{formData.unidad || 'unidad'}</div>
+                      {formData.unidad === 'PLT' && formData.cantidad > 1 && (
+                        <div className="text-purple-600">
+                          → {formData.cantidad} palettes × {(formData.peso / formData.cantidad).toFixed(3)} kg = {formData.peso.toFixed(3)} kg total
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

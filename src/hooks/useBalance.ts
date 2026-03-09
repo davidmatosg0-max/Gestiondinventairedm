@@ -250,8 +250,28 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
       console.log(`📡 Pennsylvania Scale: ${ports.length} puerto(s) disponible(s)`);
       return ports;
     } catch (err: any) {
-      console.log('⚠️ No se pudo listar puertos (normal si no hay permisos)');
+      // Ignorar errores de permisos - es normal en algunos contextos
       return [];
+    }
+  }, []);
+
+  // Verificar si tenemos permisos para acceder a puertos seriales
+  const hasSerialAccess = useCallback(async (): Promise<boolean> => {
+    if (!('serial' in navigator)) return false;
+    
+    try {
+      // Intentar acceder a getPorts - si falla, no tenemos permisos
+      await navigator.serial.getPorts();
+      return true;
+    } catch (err: any) {
+      // Silenciar completamente errores de permisos
+      // Es normal que no haya permisos hasta que el usuario conecte manualmente
+      if (err.message && err.message.includes('permissions policy')) {
+        // Este es el error esperado cuando no hay permisos de política
+        return false;
+      }
+      // No tenemos permisos - el usuario debe conectar manualmente primero
+      return false;
     }
   }, []);
 
@@ -476,10 +496,22 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
     setConnectionStatus('connecting');
 
     try {
+      // Verificar primero si tenemos acceso antes de intentar getPorts
+      const hasAccess = await hasSerialAccess();
+      
+      if (!hasAccess) {
+        console.log('📡 No hay permisos para auto-conexión. Usuario debe conectar manualmente primero.');
+        setConnectionStatus('disconnected');
+        setError(null); // No mostrar error
+        isAutoConnectingRef.current = false;
+        return false;
+      }
+      
+      // Intentar obtener puertos - ahora sabemos que tenemos permisos
       const ports = await navigator.serial.getPorts();
       
       if (ports.length === 0) {
-        console.log('📡 No hay puertos autorizados. Usuario debe dar permiso.');
+        console.log('📡 No hay puertos autorizados. Usuario debe dar permiso manualmente.');
         setConnectionStatus('disconnected');
         isAutoConnectingRef.current = false;
         return false;
@@ -489,7 +521,7 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
       const port = ports[0];
       const config = configRef.current;
       
-      console.log('🔌 Conectando a Pennsylvania Scale...');
+      console.log('🔌 Auto-conectando a Pennsylvania Scale...');
       
       await port.open({
         baudRate: config.baudRate,
@@ -509,7 +541,7 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
       const portInfo = port.getInfo();
       saveLastPort(portInfo);
 
-      console.log('✅ Pennsylvania Scale conectado exitosamente');
+      console.log('✅ Pennsylvania Scale auto-conectado exitosamente');
       console.log('📊 Configuración:', {
         baudRate: config.baudRate,
         protocol: config.protocol,
@@ -522,19 +554,13 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
       isAutoConnectingRef.current = false;
       return true;
     } catch (err: any) {
-      console.error('❌ Error de auto-conexión:', err.message);
-      setError(`Error de auto-conexión: ${err.message}`);
+      console.log('ℹ️ Auto-conexión no disponible en este momento');
       setConnectionStatus('disconnected');
+      setError(null); // No mostrar ningún error al usuario
       isAutoConnectingRef.current = false;
-      
-      // Programar reconexión
-      if (configRef.current.autoConnect) {
-        scheduleReconnect();
-      }
-      
       return false;
     }
-  }, [isSupported, readLoop, scheduleReconnect]);
+  }, [isSupported, readLoop, hasSerialAccess]);
 
   // Conectar manualmente (solicitar puerto al usuario)
   const connect = useCallback(async () => {
@@ -693,15 +719,26 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
     const config = configRef.current;
     
     if (config.autoConnect && isSupported && !isConnected) {
-      console.log('🚀 Auto-conexión habilitada para Pennsylvania Scale');
-      // Esperar 1 segundo antes de auto-conectar
+      // Verificar primero si tenemos acceso antes de intentar auto-conectar
+      const tryAutoConnect = async () => {
+        const hasAccess = await hasSerialAccess();
+        
+        if (hasAccess) {
+          console.log('🚀 Auto-conexión habilitada para Pennsylvania Scale');
+          await autoConnect();
+        } else {
+          console.log('ℹ️ Auto-conexión deshabilitada - esperando conexión manual del usuario');
+        }
+      };
+      
+      // Esperar 1 segundo antes de verificar e intentar auto-conectar
       const timeoutId = setTimeout(() => {
-        autoConnect();
+        tryAutoConnect();
       }, 1000);
       
       return () => clearTimeout(timeoutId);
     }
-  }, [isSupported, isConnected, autoConnect]);
+  }, [isSupported, isConnected, autoConnect, hasSerialAccess]);
 
   // Monitorear desconexiones y reconectar automáticamente
   useEffect(() => {
