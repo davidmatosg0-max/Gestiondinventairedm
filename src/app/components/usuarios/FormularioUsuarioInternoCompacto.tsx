@@ -167,6 +167,127 @@ export function FormularioUsuarioInternoCompacto({
 
             {/* Contenido principal con Tabs */}
             <div className="flex-1 flex flex-col overflow-hidden">
+              {esEmpresa ? (
+                /* ========================================
+                   FORMULARIO SIMPLIFICADO PARA EMPRESAS
+                   (Donador/Proveedor)
+                   ======================================== */
+                <div className="flex-1 overflow-y-auto px-6 py-6 scrollbar-thin">
+                  <div className="max-w-2xl mx-auto space-y-6">
+                    {/* Header */}
+                    <div className="text-center mb-6">
+                      <Building2 className="w-12 h-12 mx-auto mb-3" style={{ color: branding.primaryColor }} />
+                      <h3 className="text-xl font-bold mb-2" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
+                        {formData.categoria === 'donador' ? 'Informations du Donateur' : 'Informations du Fournisseur'}
+                      </h3>
+                      <p className="text-sm text-[#666666]">
+                        Complétez les informations essentielles de l'entreprise
+                      </p>
+                    </div>
+
+                    {/* 1. Nombre de la Empresa */}
+                    <div className="bg-gradient-to-r from-blue-50 to-white p-4 rounded-lg border-2 border-blue-200">
+                      <Label htmlFor="nombreEmpresa" className="text-sm font-semibold flex items-center gap-2 mb-2">
+                        <Building2 className="w-4 h-4" style={{ color: branding.primaryColor }} />
+                        {t('contacts.companyName')} *
+                      </Label>
+                      <Input
+                        id="nombreEmpresa"
+                        value={formData.nombreEmpresa || ''}
+                        onChange={(e) => setFormData({ ...formData, nombreEmpresa: e.target.value })}
+                        placeholder="Ex: Boulangerie Martin, Ferme Dupont..."
+                        className="h-11 text-base"
+                        style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
+                      />
+                    </div>
+
+                    {/* 2. Persona de Contacto */}
+                    <div className="bg-gradient-to-r from-green-50 to-white p-4 rounded-lg border-2 border-green-200">
+                      <Label htmlFor="contacto" className="text-sm font-semibold flex items-center gap-2 mb-2">
+                        <User className="w-4 h-4" style={{ color: branding.secondaryColor }} />
+                        {t('contacts.contactPerson')}
+                      </Label>
+                      <Input
+                        id="contacto"
+                        value={formData.contacto || ''}
+                        onChange={(e) => setFormData({ ...formData, contacto: e.target.value })}
+                        placeholder="Ex: Jean Martin, Marie Dupont..."
+                        className="h-11 text-base"
+                      />
+                      <p className="text-xs text-[#666666] mt-1.5">
+                        Nom de la personne responsable des communications
+                      </p>
+                    </div>
+
+                    {/* 3. Teléfono */}
+                    <div className="bg-gradient-to-r from-purple-50 to-white p-4 rounded-lg border-2 border-purple-200">
+                      <Label htmlFor="telefono" className="text-sm font-semibold flex items-center gap-2 mb-2">
+                        <Phone className="w-4 h-4 text-purple-600" />
+                        {t('contacts.phone')} *
+                      </Label>
+                      <Input
+                        id="telefono"
+                        type="tel"
+                        value={formData.telefono || ''}
+                        onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                        placeholder="(514) 555-0123"
+                        className="h-11 text-base"
+                      />
+                    </div>
+
+                    {/* 4. Dirección */}
+                    <div className="bg-gradient-to-r from-orange-50 to-white p-4 rounded-lg border-2 border-orange-200">
+                      <Label htmlFor="direccion-empresa" className="text-sm font-semibold flex items-center gap-2 mb-2">
+                        <MapPin className="w-4 h-4 text-orange-600" />
+                        {t('contacts.address')}
+                      </Label>
+                      <AddressAutocomplete
+                        value={formData.direccion || ''}
+                        onChange={(value) => setFormData({ ...formData, direccion: value })}
+                        placeholder="123 Rue Principale, Laval, QC"
+                        className="h-11 text-base"
+                      />
+                      <p className="text-xs text-[#666666] mt-1.5">
+                        Adresse complète de l'entreprise
+                      </p>
+                    </div>
+
+                    {/* 5. Email (opcional) */}
+                    <div className="bg-gradient-to-r from-indigo-50 to-white p-4 rounded-lg border-2 border-indigo-200">
+                      <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-2 mb-2">
+                        <Mail className="w-4 h-4 text-indigo-600" />
+                        {t('contacts.email')}
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email || ''}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="contact@entreprise.com"
+                        className="h-11 text-base"
+                      />
+                    </div>
+
+                    {/* Campos ocultos pero necesarios */}
+                    <input type="hidden" value={formData.categoria || ''} />
+                    
+                    {/* Nota informativa */}
+                    <div className="mt-6 p-4 bg-blue-50 border-l-4 rounded" style={{ borderColor: branding.primaryColor }}>
+                      <p className="text-xs text-[#666666] flex items-start gap-2">
+                        <span className="text-lg">ℹ️</span>
+                        <span>
+                          <strong>Formulaire simplifié:</strong> Seules les informations essentielles sont requises pour les {formData.categoria === 'donador' ? 'donateurs' : 'fournisseurs'}. 
+                          Vous pourrez ajouter plus de détails ultérieurement si nécessaire.
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* ========================================
+                   FORMULARIO COMPLETO PARA PERSONAS
+                   (Voluntarios, Empleados, etc.)
+                   ======================================== */
               <Tabs defaultValue="base" className="flex-1 flex flex-col">
                 <TabsList className="w-full justify-start rounded-none border-b bg-[#F9FAFB] px-6 py-0 h-12">
                   <TabsTrigger value="base" className="data-[state=active]:border-b-2" style={{ borderColor: branding.primaryColor }}>
@@ -177,24 +298,18 @@ export function FormularioUsuarioInternoCompacto({
                     <Phone className="w-4 h-4 mr-2" />
                     {t('contacts.contact')}
                   </TabsTrigger>
-                  
-                  {/* Solo mostrar tabs adicionales si NO es Donador o Proveedor */}
-                  {!esEmpresa && (
-                    <>
-                      <TabsTrigger value="pro" className="data-[state=active]:border-b-2" style={{ borderColor: branding.primaryColor }}>
-                        <Briefcase className="w-4 h-4 mr-2" />
-                        {t('contacts.professional')}
-                      </TabsTrigger>
-                      <TabsTrigger value="disponibilite" className="data-[state=active]:border-b-2" style={{ borderColor: branding.primaryColor }}>
-                        <Calendar className="w-4 h-4 mr-2" />
-                        {t('contacts.availability')}
-                      </TabsTrigger>
-                      <TabsTrigger value="autres" className="data-[state=active]:border-b-2" style={{ borderColor: branding.primaryColor }}>
-                        <Settings className="w-4 h-4 mr-2" />
-                        {t('contacts.other')}
-                      </TabsTrigger>
-                    </>
-                  )}
+                  <TabsTrigger value="pro" className="data-[state=active]:border-b-2" style={{ borderColor: branding.primaryColor }}>
+                    <Briefcase className="w-4 h-4 mr-2" />
+                    {t('contacts.professional')}
+                  </TabsTrigger>
+                  <TabsTrigger value="disponibilite" className="data-[state=active]:border-b-2" style={{ borderColor: branding.primaryColor }}>
+                    <Calendar className="w-4 h-4 mr-2" />
+                    {t('contacts.availability')}
+                  </TabsTrigger>
+                  <TabsTrigger value="autres" className="data-[state=active]:border-b-2" style={{ borderColor: branding.primaryColor }}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    {t('contacts.other')}
+                  </TabsTrigger>
                 </TabsList>
 
                 {/* Tab: Información Base */}
@@ -534,28 +649,7 @@ export function FormularioUsuarioInternoCompacto({
                   </div>
                 </TabsContent>
               </Tabs>
-
-              {/* Footer con botones de acción */}
-              <div className="sticky bottom-0 bg-white border-t-2 border-[#E0E0E0] px-6 py-3 shadow-sm flex justify-end gap-3">
-                <Button
-                  variant="outline"
-                  onClick={onCerrar}
-                  style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
-                >
-                  {t('common.cancel')}
-                </Button>
-                <Button
-                  onClick={onGuardar}
-                  className="text-white"
-                  style={{ 
-                    backgroundColor: branding.primaryColor,
-                    fontFamily: 'Montserrat, sans-serif',
-                    fontWeight: 600
-                  }}
-                >
-                  {modoEdicion ? t('common.save') : t('common.create')}
-                </Button>
-              </div>
+              )}
             </div>
           </div>
         </div>
