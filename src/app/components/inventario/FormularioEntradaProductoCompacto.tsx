@@ -752,13 +752,16 @@ export function FormularioEntradaProductoCompacto({
 
       {/* Diálogo de selección de contactos */}
       <Dialog open={dialogContactos} onOpenChange={setDialogContactos}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogContent 
+          className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col"
+          aria-describedby="contactos-dialog-description"
+        >
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               <Users className="w-5 h-5 inline mr-2" />
               Sélectionner un fournisseur ou donateur
             </DialogTitle>
-            <DialogDescription id="select-contact-description">
+            <DialogDescription id="contactos-dialog-description">
               Choisissez un contact du répertoire pour auto-compléter les informations
             </DialogDescription>
           </DialogHeader>

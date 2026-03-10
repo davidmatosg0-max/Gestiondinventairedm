@@ -100,6 +100,7 @@ interface FormularioNouveauBenevoleProps {
     color: string;
     bgColor: string;
   };
+  isEditing: boolean;
 }
 
 // Tipos de bénévole
@@ -122,7 +123,8 @@ export function FormularioNouveauBenevole({
   photoPreview,
   onPhotoChange,
   generateIdentifiant,
-  getTipoBenevoleConfig
+  getTipoBenevoleConfig,
+  isEditing
 }: FormularioNouveauBenevoleProps) {
   const branding = useBranding();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -220,15 +222,15 @@ export function FormularioNouveauBenevole({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
         className="!max-w-none !w-[95vw] !max-h-[95vh] !h-[95vh] overflow-hidden p-0 m-0 rounded-xl"
+        aria-describedby="formulario-benevole-description"
       >
         <div className="h-full flex flex-col">
           <DialogHeader className="sticky top-0 z-10 bg-white border-b-2 border-[#E0E0E0] px-6 py-3 shadow-sm">
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '1.25rem' }}>
-              <Users className="w-5 h-5 inline mr-2" />
-              Enregistrer un nouveau bénévole
+              {isEditing ? 'Modifier le bénévole' : 'Nouveau bénévole'}
             </DialogTitle>
-            <DialogDescription id="benevole-form-description" className="sr-only">
-              Formulaire d'enregistrement d'un nouveau bénévole
+            <DialogDescription id="formulario-benevole-description" className="sr-only">
+              Formulaire pour créer ou modifier un bénévole avec ses informations personnelles et ses disponibilités
             </DialogDescription>
           </DialogHeader>
           

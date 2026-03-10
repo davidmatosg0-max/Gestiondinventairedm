@@ -29,7 +29,10 @@ export function LanguageSelector() {
 
   return (
     <div className="flex items-center gap-1 sm:gap-2">
-      <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-white hidden sm:block" />
+      <Globe 
+        className="w-4 h-4 sm:w-5 sm:h-5 text-white hidden sm:block"
+        aria-hidden="true"
+      />
       <Select value={i18n.language} onValueChange={handleLanguageChange}>
         <SelectTrigger className="w-[100px] sm:w-[140px] md:w-[160px] bg-white/10 border-white/20 text-white hover:bg-white/20 transition-colors text-xs sm:text-sm">
           <SelectValue>

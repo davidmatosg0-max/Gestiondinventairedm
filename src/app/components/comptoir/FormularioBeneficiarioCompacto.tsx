@@ -89,15 +89,16 @@ export function FormularioBeneficiarioCompacto({
     <Dialog open={abierto} onOpenChange={onCerrar}>
       <DialogContent 
         className="!max-w-none !w-[95vw] !max-h-[95vh] !h-[95vh] overflow-hidden p-0 m-0 rounded-xl"
+        aria-describedby="formulario-beneficiario-description"
       >
         <div className="h-full flex flex-col">
           <DialogHeader className="sticky top-0 z-10 bg-white border-b-2 border-[#E0E0E0] px-6 py-3 shadow-sm">
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '1.25rem' }}>
               <Users className="w-5 h-5 inline mr-2" />
-              {modoEdicion ? t('comptoir.editBeneficiary') : t('comptoir.newBeneficiary')}
+              {modoEdicion ? 'Modifier Bénéficiaire' : 'Nouveau Bénéficiaire'}
             </DialogTitle>
-            <DialogDescription id="beneficiary-form-description" className="sr-only">
-              {modoEdicion ? t('comptoir.editBeneficiaryDescription') : t('comptoir.newBeneficiaryDescription')}
+            <DialogDescription id="formulario-beneficiario-description" className="sr-only">
+              Formulaire pour créer ou modifier un bénéficiaire avec ses informations personnelles et familiales
             </DialogDescription>
           </DialogHeader>
           

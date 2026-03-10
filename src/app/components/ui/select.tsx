@@ -47,7 +47,7 @@ const SelectTrigger = React.forwardRef<
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="size-4 opacity-50" />
+        <ChevronDownIcon className="size-4 opacity-50" aria-hidden="true" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
@@ -163,7 +163,7 @@ const SelectScrollUpButton = React.forwardRef<
       )}
       {...props}
     >
-      <ChevronUpIcon className="size-4" />
+      <ChevronUpIcon className="size-4" aria-hidden="true" />
     </SelectPrimitive.ScrollUpButton>
   );
 });
@@ -184,7 +184,7 @@ const SelectScrollDownButton = React.forwardRef<
       )}
       {...props}
     >
-      <ChevronDownIcon className="size-4" />
+      <ChevronDownIcon className="size-4" aria-hidden="true" />
     </SelectPrimitive.ScrollDownButton>
   );
 });

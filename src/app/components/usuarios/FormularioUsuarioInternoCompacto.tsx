@@ -66,7 +66,20 @@ export function FormularioUsuarioInternoCompacto({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const categoriaConfig = getCategoriaConfig();
 
-  const esEmpresa = formData.categoria === 'donador' || formData.categoria === 'vendedor';
+  // Detectar si es donador (4 campos) o vendedor/proveedor (5 campos)
+  const esDonador = formData.categoria === 'donador';
+  const esVendedor = formData.categoria === 'vendedor';
+  const esEmpresa = esDonador || esVendedor;
+
+  // Debug: verificar detección - ACTUALIZADO con email incluido
+  console.log('🔍 FormularioUsuarioInternoCompacto - Debug (v2):', {
+    categoria: formData.categoria,
+    esDonador,
+    esVendedor,
+    esEmpresa,
+    nombreEmpresa: formData.nombreEmpresa,
+    email: formData.email
+  });
 
   return (
     <Dialog open={abierto} onOpenChange={onCerrar}>
@@ -81,7 +94,9 @@ export function FormularioUsuarioInternoCompacto({
               {modoEdicion ? t('contacts.editContact') : t('contacts.newContact')}
             </DialogTitle>
             <DialogDescription id="contact-form-description" className="sr-only">
-              {modoEdicion ? t('contacts.editContactDescription') : t('contacts.newContactDescription')}
+              {modoEdicion 
+                ? 'Modifier les informations du contact interne' 
+                : 'Créer un nouveau contact interne avec ses informations de base, coordonnées et disponibilités'}
             </DialogDescription>
           </DialogHeader>
           
@@ -219,7 +234,26 @@ export function FormularioUsuarioInternoCompacto({
                       </p>
                     </div>
 
-                    {/* 3. Teléfono */}
+                    {/* 3. Email de la Persona de Contacto */}
+                    <div className="bg-gradient-to-r from-indigo-50 to-white p-4 rounded-lg border-2 border-indigo-200">
+                      <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-2 mb-2">
+                        <Mail className="w-4 h-4 text-indigo-600" />
+                        {t('contacts.email')}
+                      </Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email || ''}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="contact@entreprise.com"
+                        className="h-11 text-base"
+                      />
+                      <p className="text-xs text-[#666666] mt-1.5">
+                        Courriel de la personne de contact
+                      </p>
+                    </div>
+
+                    {/* 4. Teléfono */}
                     <div className="bg-gradient-to-r from-purple-50 to-white p-4 rounded-lg border-2 border-purple-200">
                       <Label htmlFor="telefono" className="text-sm font-semibold flex items-center gap-2 mb-2">
                         <Phone className="w-4 h-4 text-purple-600" />
@@ -235,7 +269,7 @@ export function FormularioUsuarioInternoCompacto({
                       />
                     </div>
 
-                    {/* 4. Dirección */}
+                    {/* 5. Dirección */}
                     <div className="bg-gradient-to-r from-orange-50 to-white p-4 rounded-lg border-2 border-orange-200">
                       <Label htmlFor="direccion-empresa" className="text-sm font-semibold flex items-center gap-2 mb-2">
                         <MapPin className="w-4 h-4 text-orange-600" />
@@ -252,21 +286,26 @@ export function FormularioUsuarioInternoCompacto({
                       </p>
                     </div>
 
-                    {/* 5. Email (opcional) */}
-                    <div className="bg-gradient-to-r from-indigo-50 to-white p-4 rounded-lg border-2 border-indigo-200">
-                      <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-2 mb-2">
-                        <Mail className="w-4 h-4 text-indigo-600" />
-                        {t('contacts.email')}
-                      </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={formData.email || ''}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="contact@entreprise.com"
-                        className="h-11 text-base"
-                      />
-                    </div>
+                    {/* Email adicional solo para vendedor/proveedor */}
+                    {esVendedor && (
+                      <div className="bg-gradient-to-r from-teal-50 to-white p-4 rounded-lg border-2 border-teal-200">
+                        <Label htmlFor="email-adicional" className="text-sm font-semibold flex items-center gap-2 mb-2">
+                          <Mail className="w-4 h-4 text-teal-600" />
+                          Email Adicional (Fournisseur)
+                        </Label>
+                        <Input
+                          id="email-adicional"
+                          type="email"
+                          value={formData.emailAdicional || ''}
+                          onChange={(e) => setFormData({ ...formData, emailAdicional: e.target.value })}
+                          placeholder="info@fournisseur.com"
+                          className="h-11 text-base"
+                        />
+                        <p className="text-xs text-[#666666] mt-1.5">
+                          Adresse email alternative ou générique
+                        </p>
+                      </div>
+                    )}
 
                     {/* Campos ocultos pero necesarios */}
                     <input type="hidden" value={formData.categoria || ''} />
@@ -276,7 +315,7 @@ export function FormularioUsuarioInternoCompacto({
                       <p className="text-xs text-[#666666] flex items-start gap-2">
                         <span className="text-lg">ℹ️</span>
                         <span>
-                          <strong>Formulaire simplifié:</strong> Seules les informations essentielles sont requises pour les {formData.categoria === 'donador' ? 'donateurs' : 'fournisseurs'}. 
+                          <strong>Formulaire simplifié:</strong> Seules les informations essentielles sont requises pour les {esDonador ? 'donateurs' : 'fournisseurs'}. 
                           Vous pourrez ajouter plus de détails ultérieurement si nécessaire.
                         </span>
                       </p>
@@ -651,6 +690,24 @@ export function FormularioUsuarioInternoCompacto({
               </Tabs>
               )}
             </div>
+          </div>
+
+          {/* Footer con botones */}
+          <div className="sticky bottom-0 border-t-2 border-[#E0E0E0] bg-white px-6 py-4 flex justify-end gap-3 shadow-lg">
+            <Button
+              variant="outline"
+              onClick={onCerrar}
+              className="px-6"
+            >
+              ❌ {t('common.cancel')}
+            </Button>
+            <Button
+              onClick={onGuardar}
+              className="px-6 text-white"
+              style={{ backgroundColor: branding.primaryColor }}
+            >
+              💾 {t('common.save')}
+            </Button>
           </div>
         </div>
       </DialogContent>
