@@ -163,6 +163,7 @@ export function FormularioContactoEntrepotCompacto({
     <Dialog open={abierto} onOpenChange={onCerrar}>
       <DialogContent 
         className="!max-w-none !w-[95vw] !max-h-[95vh] !h-[95vh] overflow-hidden p-0 m-0 rounded-xl"
+        aria-describedby="formulario-contacto-entrepot-description"
       >
         <div className="h-full flex flex-col bg-[#F5F5F5]">
           {/* Header compacto */}
@@ -172,10 +173,10 @@ export function FormularioContactoEntrepotCompacto({
               style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '0.95rem' }}
             >
               <User className="w-4 h-4" />
-              Enregistrer un nouveau contact
+              {modoEdicion ? 'Modifier le contact' : 'Nouveau Contact - Entrepôt'}
             </DialogTitle>
-            <DialogDescription id="contact-warehouse-form-description" className="sr-only">
-              Formulaire de contact pour l'entrepôt
+            <DialogDescription id="formulario-contacto-entrepot-description" className="sr-only">
+              {modoEdicion ? 'Modifier les informations du contact Entrepôt' : 'Créer un nouveau contact pour le département Entrepôt'}
             </DialogDescription>
           </div>
           

@@ -194,7 +194,7 @@ export function GestionUnidades() {
 
       {/* Diálogo Crear/Editar Unidad */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="gestion-unidad-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               {modoEdicion ? '✏️ Editar Unidad' : '✨ Nueva Unidad'}
