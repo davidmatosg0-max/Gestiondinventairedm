@@ -177,18 +177,24 @@ export function FormularioUsuarioInternoCompacto({
                     <Phone className="w-4 h-4 mr-2" />
                     {t('contacts.contact')}
                   </TabsTrigger>
-                  <TabsTrigger value="pro" className="data-[state=active]:border-b-2" style={{ borderColor: branding.primaryColor }}>
-                    <Briefcase className="w-4 h-4 mr-2" />
-                    {t('contacts.professional')}
-                  </TabsTrigger>
-                  <TabsTrigger value="disponibilite" className="data-[state=active]:border-b-2" style={{ borderColor: branding.primaryColor }}>
-                    <Calendar className="w-4 h-4 mr-2" />
-                    {t('contacts.availability')}
-                  </TabsTrigger>
-                  <TabsTrigger value="autres" className="data-[state=active]:border-b-2" style={{ borderColor: branding.primaryColor }}>
-                    <Settings className="w-4 h-4 mr-2" />
-                    {t('contacts.other')}
-                  </TabsTrigger>
+                  
+                  {/* Solo mostrar tabs adicionales si NO es Donador o Proveedor */}
+                  {!esEmpresa && (
+                    <>
+                      <TabsTrigger value="pro" className="data-[state=active]:border-b-2" style={{ borderColor: branding.primaryColor }}>
+                        <Briefcase className="w-4 h-4 mr-2" />
+                        {t('contacts.professional')}
+                      </TabsTrigger>
+                      <TabsTrigger value="disponibilite" className="data-[state=active]:border-b-2" style={{ borderColor: branding.primaryColor }}>
+                        <Calendar className="w-4 h-4 mr-2" />
+                        {t('contacts.availability')}
+                      </TabsTrigger>
+                      <TabsTrigger value="autres" className="data-[state=active]:border-b-2" style={{ borderColor: branding.primaryColor }}>
+                        <Settings className="w-4 h-4 mr-2" />
+                        {t('contacts.other')}
+                      </TabsTrigger>
+                    </>
+                  )}
                 </TabsList>
 
                 {/* Tab: Información Base */}
