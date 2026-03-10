@@ -34,6 +34,8 @@ import { Toaster } from './components/ui/sonner';
 import { PWAInstaller } from './components/PWAInstaller';
 // LIMPIEZA COMPLETA DEL SISTEMA
 import { ejecutarLimpiezaCompleta, yaEjecutadaLimpiezaCompleta } from './utils/limpiezaCompleta';
+// Funciones de limpieza para producción (disponibles en consola)
+import './utils/limpiarDatosProduccion';
 import { inicializarUnidades } from './utils/unidadStorage';
 import { inicializarDepartamentos } from './utils/departamentosStorage';
 import { migrarClavesDeAcceso } from './utils/organismosStorage';

@@ -100,3 +100,14 @@ export function obtenerEstadisticasComandas() {
     anuladas: comandas.filter(c => c.estado === 'anulada').length,
   };
 }
+
+// Limpiar todas las comandas (útil para producción)
+export function limpiarTodasLasComandas(): void {
+  try {
+    localStorage.setItem(COMANDAS_KEY, JSON.stringify([]));
+    console.log('✅ Todas las comandas han sido eliminadas');
+  } catch (error) {
+    console.error('Error al limpiar comandas:', error);
+    throw error;
+  }
+}
