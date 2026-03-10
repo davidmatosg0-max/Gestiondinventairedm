@@ -5,6 +5,26 @@ Este documento explica cómo limpiar las comandas y otros datos de ejemplo del s
 
 ---
 
+## ⚡ NUEVO: MODO PRODUCCIÓN
+
+**¿Quieres que el sistema solo acepte datos reales?**
+
+Después de limpiar, activa el **Modo Producción**:
+
+```javascript
+modoProduccion.configurar()
+```
+
+Esto activará el modo producción donde:
+- ✅ Solo se aceptan datos reales
+- ✅ Sin datos de ejemplo
+- ✅ Usuario David permanente
+- ✅ Todas las creaciones son datos reales
+
+📖 **Más info:** Ver `/MODO_PRODUCCION.md` o `/INICIO_RAPIDO_PRODUCCION.md`
+
+---
+
 ## 🎯 Limpiar Solo las Comandas (3 comandas en el Tableau de Bord)
 
 ### Opción 1: Desde la Consola del Navegador (Recomendado)

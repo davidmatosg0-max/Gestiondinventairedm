@@ -32,10 +32,13 @@ import { DashboardPredictivo } from './components/pages/DashboardPredictivo';
 import { GestionAutenticacion } from './components/pages/GestionAutenticacion';
 import { Toaster } from './components/ui/sonner';
 import { PWAInstaller } from './components/PWAInstaller';
+import { UpdateNotification } from './components/UpdateNotification';
 // LIMPIEZA COMPLETA DEL SISTEMA
 import { ejecutarLimpiezaCompleta, yaEjecutadaLimpiezaCompleta } from './utils/limpiezaCompleta';
 // Funciones de limpieza para producción (disponibles en consola)
 import './utils/limpiarDatosProduccion';
+// Modo Producción - Control de datos reales
+import './utils/modoProduccion';
 import { inicializarUnidades } from './utils/unidadStorage';
 import { inicializarDepartamentos } from './utils/departamentosStorage';
 import { migrarClavesDeAcceso } from './utils/organismosStorage';
@@ -228,6 +231,7 @@ function AppContent() {
       </Layout>
       <Toaster position="top-right" />
       <PWAInstaller />
+      <UpdateNotification />
     </BalanceProvider>
   );
 }
