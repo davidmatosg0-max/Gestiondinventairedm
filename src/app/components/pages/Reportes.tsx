@@ -52,6 +52,7 @@ export function Reportes() {
   ];
 
   const datosOrganismos = mockOrganismos.map((org, index) => ({
+    id: org.id || `org-${index}`,
     nombre: org.nombre.length > 15 ? org.nombre.substring(0, 15) + '...' : org.nombre,
     beneficiarios: org.beneficiarios
   }));
@@ -307,7 +308,7 @@ export function Reportes() {
                 <h3 className="text-base sm:text-lg font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
                   {t('reports.ordersMonth')}
                 </h3>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={300} key="linechart-comandas-mes">
                   <LineChart data={datosComandasMes}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="mes" />
@@ -323,7 +324,7 @@ export function Reportes() {
                 <h3 className="text-base sm:text-lg font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
                   {t('reports.beneficiariesOrganism')}
                 </h3>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={300} key="barchart-organismos">
                   <BarChart data={datosOrganismos}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="nombre" angle={-45} textAnchor="end" height={100} />
@@ -343,7 +344,7 @@ export function Reportes() {
                 <h3 className="text-base sm:text-lg font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
                   {t('reports.stockCategory')}
                 </h3>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={300} key="barchart-inventario">
                   <BarChart data={datosInventario}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="categoria" />
@@ -358,7 +359,7 @@ export function Reportes() {
                 <h3 className="text-base sm:text-lg font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
                   {t('reports.inventoryDistribution')}
                 </h3>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={300} key="piechart-inventario">
                   <PieChart>
                     <Pie
                       data={datosInventario}
@@ -370,8 +371,8 @@ export function Reportes() {
                       fill="#8884d8"
                       dataKey="stock"
                     >
-                      {datosInventario.map((entry) => (
-                        <Cell key={entry.categoria} fill={COLORS[datosInventario.indexOf(entry) % COLORS.length]} />
+                      {datosInventario.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip />
@@ -386,7 +387,7 @@ export function Reportes() {
               <h3 className="text-base sm:text-lg font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
                 {t('reports.ordersEvolution')}
               </h3>
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={400} key="barchart-comandas">
                 <BarChart data={datosComandasMes}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="mes" />
@@ -404,7 +405,7 @@ export function Reportes() {
               <h3 className="text-base sm:text-lg font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
                 {t('reports.prsRescueMonth')}
               </h3>
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={400} key="linechart-prs">
                 <LineChart data={datosPRS}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="mes" />

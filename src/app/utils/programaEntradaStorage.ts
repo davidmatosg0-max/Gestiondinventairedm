@@ -164,3 +164,15 @@ export function obtenerProgramaPorTipoEntrada(tipoEntrada: string): ProgramaEntr
   const programas = obtenerProgramasActivos();
   return programas.find(p => p.codigo.toLowerCase() === tipoEntrada.toLowerCase()) || null;
 }
+
+/**
+ * Limpiar todos los programas de entrada del localStorage
+ */
+export function limpiarProgramasEntrada(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    console.log('✅ Programas de entrada limpiados del localStorage');
+  } catch (error) {
+    console.error('Error al limpiar programas de entrada:', error);
+  }
+}

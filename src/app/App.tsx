@@ -47,6 +47,8 @@ import { corregirContactosEntrepotAutomaticamente } from './utils/correccionCont
 import { runDataMigrations } from './utils/dataMigration';
 import { inicializarAutoBackup } from './utils/autoBackupStorage';
 import { inicializarFileSystem } from './utils/fileSystemAccess';
+import { limpiarCategorias } from './utils/categoriaStorage';
+import { limpiarProgramasEntrada } from './utils/programaEntradaStorage';
 
 // Componente interno que usa el contexto de autenticación
 function AppContent() {
@@ -58,6 +60,10 @@ function AppContent() {
   useEffect(() => {
     // 🔒 EJECUTAR MIGRACIONES DE DATOS PRIMERO
     runDataMigrations();
+    
+    // 🗑️ LIMPIAR CATEGORÍAS Y PROGRAMAS PREDETERMINADOS
+    limpiarCategorias();
+    limpiarProgramasEntrada();
     
     // ===== DESACTIVADO: Ofertas de ejemplo =====
     // crearOfertasEjemplo();

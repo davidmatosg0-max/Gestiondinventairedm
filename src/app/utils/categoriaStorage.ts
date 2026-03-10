@@ -414,3 +414,15 @@ export function calcularValorMonetario(
   
   return parseFloat((peso * valorPorKg).toFixed(2));
 }
+
+/**
+ * Limpiar todas las categorías del localStorage
+ */
+export function limpiarCategorias(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    console.log('✅ Categorías limpiadas del localStorage');
+  } catch (error) {
+    console.error('Error al limpiar categorías:', error);
+  }
+}
