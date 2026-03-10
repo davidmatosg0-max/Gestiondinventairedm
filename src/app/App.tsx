@@ -44,6 +44,7 @@ import { logger, showWelcomeBanner } from './utils/logger';
 import { runDataMigrations } from './utils/dataMigration';
 import { inicializarAutoBackup } from './utils/autoBackupStorage';
 import { inicializarFileSystem } from './utils/fileSystemAccess';
+import { sistemaConDatosReales } from './utils/inicializarDatosEjemplo';
 
 // Componente interno que usa el contexto de autenticación
 function AppContent() {
@@ -53,6 +54,12 @@ function AppContent() {
 
   // Crear ofertas de ejemplo e inicializar unidades al cargar la app
   useEffect(() => {
+    // 🔒 PROTECCIÓN DE DATOS REALES
+    // Verificar si el sistema tiene datos reales y marcarlos como protegidos
+    if (sistemaConDatosReales()) {
+      logger.info('🔒 SISTEMA CON DATOS REALES DETECTADO - Protección activada');
+    }
+    
     // 🔒 EJECUTAR MIGRACIONES DE DATOS PRIMERO
     runDataMigrations();
     

@@ -1,6 +1,256 @@
 // Sistema de usuarios con credenciales
 // Usuarios predefinidos del sistema
 
+// 🎭 ROLES DEL SISTEMA
+export type RolUsuario = 
+  | 'desarrollador'           // Acceso total al sistema, debugging, configuración avanzada
+  | 'administrador'           // Gestión completa del sistema
+  | 'coordinador'             // Coordinación de operaciones, inventario y comandas
+  | 'responsable_entrepot'    // Gestión del almacén e inventario
+  | 'responsable_comptoir'    // Gestión del comptoir y beneficiarios
+  | 'responsable_transport'   // Gestión de transporte y logística
+  | 'liaison_organisme'       // Comunicación y gestión de organismos
+  | 'benevole_comptoir'       // Voluntario del comptoir
+  | 'benevole_entrepot'       // Voluntario del almacén
+  | 'employe'                 // Empleado general
+  | 'visualizador';           // Solo lectura
+
+// 🔐 PERMISOS DEL SISTEMA
+export const PERMISOS = {
+  // Permisos de Desarrollador
+  DESARROLLADOR: 'desarrollador',
+  ACCESO_TOTAL: 'acceso_total',
+  DEBUG_MODE: 'debug_mode',
+  
+  // Permisos de Administración General
+  ADMINISTRADOR_GENERAL: 'administrador_general',
+  GESTION_USUARIOS: 'gestion_usuarios',
+  GESTION_ROLES: 'gestion_roles',
+  CONFIGURACION_SISTEMA: 'configuracion_sistema',
+  BACKUP_RESTAURACION: 'backup_restauracion',
+  
+  // Permisos de Coordinación
+  COORDINADOR: 'coordinador',
+  GESTION_ORGANISMOS: 'gestion_organismos',
+  GESTION_COMANDAS: 'gestion_comandas',
+  GESTION_INVENTARIO: 'gestion_inventario',
+  REPORTES_AVANZADOS: 'reportes_avanzados',
+  
+  // Permisos de Entrepôt (Almacén)
+  RESPONSABLE_ENTREPOT: 'responsable_entrepot',
+  GESTION_PRODUCTOS: 'gestion_productos',
+  MOVIMIENTOS_INVENTARIO: 'movimientos_inventario',
+  GESTION_PRS: 'gestion_prs',
+  RECEPCION_PRODUCTOS: 'recepcion_productos',
+  
+  // Permisos de Comptoir
+  RESPONSABLE_COMPTOIR: 'responsable_comptoir',
+  GESTION_BENEFICIARIOS: 'gestion_beneficiarios',
+  GESTION_RENDEZ_VOUS: 'gestion_rendez_vous',
+  GESTION_AIDE_ALIMENTAIRE: 'gestion_aide_alimentaire',
+  REGISTRO_VISITAS: 'registro_visitas',
+  
+  // Permisos de Transport
+  RESPONSABLE_TRANSPORT: 'responsable_transport',
+  GESTION_VEHICULOS: 'gestion_vehiculos',
+  GESTION_RUTAS: 'gestion_rutas',
+  GESTION_TRANSPORTES: 'gestion_transportes',
+  TRACKING_GPS: 'tracking_gps',
+  
+  // Permisos de Liaison (Comunicación)
+  ADMINISTRADOR_LIAISON: 'administrador_liaison',
+  COMUNICACION_ORGANISMOS: 'comunicacion_organismos',
+  GESTION_OFERTAS: 'gestion_ofertas',
+  VERIFICACION_ORGANISMOS: 'verificacion_organismos',
+  
+  // Permisos de Bénévoles
+  BENEVOLE_LECTEUR: 'benevole_lecteur',
+  AIDE_COMPTOIR: 'aide_comptoir',
+  AIDE_ENTREPOT: 'aide_entrepot',
+  
+  // Permisos de Empleados
+  EMPLOYE_GENERAL: 'employe_general',
+  
+  // Permisos de Visualización
+  VISUALIZADOR: 'visualizador',
+  VER_DASHBOARD: 'ver_dashboard',
+  VER_REPORTES: 'ver_reportes',
+  VER_INVENTARIO: 'ver_inventario'
+} as const;
+
+// 🎯 CONFIGURACIÓN DE ROLES Y SUS PERMISOS
+export const ROLES_CONFIG: Record<RolUsuario, {
+  nombre: string;
+  descripcion: string;
+  color: string;
+  permisos: string[];
+}> = {
+  desarrollador: {
+    nombre: 'Développeur',
+    descripcion: 'Accès complet au système avec permissions de développement et debugging',
+    color: '#000000',
+    permisos: [
+      PERMISOS.DESARROLLADOR,
+      PERMISOS.ACCESO_TOTAL,
+      PERMISOS.DEBUG_MODE,
+      PERMISOS.ADMINISTRADOR_GENERAL,
+      PERMISOS.GESTION_USUARIOS,
+      PERMISOS.GESTION_ROLES,
+      PERMISOS.CONFIGURACION_SISTEMA,
+      PERMISOS.BACKUP_RESTAURACION
+    ]
+  },
+  
+  administrador: {
+    nombre: 'Administrateur',
+    descripcion: 'Gestion complète du système et de toutes les opérations',
+    color: '#DC3545',
+    permisos: [
+      PERMISOS.ADMINISTRADOR_GENERAL,
+      PERMISOS.GESTION_USUARIOS,
+      PERMISOS.GESTION_ROLES,
+      PERMISOS.CONFIGURACION_SISTEMA,
+      PERMISOS.BACKUP_RESTAURACION,
+      PERMISOS.COORDINADOR,
+      PERMISOS.GESTION_ORGANISMOS,
+      PERMISOS.GESTION_COMANDAS,
+      PERMISOS.GESTION_INVENTARIO,
+      PERMISOS.REPORTES_AVANZADOS,
+      PERMISOS.GESTION_PRODUCTOS,
+      PERMISOS.GESTION_BENEFICIARIOS,
+      PERMISOS.GESTION_VEHICULOS,
+      PERMISOS.GESTION_RUTAS,
+      PERMISOS.ADMINISTRADOR_LIAISON
+    ]
+  },
+  
+  coordinador: {
+    nombre: 'Coordinateur',
+    descripcion: 'Coordination des opérations, gestion des commandes et de l\'inventaire',
+    color: '#1E73BE',
+    permisos: [
+      PERMISOS.COORDINADOR,
+      PERMISOS.GESTION_ORGANISMOS,
+      PERMISOS.GESTION_COMANDAS,
+      PERMISOS.GESTION_INVENTARIO,
+      PERMISOS.REPORTES_AVANZADOS,
+      PERMISOS.MOVIMIENTOS_INVENTARIO,
+      PERMISOS.GESTION_OFERTAS,
+      PERMISOS.VER_DASHBOARD,
+      PERMISOS.VER_REPORTES
+    ]
+  },
+  
+  responsable_entrepot: {
+    nombre: 'Responsable Entrepôt',
+    descripcion: 'Gestion de l\'entrepôt, inventaire et réception des produits',
+    color: '#4CAF50',
+    permisos: [
+      PERMISOS.RESPONSABLE_ENTREPOT,
+      PERMISOS.GESTION_PRODUCTOS,
+      PERMISOS.MOVIMIENTOS_INVENTARIO,
+      PERMISOS.GESTION_PRS,
+      PERMISOS.RECEPCION_PRODUCTOS,
+      PERMISOS.GESTION_INVENTARIO,
+      PERMISOS.VER_DASHBOARD,
+      PERMISOS.VER_INVENTARIO
+    ]
+  },
+  
+  responsable_comptoir: {
+    nombre: 'Responsable Comptoir',
+    descripcion: 'Gestion du comptoir, bénéficiaires et distribution d\'aide',
+    color: '#2d9561',
+    permisos: [
+      PERMISOS.RESPONSABLE_COMPTOIR,
+      PERMISOS.GESTION_BENEFICIARIOS,
+      PERMISOS.GESTION_RENDEZ_VOUS,
+      PERMISOS.GESTION_AIDE_ALIMENTAIRE,
+      PERMISOS.REGISTRO_VISITAS,
+      PERMISOS.VER_DASHBOARD,
+      PERMISOS.VER_REPORTES
+    ]
+  },
+  
+  responsable_transport: {
+    nombre: 'Responsable Transport',
+    descripcion: 'Gestion du transport, véhicules, routes et livraisons',
+    color: '#FFC107',
+    permisos: [
+      PERMISOS.RESPONSABLE_TRANSPORT,
+      PERMISOS.GESTION_VEHICULOS,
+      PERMISOS.GESTION_RUTAS,
+      PERMISOS.GESTION_TRANSPORTES,
+      PERMISOS.TRACKING_GPS,
+      PERMISOS.VER_DASHBOARD,
+      PERMISOS.VER_REPORTES
+    ]
+  },
+  
+  liaison_organisme: {
+    nombre: 'Liaison Organisme',
+    descripcion: 'Communication avec les organismes et gestion des relations',
+    color: '#9C27B0',
+    permisos: [
+      PERMISOS.ADMINISTRADOR_LIAISON,
+      PERMISOS.COMUNICACION_ORGANISMOS,
+      PERMISOS.GESTION_OFERTAS,
+      PERMISOS.VERIFICACION_ORGANISMOS,
+      PERMISOS.GESTION_ORGANISMOS,
+      PERMISOS.VER_DASHBOARD,
+      PERMISOS.VER_REPORTES
+    ]
+  },
+  
+  benevole_comptoir: {
+    nombre: 'Bénévole Comptoir',
+    descripcion: 'Aide au comptoir et assistance aux bénéficiaires',
+    color: '#17A2B8',
+    permisos: [
+      PERMISOS.BENEVOLE_LECTEUR,
+      PERMISOS.AIDE_COMPTOIR,
+      PERMISOS.REGISTRO_VISITAS,
+      PERMISOS.VER_DASHBOARD
+    ]
+  },
+  
+  benevole_entrepot: {
+    nombre: 'Bénévole Entrepôt',
+    descripcion: 'Aide à l\'entrepôt et organisation des produits',
+    color: '#28A745',
+    permisos: [
+      PERMISOS.BENEVOLE_LECTEUR,
+      PERMISOS.AIDE_ENTREPOT,
+      PERMISOS.VER_INVENTARIO,
+      PERMISOS.VER_DASHBOARD
+    ]
+  },
+  
+  employe: {
+    nombre: 'Employé',
+    descripcion: 'Employé général avec accès aux fonctions courantes',
+    color: '#6C757D',
+    permisos: [
+      PERMISOS.EMPLOYE_GENERAL,
+      PERMISOS.VER_DASHBOARD,
+      PERMISOS.VER_INVENTARIO,
+      PERMISOS.VER_REPORTES
+    ]
+  },
+  
+  visualizador: {
+    nombre: 'Visualiseur',
+    descripcion: 'Accès en lecture seule au système',
+    color: '#9E9E9E',
+    permisos: [
+      PERMISOS.VISUALIZADOR,
+      PERMISOS.VER_DASHBOARD,
+      PERMISOS.VER_REPORTES,
+      PERMISOS.VER_INVENTARIO
+    ]
+  }
+};
+
 export interface Usuario {
   id: string;
   username: string;
@@ -8,10 +258,15 @@ export interface Usuario {
   nombre: string;
   apellido: string;
   email: string;
-  rol: 'administrador' | 'usuario' | 'coordinador';
+  rol: RolUsuario;
   permisos: string[];
   foto?: string;
   descripcion?: string;
+  activo?: boolean;
+  departamentoId?: string;
+  telefono?: string;
+  fechaCreacion?: string;
+  ultimoAcceso?: string;
 }
 
 // Lista de usuarios predefinidos - MODO PRODUCCIÓN
@@ -23,39 +278,29 @@ const USUARIOS_PREDEFINIDOS: Usuario[] = [
     nombre: 'David',
     apellido: 'Développeur',
     email: 'david@banque-alimentaire.org',
-    rol: 'administrador',
+    rol: 'desarrollador',
     permisos: [
-      'administrador_general', 
-      'desarrollador',
-      'acceso_total',
-      'administrador_liaison',
-      'coordinador'
+      PERMISOS.DESARROLLADOR,
+      PERMISOS.ACCESO_TOTAL,
+      PERMISOS.DEBUG_MODE,
+      PERMISOS.ADMINISTRADOR_GENERAL,
+      PERMISOS.GESTION_USUARIOS,
+      PERMISOS.GESTION_ROLES,
+      PERMISOS.CONFIGURACION_SISTEMA,
+      PERMISOS.BACKUP_RESTAURACION,
+      PERMISOS.COORDINADOR,
+      PERMISOS.ADMINISTRADOR_LIAISON
     ],
+    activo: true,
     descripcion: 'Développeur Principal - Accès Total au Système'
-  },
-  {
-    id: '2',
-    username: 'admin',
-    password: 'Admin2024!',
-    nombre: 'Administrateur',
-    apellido: 'Système',
-    email: 'admin@banque-alimentaire.org',
-    rol: 'administrador',
-    permisos: [
-      'administrador_general', 
-      'acceso_total',
-      'administrador_liaison',
-      'coordinador'
-    ],
-    descripcion: 'Administrateur Principal - Accès Total au Système'
   }
 ];
 
 const STORAGE_KEY = 'banque_alimentaire_usuarios';
 const VERSION_KEY = 'banque_alimentaire_usuarios_version';
-const CURRENT_VERSION = '4.1-production'; // Versión producción - David + admin
+const CURRENT_VERSION = '5.0-production'; // Versión producción - Solo David
 
-// Migrar usuarios existentes para actualizar permisos del usuario admin
+// Migrar usuarios existentes para actualizar permisos del usuario David
 export function migrarUsuarios(): void {
   try {
     const version = localStorage.getItem(VERSION_KEY);
@@ -63,10 +308,10 @@ export function migrarUsuarios(): void {
       return; // Ya está actualizado
     }
 
-    // MODO PRODUCCIÓN: Limpiar usuarios de ejemplo y mantener solo admin
+    // MODO PRODUCCIÓN: Limpiar todos los usuarios y mantener solo David
     localStorage.setItem(STORAGE_KEY, JSON.stringify(USUARIOS_PREDEFINIDOS));
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
-    console.log('✅ Modo Producción - Solo usuario administrador principal');
+    console.log('✅ Modo Producción - Solo usuario David (développeur)');
   } catch (error) {
     console.error('Error al migrar usuarios:', error);
   }

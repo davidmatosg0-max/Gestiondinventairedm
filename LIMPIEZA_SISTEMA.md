@@ -32,10 +32,12 @@ El sistema ejecuta una **limpieza completa automática** la primera vez que se c
 - ✗ **Types d'aide personalizados** (solo 5 tipos del sistema, sin ejemplos personalizados)
 - ✗ **Reportes de almacén** (gráficos de inventario, comandas y PRS sin datos de ejemplo)
 - ✗ **Tableau de bord entrepôt** (dashboard de almacén con gráficos de movimientos vacíos)
+- ✗ **Transportes de ejemplo (mockTransportes)** - Array completamente vacío
+- ✗ **Vehículos de ejemplo (mockVehiculos)** - Array completamente vacío  
+- ✗ **Rutas de ejemplo (mockRutas)** - Array completamente vacío
+- ✗ **IDs Digitales de ejemplo (mockIDsDigitales)** - Array completamente vacío
 - ✗ **Tipos de contacto predeterminados** (Donateur, Fournisseur, Bénévole, Responsable de Santé, Partenaire, Visitante, Employé)
 - ✗ **Tipos de documento predeterminados** (Contrat, Casier Judiciaire, Assurance, Certificat, CV, Lettre de Motivation, Pièce d'Identité, Référence, Formation, Autre)
-- ✗ Vehículos y rutas
-- ✗ IDs digitales
 - ✗ Categorías predeterminadas
 - ✗ Programas de entrada predeterminados
 - ✗ Registros PRS de ejemplo

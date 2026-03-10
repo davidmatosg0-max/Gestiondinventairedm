@@ -4,17 +4,33 @@
  * - Departamentos estructurados
  * - Configuraciones del sistema
  * - Usuarios permanentes (David y admin)
+ * 
+ * ⚠️ PROTECCIÓN: NUNCA se ejecuta si hay datos reales del usuario
  */
 
 import { obtenerUsuarios, guardarUsuarios } from './usuarios';
+import { sistemaConDatosReales } from './inicializarDatosEjemplo';
 
 const USUARIOS_PERMANENTES = ['David', 'admin'];
 
 /**
  * Ejecuta una limpieza completa del sistema
  * Elimina todos los datos de ejemplo pero mantiene configuraciones esenciales
+ * 
+ * ⚠️ PROTECCIÓN: Si detecta datos reales, NO ejecuta la limpieza
  */
 export function ejecutarLimpiezaCompleta(): void {
+  // 🔒 PROTECCIÓN: Verificar si hay datos reales antes de limpiar
+  if (sistemaConDatosReales()) {
+    console.log('🔒 ========================================');
+    console.log('🔒 LIMPIEZA CANCELADA - DATOS REALES DETECTADOS');
+    console.log('🔒 ========================================');
+    console.log('🔒 El sistema tiene datos reales del usuario.');
+    console.log('🔒 La limpieza automática está deshabilitada para proteger tus datos.');
+    console.log('🔒 Si deseas limpiar, usa la opción manual en Configuración.');
+    return;
+  }
+  
   console.log('🗑️ ========================================');
   console.log('🗑️ INICIANDO LIMPIEZA COMPLETA DEL SISTEMA');
   console.log('🗑️ ========================================');

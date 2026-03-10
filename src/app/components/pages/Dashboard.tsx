@@ -105,39 +105,41 @@ export function Dashboard() {
       </div>
 
       {/* Contenedor principal con glassmorphism */}
-      <div className="relative z-10 p-6 space-y-6">
+      <div className="relative z-10 p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
         {/* Header con glassmorphism */}
-        <div className="backdrop-blur-xl bg-white/90 rounded-2xl shadow-xl p-6 border border-white/60">
-          <div className="flex items-center gap-3">
-            <h1 className="mb-1 sm:mb-2 text-xl sm:text-2xl md:text-3xl flex items-center gap-3" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, color: '#1a4d7a' }}>
-              <LayoutDashboard className="w-8 h-8" />
-              {t('dashboard.title')} - Entrepôt
-            </h1>
-            <p className="text-sm sm:text-base text-[#666666]">{t('dashboard.viewOverview') || 'Vue d\'ensemble du système de la Banque Alimentaire'}</p>
-          </div>
-          <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
-            <VerificacionesRecientes />
-            <EntradaDonAchat />
+        <div className="backdrop-blur-xl bg-white/90 rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 border border-white/60">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl flex items-center gap-2 sm:gap-3" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, color: '#1a4d7a' }}>
+                <LayoutDashboard className="w-6 h-6 sm:w-8 sm:h-8" />
+                <span className="truncate">{t('dashboard.title')} - Entrepôt</span>
+              </h1>
+              <p className="text-xs sm:text-sm text-[#666666] mt-1">{t('dashboard.viewOverview') || 'Vue d\'ensemble du système de la Banque Alimentaire'}</p>
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <VerificacionesRecientes />
+              <EntradaDonAchat />
+            </div>
           </div>
         </div>
 
         {/* Stats Cards - Modernizadas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Card 1: Inventario */}
-          <div className="card-glass rounded-2xl p-5 hover-lift cursor-pointer border-l-4" style={{ borderLeftColor: '#1a4d7a' }}>
+          <div className="card-glass rounded-xl sm:rounded-2xl p-4 sm:p-5 hover-lift cursor-pointer border-l-4" style={{ borderLeftColor: '#1a4d7a' }}>
             <div className="flex items-center justify-between mb-3">
               <div 
-                className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg"
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg flex-shrink-0"
                 style={{ background: 'linear-gradient(135deg, #1a4d7a 0%, #16426a 100%)' }}
               >
-                <Package className="w-6 h-6 text-white" />
+                <Package className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <TrendingUp className="w-5 h-5 text-green-500" />
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
             </div>
-            <p className="text-sm text-[#666666] mb-1" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}>
+            <p className="text-xs sm:text-sm text-[#666666] mb-1" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}>
               {t('dashboard.totalInventory')}
             </p>
-            <div className="font-bold mb-1" style={{ fontSize: '2rem', color: '#1a4d7a', fontFamily: 'Montserrat, sans-serif' }}>
+            <div className="text-2xl sm:text-3xl font-bold mb-1" style={{ color: '#1a4d7a', fontFamily: 'Montserrat, sans-serif' }}>
               {stockTotal.toLocaleString()}
             </div>
             <div className="badge-primary text-xs">
@@ -216,7 +218,7 @@ export function Dashboard() {
         <AlertaComandasUrgentes />
 
         {/* Alertas Inteligentes - NUEVO */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <AlertasInteligentes />
           
           <Card>
@@ -264,7 +266,7 @@ export function Dashboard() {
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <Card>
             <CardHeader>
               <CardTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
@@ -306,7 +308,7 @@ export function Dashboard() {
         </div>
 
         {/* Tables */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Productos con stock bajo */}
           <Card>
             <CardHeader>

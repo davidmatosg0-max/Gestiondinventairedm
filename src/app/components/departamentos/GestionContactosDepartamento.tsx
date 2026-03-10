@@ -652,191 +652,170 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header avec statistiques */}
-      <div className="card-glass rounded-2xl shadow-xl p-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-[#333333] flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-              <Users className="w-6 h-6" style={{ color: branding.primaryColor }} />
-              Gestion des Contacts - {departamentoNombre}
-            </h2>
-            <p className="text-sm text-[#666666] mt-1">
-              Gérez tous les contacts du département ({contactos.length} contacts)
-            </p>
-          </div>
-          <div className="space-y-2">
-            <div className="flex gap-2 flex-wrap">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 p-6 space-y-6">
+      {/* Header avec statistiques - Diseño Premium */}
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-white/80 backdrop-blur-xl shadow-2xl border border-white/60 p-4 sm:p-6 lg:p-8">
+        {/* Decorative gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-green-500/5 pointer-events-none" />
+        
+        <div className="relative z-10">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <div className="flex-1 w-full">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0" 
+                     style={{ background: `linear-gradient(135deg, ${branding.primaryColor}, ${branding.secondaryColor})` }}>
+                  <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent truncate" 
+                      style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    Gestion des Contacts
+                  </h2>
+                  <p className="text-xs sm:text-sm font-medium truncate" style={{ color: branding.primaryColor, fontFamily: 'Montserrat, sans-serif' }}>
+                    {departamentoNombre}
+                  </p>
+                </div>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-600 ml-0 sm:ml-15" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                Gérez tous les contacts du département • <span className="font-semibold">{contactos.length} contacts</span> actifs
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full lg:w-auto">
               <Button
                 onClick={abrirDialogoAsignarBenevole}
-                className="text-white"
-                style={{ backgroundColor: branding.primaryColor }}
+                className="text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl w-full sm:w-auto text-sm sm:text-base"
+                style={{ 
+                  backgroundColor: branding.primaryColor,
+                  fontFamily: 'Montserrat, sans-serif'
+                }}
               >
                 <Link className="w-4 h-4 mr-2" />
-                Assigner un bénévole
+                <span className="truncate">Assigner un bénévole</span>
               </Button>
               <Button
                 onClick={abrirDialogoNuevo}
-                className="text-white"
-                style={{ backgroundColor: branding.secondaryColor }}
+                className="text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl w-full sm:w-auto text-sm sm:text-base"
+                style={{ 
+                  backgroundColor: branding.secondaryColor,
+                  fontFamily: 'Montserrat, sans-serif'
+                }}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Nouveau Contact
               </Button>
-              <Button
-                onClick={() => {
-                  // Ejecutar diagnóstico
-                  const todosContactos = obtenerContactosDepartamento();
-                  
-                  // Agrupar par département
-                  const porDepartamento: { [key: string]: any[] } = {};
-                  todosContactos.forEach(c => {
-                    const deptId = c.departamentoId || 'sin-departamento';
-                    if (!porDepartamento[deptId]) {
-                      porDepartamento[deptId] = [];
-                    }
-                    porDepartamento[deptId].push(c);
-                  });
-                  
-                  // Verificar problemas
-                  const sinActivo = todosContactos.filter(c => c.activo === undefined);
-                  const inactivos = todosContactos.filter(c => c.activo === false);
-                  const sinDepartamento = todosContactos.filter(c => !c.departamentoId);
-                  
-                  setDiagnosticoResultado({
-                    total: todosContactos.length,
-                    porDepartamento,
-                    problemas: {
-                      sinActivo,
-                      inactivos,
-                      sinDepartamento
-                    }
-                  });
-                  
-                  setDialogDiagnostico(true);
-                  diagnosticarContactos(); // También imprimir en consola
-                }}
-                variant="outline"
-                title="Diagnostic du système de contacts"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                🔍 Diagnostic
-              </Button>
-              <Button
-                onClick={() => {
-                  const resultado = repararContactosConProblemas();
-                  if (resultado.reparados > 0) {
-                    toast.success(`🔧 ${resultado.reparados} contact(s) réparé(s) avec succès!`);
-                    cargarContactos(); // Recargar la lista
-                  } else {
-                    toast.info('✅ Aucun contact à réparer');
-                  }
-                }}
-                variant="outline"
-                title="Réparer les contacts avec problèmes"
-                style={{ borderColor: branding.secondaryColor, color: branding.secondaryColor }}
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                🔧 Réparer
-              </Button>
-              <Button
-                onClick={() => setDialogAlmacenamiento(true)}
-                variant="outline"
-                title="Information sur le stockage"
-              >
-                <HardDrive className="w-4 h-4 mr-2" />
-                💾 Stockage
-              </Button>
-            </div>
-            <div className="flex items-start gap-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
-              <span className="text-blue-600 text-sm">ℹ️</span>
-              <p className="text-xs text-blue-800">
-                <strong>Note:</strong> La création de bénévoles est disponible uniquement dans le module <strong>Recrutement</strong>. 
-                Vous pouvez assigner des bénévoles existants à ce département en utilisant le bouton "Assigner un bénévole".
-              </p>
+              {/* BOTONES DE DIAGNÓSTICO REMOVIDOS - NO NECESARIOS EN PRODUCCIÓN */}
             </div>
           </div>
-        </div>
 
-        {/* Statistiques */}
-        {tiposPermitidos.length === 0 ? (
-          <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-6 text-center">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center">
-                <Building2 className="w-8 h-8 text-amber-600" />
+          {/* Statistiques */}
+          {tiposPermitidos.length === 0 ? (
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200/60 rounded-2xl p-8 text-center shadow-lg">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center shadow-lg">
+                <Building2 className="w-10 h-10 text-amber-600" />
               </div>
               <div>
-                <p className="text-lg font-semibold text-amber-900 mb-1">
+                <p className="text-xl font-bold text-amber-900 mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                   Aucun type de contact créé
                 </p>
-                <p className="text-sm text-amber-700 mb-4">
+                <p className="text-sm text-amber-700 mb-5" style={{ fontFamily: 'Roboto, sans-serif' }}>
                   Créez vos premiers types de contact pour commencer à gérer vos contacts.
                 </p>
                 <Button
                   onClick={abrirDialogoNuevo}
-                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                  className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+                  style={{ fontFamily: 'Montserrat, sans-serif' }}
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Créer un contact
                 </Button>
-                <p className="text-xs text-amber-600 mt-3">
+                <p className="text-xs text-amber-600 mt-4" style={{ fontFamily: 'Roboto, sans-serif' }}>
                   💡 Les types de contact se créent automatiquement lors de la création du premier contact
                 </p>
               </div>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
             {Object.entries(estadisticas)
               .filter(([tipo]) => tiposPermitidos.includes(tipo as TipoContacto))
               .map(([tipo, count]) => {
               const config = getTipoConfig(tipo as TipoContacto);
               const Icon = config.icon;
               return (
-                <Card key={tipo} className="p-3 border-l-4" style={{ borderLeftColor: config.color }}>
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-lg" style={{ backgroundColor: config.bgColor }}>
-                      <Icon className="w-4 h-4" style={{ color: config.color }} />
-                    </div>
-                    <div>
-                      <p className="text-xs text-[#666666] truncate">{config.label.split(' /')[0]}</p>
-                      <p className="text-xl font-bold" style={{ color: config.color }}>{count}</p>
+                <div
+                  key={tipo}
+                  className="group relative overflow-hidden rounded-xl sm:rounded-2xl bg-white border border-slate-200/60 hover:border-slate-300 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
+                >
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                       style={{ background: `linear-gradient(135deg, ${config.color}15, transparent)` }} />
+                  <div className="relative p-3 sm:p-4">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center shadow-sm flex-shrink-0" 
+                           style={{ backgroundColor: config.bgColor }}>
+                        <Icon className="w-4 h-4 sm:w-5 sm:h-5" style={{ color: config.color }} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs text-slate-600 font-medium truncate" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                          {config.label.split(' /')[0]}
+                        </p>
+                        <p className="text-xl sm:text-2xl font-bold" style={{ color: config.color, fontFamily: 'Montserrat, sans-serif' }}>
+                          {count}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </Card>
+                  <div className="absolute top-0 right-0 w-12 h-12 sm:w-16 sm:h-16 rounded-bl-full opacity-10" 
+                       style={{ backgroundColor: config.color }} />
+                </div>
               );
             })}
           </div>
         )}
+        </div>
       </div>
 
       {/* Tabs: Liste et Calendrier */}
       <Tabs defaultValue="liste" className="w-full">
-        <div className="card-glass rounded-2xl shadow-xl p-4 mb-4">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
-            <TabsTrigger value="liste" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Liste des Contacts
-            </TabsTrigger>
-            <TabsTrigger value="calendrier" className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Calendrier Horaires
-            </TabsTrigger>
-          </TabsList>
+        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white/80 backdrop-blur-xl shadow-lg border border-white/60 p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 pointer-events-none" />
+          <div className="relative z-10">
+            <TabsList className="grid w-full grid-cols-2 max-w-full sm:max-w-md bg-slate-100/80 p-1 rounded-xl">
+              <TabsTrigger 
+                value="liste" 
+                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-lg transition-all duration-300"
+                style={{ fontFamily: 'Montserrat, sans-serif' }}
+              >
+                <Users className="w-4 h-4" />
+                Liste des Contacts
+              </TabsTrigger>
+              <TabsTrigger 
+                value="calendrier" 
+                className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-md rounded-lg transition-all duration-300"
+                style={{ fontFamily: 'Montserrat, sans-serif' }}
+              >
+                <Calendar className="w-4 h-4" />
+                Calendrier Horaires
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </div>
 
         {/* Tab Liste */}
-        <TabsContent value="liste" className="space-y-4 mt-0">
+        <TabsContent value="liste" className="space-y-6 mt-0">
           {/* Recherche et filtres */}
-          <div className="card-glass rounded-2xl shadow-xl p-4">
-            <div className="flex flex-col lg:flex-row gap-3">
+          <div className="relative overflow-hidden rounded-2xl bg-white/80 backdrop-blur-xl shadow-lg border border-white/60 p-6">
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-blue-50/30 pointer-events-none" />
+            <div className="relative z-10 flex flex-col lg:flex-row gap-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#666666]" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <Input
                   placeholder="Rechercher par nom, email ou téléphone..."
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
-                  className="pl-10"
+                  className="pl-12 h-12 rounded-xl border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all bg-white/80"
+                  style={{ fontFamily: 'Roboto, sans-serif' }}
                 />
               </div>
               <div className="flex gap-2 flex-wrap">
@@ -878,126 +857,171 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
           </div>
 
           {/* Liste de contacts */}
-          <div className="card-glass rounded-2xl shadow-xl p-6">
-            {contactosFiltrados.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="w-16 h-16 mx-auto mb-4 text-[#CCCCCC]" />
-                <p className="text-[#666666] text-lg">Aucun contact trouvé</p>
-                <p className="text-[#999999] text-sm mt-2">Créez un nouveau contact pour commencer</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {contactosFiltrados.map((contacto) => {
-                  const config = getTipoConfig(contacto.tipo);
-                  const Icon = config.icon;
-                  return (
-                    <Card key={contacto.id} className="p-4 hover:shadow-lg transition-shadow border-l-4" style={{ borderLeftColor: config.color }}>
-                      <div className="flex items-start gap-3">
-                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 flex-shrink-0" style={{ borderColor: config.color }}>
-                          {contacto.foto ? (
-                            <ImageWithFallback src={contacto.foto} alt={`${contacto.nombre} ${contacto.apellido}`} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: config.bgColor }}>
-                              <User className="w-6 h-6" style={{ color: config.color }} />
+          <div className="relative overflow-hidden rounded-2xl bg-white/80 backdrop-blur-xl shadow-lg border border-white/60 p-6">
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-blue-50/20 pointer-events-none" />
+            <div className="relative z-10">
+              {contactosFiltrados.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                    <Users className="w-10 h-10 text-slate-400" />
+                  </div>
+                  <p className="text-slate-700 text-xl font-semibold mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    Aucun contact trouvé
+                  </p>
+                  <p className="text-slate-500 text-sm" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                    Créez un nouveau contact pour commencer
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+                  {contactosFiltrados.map((contacto) => {
+                    const config = getTipoConfig(contacto.tipo);
+                    const Icon = config.icon;
+                    return (
+                      <div 
+                        key={contacto.id} 
+                        className="group relative overflow-hidden rounded-2xl bg-white hover:bg-gradient-to-br hover:from-white hover:to-blue-50/30 border border-slate-200/60 hover:border-blue-300/60 shadow-md hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]"
+                      >
+                        {/* Decorative accent */}
+                        <div className="absolute top-0 left-0 w-1 h-full transition-all duration-300 group-hover:w-2" 
+                             style={{ backgroundColor: config.color }} />
+                        
+                        <div className="p-5">
+                          <div className="flex items-start gap-4">
+                            <div className="relative">
+                              <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 shadow-md flex-shrink-0 transition-transform duration-300 group-hover:scale-110" 
+                                   style={{ borderColor: config.color }}>
+                                {contacto.foto ? (
+                                  <ImageWithFallback src={contacto.foto} alt={`${contacto.nombre} ${contacto.apellido}`} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br" 
+                                       style={{ 
+                                         background: `linear-gradient(135deg, ${config.bgColor}, ${config.color}20)` 
+                                       }}>
+                                    <User className="w-7 h-7" style={{ color: config.color }} />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-lg flex items-center justify-center shadow-sm" 
+                                   style={{ backgroundColor: config.color }}>
+                                <Icon className="w-3 h-3 text-white" />
+                              </div>
                             </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold text-[#333333] truncate">
-                              {(contacto.tipo === 'donador' || contacto.tipo === 'fournisseur') && contacto.nombreEmpresa 
-                                ? contacto.nombreEmpresa 
-                                : `${contacto.nombre} ${contacto.apellido}`}
-                            </h3>
-                            <Badge className="text-xs" style={{ backgroundColor: config.color, color: 'white' }}>
-                              <Icon className="w-3 h-3 mr-1" />
-                              {config.label.split(' ')[0]}
-                            </Badge>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <h3 className="font-bold text-slate-800 truncate text-base" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                  {(contacto.tipo === 'donador' || contacto.tipo === 'fournisseur') && contacto.nombreEmpresa 
+                                    ? contacto.nombreEmpresa 
+                                    : `${contacto.nombre} ${contacto.apellido}`}
+                                </h3>
+                              </div>
+                              
+                              <Badge 
+                                className="text-xs mb-2 font-medium rounded-lg" 
+                                style={{ backgroundColor: `${config.color}15`, color: config.color, fontFamily: 'Roboto, sans-serif' }}
+                              >
+                                {config.label.split(' ')[0]}
+                              </Badge>
+                              
+                              {/* Afficher la personne de contact si c'est une entreprise */}
+                              {(contacto.tipo === 'donador' || contacto.tipo === 'fournisseur') && contacto.nombreEmpresa && (contacto.nombre || contacto.apellido) && (
+                                <p className="text-xs text-slate-600 mb-1.5 flex items-center gap-1.5" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                                  <User className="w-3.5 h-3.5" />
+                                  Contact: {contacto.nombre} {contacto.apellido}
+                                </p>
+                              )}
+                              {contacto.cargo && (
+                                <p className="text-xs text-slate-600 mb-1.5 font-medium" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                                  {contacto.cargo}
+                                </p>
+                              )}
+                              <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                                <Mail className="w-3.5 h-3.5" />
+                                <span className="truncate">{contacto.email}</span>
+                              </div>
+                              {contacto.telefono && (
+                                <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-2" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                                  <Phone className="w-3.5 h-3.5" />
+                                  <span>{contacto.telefono}</span>
+                                </div>
+                              )}
+                              {contacto.idiomas && contacto.idiomas.length > 0 && (
+                                <div className="flex gap-1.5 flex-wrap">
+                                  {contacto.idiomas.map(idioma => (
+                                    <Badge 
+                                      key={idioma} 
+                                      variant="outline" 
+                                      className="text-xs rounded-md border-slate-300"
+                                      style={{ fontFamily: 'Roboto, sans-serif' }}
+                                    >
+                                      {idioma.toUpperCase()}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          {/* Afficher la personne de contact si c'est une entreprise */}
-                          {(contacto.tipo === 'donador' || contacto.tipo === 'fournisseur') && contacto.nombreEmpresa && (contacto.nombre || contacto.apellido) && (
-                            <p className="text-xs text-[#666666] mb-1 flex items-center gap-1">
-                              <User className="w-3 h-3" />
-                              Contact: {contacto.nombre} {contacto.apellido}
-                            </p>
-                          )}
-                          {contacto.cargo && (
-                            <p className="text-xs text-[#666666] mb-1">{contacto.cargo}</p>
-                          )}
-                          <div className="flex items-center gap-1 text-xs text-[#999999] mb-1">
-                            <Mail className="w-3 h-3" />
-                            <span className="truncate">{contacto.email}</span>
+                          
+                          <div className="flex gap-2 mt-4 pt-4 border-t border-slate-100">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => abrirDialogoDetalle(contacto)}
+                              className="flex-1 hover:bg-blue-50 rounded-lg transition-colors"
+                              style={{ fontFamily: 'Montserrat, sans-serif' }}
+                            >
+                              <Eye className="w-4 h-4 mr-1.5" style={{ color: branding.primaryColor }} />
+                              Voir
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setContactoParaRol({
+                                  id: contacto.id.toString(),
+                                  nombre: contacto.nombre,
+                                  apellido: contacto.apellido,
+                                  nombreCompleto: `${contacto.nombre} ${contacto.apellido}`,
+                                  email: contacto.email,
+                                  telefono: contacto.telefono || '',
+                                  cargo: contacto.cargo || 'Contact',
+                                  modulo: contacto.tipo === 'benevole' ? 'benevole' : contacto.tipo === 'donador' ? 'donador' : 'vendedor'
+                                });
+                                setDialogAsignarRolOpen(true);
+                              }}
+                              title="Créer un accès au système"
+                              className="hover:bg-purple-50 rounded-lg transition-colors"
+                            >
+                              <Shield className="w-4 h-4" style={{ color: '#9C27B0' }} />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => abrirDialogoEditar(contacto)}
+                              className="hover:bg-blue-50 rounded-lg transition-colors"
+                            >
+                              <Edit2 className="w-4 h-4" style={{ color: branding.primaryColor }} />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setContactoSeleccionado(contacto);
+                                setDialogEliminar(true);
+                              }}
+                              className="hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" style={{ color: '#c23934' }} />
+                            </Button>
                           </div>
-                          {contacto.telefono && (
-                            <div className="flex items-center gap-1 text-xs text-[#999999] mb-2">
-                              <Phone className="w-3 h-3" />
-                              <span>{contacto.telefono}</span>
-                            </div>
-                          )}
-                          {contacto.idiomas && contacto.idiomas.length > 0 && (
-                            <div className="flex gap-1 mb-2">
-                              {contacto.idiomas.map(idioma => (
-                                <Badge key={idioma} variant="outline" className="text-xs">
-                                  {idioma.toUpperCase()}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
                         </div>
                       </div>
-                      <div className="flex gap-2 mt-3 pt-3 border-t">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => abrirDialogoDetalle(contacto)}
-                          className="flex-1"
-                        >
-                          <Eye className="w-3.5 h-3.5 mr-1" style={{ color: branding.primaryColor }} />
-                          Voir
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setContactoParaRol({
-                              id: contacto.id.toString(),
-                              nombre: contacto.nombre,
-                              apellido: contacto.apellido,
-                              nombreCompleto: `${contacto.nombre} ${contacto.apellido}`,
-                              email: contacto.email,
-                              telefono: contacto.telefono || '',
-                              cargo: contacto.cargo || 'Contact',
-                              modulo: contacto.tipo === 'benevole' ? 'benevole' : contacto.tipo === 'donador' ? 'donador' : 'vendedor'
-                            });
-                            setDialogAsignarRolOpen(true);
-                          }}
-                          title="Créer un accès au système"
-                        >
-                          <Shield className="w-3.5 h-3.5" style={{ color: '#9C27B0' }} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => abrirDialogoEditar(contacto)}
-                        >
-                          <Edit2 className="w-3.5 h-3.5" style={{ color: branding.primaryColor }} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setContactoSeleccionado(contacto);
-                            setDialogEliminar(true);
-                          }}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" style={{ color: '#c23934' }} />
-                        </Button>
-                      </div>
-                    </Card>
                   );
                 })}
               </div>
             )}
+            </div>
           </div>
         </TabsContent>
 

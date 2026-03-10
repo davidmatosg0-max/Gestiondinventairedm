@@ -289,32 +289,44 @@ export function Reportes() {
                 <h3 className="text-base sm:text-lg font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
                   {t('reports.ordersMonth')}
                 </h3>
-                <ResponsiveContainer width="100%" height={300} key="linechart-comandas-mes">
-                  <LineChart data={datosComandasMes}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="mes" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey="comandas" stroke={branding.primaryColor} strokeWidth={2} name={t('nav.orders')} />
-                  </LineChart>
-                </ResponsiveContainer>
+                {datosComandasMes.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300} key="linechart-comandas-mes">
+                    <LineChart data={datosComandasMes}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="mes" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="comandas" stroke={branding.primaryColor} strokeWidth={2} name={t('nav.orders')} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[300px] flex items-center justify-center text-gray-400">
+                    <p className="text-center">Aucune donnée disponible</p>
+                  </div>
+                )}
               </div>
 
               <div className="backdrop-blur-lg bg-white/80 rounded-xl shadow-lg p-4 sm:p-6 border border-white/40">
                 <h3 className="text-base sm:text-lg font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
                   {t('reports.beneficiariesOrganism')}
                 </h3>
-                <ResponsiveContainer width="100%" height={300} key="barchart-organismos">
-                  <BarChart data={datosOrganismos}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="nombre" angle={-45} textAnchor="end" height={100} />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="beneficiarios" fill="#4CAF50" name={t('reports.beneficiaries')} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {datosOrganismos.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300} key="barchart-organismos">
+                    <BarChart data={datosOrganismos}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="nombre" angle={-45} textAnchor="end" height={100} />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="beneficiarios" fill="#4CAF50" name={t('reports.beneficiaries')} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[300px] flex items-center justify-center text-gray-400">
+                    <p className="text-center">Aucune donnée disponible</p>
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>
@@ -325,40 +337,52 @@ export function Reportes() {
                 <h3 className="text-base sm:text-lg font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
                   {t('reports.stockCategory')}
                 </h3>
-                <ResponsiveContainer width="100%" height={300} key="barchart-inventario">
-                  <BarChart data={datosInventario}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="categoria" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="stock" fill={branding.primaryColor} name={t('reports.stockKg')} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {datosInventario.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300} key="barchart-inventario">
+                    <BarChart data={datosInventario}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="categoria" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="stock" fill={branding.primaryColor} name={t('reports.stockKg')} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[300px] flex items-center justify-center text-gray-400">
+                    <p className="text-center">Aucune donnée disponible</p>
+                  </div>
+                )}
               </div>
 
               <div className="backdrop-blur-lg bg-white/80 rounded-xl shadow-lg p-4 sm:p-6 border border-white/40">
                 <h3 className="text-base sm:text-lg font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
                   {t('reports.inventoryDistribution')}
                 </h3>
-                <ResponsiveContainer width="100%" height={300} key="piechart-inventario">
-                  <PieChart>
-                    <Pie
-                      data={datosInventario}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={(entry) => entry.categoria}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="stock"
-                    >
-                      {datosInventario.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+                {datosInventario.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300} key="piechart-inventario">
+                    <PieChart>
+                      <Pie
+                        data={datosInventario}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={(entry) => entry.categoria}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="stock"
+                      >
+                        {datosInventario.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[300px] flex items-center justify-center text-gray-400">
+                    <p className="text-center">Aucune donnée disponible</p>
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>
@@ -368,16 +392,22 @@ export function Reportes() {
               <h3 className="text-base sm:text-lg font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
                 {t('reports.ordersEvolution')}
               </h3>
-              <ResponsiveContainer width="100%" height={400} key="barchart-comandas">
-                <BarChart data={datosComandasMes}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="mes" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="comandas" fill="#4CAF50" name={t('reports.completedOrders')} />
-                </BarChart>
-              </ResponsiveContainer>
+              {datosComandasMes.length > 0 ? (
+                <ResponsiveContainer width="100%" height={400} key="barchart-comandas">
+                  <BarChart data={datosComandasMes}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="mes" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="comandas" fill="#4CAF50" name={t('reports.completedOrders')} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[400px] flex items-center justify-center text-gray-400">
+                  <p className="text-center">Aucune donnée disponible</p>
+                </div>
+              )}
             </div>
           </TabsContent>
 
@@ -386,16 +416,22 @@ export function Reportes() {
               <h3 className="text-base sm:text-lg font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
                 {t('reports.prsRescueMonth')}
               </h3>
-              <ResponsiveContainer width="100%" height={400} key="linechart-prs">
-                <LineChart data={datosPRS}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="mes" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line type="monotone" dataKey="kg" stroke="#4CAF50" strokeWidth={3} name={t('reports.rescuedKg')} />
-                </LineChart>
-              </ResponsiveContainer>
+              {datosPRS.length > 0 ? (
+                <ResponsiveContainer width="100%" height={400} key="linechart-prs">
+                  <LineChart data={datosPRS}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="mes" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line type="monotone" dataKey="kg" stroke="#4CAF50" strokeWidth={3} name={t('reports.rescuedKg')} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-[400px] flex items-center justify-center text-gray-400">
+                  <p className="text-center">Aucune donnée disponible</p>
+                </div>
+              )}
             </div>
           </TabsContent>
 

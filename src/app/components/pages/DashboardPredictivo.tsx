@@ -92,38 +92,38 @@ export function DashboardPredictivo() {
         }}
       >
         <div 
-          className="absolute top-20 right-20 w-96 h-96 rounded-full opacity-20 blur-3xl animate-pulse"
+          className="absolute top-20 right-20 w-64 sm:w-96 h-64 sm:h-96 rounded-full opacity-20 blur-3xl animate-pulse"
           style={{ backgroundColor: branding.primaryColor }}
         />
         <div 
-          className="absolute bottom-20 left-20 w-96 h-96 rounded-full opacity-20 blur-3xl animate-pulse"
+          className="absolute bottom-20 left-20 w-64 sm:w-96 h-64 sm:h-96 rounded-full opacity-20 blur-3xl animate-pulse"
           style={{ backgroundColor: branding.secondaryColor }}
         />
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 
-              className="text-3xl font-bold flex items-center gap-3"
+              className="text-2xl sm:text-3xl lg:text-4xl font-bold flex items-center gap-2 sm:gap-3"
               style={{ 
                 fontFamily: 'Montserrat, sans-serif',
                 color: branding.primaryColor 
               }}
             >
-              <Brain className="w-8 h-8" />
-              Dashboard Predictivo IA
+              <Brain className="w-6 h-6 sm:w-8 sm:h-8" />
+              <span className="truncate">Dashboard Predictivo IA</span>
             </h1>
-            <p className="text-gray-600 mt-2">Analítica avanzada e inteligencia de datos</p>
+            <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Analítica avanzada e inteligencia de datos</p>
           </div>
           <Button
             onClick={cargarAnalytics}
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto"
             style={{ backgroundColor: branding.primaryColor }}
           >
             <Zap className="w-4 h-4" />
-            Actualizar Análisis
+            <span className="text-sm sm:text-base">Actualizar Análisis</span>
           </Button>
         </div>
 
@@ -260,8 +260,8 @@ export function DashboardPredictivo() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="actual" fill={branding.primaryColor} name="Demanda Actual" />
-                <Bar dataKey="prediccion" fill={branding.secondaryColor} name="Predicción Próximo Mes" />
+                <Bar key="bar-actual" dataKey="actual" fill={branding.primaryColor} name="Demanda Actual" />
+                <Bar key="bar-prediccion" dataKey="prediccion" fill={branding.secondaryColor} name="Predicción Próximo Mes" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

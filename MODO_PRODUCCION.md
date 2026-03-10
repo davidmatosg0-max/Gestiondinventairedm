@@ -1,377 +1,316 @@
-# 🚀 MODO PRODUCCIÓN - Banque Alimentaire
+# 🚀 MODO PRODUCCIÓN ACTIVADO
 
-## Sistema preparado para producción
+## Estado del Sistema
 
-El sistema ha sido configurado para iniciar en **MODO PRODUCCIÓN** sin datos de ejemplo.
+✅ **El sistema está ahora en MODO PRODUCCIÓN**
 
----
-
-## 📋 Configuración Inicial
-
-### Usuarios Administradores del Sistema
-
-**Usuario Desarrollador (Permanente):**
-- **Usuario:** `David`
-- **Contraseña:** `Lettycia26`
-- **Rol:** Développeur Principal - Accès Total au Système
-- ⚠️ **Este usuario siempre debe estar activo como desarrollador**
-
-**Usuario Administrador Principal:**
-- **Usuario:** `admin`
-- **Contraseña:** `Admin2024!`
-- **Rol:** Administrateur Principal - Accès Total au Système
-
-⚠️ **IMPORTANTE:** Cambie la contraseña del usuario `admin` inmediatamente después del primer acceso.
+**Versión:** 5.0-production  
+**Fecha de activación:** Martes, 10 de marzo de 2026  
+**Estado:** Listo para uso en producción
 
 ---
 
-## 🧹 Limpieza de Datos (Si es necesario)
+## 🎯 Características del Modo Producción
 
-El sistema incluye herramientas para eliminar todos los datos de demostración que pudieran existir.
+### **✅ Datos Limpios**
+- ❌ **0 organismos** de ejemplo
+- ❌ **0 transportes** de ejemplo  
+- ❌ **0 vehículos** de ejemplo
+- ❌ **0 rutas** de ejemplo
+- ❌ **0 IDs digitales** de ejemplo
+- ❌ **0 productos** de ejemplo
+- ❌ **0 movimientos** de ejemplo
+- ❌ **0 comandas** de ejemplo
+- ❌ **0 usuarios internos** de ejemplo
+- ✅ **1 usuario del sistema** (David - Desarrollador)
 
-### Opción 1: Limpieza Completa (Recomendada)
+### **🔐 Usuario Único**
+**David (Desarrollador Principal)**
+- Username: `David`
+- Password: `Lettycia26`
+- Rol: `desarrollador`
+- Email: david@banque-alimentaire.org
+- Permisos: Acceso total + debugging
 
-Abrir la consola del navegador (`F12`) y ejecutar:
+### **🛡️ Protección de Datos**
+- ✅ Sistema de detección de datos reales activado
+- ✅ Protección contra sobrescritura de datos del usuario
+- ✅ Todos los datos creados se almacenan permanentemente
+- ✅ Las actualizaciones del sistema NO borran datos del usuario
 
-```javascript
-limpiarDatosProduccion.limpiarTodo()
+---
+
+## 📋 Cómo Empezar
+
+### **1. Iniciar Sesión**
+```
+Username: David
+Password: Lettycia26
 ```
 
-Esto eliminará:
-- ✅ Todos los organismos de ejemplo
-- ✅ Todas las comandas de ejemplo
-- ✅ Todo el inventario de ejemplo
-- ✅ Todos los productos de ejemplo
-- ✅ Todos los contactos de ejemplo
-- ✅ Todos los bénévoles de ejemplo
-- ✅ Todos los usuarios de ejemplo (excepto admin)
-- ✅ Todas las ofertas de ejemplo
-- ✅ Todas las notificaciones de ejemplo
+### **2. Configuración Inicial del Sistema**
 
-**Mantiene:**
-- ✅ Usuario administrador principal
-- ✅ Departamentos base del sistema
-- ✅ Categorías y subcategorías
-- ✅ Configuración del sistema
+#### **A. Configurar Categorías y Subcategorías de Productos**
+1. Ir a **Configuración** → Tab **Catégories**
+2. Crear categorías principales (ej: Aliments, Produits d'hygiène, etc.)
+3. Crear subcategorías para cada categoría
+4. Asignar iconos y colores
 
-### Opción 2: Limpieza Selectiva
+#### **B. Configurar Programas de Ayuda**
+1. Ir a **Configuración** → Tab **Programmes**
+2. Crear programas (ej: Aide Alimentaire, Panier de Noël, etc.)
+3. Configurar detalles de cada programa
 
-Si solo desea eliminar datos específicos:
+#### **C. Configurar Productos PRS (opcional)**
+1. Ir a **Configuración** → Tab **Produits PRS**
+2. Agregar productos del PRS si es necesario
+3. Configurar valores y equivalencias
 
-```javascript
-// Ver estado actual del sistema
-limpiarDatosProduccion.verEstado()
-
-// Limpiar solo organismos
-limpiarDatosProduccion.limpiarOrganismos()
-
-// Limpiar solo comandas
-limpiarDatosProduccion.limpiarComandas()
-
-// Limpiar solo inventario
-limpiarDatosProduccion.limpiarInventario()
-
-// Limpiar solo contactos
-limpiarDatosProduccion.limpiarContactos()
-```
+#### **D. Crear Departamentos**
+1. Ir a **Usuarios/Roles** → Tab **Départements**
+2. Crear departamentos de la organización
+3. Asignar colores y descripciones
 
 ---
 
-## 🎯 Estado del Sistema en Producción
+### **3. Registrar Datos Operacionales**
 
-### Datos Predefinidos (NO se eliminan)
+#### **A. Registrar Productos en Inventario**
+1. Ir a **Inventario**
+2. Click en **Nouveau Produit**
+3. Completar información:
+   - Código de barras
+   - Nombre del producto
+   - Categoría y subcategoría
+   - Stock inicial
+   - Ubicación en almacén
 
-El sistema incluye datos esenciales que permanecen:
+#### **B. Registrar Organismos**
+1. Ir a **Organismos**
+2. Click en **Nouvel Organisme**
+3. Completar formulario:
+   - Nombre del organismo
+   - Contacto principal
+   - Dirección (con autocompletado de Laval)
+   - Correo y teléfono
+   - Programas que atiende
 
-#### Departamentos Base:
-1. **Entrepôt** - Gestion des stocks et inventaire
-2. **Comptoir** - Distribution directe aux bénéficiaires
-3. **Cuisine** - Préparation de repas et recettes
-4. **Liaison** - Coordination avec les organismes
-5. **PTC** - Programme de travail communautaire
-6. **Maintien** - Maintenance et entretien
-7. **Recrutement** - Gestion des ressources humaines
+#### **C. Registrar Vehículos (opcional)**
+1. Ir a **Transporte**
+2. Click en **Nouveau Véhicule**
+3. Registrar información del vehículo:
+   - Matrícula
+   - Marca y modelo
+   - Capacidad
+   - Estado
 
-#### Usuarios Base:
-- **David** (Développeur) - Acceso total como desarrollador (permanente)
-- **admin** (Administrateur) - Acceso total al sistema
-
-### Datos Vacíos (Listos para datos reales)
-
-Los siguientes módulos están vacíos y listos para datos de producción:
-- Organismos
-- Comandas
-- Inventario
-- Productos
-- Contactos (Departamento y Entrepôt)
-- Bénévoles
-- Ofertas
-- Personas Responsables
-- Transacciones
-- Zonas de Almacenamiento
-
----
-
-## 🔐 Seguridad
-
-### Cambiar Contraseña del Administrador
-
-1. Iniciar sesión con las credenciales predeterminadas
-2. Ir a **Usuarios** en el menú lateral
-3. Hacer clic en editar (✏️) junto al usuario `admin`
-4. Ingresar nueva contraseña
-5. Confirmar y guardar
-
-### Crear Usuarios Adicionales
-
-1. Ir a **Usuarios** > **Nouvel Utilisateur**
-2. Completar el formulario:
-   - Nombre de usuario
+#### **D. Crear Usuarios del Sistema**
+1. Ir a **Usuarios/Roles**
+2. Click en **Nouvel Utilisateur**
+3. Completar datos:
    - Nombre y apellido
-   - Email
-   - Rol (Administrador, Coordinador, Usuario)
-   - Contraseña (manual)
-   - Descripción (opcional)
-3. Guardar
-
-**Roles disponibles:**
-- **Administrador:** Acceso completo al sistema
-- **Coordinador:** Acceso de lectura a todos los módulos
-- **Usuario:** Permisos personalizados según función
+   - Email y teléfono
+   - Username y password
+   - Seleccionar rol apropiado
+4. Guardar
 
 ---
 
-## 📊 Primeros Pasos
+### **4. Operaciones Diarias**
 
-### 1. Configuración Inicial
+#### **Gestión de Inventario**
+- Registrar entradas de productos
+- Registrar salidas
+- Hacer conversiones (kg ↔ unidades)
+- Gestionar ubicaciones
+- Generar etiquetas QR
 
-**a) Personalización del Sistema**
-- Ir a **Configuración** > **Personnalisation**
-- Ajustar colores (si es necesario)
-- Subir logo de la organización (opcional)
+#### **Gestión de Comandas**
+- Crear nuevas comandas para organismos
+- Preparar comandas
+- Marcar como entregadas
+- Generar etiquetas de comanda
 
-**b) Configurar Departamentos**
-- Ir a **Départements**
-- Los departamentos base ya están creados
-- Puede agregar más si es necesario
+#### **Publicar Ofertas**
+- Crear ofertas de productos disponibles
+- Los organismos las verán en su portal
+- Gestionar solicitudes de organismos
 
-### 2. Agregar Organismos
-
-**Opción A: Portal Público**
-- Los organismos pueden auto-registrarse en:
-  `[URL-DEL-SISTEMA]/acceso-organismo`
-
-**Opción B: Administrador**
-1. Ir a **Organismes**
-2. Clic en **Nouvel Organisme**
-3. Completar formulario
-4. Asignar clave de acceso automática
-5. Guardar
-
-### 3. Configurar Inventario
-
-1. **Crear Categorías** (si no existen):
-   - Ir a **Configuration** > **Catégories de Produits**
-
-2. **Agregar Productos**:
-   - Ir a **Inventaire**
-   - Clic en **Nouveau Produit**
-   - Completar información
-
-3. **Registrar Entradas**:
-   - Ir a **Inventaire** > **Entrepôt**
-   - Registrar entrada de productos
-
-### 4. Gestión de Comandas
-
-1. **Crear Oferta** (opcional):
-   - Ir a **Inventaire** > **Créer une Offre**
-   - Seleccionar productos disponibles
-   - Compartir con organismos
-
-2. **Gestionar Comandas**:
-   - Los organismos crean solicitudes
-   - Revisar en **Commandes**
-   - Aprobar/Rechazar según disponibilidad
-   - Programar entrega
-
-### 5. Agregar Contactos
-
-**Contactos de Departamento:**
-1. Ir a **Départements**
-2. Seleccionar departamento
-3. Agregar contactos del personal
-
-**Contactos de Entrepôt:**
-1. Ir a **Entrepôt** > **Contactos**
-2. Agregar:
-   - Proveedores
-   - Donadores
-   - Transportistas
+#### **Gestión de Transporte**
+- Crear rutas de distribución
+- Asignar vehículos
+- Seguimiento de entregas
 
 ---
 
-## 🔄 Flujo de Trabajo Recomendado
+## 🗂️ Estructura de Almacenamiento
 
-```mermaid
-1. Configuración → 2. Organismos → 3. Inventario → 4. Ofertas → 5. Comandas → 6. Entregas
+### **LocalStorage Keys:**
 ```
-
-### Flujo Detallado:
-
-1. **Configuración del Sistema**
-   - Usuarios
-   - Departamentos
-   - Personalización
-
-2. **Registro de Organismos**
-   - Auto-registro o registro manual
-   - Asignación de claves de acceso
-   - Personas responsables
-
-3. **Gestión de Inventario**
-   - Registro de productos
-   - Entradas de donaciones/compras
-   - Control de stock
-
-4. **Creación de Ofertas** (opcional)
-   - Selección de productos disponibles
-   - Publicación para organismos
-
-5. **Gestión de Comandas**
-   - Recepción de solicitudes
-   - Aprobación/Rechazo
-   - Preparación
-
-6. **Logística y Entregas**
-   - Programación de rutas
-   - Asignación de vehículos
-   - Seguimiento de entregas
-
----
-
-## 📞 Soporte y Ayuda
-
-### Módulo de Ayuda Integrado
-
-Acceder desde el menú lateral:
-- **Aide et Support**
-- Incluye:
-  - Guías de usuario
-  - Preguntas frecuentes
-  - Tutoriales
-  - Configuración
-
-### Verificar Estado del Sistema
-
-Desde la consola del navegador:
-
-```javascript
-// Ver estadísticas actuales
-limpiarDatosProduccion.verEstado()
+banque_alimentaire_productos          → Productos del inventario
+banque_alimentaire_movimientos        → Movimientos de inventario
+banque_alimentaire_categorias         → Categorías y subcategorías
+banque_alimentaire_programas          → Programas de ayuda
+banque_alimentaire_organismos         → Organismos registrados
+banque_alimentaire_comandas           → Comandas
+banque_alimentaire_ofertas            → Ofertas publicadas
+banque_alimentaire_transportes        → Transportes
+banque_alimentaire_vehiculos          → Vehículos
+banque_alimentaire_rutas              → Rutas
+banque_alimentaire_usuarios           → Usuarios del sistema
+banque_alimentaire_usuarios_version   → Versión de usuarios (5.0-production)
+banqueAlimentaire_benevoles           → Bénévoles registrados
+banqueAlimentaire_feuillesTemps       → Hojas de tiempo
+banqueAlimentaire_departamentos       → Departamentos
+banqueAlimentaire_contactosDep_*      → Contactos por departamento
 ```
 
 ---
 
-## ⚙️ Mantenimiento
+## 🔒 Seguridad en Producción
 
-### Respaldo de Datos
+### **Protecciones Activas:**
 
-El sistema utiliza `localStorage` del navegador. Para crear respaldos:
+1. **Usuario David Protegido**
+   - No se puede eliminar
+   - Siempre está activo
+   - Credenciales protegidas
 
-1. **Manual:**
-   - Abrir consola del navegador (`F12`)
-   - Copiar todo el contenido de `localStorage`
+2. **Detección de Datos Reales**
+   - El sistema detecta automáticamente cuando hay datos reales
+   - Los datos reales NUNCA se sobrescriben
+   - Las migraciones respetan datos existentes
 
-2. **Automático:**
-   - Usar herramientas de exportación del sistema
-   - Ir a **Configuration** > **Gestion des Données**
+3. **Versionado de Datos**
+   - Cada módulo tiene su versión
+   - Las actualizaciones verifican versiones
+   - Migración controlada de datos
 
-### Restauración de Datos
-
-En caso de pérdida de datos:
-
-1. Verificar respaldo disponible
-2. Usar herramientas de importación
-3. Validar integridad de datos
+4. **Backup Manual Disponible**
+   - Ir a **Configuración** → Tab **Sauvegardes**
+   - Descargar backup completo en JSON
+   - Restaurar desde backup si es necesario
 
 ---
 
-## 🚨 Solución de Problemas
+## 📊 Reportes y Análisis
 
-### Sistema muestra datos de ejemplo
+### **Dashboard Principal:**
+- Métricas en tiempo real
+- Estadísticas de inventario
+- Estado de comandas
+- Gráficos de distribución
 
-**Solución:**
-```javascript
-// Limpiar todos los datos de ejemplo
-limpiarDatosProduccion.limpiarTodo()
+### **Módulo Reportes:**
+- Reportes de inventario
+- Reportes de comandas
+- Reportes de organismos
+- Reportes de PRS
+- Exportar a PDF/Excel
 
-// Recargar la página
-location.reload()
-```
+---
 
-### No puedo iniciar sesión
+## 🆘 Soporte y Ayuda
 
-**Verificar:**
-1. Usuario: `admin`
-2. Contraseña: `Admin2024!`
-3. Mayúsculas/minúsculas correctas
+### **Usuario de Soporte:**
+- **David** tiene acceso total
+- Puede resolver cualquier problema
+- Acceso a debugging y logs
 
-**Si olvidó la contraseña:**
-```javascript
-// Resetear usuario admin
-localStorage.setItem('banque_alimentaire_usuarios', JSON.stringify([{
-  id: '1',
-  username: 'admin',
-  password: 'Admin2024!',
-  nombre: 'Administrateur',
-  apellido: 'Système',
-  email: 'admin@banque-alimentaire.org',
-  rol: 'administrador',
-  permisos: ['administrador_general', 'desarrollador', 'acceso_total', 'administrador_liaison', 'coordinador'],
-  descripcion: 'Administrateur Principal'
-}]));
-
-// Recargar
-location.reload();
-```
-
-### Departamentos no aparecen
-
-Los departamentos base deberían cargarse automáticamente. Si no aparecen:
-
-```javascript
-// Reinicializar departamentos
-localStorage.removeItem('departamentos_banco_alimentos');
-location.reload();
-```
+### **Funciones de Debugging:**
+- Modo debug activado para David
+- Logs detallados en consola
+- Verificación de integridad de datos
 
 ---
 
 ## 📝 Notas Importantes
 
-1. **Navegador Recomendado:** Chrome, Firefox, Edge (últimas versiones)
-2. **localStorage:** No limpiar caché del navegador sin hacer respaldo
-3. **Sesiones:** Las sesiones expiran a los 30 días
-4. **Idiomas:** Sistema multilingüe (FR, ES, EN, AR)
-5. **Moneda:** Dólar Canadiense (CAD$)
+### **⚠️ Recordatorios:**
+
+1. **Backup Regular**
+   - Hacer backup semanal desde Configuración
+   - Guardar archivos JSON de forma segura
+   - Probar restauración periódicamente
+
+2. **Gestión de Usuarios**
+   - Crear usuarios con roles apropiados
+   - No dar acceso total a todos
+   - Revisar permisos regularmente
+
+3. **Datos Sensibles**
+   - No usar para PII sensible sin autorización
+   - El sistema está optimizado para gestión operacional
+   - Los datos están en localStorage (navegador local)
+
+4. **Navegador**
+   - Usar Chrome, Firefox, Safari o Edge modernos
+   - No limpiar caché del navegador (perdería datos)
+   - Considerar usar siempre el mismo navegador
+
+5. **Actualizaciones**
+   - Las actualizaciones del sistema respetan datos existentes
+   - Leer notas de actualización antes de aplicar
+   - Hacer backup antes de actualizaciones mayores
+
+---
+
+## 🎨 Personalización
+
+### **Branding:**
+- Color primario: `#1a4d7a` (Azul marino)
+- Color secundario: `#2d9561` (Verde elegante)
+- Tipografía: Montserrat (títulos) + Roboto (texto)
+
+### **Idiomas Disponibles:**
+- 🇫🇷 Francés (por defecto)
+- 🇪🇸 Español
+- 🇬🇧 Inglés
+- 🇸🇦 Árabe (con soporte RTL)
+
+### **Moneda:**
+- CAD$ (Dólar canadiense)
 
 ---
 
 ## ✅ Checklist de Producción
 
-- [ ] Cambiar contraseña del administrador
-- [ ] Limpiar datos de ejemplo (`limpiarDatosProduccion.limpiarTodo()`)
-- [ ] Crear usuarios del personal
-- [ ] Configurar departamentos adicionales (si es necesario)
-- [ ] Personalizar colores y logo (opcional)
-- [ ] Probar flujo de registro de organismos
-- [ ] Probar flujo de comandas
-- [ ] Configurar respaldos periódicos
-- [ ] Capacitar al personal en el uso del sistema
+### **Sistema Configurado:**
+- [x] Usuario David activo
+- [x] Datos de ejemplo eliminados
+- [x] Protección de datos activada
+- [x] Sistema de roles configurado (11 roles)
+- [x] Sistema de permisos activo (40+ permisos)
+- [x] Modo producción en mockData.ts
+- [x] Versión 5.0-production activada
+
+### **Listo para Usar:**
+- [ ] Categorías de productos creadas
+- [ ] Programas de ayuda configurados
+- [ ] Departamentos creados
+- [ ] Primeros productos agregados
+- [ ] Primeros organismos registrados
+- [ ] Usuarios adicionales creados (si necesario)
 
 ---
 
-**Última actualización:** Marzo 2026  
-**Versión del Sistema:** 4.0 - Modo Producción  
-**Desarrollado para:** Banque Alimentaire
+## 🚀 Estado Final
+
+```
+╔════════════════════════════════════════════╗
+║   SISTEMA EN MODO PRODUCCIÓN COMPLETO      ║
+║   ✅ Listo para Uso Operacional            ║
+║   ✅ Datos Limpios                         ║
+║   ✅ Usuario Único: David                  ║
+║   ✅ Protección de Datos Activa            ║
+║   ✅ Todos los Módulos Funcionales         ║
+╚════════════════════════════════════════════╝
+```
+
+**¡El sistema Banque Alimentaire está listo para producción!** 🎉
+
+---
+
+**Última actualización:** Martes, 10 de marzo de 2026  
+**Versión:** 5.0-production  
+**Modo:** PRODUCCIÓN ✅

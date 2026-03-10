@@ -369,40 +369,70 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
   // Roles disponibles del sistema
   const rolesDisponibles = [
     {
-      id: 'admin',
+      id: 'desarrollador',
+      nombre: 'Développeur',
+      descripcion: 'Accès complet au système avec permissions de développement et debugging',
+      color: '#000000'
+    },
+    {
+      id: 'administrador',
       nombre: 'Administrateur',
-      descripcion: 'Accès complet à toutes les fonctionnalités du système',
+      descripcion: 'Gestion complète du système et de toutes les opérations',
       color: '#DC3545'
     },
     {
       id: 'coordinador',
       nombre: 'Coordinateur',
-      descripcion: 'Gestion de l\'inventaire, des commandes et des organismes',
+      descripcion: 'Coordination des opérations, gestion des commandes et de l\'inventaire',
       color: '#1E73BE'
     },
     {
-      id: 'almacenista',
-      nombre: 'Magasinier',
-      descripcion: 'Gestion de l\'inventaire et mouvements de produits',
+      id: 'responsable_entrepot',
+      nombre: 'Responsable Entrepôt',
+      descripcion: 'Gestion de l\'entrepôt, inventaire et réception des produits',
       color: '#4CAF50'
     },
     {
-      id: 'transportista',
-      nombre: 'Transporteur',
-      descripcion: 'Gestion des routes et des livraisons',
+      id: 'responsable_comptoir',
+      nombre: 'Responsable Comptoir',
+      descripcion: 'Gestion du comptoir, bénéficiaires et distribution d\'aide',
+      color: '#2d9561'
+    },
+    {
+      id: 'responsable_transport',
+      nombre: 'Responsable Transport',
+      descripcion: 'Gestion du transport, véhicules, routes et livraisons',
       color: '#FFC107'
+    },
+    {
+      id: 'liaison_organisme',
+      nombre: 'Liaison Organisme',
+      descripcion: 'Communication avec les organismes et gestion des relations',
+      color: '#9C27B0'
+    },
+    {
+      id: 'benevole_comptoir',
+      nombre: 'Bénévole Comptoir',
+      descripcion: 'Aide au comptoir et assistance aux bénéficiaires',
+      color: '#17A2B8'
+    },
+    {
+      id: 'benevole_entrepot',
+      nombre: 'Bénévole Entrepôt',
+      descripcion: 'Aide à l\'entrepôt et organisation des produits',
+      color: '#28A745'
+    },
+    {
+      id: 'employe',
+      nombre: 'Employé',
+      descripcion: 'Employé général avec accès aux fonctions courantes',
+      color: '#6C757D'
     },
     {
       id: 'visualizador',
       nombre: 'Visualiseur',
-      descripcion: 'Lecture seule des informations du système',
+      descripcion: 'Accès en lecture seule au système',
       color: '#9E9E9E'
-    },
-    {
-      id: 'liaison',
-      nombre: 'Liaison Organisme',
-      descripcion: 'Gestion des organismes et communication',
-      color: '#9C27B0'
     }
   ];
 
