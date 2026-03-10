@@ -46,6 +46,8 @@ import { CentroNotificaciones } from './CentroNotificaciones';
 import { SystemAlerts, AlertsSummary } from './SystemAlerts';
 import { GlobalSearch } from './GlobalSearch';
 import { GuideCompletModules } from './GuideCompletModules';
+import { PWAFloatingButton } from './PWAInstallButton';
+import { PWAInstallButton } from './PWAInstallButton';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 
@@ -69,6 +71,7 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [expandedMenus, setExpandedMenus] = React.useState<string[]>([]);
   const [showGuideComplete, setShowGuideComplete] = React.useState(false);
+  const [showIOSInstructions, setShowIOSInstructions] = React.useState(false);
   
   // Estados para botón draggable del Guide Complet
   const [isDragging, setIsDragging] = React.useState(false);
@@ -526,6 +529,9 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
       {showGuideComplete && (
         <GuideCompletModules onClose={() => setShowGuideComplete(false)} />
       )}
+
+      {/* Botón de instalación PWA flotante */}
+      <PWAFloatingButton />
     </div>
   );
 }

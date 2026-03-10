@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useBranding } from '../../../hooks/useBranding';
 import { Lock, User, LogIn, AlertCircle, Sparkles, Clock, Shield } from 'lucide-react';
 import { LanguageSelector } from '../LanguageSelector';
+import { PWAFloatingButton } from '../PWAInstallButton';
 import { toast } from 'sonner';
 import { useAuth } from '../../../contexts/AuthContext';
 import { inicializarUsuarios } from '../../utils/usuarios';
@@ -393,6 +394,9 @@ export function Login({ onLogin, onAccessPublic }: LoginProps) {
           </p>
         </div>
       </div>
+
+      {/* Botón flotante de instalación PWA */}
+      <PWAFloatingButton />
 
       <style>{`
         @keyframes fadeIn {
