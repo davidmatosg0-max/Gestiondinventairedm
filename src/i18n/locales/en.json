@@ -2185,6 +2185,22 @@
     "step3": "Select your scale from the list",
     "step4": "Weight will display automatically"
   },
+  "pwa": {
+    "installTitle": "Install Application",
+    "installDescription": "Install the app on your device for quick access and optimal experience",
+    "install": "Install",
+    "later": "Later",
+    "installed": "Application installed successfully!",
+    "installing": "Installing...",
+    "updateAvailable": "Update available",
+    "updateDescription": "A new version is available. Reload to update.",
+    "reload": "Reload",
+    "iosInstallTitle": "Install on iOS",
+    "iosInstallSteps": "To install this app on your iPhone or iPad:",
+    "iosStep1": "Tap the Share button (at the bottom of Safari)",
+    "iosStep2": "Scroll down and tap 'Add to Home Screen'",
+    "iosStep3": "Tap 'Add' to confirm installation"
+  },
   "comptoir": {
     "dashboard": "Dashboard",
     "beneficiaries": "Beneficiaries",

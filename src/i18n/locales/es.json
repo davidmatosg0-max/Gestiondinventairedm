@@ -1918,6 +1918,22 @@
     "step3": "Seleccione su balanza de la lista",
     "step4": "El peso se mostrará automáticamente"
   },
+  "pwa": {
+    "installTitle": "Instalar Aplicación",
+    "installDescription": "Instale la aplicación en su dispositivo para acceso rápido y experiencia óptima",
+    "install": "Instalar",
+    "later": "Más tarde",
+    "installed": "¡Aplicación instalada con éxito!",
+    "installing": "Instalando...",
+    "updateAvailable": "Actualización disponible",
+    "updateDescription": "Una nueva versión está disponible. Recargue para actualizar.",
+    "reload": "Recargar",
+    "iosInstallTitle": "Instalar en iOS",
+    "iosInstallSteps": "Para instalar esta aplicación en su iPhone o iPad:",
+    "iosStep1": "Presione el botón Compartir (en la parte inferior de Safari)",
+    "iosStep2": "Desplácese y presione 'Agregar a pantalla de inicio'",
+    "iosStep3": "Presione 'Agregar' para confirmar la instalación"
+  },
   "comptoir": {
     "dashboard": "Tablero Principal",
     "beneficiaries": "Beneficiarios",

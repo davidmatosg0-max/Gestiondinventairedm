@@ -31,6 +31,7 @@ import { APIKeysPage } from './components/pages/APIKeysPage';
 import { DashboardPredictivo } from './components/pages/DashboardPredictivo';
 import { GestionAutenticacion } from './components/pages/GestionAutenticacion';
 import { Toaster } from './components/ui/sonner';
+import { PWAInstaller } from './components/PWAInstaller';
 // LIMPIEZA COMPLETA DEL SISTEMA
 import { ejecutarLimpiezaCompleta, yaEjecutadaLimpiezaCompleta } from './utils/limpiezaCompleta';
 import { inicializarUnidades } from './utils/unidadStorage';
@@ -224,6 +225,7 @@ function AppContent() {
         {renderPage()}
       </Layout>
       <Toaster position="top-right" />
+      <PWAInstaller />
     </BalanceProvider>
   );
 }
