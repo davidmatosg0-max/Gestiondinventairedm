@@ -152,7 +152,8 @@
     "lot": "الدفعة",
     "expiryDate": "تاريخ الانتهاء",
     "weight": "الوزن",
-    "packagingDetails": "تفاصيل التعبئة"
+    "packagingDetails": "تفاصيل التعبئة",
+    "users": "المستخدمون"
   },
   "auth": {
     "login": "تسجيل الدخول",

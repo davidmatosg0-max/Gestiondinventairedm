@@ -152,7 +152,8 @@
     "lot": "LOT",
     "expiryDate": "DATE D'EXPIRATION",
     "weight": "POIDS",
-    "packagingDetails": "DÉTAILS DE L'EMPAQUETAGE"
+    "packagingDetails": "DÉTAILS DE L'EMPAQUETAGE",
+    "users": "Utilisateurs"
   },
   "auth": {
     "login": "Se connecter",

@@ -152,7 +152,8 @@
     "lot": "LOTE",
     "expiryDate": "FECHA CADUCIDAD",
     "weight": "PESO",
-    "packagingDetails": "DETALLES DE EMPAQUE"
+    "packagingDetails": "DETALLES DE EMPAQUE",
+    "users": "Usuarios"
   },
   "auth": {
     "login": "Iniciar Sesión",

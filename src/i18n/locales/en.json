@@ -152,7 +152,8 @@
     "lot": "LOT",
     "expiryDate": "EXPIRY DATE",
     "weight": "WEIGHT",
-    "packagingDetails": "PACKAGING DETAILS"
+    "packagingDetails": "PACKAGING DETAILS",
+    "users": "Users"
   },
   "auth": {
     "login": "Log In",
