@@ -71,52 +71,56 @@ export function limpiarTodosDatosEjemplo(): void {
     localStorage.setItem('banqueAlimentaire_benevoles', JSON.stringify([]));
     console.log('✅ Bénévoles limpiados');
 
-    // 9. Limpiar ofertas
+    // 9. Limpiar feuilles de temps
+    localStorage.setItem('banqueAlimentaire_feuillesTemps', JSON.stringify([]));
+    console.log('✅ Feuilles de temps limpiadas');
+
+    // 10. Limpiar ofertas
     localStorage.setItem('ofertas_banco_alimentos', JSON.stringify([]));
     console.log('✅ Ofertas limpiadas');
 
-    // 10. Limpiar solicitudes de ofertas
+    // 11. Limpiar solicitudes de ofertas
     localStorage.setItem('solicitudes_oferta_banco_alimentos', JSON.stringify([]));
     console.log('✅ Solicitudes de ofertas limpiadas');
 
-    // 11. Limpiar notificaciones de ofertas
+    // 12. Limpiar notificaciones de ofertas
     localStorage.setItem('notificaciones_oferta_banco_alimentos', JSON.stringify([]));
     console.log('✅ Notificaciones de ofertas limpiadas');
 
-    // 12. Limpiar personas responsables
+    // 13. Limpiar personas responsables
     localStorage.setItem('personas_responsables_banco_alimentos', JSON.stringify([]));
     console.log('✅ Personas responsables limpiadas');
 
-    // 13. Limpiar entradas de inventario
+    // 14. Limpiar entradas de inventario
     localStorage.setItem('entradas_inventario_banco_alimentos', JSON.stringify([]));
     console.log('✅ Entradas de inventario limpiadas');
 
-    // 14. Limpiar inventario de cocina
+    // 15. Limpiar inventario de cocina
     localStorage.setItem('inventario_cocina_banco_alimentos', JSON.stringify([]));
     console.log('✅ Inventario de cocina limpiado');
 
-    // 15. Limpiar movimientos de cocina
+    // 16. Limpiar movimientos de cocina
     localStorage.setItem('movimientos_cocina_banco_alimentos', JSON.stringify([]));
     console.log('✅ Movimientos de cocina limpiados');
 
-    // 16. Limpiar demandes
+    // 17. Limpiar demandes
     localStorage.setItem('banqueAlimentaire_demandes', JSON.stringify([]));
     console.log('✅ Demandes limpiadas');
 
-    // 17. Limpiar direcciones y barrios
+    // 18. Limpiar direcciones y barrios
     localStorage.setItem('banqueAlimentaire_adresses', JSON.stringify([]));
     localStorage.setItem('banqueAlimentaire_quartiers', JSON.stringify([]));
     console.log('✅ Direcciones y barrios limpiados');
 
-    // 18. Limpiar transacciones de usuarios internos
+    // 19. Limpiar transacciones de usuarios internos
     localStorage.setItem('banqueAlimentaire_transacciones', JSON.stringify([]));
     console.log('✅ Transacciones limpiadas');
 
-    // 19. Limpiar zonas de almacenamiento
+    // 20. Limpiar zonas de almacenamiento
     localStorage.setItem('zonas_almacenamiento', JSON.stringify([]));
     console.log('✅ Zonas de almacenamiento limpiadas');
 
-    // 20. Resetear usuarios a David y admin (usuarios base del sistema)
+    // 21. Resetear usuarios a David y admin (usuarios base del sistema)
     const usuariosBase = [
       {
         id: '1',
@@ -156,7 +160,7 @@ export function limpiarTodosDatosEjemplo(): void {
     localStorage.setItem('banque_alimentaire_usuarios_version', '4.1-production');
     console.log('✅ Usuarios reseteados (David + admin)');
 
-    // 21. Actualizar versiones para evitar reinicialización automática
+    // 22. Actualizar versiones para evitar reinicialización automática
     localStorage.setItem('contactos_version', 'v4.0-production-clean');
     localStorage.setItem('ofertas_version', 'v2.0-production');
     console.log('✅ Versiones actualizadas');
@@ -248,6 +252,7 @@ export function verEstadoSistema(): void {
     contactosDept: JSON.parse(localStorage.getItem('banqueAlimentaire_contactosDepartamento') || '[]').length,
     contactosEntrepot: JSON.parse(localStorage.getItem('banqueAlimentaire_contactosEntrepot') || '[]').length,
     benevoles: JSON.parse(localStorage.getItem('banqueAlimentaire_benevoles') || '[]').length,
+    feuillesTemps: JSON.parse(localStorage.getItem('banqueAlimentaire_feuillesTemps') || '[]').length,
     ofertas: JSON.parse(localStorage.getItem('ofertas_banco_alimentos') || '[]').length,
   };
 
@@ -259,6 +264,7 @@ export function verEstadoSistema(): void {
   console.log('Contactos Departamento:', datos.contactosDept);
   console.log('Contactos Entrepôt:', datos.contactosEntrepot);
   console.log('Bénévoles:', datos.benevoles);
+  console.log('Feuilles de Temps:', datos.feuillesTemps);
   console.log('Ofertas:', datos.ofertas);
   console.log('============================');
   

@@ -23,8 +23,6 @@ import { SelecteurJoursDisponibles, type JourDisponible } from '../shared/Select
 import { obtenerDepartamentos } from '../../utils/departamentosStorage';
 import { obtenerUsuarioSesion, tienePermiso } from '../../utils/sesionStorage';
 import { guardarContacto, type ContactoDepartamento } from '../../utils/contactosDepartamentoStorage';
-import { feuillesTempsInitialData } from '../../data/feuillesTempsData';
-import { benevolesInitialData } from '../../data/benevolesData';
 import { BoutonRetourHeader } from '../shared/BoutonRetour';
 import { 
   UserPlus, 
@@ -411,41 +409,41 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
   // Mock Data - Bénévoles
   const [benevoles, setBenevoles] = useState<Benevole[]>(() => {
     // Cargar bénévoles desde localStorage al iniciar
-    const stored = localStorage.getItem('benevoles');
+    const stored = localStorage.getItem('banqueAlimentaire_benevoles');
     if (stored) {
       try {
         return JSON.parse(stored);
       } catch (error) {
         console.error('Error al cargar bénévoles:', error);
-        return benevolesInitialData;
+        return []; // PRODUCCIÓN: Array vacío, no usar datos de ejemplo
       }
     }
-    return benevolesInitialData;
+    return []; // PRODUCCIÓN: Array vacío, no usar datos de ejemplo
   });
 
   // Guardar bénévoles en localStorage cada vez que cambien
   React.useEffect(() => {
-    localStorage.setItem('benevoles', JSON.stringify(benevoles));
+    localStorage.setItem('banqueAlimentaire_benevoles', JSON.stringify(benevoles));
   }, [benevoles]);
 
   // Mock Data - Feuilles de temps
   const [feuillesTemps, setFeuillesTemps] = useState<FeuilleTemps[]>(() => {
     // Cargar feuilles de temps desde localStorage al iniciar
-    const stored = localStorage.getItem('feuilles_temps');
+    const stored = localStorage.getItem('banqueAlimentaire_feuillesTemps');
     if (stored) {
       try {
         return JSON.parse(stored);
       } catch (error) {
         console.error('Error al cargar feuilles de temps:', error);
-        return feuillesTempsInitialData;
+        return []; // PRODUCCIÓN: Array vacío, no usar datos de ejemplo
       }
     }
-    return feuillesTempsInitialData;
+    return []; // PRODUCCIÓN: Array vacío, no usar datos de ejemplo
   });
 
   // Guardar feuilles de temps en localStorage cada vez que cambien
   React.useEffect(() => {
-    localStorage.setItem('feuilles_temps', JSON.stringify(feuillesTemps));
+    localStorage.setItem('banqueAlimentaire_feuillesTemps', JSON.stringify(feuillesTemps));
   }, [feuillesTemps]);
 
   // Form states

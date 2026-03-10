@@ -31,12 +31,8 @@ export function RendezVous({ onNavigate, aidRequests = [], aidTypes = [] }: Rend
     return aidType?.color || '#4CAF50';
   };
 
-  // Mock data pour les rendez-vous réguliers
-  const rendezvous = [
-    { id: 1, beneficiaire: 'Marie Dubois', date: '2024-02-07', heure: '09:00', motif: 'Distribution alimentaire', statut: 'confirme', notes: 'Première visite', type: 'regular' },
-    { id: 2, beneficiaire: 'Jean Martin', date: '2024-02-07', heure: '10:30', motif: 'Consultation sociale', statut: 'confirme', notes: '', type: 'regular' },
-    { id: 5, beneficiaire: 'Claire Rousseau', date: '2024-02-08', heure: '11:00', motif: 'Distribution alimentaire', statut: 'confirme', notes: '', type: 'regular' },
-  ];
+  // Mock data pour les rendez-vous réguliers - VACÍO PARA PRODUCCIÓN
+  const rendezvous: any[] = [];
 
   // Convertir demandes aprobadas en citas
   const approvedAidAppointments = aidRequests

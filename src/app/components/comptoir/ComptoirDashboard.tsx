@@ -14,20 +14,14 @@ export function ComptoirDashboard({ onNavigate }: ComptoirDashboardProps) {
   const { t } = useTranslation();
   const branding = useBranding();
 
-  // Données mock
+  // Données mock - VACÍO PARA PRODUCCIÓN
   const stats = {
-    beneficiairesActifs: 245,
-    rdvAujourdhui: 12,
-    aidesDistribuees: 87
+    beneficiairesActifs: 0,
+    rdvAujourdhui: 0,
+    aidesDistribuees: 0
   };
 
-  const activitesRecentes = [
-    { id: 1, type: 'beneficiaire', nom: 'Marie Dubois', action: 'Nouveau bénéficiaire créé', date: '10:30', priorite: 'haute' },
-    { id: 2, type: 'rdv', nom: 'Jean Martin', action: 'Rendez-vous confirmé', date: '09:15', priorite: 'normale' },
-    { id: 3, type: 'aide', nom: 'Sophie Bernard', action: 'Aide alimentaire distribuée', date: '08:45', priorite: 'normale' },
-    { id: 4, type: 'rdv', nom: 'Pierre Lefebvre', action: 'Rendez-vous annulé', date: 'Hier 16:20', priorite: 'basse' },
-    { id: 5, type: 'beneficiaire', nom: 'Claire Rousseau', action: 'Dossier mis à jour', date: 'Hier 14:10', priorite: 'normale' }
-  ];
+  const activitesRecentes: any[] = [];
 
   const getActivityIcon = (type: string) => {
     switch (type) {

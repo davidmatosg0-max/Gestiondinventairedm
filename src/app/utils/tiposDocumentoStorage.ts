@@ -17,99 +17,9 @@ export interface TipoDocumento {
 const STORAGE_KEY = 'banque_alimentaire_tipos_documento';
 const PREDEFINED_KEY = 'banque_alimentaire_tipos_documento_predefined';
 
-// Tipos de documentos predefinidos
-const TIPOS_DOCUMENTO_PREDEFINIDOS: Omit<TipoDocumento, 'id'>[] = [
-  {
-    code: 'contrat',
-    label: 'Contrat de Travail',
-    icon: '📄',
-    color: '#1a4d7a',
-    bgColor: '#E3F2FD',
-    description: 'Contrat de travail ou bénévolat',
-    isPredefined: true
-  },
-  {
-    code: 'casier-judiciaire',
-    label: 'Casier Judiciaire',
-    icon: '🛡️',
-    color: '#2d9561',
-    bgColor: '#E8F5E9',
-    description: 'Vérification du casier judiciaire',
-    isPredefined: true
-  },
-  {
-    code: 'assurance',
-    label: 'Assurance',
-    icon: '🏥',
-    color: '#F59E0B',
-    bgColor: '#FFF3E0',
-    description: 'Documents d\'assurance',
-    isPredefined: true
-  },
-  {
-    code: 'certificat',
-    label: 'Certificat',
-    icon: '🎓',
-    color: '#8B5CF6',
-    bgColor: '#F3E8FF',
-    description: 'Certificats de formation',
-    isPredefined: true
-  },
-  {
-    code: 'cv',
-    label: 'CV',
-    icon: '📋',
-    color: '#3B82F6',
-    bgColor: '#DBEAFE',
-    description: 'Curriculum vitae',
-    isPredefined: true
-  },
-  {
-    code: 'lettre-motivation',
-    label: 'Lettre de Motivation',
-    icon: '✉️',
-    color: '#EC4899',
-    bgColor: '#FCE7F3',
-    description: 'Lettre de motivation',
-    isPredefined: true
-  },
-  {
-    code: 'piece-identite',
-    label: 'Pièce d\'Identité',
-    icon: '🪪',
-    color: '#EF4444',
-    bgColor: '#FEE2E2',
-    description: 'Carte d\'identité, passeport',
-    isPredefined: true
-  },
-  {
-    code: 'reference',
-    label: 'Lettre de Référence',
-    icon: '⭐',
-    color: '#10B981',
-    bgColor: '#D1FAE5',
-    description: 'Lettres de recommandation',
-    isPredefined: true
-  },
-  {
-    code: 'formation',
-    label: 'Formation',
-    icon: '📚',
-    color: '#06B6D4',
-    bgColor: '#CFFAFE',
-    description: 'Attestations de formation',
-    isPredefined: true
-  },
-  {
-    code: 'autre',
-    label: 'Autre Document',
-    icon: '📎',
-    color: '#6B7280',
-    bgColor: '#F3F4F6',
-    description: 'Autres documents',
-    isPredefined: true
-  }
-];
+// Tipos de documentos predefinidos - DESHABILITADOS
+// Ya no se inicializan automáticamente
+const TIPOS_DOCUMENTO_PREDEFINIDOS: Omit<TipoDocumento, 'id'>[] = [];
 
 // Colores disponibles para tipos personalizados
 export const COLORES_DOCUMENTO_DISPONIBLES = [
@@ -127,24 +37,19 @@ export const COLORES_DOCUMENTO_DISPONIBLES = [
 
 /**
  * Inicializa los tipos de documentos predefinidos si no existen
+ * ❌ DESHABILITADO: Ya no inicializa automáticamente
  */
 function inicializarTiposDocumento(): void {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (!stored) {
-    const tiposConId: TipoDocumento[] = TIPOS_DOCUMENTO_PREDEFINIDOS.map((tipo, index) => ({
-      ...tipo,
-      id: `tipo-doc-${Date.now()}-${index}`
-    }));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tiposConId));
-    localStorage.setItem(PREDEFINED_KEY, JSON.stringify(tiposConId));
-  }
+  // Esta función ya no inicializa tipos automáticamente
+  // El sistema empieza completamente vacío después de la limpieza
+  return;
 }
 
 /**
  * Obtiene todos los tipos de documentos
  */
 export function obtenerTiposDocumento(): TipoDocumento[] {
-  inicializarTiposDocumento();
+  // Ya NO llama a inicializarTiposDocumento()
   const stored = localStorage.getItem(STORAGE_KEY);
   return stored ? JSON.parse(stored) : [];
 }

@@ -19,17 +19,8 @@ export function ListeBeneficiaires({ onNavigate }: ListeBeneficiairesProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Données mock
-  const beneficiaires = [
-    { id: 'BEN-001', nom: 'Marie Dubois', statut: 'actif', derniereAide: '2024-02-05', priorite: 'haute', telephone: '514-555-0101', email: 'marie.dubois@email.com' },
-    { id: 'BEN-002', nom: 'Jean Martin', statut: 'actif', derniereAide: '2024-02-03', priorite: 'normale', telephone: '514-555-0102', email: 'jean.martin@email.com' },
-    { id: 'BEN-003', nom: 'Sophie Bernard', statut: 'inactif', derniereAide: '2024-01-28', priorite: 'basse', telephone: '514-555-0103', email: 'sophie.bernard@email.com' },
-    { id: 'BEN-004', nom: 'Pierre Lefebvre', statut: 'actif', derniereAide: '2024-02-06', priorite: 'haute', telephone: '514-555-0104', email: 'pierre.lefebvre@email.com' },
-    { id: 'BEN-005', nom: 'Claire Rousseau', statut: 'actif', derniereAide: '2024-02-04', priorite: 'normale', telephone: '514-555-0105', email: 'claire.rousseau@email.com' },
-    { id: 'BEN-006', nom: 'Thomas Petit', statut: 'inactif', derniereAide: '2024-01-15', priorite: 'basse', telephone: '514-555-0106', email: 'thomas.petit@email.com' },
-    { id: 'BEN-007', nom: 'Julie Moreau', statut: 'actif', derniereAide: '2024-02-07', priorite: 'haute', telephone: '514-555-0107', email: 'julie.moreau@email.com' },
-    { id: 'BEN-008', nom: 'Antoine Simon', statut: 'actif', derniereAide: '2024-02-02', priorite: 'normale', telephone: '514-555-0108', email: 'antoine.simon@email.com' },
-  ];
+  // Données mock - VACÍO PARA PRODUCCIÓN
+  const beneficiaires: any[] = [];
 
   // Filtrage amélioré avec recherche par ID
   const beneficiairesFiltres = beneficiaires.filter(b => {

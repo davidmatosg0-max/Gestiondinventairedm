@@ -12,29 +12,17 @@ export function Rapports() {
   const [periode, setPeriode] = useState('month');
   const [typeAide, setTypeAide] = useState('all');
 
-  // Données mock pour les graphiques
+  // Données mock pour les graphiques - VACÍO PARA PRODUCCIÓN
   const stats = {
-    totalBeneficiaires: 245,
-    totalDistributions: 687,
-    valeurTotale: '31,245',
-    tendance: '+15%'
+    totalBeneficiaires: 0,
+    totalDistributions: 0,
+    valeurTotale: '0.00',
+    tendance: '0%'
   };
 
-  const distributionsParType = [
-    { type: 'Panier complet', nombre: 285, pourcentage: 41 },
-    { type: 'Panier familial', nombre: 198, pourcentage: 29 },
-    { type: 'Aide d\'urgence', nombre: 124, pourcentage: 18 },
-    { type: 'Denrées essentielles', nombre: 80, pourcentage: 12 },
-  ];
+  const distributionsParType: Array<{ type: string; nombre: number; pourcentage: number }> = [];
 
-  const evolutionMensuelle = [
-    { mois: 'Sep', distributions: 520 },
-    { mois: 'Oct', distributions: 580 },
-    { mois: 'Nov', distributions: 625 },
-    { mois: 'Déc', distributions: 670 },
-    { mois: 'Jan', distributions: 645 },
-    { mois: 'Fév', distributions: 687 },
-  ];
+  const evolutionMensuelle: Array<{ mois: string; distributions: number }> = [];
 
   return (
     <div className="space-y-6">

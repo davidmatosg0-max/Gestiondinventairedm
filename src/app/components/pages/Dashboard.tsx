@@ -76,16 +76,8 @@ export function Dashboard() {
   const comandasPendientes = stats.comandasPendientes;
   const organismosActivos = stats.organismosActivos;
 
-  // Datos para gráfico de movimientos
-  const movimientosPorDia = [
-    { id: 'lun', dia: 'Lun', entradas: 450, salidas: 280 },
-    { id: 'mar', dia: 'Mar', entradas: 380, salidas: 320 },
-    { id: 'mie', dia: 'Mié', entradas: 520, salidas: 290 },
-    { id: 'jue', dia: 'Jue', entradas: 410, salidas: 350 },
-    { id: 'vie', dia: 'Vie', entradas: 480, salidas: 310 },
-    { id: 'sab', dia: 'Sáb', entradas: 320, salidas: 180 },
-    { id: 'dom', dia: 'Dom', entradas: 290, salidas: 150 }
-  ];
+  // Datos para gráfico de movimientos - VACÍO PARA PRODUCCIÓN
+  const movimientosPorDia: Array<{ id: string; dia: string; entradas: number; salidas: number }> = [];
 
   return (
     <div className="min-h-screen relative">

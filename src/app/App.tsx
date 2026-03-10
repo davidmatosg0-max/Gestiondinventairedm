@@ -31,24 +31,19 @@ import { APIKeysPage } from './components/pages/APIKeysPage';
 import { DashboardPredictivo } from './components/pages/DashboardPredictivo';
 import { GestionAutenticacion } from './components/pages/GestionAutenticacion';
 import { Toaster } from './components/ui/sonner';
-// MODO PRODUCCIÓN: Funciones de limpieza de datos de ejemplo
-import './utils/limpiarDatosProduccion';
-import { crearOfertasEjemplo } from './utils/ofertaStorage';
+// LIMPIEZA COMPLETA DEL SISTEMA
+import { ejecutarLimpiezaCompleta, yaEjecutadaLimpiezaCompleta } from './utils/limpiezaCompleta';
 import { inicializarUnidades } from './utils/unidadStorage';
 import { inicializarDepartamentos } from './utils/departamentosStorage';
-import { inicializarOrganismos, migrarClavesDeAcceso } from './utils/organismosStorage';
+import { migrarClavesDeAcceso } from './utils/organismosStorage';
 import { cerrarSesionUsuario } from './utils/sesionStorage';
 import { inicializarConfigSupport } from './utils/supportConfig';
-import { inicializarTodosDatosEjemplo, datosEjemploInicializados } from './utils/inicializarDatosEjemplo';
 import { BalanceProvider } from '../contexts/BalanceContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { logger, showWelcomeBanner } from './utils/logger';
-import { corregirContactosEntrepotAutomaticamente } from './utils/correccionContactosEntrepot';
 import { runDataMigrations } from './utils/dataMigration';
 import { inicializarAutoBackup } from './utils/autoBackupStorage';
 import { inicializarFileSystem } from './utils/fileSystemAccess';
-import { limpiarCategorias } from './utils/categoriaStorage';
-import { limpiarProgramasEntrada } from './utils/programaEntradaStorage';
 
 // Componente interno que usa el contexto de autenticación
 function AppContent() {
@@ -61,30 +56,29 @@ function AppContent() {
     // 🔒 EJECUTAR MIGRACIONES DE DATOS PRIMERO
     runDataMigrations();
     
-    // 🗑️ LIMPIAR CATEGORÍAS Y PROGRAMAS PREDETERMINADOS
-    limpiarCategorias();
-    limpiarProgramasEntrada();
+    // 🗑️ LIMPIEZA COMPLETA DEL SISTEMA (Solo primera vez)
+    if (!yaEjecutadaLimpiezaCompleta()) {
+      showWelcomeBanner('╔══════════════════════════════════════════════════════════╗');
+      showWelcomeBanner('║  🗑️  EJECUTANDO LIMPIEZA COMPLETA DEL SISTEMA...       ║');
+      showWelcomeBanner('╚══════════════════════════════════════════════════════════╝');
+      ejecutarLimpiezaCompleta();
+    } else {
+      logger.info('✅ Sistema ya limpio y listo para operar');
+    }
     
-    // ===== DESACTIVADO: Ofertas de ejemplo =====
-    // crearOfertasEjemplo();
-    
+    // ✅ INICIALIZAR COMPONENTES ESENCIALES
     inicializarUnidades();
+    
     // Solo inicializar departamentos si no están ya inicializados
     if (!localStorage.getItem('departamentos_banco_alimentos')) {
       inicializarDepartamentos();
     }
-    // Solo inicializar organismos si no están ya inicializados
-    if (!localStorage.getItem('organismos_banco_alimentos')) {
-      inicializarOrganismos();
-    }
+    
     // Ejecutar migración de claves de acceso (para organismos existentes sin clave)
     migrarClavesDeAcceso();
     
     // Inicializar configuración de soporte (necesaria para el sistema)
     inicializarConfigSupport();
-    
-    // 🔧 CORRECCIÓN AUTOMÁTICA: Contactos Entrepôt (departamentoId correcto)
-    corregirContactosEntrepotAutomaticamente();
     
     // 🔄 INICIALIZAR SISTEMA DE BACKUP AUTOMÁTICO
     inicializarAutoBackup();
@@ -96,46 +90,6 @@ function AppContent() {
     }).catch((error) => {
       logger.warn('⚠️ No se pudo inicializar el sistema de archivos:', error);
     });
-    
-    // 🎯 INICIALIZAR DATOS DE EJEMPLO (solo si no se han inicializado antes)
-    if (!datosEjemploInicializados()) {
-      showWelcomeBanner('╔══════════════════════════════════════════════════════════╗');
-      showWelcomeBanner('║  🎯 CARGANDO DATOS DE EJEMPLO PARA PRUEBAS...           ║');
-      showWelcomeBanner('╚══════════════════════════════════════════════════════════╝');
-      inicializarTodosDatosEjemplo();
-      showWelcomeBanner('╔═════════════════════════════════════════════════════════╗');
-      showWelcomeBanner('║  ✅ DATOS DE EJEMPLO CARGADOS EXITOSAMENTE              ║');
-      showWelcomeBanner('║                                                          ║');
-      showWelcomeBanner('║  📋 Datos disponibles:                                   ║');
-      showWelcomeBanner('║     • 3 Usuarios del sistema                             ║');
-      showWelcomeBanner('║     • 4 Organismos                                       ║');
-      showWelcomeBanner('║     • 5 Comandas                                         ║');
-      showWelcomeBanner('║     • 3 Movimientos de inventario                        ║');
-      showWelcomeBanner('║     • 5 Vehículos                                        ║');
-      showWelcomeBanner('║     • 4 Rutas                                            ║');
-      showWelcomeBanner('║     • 3 Transportes                                      ║');
-      showWelcomeBanner('║     • 3 IDs Digitales                                    ║');
-      showWelcomeBanner('║     • 10 Usuarios internos (Dept. Entrepôt - ID 1):     ║');
-      showWelcomeBanner('║       → 3 Bénévoles                                      ║');
-      showWelcomeBanner('║       → 2 Employés                                       ║');
-      showWelcomeBanner('║       → 3 Donateurs (sincronizados con formularios)      ║');
-      showWelcomeBanner('║       → 2 Fournisseurs (sincronizados con formularios)   ║');
-      showWelcomeBanner('║     • 5 Registros PRS                                    ║');
-      showWelcomeBanner('║                                                          ║');
-      showWelcomeBanner('║  🎯 Sincronización completa:                             ║');
-      showWelcomeBanner('║     ✅ Entrepôt (Départements)                           ║');
-      showWelcomeBanner('║     ✅ Contactos Almacén                                 ║');
-      showWelcomeBanner('║     ✅ Entrada Don/Achat (donateurs/fournisseurs)        ║');
-      showWelcomeBanner('║     ✅ Entrada PRS                                       ║');
-      showWelcomeBanner('║                                                          ║');
-      showWelcomeBanner('║  🚀 ¡El sistema está listo para pruebas!                ║');
-      showWelcomeBanner('║                                                          ║');
-      showWelcomeBanner('║  💡 Para reiniciar datos:                                ║');
-      showWelcomeBanner('║     localStorage.removeItem("datos_ejemplo_inicializados"); location.reload(); ║');
-      showWelcomeBanner('╚══════════════════════════════════════════════════════════╝');
-    } else {
-      logger.info('ℹ️ Datos de ejemplo ya inicializados. Para reiniciar: localStorage.removeItem("datos_ejemplo_inicializados") y recargar');
-    }
   }, []);
 
   // Inicializar dirección RTL si el idioma es árabe

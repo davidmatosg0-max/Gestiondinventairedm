@@ -70,7 +70,7 @@ export function IDDigital() {
   const [selectedBeneficiaireId, setSelectedBeneficiaireId] = useState<string | undefined>();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Tipos de ayuda del sistema (no modificables)
+  // Tipos de ayuda del sistema (no modificables) - CONTADORES EN CERO PARA PRODUCCIÓN
   const systemAidTypes: AidType[] = [
     {
       id: 'system-1',
@@ -81,7 +81,7 @@ export function IDDigital() {
       isActive: true,
       isSystem: true,
       createdAt: '2024-01-01',
-      usageCount: 156
+      usageCount: 0
     },
     {
       id: 'system-2',
@@ -92,7 +92,7 @@ export function IDDigital() {
       isActive: true,
       isSystem: true,
       createdAt: '2024-01-01',
-      usageCount: 89
+      usageCount: 0
     },
     {
       id: 'system-3',
@@ -103,7 +103,7 @@ export function IDDigital() {
       isActive: true,
       isSystem: true,
       createdAt: '2024-01-01',
-      usageCount: 45
+      usageCount: 0
     },
     {
       id: 'system-4',
@@ -114,7 +114,7 @@ export function IDDigital() {
       isActive: true,
       isSystem: true,
       createdAt: '2024-01-01',
-      usageCount: 67
+      usageCount: 0
     },
     {
       id: 'system-5',
@@ -125,107 +125,18 @@ export function IDDigital() {
       isActive: true,
       isSystem: true,
       createdAt: '2024-01-01',
-      usageCount: 34
+      usageCount: 0
     },
   ];
 
-  // Estado compartido para tipos de ayuda personalizados
-  const [customAidTypes, setCustomAidTypes] = useState<AidType[]>([
-    {
-      id: 'custom-1',
-      name: 'Panier Senior',
-      description: 'Panier adapté aux besoins des personnes âgées',
-      defaultValue: 40.00,
-      color: '#9C27B0',
-      isActive: true,
-      isSystem: false,
-      createdAt: '2024-02-01',
-      usageCount: 23
-    },
-    {
-      id: 'custom-2',
-      name: 'Aide Bébé',
-      description: 'Produits pour bébés et jeunes enfants',
-      defaultValue: 50.00,
-      color: '#FF9800',
-      isActive: true,
-      isSystem: false,
-      createdAt: '2024-02-05',
-      usageCount: 12
-    },
-  ]);
+  // Estado compartido para tipos de ayuda personalizados - VACÍO PARA PRODUCCIÓN
+  const [customAidTypes, setCustomAidTypes] = useState<AidType[]>([]);
 
   // Combinar todos los tipos de ayuda (sistema + personalizados)
   const allAidTypes = [...systemAidTypes, ...customAidTypes];
 
-  // Estado compartido para demandas de ayuda
-  const [aidRequests, setAidRequests] = useState<AidRequest[]>([
-    {
-      id: 1,
-      beneficiaire: 'Marie Dubois',
-      beneficiaireId: '1',
-      type: 'Panier complet',
-      quantite: 1,
-      dateRequested: '2024-02-07 09:30',
-      status: 'pending',
-      notes: 'Situation urgente - famille de 4 personnes',
-      estimatedValue: 45.00
-    },
-    {
-      id: 2,
-      beneficiaire: 'Jean Martin',
-      beneficiaireId: '2',
-      type: 'Aide d\'urgence',
-      quantite: 1,
-      dateRequested: '2024-02-07 08:15',
-      status: 'pending',
-      notes: 'Besoin immédiat de denrées essentielles',
-      estimatedValue: 30.00
-    },
-    {
-      id: 3,
-      beneficiaire: 'Sophie Bernard',
-      beneficiaireId: '3',
-      type: 'Panier familial',
-      quantite: 1,
-      dateRequested: '2024-02-06 14:20',
-      status: 'approved',
-      processedDate: '2024-02-06 15:30',
-      processedBy: 'Admin Système',
-      notes: 'Vérifié et approuvé',
-      estimatedValue: 60.00,
-      appointmentDate: '2024-02-08',
-      appointmentTime: '10:00'
-    },
-    {
-      id: 4,
-      beneficiaire: 'Pierre Lefebvre',
-      beneficiaireId: '4',
-      type: 'Denrées essentielles',
-      quantite: 2,
-      dateRequested: '2024-02-05 16:45',
-      status: 'approved',
-      processedDate: '2024-02-05 17:00',
-      processedBy: 'Admin Système',
-      notes: 'Approuvé pour distribution immédiate',
-      estimatedValue: 50.00,
-      appointmentDate: '2024-02-09',
-      appointmentTime: '14:30'
-    },
-    {
-      id: 5,
-      beneficiaire: 'Claire Rousseau',
-      beneficiaireId: '5',
-      type: 'Produits frais',
-      quantite: 1,
-      dateRequested: '2024-02-04 11:20',
-      status: 'rejected',
-      processedDate: '2024-02-04 13:15',
-      processedBy: 'Admin Système',
-      rejectionReason: 'Stock insuffisant pour cette période',
-      estimatedValue: 35.00
-    }
-  ]);
+  // Estado compartido para demandas de ayuda - VACÍO PARA PRODUCCIÓN
+  const [aidRequests, setAidRequests] = useState<AidRequest[]>([]);
 
   const handleNavigate = (view: string, id?: string) => {
     setCurrentView(view as ComptoirView);
@@ -239,7 +150,7 @@ export function IDDigital() {
     { id: 'beneficiaires', label: t('comptoir.beneficiaries'), icon: <Users className="w-5 h-5" /> },
     { id: 'rendez-vous', label: t('comptoir.appointments'), icon: <Calendar className="w-5 h-5" /> },
     { id: 'aide-alimentaire', label: t('comptoir.foodAid'), icon: <Package className="w-5 h-5" /> },
-    { id: 'demandes-aide', label: t('comptoir.aidRequests'), icon: <ClipboardList className="w-5 h-5" />, badge: 2 },
+    { id: 'demandes-aide', label: t('comptoir.aidRequests'), icon: <ClipboardList className="w-5 h-5" /> },
     { id: 'types-aide', label: t('comptoir.aidTypes'), icon: <Settings className="w-5 h-5" /> },
     { id: 'rapports', label: t('comptoir.reports'), icon: <FileText className="w-5 h-5" /> },
     { id: 'contactos', label: 'Gestion des Contacts', icon: <Users className="w-5 h-5" /> },

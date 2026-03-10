@@ -13,98 +13,19 @@ export interface TipoContactoPersonalizado {
 
 const STORAGE_KEY = 'banque_alimentaire_tipos_contacto_personalizados';
 
-// Inicializar tipos de contacto predefinidos SOLO si el storage está completamente vacío
+// ❌ DESHABILITADO: No inicializar tipos predefinidos automáticamente
+// Los tipos de contacto deben ser creados manualmente por el usuario
+// Esto permite que la limpieza completa del sistema funcione correctamente
 function inicializarTiposPredefinidosInicial(): void {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    
-    // Solo inicializar si no existe nada en el storage
-    if (!stored) {
-      console.log('📋 Inicializando tipos de contacto predefinidos iniciales...');
-      const tiposIniciales: TipoContactoPersonalizado[] = [
-        {
-          id: 'tipo-donador-default',
-          code: 'donador',
-          label: 'Donateur de la Banque',
-          icon: 'Heart',
-          color: '#FCD34D',
-          bgColor: '#FEF3C7',
-          isPredefined: true,
-          dateCreated: new Date().toISOString()
-        },
-        {
-          id: 'tipo-fournisseur-default',
-          code: 'fournisseur',
-          label: 'Fournisseur',
-          icon: 'Building2',
-          color: '#1a4d7a',
-          bgColor: '#DBEAFE',
-          isPredefined: true,
-          dateCreated: new Date().toISOString()
-        },
-        {
-          id: 'tipo-benevole-default',
-          code: 'benevole',
-          label: 'Bénévole / Professionnel administratif',
-          icon: 'UserCheck',
-          color: '#9CA3AF',
-          bgColor: '#F3F4F6',
-          isPredefined: true,
-          dateCreated: new Date().toISOString()
-        },
-        {
-          id: 'tipo-responsable-sante-default',
-          code: 'responsable-sante',
-          label: 'Responsable de Santé Alimentaire',
-          icon: 'Stethoscope',
-          color: '#EC4899',
-          bgColor: '#FCE7F3',
-          isPredefined: true,
-          dateCreated: new Date().toISOString()
-        },
-        {
-          id: 'tipo-partenaire-default',
-          code: 'partenaire',
-          label: 'Partenaire / Bénévole informel',
-          icon: 'Star',
-          color: '#F59E0B',
-          bgColor: '#FEF3C7',
-          isPredefined: true,
-          dateCreated: new Date().toISOString()
-        },
-        {
-          id: 'tipo-visiteur-default',
-          code: 'visiteur',
-          label: 'Visitante ou Invité',
-          icon: 'UserPlus',
-          color: '#2d9561',
-          bgColor: '#D1FAE5',
-          isPredefined: true,
-          dateCreated: new Date().toISOString()
-        },
-        {
-          id: 'tipo-employe-default',
-          code: 'employe',
-          label: 'Employé',
-          icon: 'User',
-          color: '#65A30D',
-          bgColor: '#ECF9EE',
-          isPredefined: true,
-          dateCreated: new Date().toISOString()
-        }
-      ];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(tiposIniciales));
-      console.log(`✅ ${tiposIniciales.length} tipos de contacto predefinidos inicializados`);
-    }
-  } catch (error) {
-    console.error('❌ Error al inicializar tipos de contacto:', error);
-  }
+  // Esta función ya no inicializa tipos automáticamente
+  // El sistema empieza completamente vacío después de la limpieza
+  return;
 }
 
 // Obtener todos los tipos de contacto
 export function obtenerTiposContacto(): TipoContactoPersonalizado[] {
   try {
-    inicializarTiposPredefinidosInicial();
+    // Ya NO llama a inicializarTiposPredefinidosInicial()
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored ? JSON.parse(stored) : [];
   } catch (error) {

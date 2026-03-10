@@ -181,9 +181,16 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
 
   // NUEVO: Definir types de contacto disponibles selon le département
   const getTiposPermitidos = (): TipoContacto[] => {
-    // TODOS les départements ont accès à tous les types EXCEPTO bénévoles
-    // Les bénévoles ne peuvent être créés que dans le module de Recrutement
-    return ['donador', 'fournisseur', 'responsable-sante', 'partenaire', 'visiteur', 'employe', 'transportista'];
+    // Obtener TODOS los tipos de contacto creados por el usuario
+    const tiposCreados = obtenerTiposContacto();
+    
+    // Si no hay tipos creados, devolver array vacío
+    if (tiposCreados.length === 0) {
+      return [];
+    }
+    
+    // Devolver los códigos de todos los tipos creados
+    return tiposCreados.map(tipo => tipo.code as TipoContacto);
   };
 
   const tiposPermitidos = getTiposPermitidos();
@@ -191,7 +198,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
   const [formulario, setFormulario] = useState<Omit<ContactoDepartamento, 'id'>>({
     departamentoId,
     departamentoIds: [departamentoId], // Initialiser avec le département actuel sélectionné
-    tipo: 'employe', // Changé de 'benevole' - Les bénévoles ne sont créés que dans Recrutement
+    tipo: tiposPermitidos[0] || 'employe', // Usar el primer tipo disponible o 'employe' por defecto
     nombre: '',
     apellido: '',
     fechaNacimiento: '',
@@ -390,7 +397,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
     setFormulario({
       departamentoId,
       departamentoIds: [departamentoId],
-      tipo: 'employe', // Changé de 'benevole' - Les bénévoles ne sont créés que dans Recrutement
+      tipo: tiposPermitidos[0] || 'employe', // Usar el primer tipo disponible o 'employe' por defecto
       nombre: '',
       apellido: '',
       fechaNacimiento: '',
@@ -752,27 +759,55 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         </div>
 
         {/* Statistiques */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {Object.entries(estadisticas)
-            .filter(([tipo]) => tiposPermitidos.includes(tipo as TipoContacto))
-            .map(([tipo, count]) => {
-            const config = getTipoConfig(tipo as TipoContacto);
-            const Icon = config.icon;
-            return (
-              <Card key={tipo} className="p-3 border-l-4" style={{ borderLeftColor: config.color }}>
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg" style={{ backgroundColor: config.bgColor }}>
-                    <Icon className="w-4 h-4" style={{ color: config.color }} />
+        {tiposPermitidos.length === 0 ? (
+          <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-6 text-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center">
+                <Building2 className="w-8 h-8 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-lg font-semibold text-amber-900 mb-1">
+                  Aucun type de contact créé
+                </p>
+                <p className="text-sm text-amber-700 mb-4">
+                  Créez vos premiers types de contact pour commencer à gérer vos contacts.
+                </p>
+                <Button
+                  onClick={abrirDialogoNuevo}
+                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Créer un contact
+                </Button>
+                <p className="text-xs text-amber-600 mt-3">
+                  💡 Les types de contact se créent automatiquement lors de la création du premier contact
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {Object.entries(estadisticas)
+              .filter(([tipo]) => tiposPermitidos.includes(tipo as TipoContacto))
+              .map(([tipo, count]) => {
+              const config = getTipoConfig(tipo as TipoContacto);
+              const Icon = config.icon;
+              return (
+                <Card key={tipo} className="p-3 border-l-4" style={{ borderLeftColor: config.color }}>
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-lg" style={{ backgroundColor: config.bgColor }}>
+                      <Icon className="w-4 h-4" style={{ color: config.color }} />
+                    </div>
+                    <div>
+                      <p className="text-xs text-[#666666] truncate">{config.label.split(' /')[0]}</p>
+                      <p className="text-xl font-bold" style={{ color: config.color }}>{count}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-[#666666] truncate">{config.label.split(' /')[0]}</p>
-                    <p className="text-xl font-bold" style={{ color: config.color }}>{count}</p>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Tabs: Liste et Calendrier */}
@@ -805,30 +840,39 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                 />
               </div>
               <div className="flex gap-2 flex-wrap">
-                <Button
-                  variant={tipoFiltro === 'todos' ? 'default' : 'outline'}
-                  onClick={() => setTipoFiltro('todos')}
-                  size="sm"
-                  style={tipoFiltro === 'todos' ? { backgroundColor: branding.primaryColor } : {}}
-                >
-                  Tous ({contactos.filter(c => c.activo).length})
-                </Button>
-                {Object.entries(estadisticas)
-                  .filter(([tipo]) => tiposPermitidos.includes(tipo as TipoContacto))
-                  .map(([tipo, count]) => {
-                  const config = getTipoConfig(tipo as TipoContacto);
-                  return (
+                {tiposPermitidos.length === 0 ? (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800 flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-blue-600" />
+                    <span>Aucun type de contact créé. Créez votre premier contact pour commencer.</span>
+                  </div>
+                ) : (
+                  <>
                     <Button
-                      key={tipo}
-                      variant={tipoFiltro === tipo ? 'default' : 'outline'}
-                      onClick={() => setTipoFiltro(tipo as TipoContacto)}
+                      variant={tipoFiltro === 'todos' ? 'default' : 'outline'}
+                      onClick={() => setTipoFiltro('todos')}
                       size="sm"
-                      style={tipoFiltro === tipo ? { backgroundColor: config.color } : {}}
+                      style={tipoFiltro === 'todos' ? { backgroundColor: branding.primaryColor } : {}}
                     >
-                      {config.label.split(' ')[0]} ({count})
+                      Tous ({contactos.filter(c => c.activo).length})
                     </Button>
-                  );
-                })}
+                    {Object.entries(estadisticas)
+                      .filter(([tipo]) => tiposPermitidos.includes(tipo as TipoContacto))
+                      .map(([tipo, count]) => {
+                      const config = getTipoConfig(tipo as TipoContacto);
+                      return (
+                        <Button
+                          key={tipo}
+                          variant={tipoFiltro === tipo ? 'default' : 'outline'}
+                          onClick={() => setTipoFiltro(tipo as TipoContacto)}
+                          size="sm"
+                          style={tipoFiltro === tipo ? { backgroundColor: config.color } : {}}
+                        >
+                          {config.label.split(' ')[0]} ({count})
+                        </Button>
+                      );
+                    })}
+                  </>
+                )}
               </div>
             </div>
           </div>

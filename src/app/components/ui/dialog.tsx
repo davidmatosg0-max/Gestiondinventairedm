@@ -62,18 +62,40 @@ const DialogContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => {
   const descriptionId = React.useId();
   
-  // Check if children contains a DialogDescription
+  // Check if children contains a DialogDescription using multiple detection methods
   const hasDescription = React.useMemo(() => {
     let found = false;
     const checkChildren = (children: React.ReactNode): void => {
       React.Children.forEach(children, (child) => {
         if (React.isValidElement(child)) {
-          // Check if it's a DialogDescription
+          // Method 1: Check by type
           if (child.type === DialogDescription || 
               child.type === DialogPrimitive.Description) {
             found = true;
             return;
           }
+          
+          // Method 2: Check by displayName
+          const displayName = (child.type as any)?.displayName;
+          if (displayName === 'DialogDescription') {
+            found = true;
+            return;
+          }
+          
+          // Method 3: Check by data-slot prop
+          if (child.props?.['data-slot'] === 'dialog-description') {
+            found = true;
+            return;
+          }
+          
+          // Method 4: Check if it's a Radix DialogPrimitive.Description by checking props
+          const childType = child.type as any;
+          if (childType?.render?.displayName === 'DialogPrimitive.Description' ||
+              childType?.__docgenInfo?.displayName === 'DialogDescription') {
+            found = true;
+            return;
+          }
+          
           // Recursively check children
           if (child.props && child.props.children) {
             checkChildren(child.props.children);
@@ -85,9 +107,14 @@ const DialogContent = React.forwardRef<
     return found;
   }, [children]);
 
-  // Set aria-describedby:
-  // If there's a description, use the descriptionId; otherwise undefined to avoid warning
-  const ariaDescribedBy = hasDescription ? descriptionId : undefined;
+  // CRITICAL: Set aria-describedby BEFORE spreading props
+  // This ensures our value takes precedence over Radix's default behavior
+  const finalAriaDescribedBy = 'aria-describedby' in props 
+    ? props['aria-describedby'] 
+    : (hasDescription ? descriptionId : undefined);
+  
+  // Remove aria-describedby from props to avoid conflicts
+  const { 'aria-describedby': _, ...restProps } = props;
   
   return (
     <DialogDescriptionContext.Provider value={{ descriptionId, setDescriptionId: () => {} }}>
@@ -96,13 +123,13 @@ const DialogContent = React.forwardRef<
         <DialogPrimitive.Content
           ref={ref}
           data-slot="dialog-content"
-          aria-describedby={ariaDescribedBy}
+          aria-describedby={finalAriaDescribedBy}
+          {...restProps}
           className={cn(
             "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200",
             !className?.includes("max-w-") && "max-w-[calc(100%-2rem)] sm:max-w-lg",
             className,
           )}
-          {...props}
         >
           {children}
           <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">

@@ -28,17 +28,8 @@ export function AideAlimentaire({ onNavigate, aidTypes }: AideAlimentaireProps) 
   // Obtener el tipo de ayuda seleccionado
   const currentAidType = aidTypes.find(type => type.id === selectedAidType);
 
-  // Liste des bénéficiaires
-  const beneficiaires = [
-    { id: 'BEN-001', nom: 'Marie Dubois', telephone: '514-555-0101', email: 'marie.dubois@email.com', statut: 'actif' },
-    { id: 'BEN-002', nom: 'Jean Martin', telephone: '514-555-0102', email: 'jean.martin@email.com', statut: 'actif' },
-    { id: 'BEN-003', nom: 'Sophie Bernard', telephone: '514-555-0103', email: 'sophie.bernard@email.com', statut: 'inactif' },
-    { id: 'BEN-004', nom: 'Pierre Lefebvre', telephone: '514-555-0104', email: 'pierre.lefebvre@email.com', statut: 'actif' },
-    { id: 'BEN-005', nom: 'Claire Rousseau', telephone: '514-555-0105', email: 'claire.rousseau@email.com', statut: 'actif' },
-    { id: 'BEN-006', nom: 'Thomas Petit', telephone: '514-555-0106', email: 'thomas.petit@email.com', statut: 'inactif' },
-    { id: 'BEN-007', nom: 'Julie Moreau', telephone: '514-555-0107', email: 'julie.moreau@email.com', statut: 'actif' },
-    { id: 'BEN-008', nom: 'Antoine Simon', telephone: '514-555-0108', email: 'antoine.simon@email.com', statut: 'actif' },
-  ];
+  // Liste des bénéficiaires - VACÍO PARA PRODUCCIÓN
+  const beneficiaires: any[] = [];
 
   // Filtrage des bénéficiaires (excluant ceux déjà sélectionnés)
   const beneficiairesFiltres = beneficiaires.filter(b => {
@@ -79,13 +70,8 @@ export function AideAlimentaire({ onNavigate, aidTypes }: AideAlimentaireProps) 
     );
   };
 
-  // Historique récent
-  const historiqueRecent = [
-    { id: 1, beneficiaire: 'Marie Dubois', type: 'Panier complet', quantite: '1', date: '2024-02-07 10:30' },
-    { id: 2, beneficiaire: 'Jean Martin', type: 'Aide d\'urgence', quantite: '1', date: '2024-02-07 09:15' },
-    { id: 3, beneficiaire: 'Sophie Bernard', type: 'Panier familial', quantite: '1', date: '2024-02-06 15:20' },
-    { id: 4, beneficiaire: 'Pierre Lefebvre', type: 'Denrées essentielles', quantite: '1', date: '2024-02-06 11:45' },
-  ];
+  // Historique récent - VACÍO PARA PRODUCCIÓN
+  const historiqueRecent: any[] = [];
 
   return (
     <>

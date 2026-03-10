@@ -517,9 +517,28 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                 </div>
                 <div className="space-y-1.5 sm:space-y-2">
                   {tiposContacto.length === 0 ? (
-                    <div className="text-center py-8 text-[#999999]">
-                      <p className="text-xs">Aucun type créé</p>
-                      <p className="text-xs mt-1">Cliquez sur ⚙️ pour créer</p>
+                    <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                          <Building2 className="w-6 h-6 text-amber-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-amber-900 mb-1">
+                            Aucun type de contact créé
+                          </p>
+                          <p className="text-xs text-amber-700 mb-3">
+                            Le système est vide. Créez vos premiers types de contact pour commencer.
+                          </p>
+                          <Button
+                            type="button"
+                            onClick={() => setDialogGestionTipos(true)}
+                            className="bg-amber-600 hover:bg-amber-700 text-white text-xs h-8"
+                          >
+                            <Plus className="w-3 h-3 mr-1" />
+                            Créer des types
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     tiposContacto.map((tipo) => {

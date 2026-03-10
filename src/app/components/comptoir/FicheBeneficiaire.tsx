@@ -25,28 +25,8 @@ interface FicheBeneficiaireProps {
 export function FicheBeneficiaire({ beneficiaireId, onNavigate }: FicheBeneficiaireProps) {
   const { t } = useTranslation();
   
-  // Mock data - debe estar primero
-  const beneficiaire = beneficiaireId !== 'new' ? {
-    id: beneficiaireId || '1',
-    nom: 'Marie Dubois',
-    telephone: '514-555-0101',
-    email: 'marie.dubois@email.com',
-    adresse: '123 Rue Principale',
-    numeroAppartement: 'App. 5',
-    ville: 'Montréal',
-    codePostal: 'H2X 1Y1',
-    dateNaissance: '1985-03-15',
-    statut: 'actif',
-    priorite: 'haute',
-    situationFamiliale: 'Famille monoparentale',
-    nombrePersonnes: 3,
-    revenus: 'Faibles',
-    revenuMensuel: 1200,
-    typeLogement: 'locataire',
-    hasEnfants: true,
-    nombreEnfants: 2,
-    notes: 'Allergies: arachides. Préfère les légumes frais.'
-  } : null;
+  // Mock data - VACÍO PARA PRODUCCIÓN
+  const beneficiaire = beneficiaireId !== 'new' ? null : null;
   
   const [isEditing, setIsEditing] = useState(beneficiaireId === 'new');
   const [infoExpanded, setInfoExpanded] = useState(true);
@@ -128,17 +108,9 @@ export function FicheBeneficiaire({ beneficiaireId, onNavigate }: FicheBeneficia
     }
   }, [revenuMensuel, nombrePersonnes]);
 
-  const historiqueAides = [
-    { id: 1, date: '2024-02-05', type: 'Panier alimentaire', quantite: '1 panier complet', valeur: '45 CAD$' },
-    { id: 2, date: '2024-01-29', type: 'Aide d\'urgence', quantite: 'Produits essentiels', valeur: '30 CAD$' },
-    { id: 3, date: '2024-01-22', type: 'Panier alimentaire', quantite: '1 panier complet', valeur: '45 CAD$' },
-  ];
+  const historiqueAides: any[] = [];
 
-  const timeline = [
-    { id: 1, date: '2024-02-05 10:30', action: 'Distribution panier alimentaire', user: 'Jean Admin' },
-    { id: 2, date: '2024-02-01 14:15', action: 'Rendez-vous confirmé', user: 'Marie Coord' },
-    { id: 3, date: '2024-01-29 09:45', action: 'Aide d\'urgence distribuée', user: 'Jean Admin' },
-  ];
+  const timeline: any[] = [];
 
   const handleSave = () => {
     toast.success(t('comptoir.beneficiarySaved'));

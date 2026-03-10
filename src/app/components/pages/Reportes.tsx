@@ -33,23 +33,10 @@ export function Reportes() {
   const [fechaInicio, setFechaInicio] = useState('2025-01-01');
   const [fechaFin, setFechaFin] = useState('2025-01-31');
 
-  // Datos para gráficos
-  const datosInventario = [
-    { categoria: 'Cereales', stock: 2300 },
-    { categoria: 'Legumbres', stock: 1800 },
-    { categoria: 'Aceites', stock: 850 },
-    { categoria: 'Verduras', stock: 450 },
-    { categoria: 'Frutas', stock: 380 },
-    { categoria: 'Lácteos', stock: 620 }
-  ];
+  // Datos para gráficos - VACÍO PARA PRODUCCIÓN
+  const datosInventario: Array<{ categoria: string; stock: number }> = [];
 
-  const datosComandasMes = [
-    { mes: 'Sep', comandas: 45 },
-    { mes: 'Oct', comandas: 52 },
-    { mes: 'Nov', comandas: 48 },
-    { mes: 'Dic', comandas: 58 },
-    { mes: 'Ene', comandas: 42 }
-  ];
+  const datosComandasMes: Array<{ mes: string; comandas: number }> = [];
 
   const datosOrganismos = mockOrganismos.map((org, index) => ({
     id: org.id || `org-${index}`,
@@ -57,13 +44,7 @@ export function Reportes() {
     beneficiarios: org.beneficiarios
   }));
 
-  const datosPRS = [
-    { mes: 'Sep', kg: 1200 },
-    { mes: 'Oct', kg: 1450 },
-    { mes: 'Nov', kg: 1380 },
-    { mes: 'Dic', kg: 1590 },
-    { mes: 'Ene', kg: 1420 }
-  ];
+  const datosPRS: Array<{ mes: string; kg: number }> = [];
 
   const COLORS = ['#1E73BE', '#4CAF50', '#FFC107', '#DC3545', '#9C27B0', '#00BCD4'];
 
