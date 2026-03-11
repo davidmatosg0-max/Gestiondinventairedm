@@ -18,6 +18,7 @@ import { FicheBenevole } from '../benevoles/FicheBenevole';
 import { IDDigitalBenevole } from '../benevoles/IDDigitalBenevole';
 import { FormularioNouveauBenevole } from '../benevoles/FormularioNouveauBenevole';
 import { AsignarRolContacto } from '../AsignarRolContacto';
+import { GestionContactosDepartamento } from '../departamentos/GestionContactosDepartamento';
 import { obtenirQuartiersLaval } from '../../data/quartiersLaval';
 import { SelecteurJoursDisponibles, type JourDisponible } from '../shared/SelecteurJoursDisponibles';
 import { obtenerDepartamentos } from '../../utils/departamentosStorage';
@@ -190,7 +191,7 @@ interface FeuilleTemps {
   enCours?: boolean; // Nueva propiedad para indicar si la entrada está en progreso
 }
 
-type BenevoleView = 'liste' | 'fiche' | 'feuilles-temps' | 'historique' | 'repartition' | 'rapports';
+type BenevoleView = 'liste' | 'fiche' | 'feuilles-temps' | 'historique' | 'repartition' | 'rapports' | 'contactos';
 
 interface BenevolesProps {
   isPublicAccess?: boolean;
@@ -3538,7 +3539,6 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    key="sexe-pie-chart"
                     data={sexeData}
                     cx="50%"
                     cy="50%"
@@ -3605,7 +3605,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                       borderRadius: '8px'
                     }}
                   />
-                  <Bar dataKey="value" key="age-bar-chart" radius={[8, 8, 0, 0]}>
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]}>
                     {ageData.map((entry, index) => (
                       <Cell key={`age-cell-${index}`} fill={ageColors[index % ageColors.length]} />
                     ))}
@@ -3725,7 +3725,6 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    key="dept-pie-chart"
                     data={heuresByDept}
                     dataKey="heures"
                     nameKey="departement"
@@ -3756,7 +3755,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                   <XAxis dataKey="departement" angle={-45} textAnchor="end" height={100} />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="heures" key="heures-dept-bar" fill="#1E73BE" />
+                  <Bar dataKey="heures" fill="#1E73BE" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -4151,7 +4150,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                           borderRadius: '8px'
                         }}
                       />
-                      <Bar dataKey="heures" key="rapport-heures-bar" fill="#1E73BE" name="Heures" radius={[8, 8, 0, 0]} />
+                      <Bar dataKey="heures" fill="#1E73BE" name="Heures" radius={[8, 8, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -4263,6 +4262,8 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         return renderRepartition();
       case 'rapports':
         return renderRapports();
+      case 'contactos':
+        return <GestionContactosDepartamento departamentoId="benevoles" nombreDepartamento="Bénévoles" />;
       default:
         return renderListeBenevoles();
     }
@@ -5372,6 +5373,10 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         onPhotoChange={handleNewFormPhotoChange}
         generateIdentifiant={generateIdentifiant}
         getTipoBenevoleConfig={getTipoBenevoleConfig}
+        onOpenGestionTiposContacto={() => {
+          setNewModalOpen(false);
+          setCurrentView('contactos');
+        }}
       />
 
       {/* Dialog Asignar Bénévole a Departamentos */}

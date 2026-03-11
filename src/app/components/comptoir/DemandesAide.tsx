@@ -384,14 +384,14 @@ export function DemandesAide({ onNavigate, aidRequests, setAidRequests }: Demand
 
       {/* Approve Dialog */}
       <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
-        <DialogContent>
+        <DialogContent aria-describedby="approve-dialog-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-[#4CAF50]">
               <CheckCircle className="w-6 h-6" />
               {t('comptoir.approveRequest')}
             </DialogTitle>
-            <DialogDescription>
-              {t('comptoir.approveConfirm')}
+            <DialogDescription id="approve-dialog-description">
+              Approuver cette demande d'aide alimentaire
             </DialogDescription>
           </DialogHeader>
           
@@ -460,13 +460,13 @@ export function DemandesAide({ onNavigate, aidRequests, setAidRequests }: Demand
 
       {/* Reject Dialog */}
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-        <DialogContent>
+        <DialogContent aria-describedby="reject-dialog-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-[#DC3545]">
               <XCircle className="w-6 h-6" />
               {t('comptoir.rejectRequest')}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="reject-dialog-description">
               {t('comptoir.rejectConfirm')}
             </DialogDescription>
           </DialogHeader>

@@ -585,7 +585,7 @@ export function CarritoMejorado({
 
       {/* Dialog para guardar carrito */}
       <Dialog open={guardarDialogOpen} onOpenChange={setGuardarDialogOpen}>
-        <DialogContent>
+        <DialogContent aria-describedby="guardar-carrito-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               💾 Guardar Carrito

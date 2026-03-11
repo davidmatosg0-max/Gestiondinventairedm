@@ -490,14 +490,14 @@ export function InventarioCocina() {
 
       {/* Modal Ajustar Stock */}
       <Dialog open={modalAjustarOpen} onOpenChange={setModalAjustarOpen}>
-        <DialogContent>
+        <DialogContent aria-describedby="ajustar-stock-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <span className="text-3xl">{productoSeleccionado?.icono}</span>
               Ajustar Stock - {productoSeleccionado?.nombre}
             </DialogTitle>
             <DialogDescription id="ajustar-stock-description">
-              Modifier la quantité en stock du produit
+              Ajuster la quantité de stock disponible pour ce produit
             </DialogDescription>
           </DialogHeader>
           
@@ -548,7 +548,7 @@ export function InventarioCocina() {
 
       {/* Modal Registrar Merma */}
       <Dialog open={modalMermaOpen} onOpenChange={setModalMermaOpen}>
-        <DialogContent>
+        <DialogContent aria-describedby="registrar-merma-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <span className="text-3xl">{productoSeleccionado?.icono}</span>

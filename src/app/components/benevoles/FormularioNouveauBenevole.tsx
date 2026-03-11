@@ -24,7 +24,9 @@ import {
   FileText,
   Trash2,
   Download,
-  Languages
+  Languages,
+  Plus,
+  Edit2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
@@ -40,6 +42,130 @@ import { Checkbox } from '../ui/checkbox';
 import { TaskSelector } from '../ui/task-selector';
 import { SelecteurJoursDisponibles, type JourDisponible } from '../shared/SelecteurJoursDisponibles';
 import { obtenerDepartamentos, type Departamento } from '../../utils/departamentosStorage';
+
+// Tipo para tipos de bénévole personalizados
+interface TipoBenevolePersonalizado {
+  id: string;
+  code: string;
+  label: string;
+  icon: string;
+  color: string;
+  bgColor: string;
+  dateCreated: string;
+}
+
+// Mapeo de iconos disponibles
+const ICON_MAP: Record<string, any> = {
+  Heart, UserCheck, Briefcase, Award, Crown, Star,
+  User, Users, UserPlus, Building2, Phone, Mail,
+  Sparkles, Calendar, FileText, MapPin, Trash2,
+  Download, Languages, Plus, Edit2, SettingsIcon
+};
+
+// Iconos disponibles para selección
+const ICONOS_DISPONIBLES = [
+  'Heart', 'UserCheck', 'Briefcase', 'Award', 'Crown', 'Star',
+  'User', 'Users', 'UserPlus', 'Building2', 'Sparkles'
+];
+
+// Colores disponibles para tipos
+const COLORES_DISPONIBLES = [
+  { name: 'Vert', value: '#2d9561', bg: '#2d956115' },
+  { name: 'Bleu', value: '#3B82F6', bg: '#3B82F615' },
+  { name: 'Violet', value: '#8B5CF6', bg: '#8B5CF615' },
+  { name: 'Orange', value: '#F59E0B', bg: '#F59E0B15' },
+  { name: 'Rouge', value: '#EF4444', bg: '#EF444415' },
+  { name: 'Rose', value: '#EC4899', bg: '#EC489915' },
+  { name: 'Indigo', value: '#6366F1', bg: '#6366F115' },
+  { name: 'Gris', value: '#6B7280', bg: '#6B728015' },
+  { name: 'Cyan', value: '#06B6D4', bg: '#06B6D415' },
+  { name: 'Jaune', value: '#EAB308', bg: '#EAB30815' }
+];
+
+// Función auxiliar para obtener componente de icono
+const getIconComponent = (iconName: string) => {
+  return ICON_MAP[iconName] || User;
+};
+
+// Utilidades de localStorage para tipos de bénévoles
+const STORAGE_KEY_TIPOS_BENEVOLES = 'ba_tipos_benevoles_todos';
+const STORAGE_KEY_INITIALIZED = 'ba_tipos_benevoles_initialized';
+
+// Tipos predefinidos por defecto (se cargan solo la primera vez)
+const TIPOS_PREDEFINIDOS_DEFAULT = [
+  { code: 'benevole', label: 'Bénévole', icon: 'Heart', color: '#2d9561', bgColor: '#2d956115' },
+  { code: 'stagiaire', label: 'Stagiaire', icon: 'UserCheck', color: '#3B82F6', bgColor: '#3B82F615' },
+  { code: 'employe', label: 'Employé', icon: 'Briefcase', color: '#8B5CF6', bgColor: '#8B5CF615' },
+  { code: 'coordinateur', label: 'Coordinateur', icon: 'Award', color: '#F59E0B', bgColor: '#F59E0B15' },
+  { code: 'responsable', label: 'Responsable', icon: 'Crown', color: '#EF4444', bgColor: '#EF444415' },
+  { code: 'autre', label: 'Autre', icon: 'Star', color: '#6B7280', bgColor: '#6B728015' }
+];
+
+const inicializarTiposPredefinidos = () => {
+  const initialized = localStorage.getItem(STORAGE_KEY_INITIALIZED);
+  if (!initialized) {
+    const tiposIniciales: TipoBenevolePersonalizado[] = TIPOS_PREDEFINIDOS_DEFAULT.map((tipo) => ({
+      ...tipo,
+      id: `predefinido-${tipo.code}`,
+      dateCreated: new Date().toISOString()
+    }));
+    localStorage.setItem(STORAGE_KEY_TIPOS_BENEVOLES, JSON.stringify(tiposIniciales));
+    localStorage.setItem(STORAGE_KEY_INITIALIZED, 'true');
+  }
+};
+
+const obtenerTiposBenevoles = (): TipoBenevolePersonalizado[] => {
+  try {
+    inicializarTiposPredefinidos();
+    const stored = localStorage.getItem(STORAGE_KEY_TIPOS_BENEVOLES);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Error al obtener tipos de bénévoles:', error);
+    return [];
+  }
+};
+
+const guardarTiposBenevoles = (tipos: TipoBenevolePersonalizado[]) => {
+  try {
+    localStorage.setItem(STORAGE_KEY_TIPOS_BENEVOLES, JSON.stringify(tipos));
+  } catch (error) {
+    console.error('Error al guardar tipos de bénévoles:', error);
+  }
+};
+
+const agregarTipoBenevole = (tipo: Omit<TipoBenevolePersonalizado, 'id' | 'dateCreated'>) => {
+  const tipos = obtenerTiposBenevoles();
+  const nuevoTipo: TipoBenevolePersonalizado = {
+    ...tipo,
+    id: `tipo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    dateCreated: new Date().toISOString()
+  };
+  tipos.push(nuevoTipo);
+  guardarTiposBenevoles(tipos);
+  return nuevoTipo;
+};
+
+const actualizarTipoBenevole = (id: string, datos: Partial<TipoBenevolePersonalizado>) => {
+  const tipos = obtenerTiposBenevoles();
+  const index = tipos.findIndex(t => t.id === id);
+  if (index !== -1) {
+    tipos[index] = { ...tipos[index], ...datos };
+    guardarTiposBenevoles(tipos);
+    return true;
+  }
+  return false;
+};
+
+const eliminarTipoBenevole = (id: string) => {
+  const tipos = obtenerTiposBenevoles();
+  const nuevosTipos = tipos.filter(t => t.id !== id);
+  guardarTiposBenevoles(nuevosTipos);
+};
+
+const existeCodigoTipoBenevole = (code: string, excludeId?: string): boolean => {
+  const tipos = obtenerTiposBenevoles();
+  return tipos.some(t => t.code === code && t.id !== excludeId);
+};
 
 export type TipoBenevole = 'benevole' | 'stagiaire' | 'employe' | 'coordinateur' | 'responsable' | 'autre';
 
@@ -100,17 +226,8 @@ interface FormularioNouveauBenevoleProps {
     color: string;
     bgColor: string;
   };
+  onOpenGestionTiposContacto?: () => void;
 }
-
-// Tipos de bénévole
-const TIPOS_BENEVOLE = [
-  { code: 'benevole', label: 'Bénévole', icon: Heart, color: '#2d9561', bgColor: '#2d956115' },
-  { code: 'stagiaire', label: 'Stagiaire', icon: UserCheck, color: '#3B82F6', bgColor: '#3B82F615' },
-  { code: 'employe', label: 'Employé', icon: Briefcase, color: '#8B5CF6', bgColor: '#8B5CF615' },
-  { code: 'coordinateur', label: 'Coordinateur', icon: Award, color: '#F59E0B', bgColor: '#F59E0B15' },
-  { code: 'responsable', label: 'Responsable', icon: Crown, color: '#EF4444', bgColor: '#EF444415' },
-  { code: 'autre', label: 'Autre', icon: Star, color: '#6B7280', bgColor: '#6B728015' }
-];
 
 export function FormularioNouveauBenevole({
   isOpen,
@@ -122,11 +239,103 @@ export function FormularioNouveauBenevole({
   photoPreview,
   onPhotoChange,
   generateIdentifiant,
-  getTipoBenevoleConfig
+  getTipoBenevoleConfig,
+  onOpenGestionTiposContacto
 }: FormularioNouveauBenevoleProps) {
   const branding = useBranding();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
+  
+  // Estado para el dialog de gestión de tipos
+  const [dialogGestionTiposOpen, setDialogGestionTiposOpen] = useState(false);
+  const [dialogEditarTipo, setDialogEditarTipo] = useState(false);
+  const [tiposBenevoles, setTiposBenevoles] = useState<TipoBenevolePersonalizado[]>([]);
+  const [tipoEditando, setTipoEditando] = useState<TipoBenevolePersonalizado | null>(null);
+  const [nuevoTipo, setNuevoTipo] = useState({
+    code: '',
+    label: '',
+    icon: 'Heart',
+    color: branding.primaryColor,
+    bgColor: `${branding.primaryColor}15`
+  });
+
+  // Cargar tipos al abrir el dialog y cuando se actualiza el estado
+  React.useEffect(() => {
+    if (dialogGestionTiposOpen || isOpen) {
+      setTiposBenevoles(obtenerTiposBenevoles());
+    }
+  }, [dialogGestionTiposOpen, isOpen]);
+
+  const limpiarFormularioTipo = () => {
+    setNuevoTipo({
+      code: '',
+      label: '',
+      icon: 'Heart',
+      color: branding.primaryColor,
+      bgColor: `${branding.primaryColor}15`
+    });
+    setTipoEditando(null);
+  };
+
+  const abrirNuevoTipo = () => {
+    limpiarFormularioTipo();
+    setDialogEditarTipo(true);
+  };
+
+  const abrirEditarTipo = (tipo: TipoBenevolePersonalizado) => {
+    setTipoEditando(tipo);
+    setNuevoTipo({
+      code: tipo.code,
+      label: tipo.label,
+      icon: tipo.icon,
+      color: tipo.color,
+      bgColor: tipo.bgColor
+    });
+    setDialogEditarTipo(true);
+  };
+
+  const handleGuardarTipo = () => {
+    // Validaciones
+    if (!nuevoTipo.code.trim()) {
+      toast.error('Le code est requis');
+      return;
+    }
+    if (!nuevoTipo.label.trim()) {
+      toast.error('Le libellé est requis');
+      return;
+    }
+
+    // Verificar código duplicado
+    if (existeCodigoTipoBenevole(nuevoTipo.code, tipoEditando?.id)) {
+      toast.error('Ce code existe déjà');
+      return;
+    }
+
+    if (tipoEditando) {
+      // Actualizar tipo existente
+      actualizarTipoBenevole(tipoEditando.id, nuevoTipo);
+      toast.success(`✅ Type "${nuevoTipo.label}" mis à jour avec succès`);
+    } else {
+      // Crear nuevo tipo
+      agregarTipoBenevole(nuevoTipo);
+      toast.success(`✅ Type "${nuevoTipo.label}" créé avec succès`);
+    }
+
+    // Recargar lista inmediatamente
+    const tiposActualizados = obtenerTiposBenevoles();
+    setTiposBenevoles(tiposActualizados);
+    setDialogEditarTipo(false);
+    limpiarFormularioTipo();
+  };
+
+  const handleEliminarTipo = (tipo: TipoBenevolePersonalizado) => {
+    if (confirm(`⚠️ Voulez-vous vraiment supprimer le type "${tipo.label}" ?\n\nCette action est irréversible.`)) {
+      eliminarTipoBenevole(tipo.id);
+      const tiposActualizados = obtenerTiposBenevoles();
+      setTiposBenevoles(tiposActualizados);
+      toast.success(`✅ Type "${tipo.label}" supprimé avec succès`);
+    }
+  };
 
   const updateDisponibilidad = (index: number, period: 'am' | 'pm', value: boolean) => {
     if (!formData.disponibilidadesSemanal) return;
@@ -220,6 +429,7 @@ export function FormularioNouveauBenevole({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
         className="!max-w-none !w-[95vw] !max-h-[95vh] !h-[95vh] overflow-hidden p-0 m-0 rounded-xl"
+        aria-describedby="nouveau-benevole-description"
       >
         <div className="h-full flex flex-col">
           <DialogHeader className="sticky top-0 z-10 bg-white border-b-2 border-[#E0E0E0] px-6 py-3 shadow-sm">
@@ -227,8 +437,8 @@ export function FormularioNouveauBenevole({
               <Users className="w-5 h-5 inline mr-2" />
               Enregistrer un nouveau bénévole
             </DialogTitle>
-            <DialogDescription id="benevole-form-description" className="sr-only">
-              Formulaire d'enregistrement d'un nouveau bénévole
+            <DialogDescription id="nouveau-benevole-description" className="sr-only">
+              Formulaire d'enregistrement d'un nouveau bénévole avec informations personnelles, contact, et professionnelles
             </DialogDescription>
           </DialogHeader>
           
@@ -272,38 +482,59 @@ export function FormularioNouveauBenevole({
 
               {/* Type de Bénévole */}
               <div>
-                <h4 className="text-sm font-semibold text-[#666666] mb-3 uppercase tracking-wide">Type</h4>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold text-[#666666] uppercase tracking-wide">Type</h4>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDialogGestionTiposOpen(true);
+                    }}
+                    className="p-1.5 rounded-lg hover:bg-gray-200 transition-colors group"
+                    title="Gérer les types de contact"
+                  >
+                    <SettingsIcon className="w-4 h-4 text-gray-500 group-hover:text-[#1a4d7a] group-hover:rotate-90 transition-all duration-300" />
+                  </button>
+                </div>
                 <div className="space-y-2">
-                  {TIPOS_BENEVOLE.map((tipo) => {
-                    const Icon = tipo.icon;
-                    const isSelected = formData.tipo === tipo.code;
-                    return (
-                      <div
-                        key={tipo.code}
-                        onClick={() => onFormChange({ ...formData, tipo: tipo.code as TipoBenevole })}
-                        className={`p-2 rounded-lg border-2 cursor-pointer transition-all hover:shadow-sm ${
-                          isSelected ? 'ring-2' : ''
-                        }`}
-                        style={{
-                          borderColor: isSelected ? tipo.color : '#E0E0E0',
-                          backgroundColor: isSelected ? tipo.bgColor : 'white',
-                          ringColor: tipo.color
-                        }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="p-1.5 rounded-full"
-                            style={{ backgroundColor: isSelected ? 'white' : tipo.bgColor }}
-                          >
-                            <Icon className="w-4 h-4" style={{ color: tipo.color }} />
+                  {tiposBenevoles.length > 0 ? (
+                    tiposBenevoles.map((tipo) => {
+                      const Icon = getIconComponent(tipo.icon);
+                      const isSelected = formData.tipo === tipo.code;
+                      return (
+                        <div
+                          key={tipo.id}
+                          onClick={() => onFormChange({ ...formData, tipo: tipo.code as TipoBenevole })}
+                          className={`p-2 rounded-lg border-2 cursor-pointer transition-all hover:shadow-sm ${
+                            isSelected ? 'ring-2' : ''
+                          }`}
+                          style={{
+                            borderColor: isSelected ? tipo.color : '#E0E0E0',
+                            backgroundColor: isSelected ? tipo.bgColor : 'white',
+                            ringColor: tipo.color
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="p-1.5 rounded-full"
+                              style={{ backgroundColor: isSelected ? 'white' : tipo.bgColor }}
+                            >
+                              <Icon className="w-4 h-4" style={{ color: tipo.color }} />
+                            </div>
+                            <span className="text-xs font-medium text-[#333333] leading-tight">
+                              {tipo.label}
+                            </span>
                           </div>
-                          <span className="text-xs font-medium text-[#333333] leading-tight">
-                            {tipo.label}
-                          </span>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      <p className="text-xs">Aucun type disponible</p>
+                      <p className="text-xs mt-1">Cliquez sur ⚙️ pour créer</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -866,6 +1097,217 @@ export function FormularioNouveauBenevole({
           </div>
         </div>
       </DialogContent>
+      
+      {/* Dialog de Gestion de Types de Bénévoles */}
+      <Dialog open={dialogGestionTiposOpen} onOpenChange={setDialogGestionTiposOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto scrollbar-thin" aria-describedby="gestion-tipos-benevoles-description">
+          <DialogHeader>
+            <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              Gestion des Types de Bénévoles
+            </DialogTitle>
+            <DialogDescription id="gestion-tipos-benevoles-description">
+              Créez, modifiez ou supprimez tous les types de bénévoles. Tous les types peuvent être personnalisés selon vos besoins.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-3">
+            <Button
+              onClick={abrirNuevoTipo}
+              className="w-full text-white"
+              style={{ backgroundColor: branding.secondaryColor }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Créer un nouveau type
+            </Button>
+
+            {/* Panel de estadísticas */}
+            {tiposBenevoles.length > 0 && (
+              <div className="p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200 text-center">
+                <p className="text-3xl font-bold" style={{ color: branding.primaryColor }}>
+                  {tiposBenevoles.length}
+                </p>
+                <p className="text-xs text-gray-600">Types de bénévoles</p>
+              </div>
+            )}
+
+            {/* Lista de todos los tipos (editables y eliminables) */}
+            {tiposBenevoles.length > 0 ? (
+              <div className="border rounded-lg divide-y">
+                <div className="p-2 bg-gradient-to-r from-blue-50 to-green-50">
+                  <p className="text-xs font-semibold text-gray-700">Tous les types (modifiables)</p>
+                </div>
+                {tiposBenevoles.map((tipo) => {
+                  const Icon = getIconComponent(tipo.icon);
+                  const isPredefinido = tipo.id.startsWith('predefinido-');
+                  return (
+                    <div key={tipo.id} className="p-3 flex items-center justify-between hover:bg-[#F9FAFB] transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg" style={{ backgroundColor: tipo.bgColor }}>
+                          <Icon className="w-5 h-5" style={{ color: tipo.color }} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm">{tipo.label}</p>
+                            {isPredefinido && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                                Défaut
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-[#999999]">Code: {tipo.code}</p>
+                          <p className="text-xs text-[#999999]">
+                            Créé: {new Date(tipo.dateCreated).toLocaleDateString('fr-FR')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => abrirEditarTipo(tipo)}
+                          title="Modifier ce type"
+                        >
+                          <Edit2 className="w-4 h-4" style={{ color: branding.primaryColor }} />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleEliminarTipo(tipo)}
+                          title="Supprimer ce type"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500 border rounded-lg">
+                <Users className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                <p className="text-sm">Aucun type de bénévole</p>
+                <p className="text-xs mt-1">Créez votre premier type de bénévole</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Crear/Editar Tipo */}
+      <Dialog open={dialogEditarTipo} onOpenChange={(open) => {
+        setDialogEditarTipo(open);
+        if (!open) limpiarFormularioTipo();
+      }}>
+        <DialogContent className="max-w-xl" aria-describedby="editar-tipo-description">
+          <DialogHeader>
+            <DialogTitle>{tipoEditando ? 'Modifier le type' : 'Créer un nouveau type'}</DialogTitle>
+            <DialogDescription id="editar-tipo-description">
+              Définissez les propriétés du type de bénévole
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="tipo-code" className="text-xs">Code unique *</Label>
+              <Input
+                id="tipo-code"
+                value={nuevoTipo.code}
+                onChange={(e) => setNuevoTipo({ ...nuevoTipo, code: e.target.value })}
+                placeholder="benevole-special"
+                className="h-9"
+                disabled={!!tipoEditando}
+              />
+              {tipoEditando && (
+                <p className="text-xs text-gray-500 mt-1">Le code ne peut pas être modifié</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="tipo-label" className="text-xs">Étiquette *</Label>
+              <Input
+                id="tipo-label"
+                value={nuevoTipo.label}
+                onChange={(e) => setNuevoTipo({ ...nuevoTipo, label: e.target.value })}
+                placeholder="Bénévole Spécial"
+                className="h-9"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs mb-2 block">Icône</Label>
+              <div className="grid grid-cols-8 gap-2">
+                {ICONOS_DISPONIBLES.map((iconName) => {
+                  const Icon = ICON_MAP[iconName];
+                  const isSelected = nuevoTipo.icon === iconName;
+                  return (
+                    <button
+                      key={iconName}
+                      type="button"
+                      onClick={() => setNuevoTipo({ ...nuevoTipo, icon: iconName })}
+                      className={`p-2 border-2 rounded-lg hover:shadow-sm transition-all ${
+                        isSelected ? 'ring-2' : ''
+                      }`}
+                      style={{
+                        borderColor: isSelected ? nuevoTipo.color : '#E0E0E0',
+                        backgroundColor: isSelected ? nuevoTipo.bgColor : 'white',
+                        ringColor: nuevoTipo.color
+                      }}
+                    >
+                      <Icon className="w-5 h-5 mx-auto" style={{ color: nuevoTipo.color }} />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs mb-2 block">Couleur</Label>
+              <div className="grid grid-cols-5 gap-2">
+                {COLORES_DISPONIBLES.map((color) => {
+                  const isSelected = nuevoTipo.color === color.value;
+                  return (
+                    <button
+                      key={color.value}
+                      type="button"
+                      onClick={() => setNuevoTipo({ ...nuevoTipo, color: color.value, bgColor: color.bg })}
+                      className={`p-3 border-2 rounded-lg hover:shadow-sm transition-all ${
+                        isSelected ? 'ring-2 ring-offset-2' : ''
+                      }`}
+                      style={{
+                        borderColor: color.value,
+                        backgroundColor: color.bg,
+                        ringColor: color.value
+                      }}
+                    >
+                      <div className="w-full h-4 rounded" style={{ backgroundColor: color.value }} />
+                      <p className="text-xs mt-1 font-medium">{color.name}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="pt-4 border-t flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDialogEditarTipo(false);
+                  limpiarFormularioTipo();
+                }}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleGuardarTipo}
+                className="text-white"
+                style={{ backgroundColor: branding.secondaryColor }}
+              >
+                {tipoEditando ? 'Mettre à jour' : 'Créer'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
