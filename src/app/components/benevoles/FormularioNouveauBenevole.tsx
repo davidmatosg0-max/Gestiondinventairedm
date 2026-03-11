@@ -87,12 +87,14 @@ const getIconComponent = (iconName: string) => {
   return ICON_MAP[iconName] || User;
 };
 
-// Utilidades de localStorage para tipos de bénévoles
-const STORAGE_KEY_TIPOS_BENEVOLES = 'ba_tipos_benevoles_todos';
-const STORAGE_KEY_INITIALIZED = 'ba_tipos_benevoles_initialized';
+// Utilidades de localStorage para tipos de bénévoles (específicos por departamento)
+const DEPARTAMENTO_ID = 'benevoles'; // ID único del departamento Bénévoles
 
-// Tipos predefinidos por defecto (se cargan solo la primera vez)
-const TIPOS_PREDEFINIDOS_DEFAULT = [
+const getStorageKey = (deptId: string) => `ba_tipos_contacto_dept_${deptId}`;
+const getInitializedKey = (deptId: string) => `ba_tipos_contacto_dept_${deptId}_initialized`;
+
+// Tipos predefinidos por defecto para el departamento Bénévoles
+const TIPOS_PREDEFINIDOS_BENEVOLES = [
   { code: 'benevole', label: 'Bénévole', icon: 'Heart', color: '#2d9561', bgColor: '#2d956115' },
   { code: 'stagiaire', label: 'Stagiaire', icon: 'UserCheck', color: '#3B82F6', bgColor: '#3B82F615' },
   { code: 'employe', label: 'Employé', icon: 'Briefcase', color: '#8B5CF6', bgColor: '#8B5CF615' },
@@ -101,23 +103,23 @@ const TIPOS_PREDEFINIDOS_DEFAULT = [
   { code: 'autre', label: 'Autre', icon: 'Star', color: '#6B7280', bgColor: '#6B728015' }
 ];
 
-const inicializarTiposPredefinidos = () => {
-  const initialized = localStorage.getItem(STORAGE_KEY_INITIALIZED);
+const inicializarTiposPredefinidos = (deptId: string) => {
+  const initialized = localStorage.getItem(getInitializedKey(deptId));
   if (!initialized) {
-    const tiposIniciales: TipoBenevolePersonalizado[] = TIPOS_PREDEFINIDOS_DEFAULT.map((tipo) => ({
+    const tiposIniciales: TipoBenevolePersonalizado[] = TIPOS_PREDEFINIDOS_BENEVOLES.map((tipo) => ({
       ...tipo,
-      id: `predefinido-${tipo.code}`,
+      id: `${deptId}-predefinido-${tipo.code}`,
       dateCreated: new Date().toISOString()
     }));
-    localStorage.setItem(STORAGE_KEY_TIPOS_BENEVOLES, JSON.stringify(tiposIniciales));
-    localStorage.setItem(STORAGE_KEY_INITIALIZED, 'true');
+    localStorage.setItem(getStorageKey(deptId), JSON.stringify(tiposIniciales));
+    localStorage.setItem(getInitializedKey(deptId), 'true');
   }
 };
 
-const obtenerTiposBenevoles = (): TipoBenevolePersonalizado[] => {
+const obtenerTiposBenevoles = (deptId: string = DEPARTAMENTO_ID): TipoBenevolePersonalizado[] => {
   try {
-    inicializarTiposPredefinidos();
-    const stored = localStorage.getItem(STORAGE_KEY_TIPOS_BENEVOLES);
+    inicializarTiposPredefinidos(deptId);
+    const stored = localStorage.getItem(getStorageKey(deptId));
     return stored ? JSON.parse(stored) : [];
   } catch (error) {
     console.error('Error al obtener tipos de bénévoles:', error);
@@ -125,45 +127,45 @@ const obtenerTiposBenevoles = (): TipoBenevolePersonalizado[] => {
   }
 };
 
-const guardarTiposBenevoles = (tipos: TipoBenevolePersonalizado[]) => {
+const guardarTiposBenevoles = (tipos: TipoBenevolePersonalizado[], deptId: string = DEPARTAMENTO_ID) => {
   try {
-    localStorage.setItem(STORAGE_KEY_TIPOS_BENEVOLES, JSON.stringify(tipos));
+    localStorage.setItem(getStorageKey(deptId), JSON.stringify(tipos));
   } catch (error) {
     console.error('Error al guardar tipos de bénévoles:', error);
   }
 };
 
-const agregarTipoBenevole = (tipo: Omit<TipoBenevolePersonalizado, 'id' | 'dateCreated'>) => {
-  const tipos = obtenerTiposBenevoles();
+const agregarTipoBenevole = (tipo: Omit<TipoBenevolePersonalizado, 'id' | 'dateCreated'>, deptId: string = DEPARTAMENTO_ID) => {
+  const tipos = obtenerTiposBenevoles(deptId);
   const nuevoTipo: TipoBenevolePersonalizado = {
     ...tipo,
-    id: `tipo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: `${deptId}-tipo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     dateCreated: new Date().toISOString()
   };
   tipos.push(nuevoTipo);
-  guardarTiposBenevoles(tipos);
+  guardarTiposBenevoles(tipos, deptId);
   return nuevoTipo;
 };
 
-const actualizarTipoBenevole = (id: string, datos: Partial<TipoBenevolePersonalizado>) => {
-  const tipos = obtenerTiposBenevoles();
+const actualizarTipoBenevole = (id: string, datos: Partial<TipoBenevolePersonalizado>, deptId: string = DEPARTAMENTO_ID) => {
+  const tipos = obtenerTiposBenevoles(deptId);
   const index = tipos.findIndex(t => t.id === id);
   if (index !== -1) {
     tipos[index] = { ...tipos[index], ...datos };
-    guardarTiposBenevoles(tipos);
+    guardarTiposBenevoles(tipos, deptId);
     return true;
   }
   return false;
 };
 
-const eliminarTipoBenevole = (id: string) => {
-  const tipos = obtenerTiposBenevoles();
+const eliminarTipoBenevole = (id: string, deptId: string = DEPARTAMENTO_ID) => {
+  const tipos = obtenerTiposBenevoles(deptId);
   const nuevosTipos = tipos.filter(t => t.id !== id);
-  guardarTiposBenevoles(nuevosTipos);
+  guardarTiposBenevoles(nuevosTipos, deptId);
 };
 
-const existeCodigoTipoBenevole = (code: string, excludeId?: string): boolean => {
-  const tipos = obtenerTiposBenevoles();
+const existeCodigoTipoBenevole = (code: string, excludeId?: string, deptId: string = DEPARTAMENTO_ID): boolean => {
+  const tipos = obtenerTiposBenevoles(deptId);
   return tipos.some(t => t.code === code && t.id !== excludeId);
 };
 
@@ -1103,10 +1105,10 @@ export function FormularioNouveauBenevole({
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto scrollbar-thin" aria-describedby="gestion-tipos-benevoles-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
-              Gestion des Types de Bénévoles
+              Gestion des Types - Département Bénévoles
             </DialogTitle>
             <DialogDescription id="gestion-tipos-benevoles-description">
-              Créez, modifiez ou supprimez tous les types de bénévoles. Tous les types peuvent être personnalisés selon vos besoins.
+              Créez, modifiez ou supprimez les types de contact spécifiques au département Bénévoles. Ces types sont indépendants des autres départements.
             </DialogDescription>
           </DialogHeader>
           
@@ -1120,15 +1122,26 @@ export function FormularioNouveauBenevole({
               Créer un nouveau type
             </Button>
 
-            {/* Panel de estadísticas */}
-            {tiposBenevoles.length > 0 && (
-              <div className="p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200 text-center">
-                <p className="text-3xl font-bold" style={{ color: branding.primaryColor }}>
-                  {tiposBenevoles.length}
+            {/* Panel de estadísticas e información */}
+            <div className="space-y-2">
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-xs text-blue-800 text-center">
+                  📋 <strong>Département:</strong> Bénévoles
                 </p>
-                <p className="text-xs text-gray-600">Types de bénévoles</p>
+                <p className="text-xs text-blue-600 text-center mt-1">
+                  Ces types sont indépendants des autres départements
+                </p>
               </div>
-            )}
+              
+              {tiposBenevoles.length > 0 && (
+                <div className="p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200 text-center">
+                  <p className="text-3xl font-bold" style={{ color: branding.primaryColor }}>
+                    {tiposBenevoles.length}
+                  </p>
+                  <p className="text-xs text-gray-600">Types disponibles</p>
+                </div>
+              )}
+            </div>
 
             {/* Lista de todos los tipos (editables y eliminables) */}
             {tiposBenevoles.length > 0 ? (
