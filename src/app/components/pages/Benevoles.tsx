@@ -3340,7 +3340,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                         <td className="px-6 py-4 text-[#666666]">{new Date(feuille.date).toLocaleDateString('fr-FR')}</td>
                         <td className="px-6 py-4 text-[#666666]">{feuille.heureDebut} - {feuille.heureFin}</td>
                         <td className="px-6 py-4 text-right">
-                          <span className="font-bold text-[#1E73BE]">{feuille.duree}h</span>
+                          <span className="font-bold text-[#1E73BE]">{formaterHeures(feuille.duree)}</span>
                         </td>
                         <td className="px-6 py-4 text-[#999999] text-sm">{feuille.notes || '—'}</td>
                       </tr>
@@ -3779,7 +3779,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                   <h3 className="font-semibold text-[#333333]">{dept.departement}</h3>
                 </div>
                 <p className="text-3xl font-bold" style={{ color: COLORS[index % COLORS.length] }}>
-                  {dept.heures}h
+                  {formaterHeures(dept.heures)}
                 </p>
               </CardContent>
             </Card>
@@ -3802,7 +3802,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                     cx="50%"
                     cy="50%"
                     outerRadius={100}
-                    label={(entry) => `${entry.heures}h`}
+                    label={(entry) => formaterHeures(entry.heures)}
                   >
                     {heuresByDept.map((entry, index) => (
                       <Cell key={`dept-cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -3868,11 +3868,11 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                         </td>
                         {benevoleHeures.map((heures, index) => (
                           <td key={index} className="px-4 py-4 text-right text-[#666666]">
-                            {heures > 0 ? `${heures}h` : '—'}
+                            {heures > 0 ? formaterHeures(heures) : '—'}
                           </td>
                         ))}
                         <td className="px-6 py-4 text-right">
-                          <span className="font-bold text-[#1E73BE]">{total}h</span>
+                          <span className="font-bold text-[#1E73BE]">{formaterHeures(total)}</span>
                         </td>
                       </tr>
                     );
@@ -4265,7 +4265,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                               {feuille.heureDebut} - {feuille.heureFin}
                             </td>
                             <td className="px-4 py-3 text-sm text-right font-bold text-[#1E73BE]">
-                              {feuille.duree}h
+                              {formaterHeures(feuille.duree)}
                             </td>
                             <td className="px-4 py-3 text-sm text-[#666666] italic">
                               {feuille.notes || '—'}

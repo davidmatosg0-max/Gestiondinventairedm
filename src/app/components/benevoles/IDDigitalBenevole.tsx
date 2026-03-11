@@ -33,7 +33,7 @@ export function IDDigitalBenevole({ benevole, isOpen, onClose }: IDDigitalBenevo
     statut: benevole.statut,
     metrique: {
       label: 'Heures accumulées',
-      valor: `${benevole.heuresTotal}h`
+      valor: `${Math.round(benevole.heuresTotal)}h`
     },
     couleurTheme: '#4CAF50' // Verde para bénévoles
   };

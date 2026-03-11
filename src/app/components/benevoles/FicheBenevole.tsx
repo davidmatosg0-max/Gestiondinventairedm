@@ -1056,7 +1056,7 @@ export function FicheBenevole({ benevole, onNavigate, onUpdate }: FicheBenevoleP
                           <span className="font-mono">{feuille.heureDebut} - {feuille.heureFin}</span>
                         </div>
                         <Badge className="bg-[#4CAF50] text-white text-xs">
-                          {feuille.duree}h
+                          {formaterHeures(feuille.duree)}
                         </Badge>
                       </div>
                     </div>
@@ -1150,7 +1150,7 @@ export function FicheBenevole({ benevole, onNavigate, onUpdate }: FicheBenevoleP
                     {filtered.length} {filtered.length > 1 ? 'entrées' : 'entrée'}
                   </Badge>
                   <Badge variant="outline" className="border-[#FF9800] text-[#FF9800]">
-                    Total: {totalHeures}h
+                    Total: {formaterHeures(totalHeures)}
                   </Badge>
                 </div>
               );
@@ -1189,7 +1189,7 @@ export function FicheBenevole({ benevole, onNavigate, onUpdate }: FicheBenevoleP
                             <span className="font-mono font-semibold">{feuille.heureFin}</span>
                           </div>
                           <Badge variant="outline" className="border-[#FF9800] text-[#FF9800]">
-                            {feuille.duree}h
+                            {formaterHeures(feuille.duree)}
                           </Badge>
                         </div>
                         {feuille.notes && (
