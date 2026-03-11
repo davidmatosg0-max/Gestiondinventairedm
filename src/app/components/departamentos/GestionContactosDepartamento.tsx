@@ -81,6 +81,7 @@ import {
 } from '../../utils/idiomasPersonalizadosStorage';
 import { obtenerTiposContacto } from '../../utils/tiposContactoStorage';
 import { FormularioContactoCompacto } from './FormularioContactoCompacto';
+import { FormularioContactoEmpresa } from './FormularioContactoEmpresa';
 import { CalendarioContactos } from './CalendarioContactos';
 import { AsignarRolContacto } from '../AsignarRolContacto';
 import { HistoriqueActivite } from '../benevoles/HistoriqueActivite';
@@ -1139,25 +1140,43 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         </TabsContent>
       </Tabs>
 
-      {/* Dialog Créer/Éditer - FORMULAIRE COMPACT */}
-      <FormularioContactoCompacto
-        abierto={dialogAbierto}
-        onCerrar={() => {
-          setDialogAbierto(false);
-          limpiarFormulario();
-        }}
-        formulario={formulario}
-        setFormulario={setFormulario}
-        modoEdicion={modoEdicion}
-        onGuardar={handleGuardar}
-        fotoPreview={fotoPreview}
-        onFotoChange={handleFotoChange}
-        getTipoConfig={getTipoConfig}
-        updateDisponibilidad={updateDisponibilidad}
-        tiposPermitidos={tiposPermitidos}
-        departamentoId={departamentoId}
-        departamentoNombre={departamentoNombre}
-      />
+      {/* Dialog Créer/Éditer - Formulaire selon le type */}
+      {(formulario.tipo === 'donador' || formulario.tipo === 'fournisseur') ? (
+        <FormularioContactoEmpresa
+          abierto={dialogAbierto}
+          onCerrar={() => {
+            setDialogAbierto(false);
+            limpiarFormulario();
+          }}
+          formulario={formulario}
+          setFormulario={setFormulario}
+          modoEdicion={modoEdicion}
+          onGuardar={handleGuardar}
+          fotoPreview={fotoPreview}
+          onFotoChange={handleFotoChange}
+          getTipoConfig={getTipoConfig}
+          departamentoNombre={departamentoNombre}
+        />
+      ) : (
+        <FormularioContactoCompacto
+          abierto={dialogAbierto}
+          onCerrar={() => {
+            setDialogAbierto(false);
+            limpiarFormulario();
+          }}
+          formulario={formulario}
+          setFormulario={setFormulario}
+          modoEdicion={modoEdicion}
+          onGuardar={handleGuardar}
+          fotoPreview={fotoPreview}
+          onFotoChange={handleFotoChange}
+          getTipoConfig={getTipoConfig}
+          updateDisponibilidad={updateDisponibilidad}
+          tiposPermitidos={tiposPermitidos}
+          departamentoId={departamentoId}
+          departamentoNombre={departamentoNombre}
+        />
+      )}
 
       {/* Dialog Détails */}
       <Dialog open={dialogDetalle} onOpenChange={setDialogDetalle}>
@@ -1169,7 +1188,13 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
             </DialogDescription>
           </DialogHeader>
           {contactoSeleccionado && (
-            <div className="space-y-4">
+            <Tabs defaultValue="information" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="information">Informations</TabsTrigger>
+                <TabsTrigger value="activite">Historial de actividad</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="information" className="space-y-4 mt-4">
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 rounded-full overflow-hidden border-4" style={{ borderColor: getTipoConfig(contactoSeleccionado.tipo).color }}>
                   {contactoSeleccionado.foto ? (
@@ -1246,18 +1271,146 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                 </div>
               )}
 
-              {/* Historial de actividad */}
+              {/* Historial de modificaciones */}
               <div className="mt-6 pt-6 border-t-2 border-gray-200">
                 <h4 className="font-bold text-[#333333] mb-4 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                   <Clock className="w-5 h-5" style={{ color: branding.primaryColor }} />
-                  Historique d'activité
+                  Historique de modifications
                 </h4>
                 <HistoriqueActivite 
                   evenements={contactoSeleccionado.evenements || []}
                   isEditing={false}
                 />
               </div>
-            </div>
+              </TabsContent>
+
+              <TabsContent value="activite" className="mt-4">
+                <div className="space-y-4">
+                  <h3 className="font-bold text-lg flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    <Briefcase className="w-5 h-5" style={{ color: branding.primaryColor }} />
+                    Registres de travail
+                  </h3>
+                  
+                  {/* Tabla de historial de actividad */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b-2" style={{ borderColor: branding.primaryColor }}>
+                          <th className="text-left py-3 px-4 font-semibold" style={{ color: branding.primaryColor }}>Date</th>
+                          <th className="text-left py-3 px-4 font-semibold" style={{ color: branding.primaryColor }}>Heures travaillées</th>
+                          <th className="text-left py-3 px-4 font-semibold" style={{ color: branding.primaryColor }}>Département</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {/* Ejemplo de datos - En el futuro esto vendrá de un array de registros */}
+                        <tr className="border-b border-gray-200 hover:bg-gray-50">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-gray-500" />
+                              {new Date().toLocaleDateString('fr-CA')}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4 text-gray-500" />
+                              {contactoSeleccionado.heuresSemaines || 0} heures
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge variant="outline" style={{ borderColor: branding.primaryColor, color: branding.primaryColor }}>
+                              {departamentoNombre}
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr className="border-b border-gray-200 hover:bg-gray-50">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-gray-500" />
+                              {new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString('fr-CA')}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4 text-gray-500" />
+                              {contactoSeleccionado.heuresSemaines || 0} heures
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge variant="outline" style={{ borderColor: branding.primaryColor, color: branding.primaryColor }}>
+                              {departamentoNombre}
+                            </Badge>
+                          </td>
+                        </tr>
+                        <tr className="border-b border-gray-200 hover:bg-gray-50">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-gray-500" />
+                              {new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toLocaleDateString('fr-CA')}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4 text-gray-500" />
+                              {contactoSeleccionado.heuresSemaines || 0} heures
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge variant="outline" style={{ borderColor: branding.primaryColor, color: branding.primaryColor }}>
+                              {departamentoNombre}
+                            </Badge>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Resumen de actividad */}
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: `${branding.primaryColor}20` }}>
+                          <Clock className="w-6 h-6" style={{ color: branding.primaryColor }} />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Heures/semaine</p>
+                          <p className="text-2xl font-bold" style={{ color: branding.primaryColor }}>
+                            {contactoSeleccionado.heuresSemaines || 0}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                    
+                    <Card className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: `${branding.secondaryColor}20` }}>
+                          <Calendar className="w-6 h-6" style={{ color: branding.secondaryColor }} />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Jours travaillés</p>
+                          <p className="text-2xl font-bold" style={{ color: branding.secondaryColor }}>
+                            {contactoSeleccionado.disponibilidades?.filter(d => d.am || d.pm).length || 0}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                    
+                    <Card className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-purple-100">
+                          <Building className="w-6 h-6 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Départements</p>
+                          <p className="text-2xl font-bold text-purple-600">
+                            {contactoSeleccionado.departamentoIds?.length || 1}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           )}
         </DialogContent>
       </Dialog>
