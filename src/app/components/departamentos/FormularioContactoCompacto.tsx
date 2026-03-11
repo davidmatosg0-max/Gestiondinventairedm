@@ -1,3 +1,59 @@
+/**
+ * ====================================================================
+ * FORMULARIO: Contacts Départements (Sistema Unificado Multi-Departamento)
+ * ====================================================================
+ * 
+ * MÓDULO: Départements (Sistema Universal)
+ * UBICACIÓN: /src/app/components/departamentos/FormularioContactoCompacto.tsx
+ * DEPARTAMENTO ID: Variable (según contexto)
+ * 
+ * DEPARTAMENTOS SOPORTADOS:
+ * - '1' → Entrepôt (desde Inventaire > Contactos)
+ * - '2' → Comptoir (desde Comptoir > Contactos)
+ * - '3' → Cuisine (desde Cuisine > Contactos)
+ * - '4' → Liaison (desde Liaison > Contactos)
+ * - '5' → PTC (Programa de Trabajo Comunitario)
+ * - '6' → Maintien (Mantenimiento)
+ * - '7' → Recrutement (Reclutamiento)
+ * 
+ * USADO EN:
+ * - GestionContactosDepartamento.tsx (componente universal)
+ * - Cada departamento tiene su propia instancia
+ * 
+ * TIPOS DE CONTACTO:
+ * - Dinámicos y personalizables por departamento
+ * - Tipos globales (compartidos entre todos)
+ * - Tipos específicos (solo para un departamento)
+ * 
+ * STORAGE:
+ * - Key: 'banqueAlimentaire_contactosDepartamento'
+ * - Sistema unificado de contactos
+ * 
+ * CARACTERÍSTICAS ESPECIALES:
+ * - Gestión de tipos de contacto personalizados
+ * - Tipos de documentos estandarizados
+ * - Sistema de disponibilidad por días (AM/PM)
+ * - Historial de actividad completo
+ * - Soporte multi-departamento
+ * - Gestión de idiomas personalizados
+ * - Importar/Exportar configuraciones
+ * 
+ * PESTAÑAS:
+ * - Base (información básica)
+ * - Contact (comunicación y dirección)
+ * - Professionnel (datos profesionales)
+ * - Disponibilités (horarios y disponibilidad)
+ * - Documents (archivos adjuntos)
+ * - Historique (registro de actividad)
+ * 
+ * ACCESIBILIDAD:
+ * - aria-describedby: "contact-form-description"
+ * 
+ * VERSIÓN: 2.1
+ * ÚLTIMA ACTUALIZACIÓN: 11 marzo 2026
+ * ====================================================================
+ */
+
 // Formulaire Compacto v2.1
 import React, { useRef, useState, useEffect } from 'react';
 import { useBranding } from '../../../hooks/useBranding';
@@ -166,6 +222,23 @@ export function FormularioContactoCompacto({
   // Estados para exportación/importación de tipos
   const [dialogExportarImportar, setDialogExportarImportar] = useState(false);
   const [jsonImportar, setJsonImportar] = useState('');
+
+  // Estado para controlar la pestaña activa
+  const [activeTab, setActiveTab] = useState('base');
+
+  // Efecto para resetear la pestaña activa cuando se abre el diálogo
+  useEffect(() => {
+    if (abierto) {
+      setActiveTab('base');
+    }
+  }, [abierto]);
+
+  // Efecto para forzar cambio de pestaña cuando se selecciona Donador
+  useEffect(() => {
+    if (formulario.tipo === 'donador' && (activeTab === 'pro' || activeTab === 'autres')) {
+      setActiveTab('base');
+    }
+  }, [formulario.tipo, activeTab]);
 
   useEffect(() => {
     cargarTipos();
@@ -451,6 +524,17 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
     `.trim();
     
     alert(mensaje);
+  };
+
+  // Función para determinar si una pestaña debe mostrarse según el tipo de contacto
+  const mostrarPestana = (pestana: 'base' | 'contact' | 'pro' | 'autres'): boolean => {
+    // Para Donador: SOLO mostrar Base y Contact
+    if (formulario.tipo === 'donador') {
+      return ['base', 'contact'].includes(pestana);
+    }
+    
+    // Para todos los demás tipos: mostrar todas las pestañas
+    return true;
   };
 
   return (
@@ -951,7 +1035,7 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                 </div>
               ) : (
                 // VISTA COMPLETA: Para todos los demás tipos
-                <Tabs defaultValue="base" className="flex-1 flex flex-col">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
                   <TabsList className="w-full justify-start rounded-none border-b bg-[#F9FAFB] px-3 sm:px-4 md:px-6 py-0 h-10 sm:h-12 overflow-x-auto">
                     <TabsTrigger value="base" className="data-[state=active]:border-b-2 text-xs sm:text-sm" style={{ borderColor: branding.primaryColor }}>
                       <User className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
@@ -961,14 +1045,20 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                       <Phone className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                       Contact
                     </TabsTrigger>
-                    <TabsTrigger value="pro" className="data-[state=active]:border-b-2 text-xs sm:text-sm" style={{ borderColor: branding.primaryColor }}>
-                      <Briefcase className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                      Professionnel
-                    </TabsTrigger>
-                    <TabsTrigger value="autres" className="data-[state=active]:border-b-2 text-xs sm:text-sm" style={{ borderColor: branding.primaryColor }}>
-                      <SettingsIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                      Autres
-                    </TabsTrigger>
+                    {/* Ocultar pestaña Professionnel para Donador */}
+                    {mostrarPestana('pro') && (
+                      <TabsTrigger value="pro" className="data-[state=active]:border-b-2 text-xs sm:text-sm" style={{ borderColor: branding.primaryColor }}>
+                        <Briefcase className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                        Professionnel
+                      </TabsTrigger>
+                    )}
+                    {/* Ocultar pestaña Autres para Donador */}
+                    {mostrarPestana('autres') && (
+                      <TabsTrigger value="autres" className="data-[state=active]:border-b-2 text-xs sm:text-sm" style={{ borderColor: branding.primaryColor }}>
+                        <SettingsIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                        Autres
+                      </TabsTrigger>
+                    )}
                   </TabsList>
 
                 {/* Tab: Base */}

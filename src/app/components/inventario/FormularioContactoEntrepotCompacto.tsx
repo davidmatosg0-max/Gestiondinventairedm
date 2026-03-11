@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useBranding } from '../../../hooks/useBranding';
 import {
   User,
@@ -78,6 +78,23 @@ export function FormularioContactoEntrepotCompacto({
 }: FormularioContactoEntrepotCompactoProps) {
   const branding = useBranding();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Estado para controlar la pestaña activa
+  const [activeTab, setActiveTab] = useState('base');
+
+  // Efecto para resetear la pestaña activa cuando se abre el diálogo
+  useEffect(() => {
+    if (abierto) {
+      setActiveTab('base');
+    }
+  }, [abierto]);
+
+  // Efecto para forzar cambio de pestaña cuando se selecciona Donador
+  useEffect(() => {
+    if (formulario.tipoContacto === 'donador' && (activeTab === 'professionnel' || activeTab === 'autres')) {
+      setActiveTab('base');
+    }
+  }, [formulario.tipoContacto, activeTab]);
 
   // Sincronizar departamento automáticamente cuando cambia el tipo de contacto
   useEffect(() => {
@@ -159,24 +176,38 @@ export function FormularioContactoEntrepotCompacto({
     return '1'; // Entrepôt
   };
 
+  // Función para determinar si una pestaña debe mostrarse según el tipo de contacto
+  const mostrarPestana = (pestana: 'base' | 'contact' | 'professionnel' | 'disponibilites' | 'autres'): boolean => {
+    // Para Donador: SOLO mostrar Base, Contact, Disponibilités
+    if (formulario.tipoContacto === 'donador') {
+      return ['base', 'contact', 'disponibilites'].includes(pestana);
+    }
+    
+    // Para todos los demás tipos: mostrar todas las pestañas
+    return true;
+  };
+
   return (
     <Dialog open={abierto} onOpenChange={onCerrar}>
       <DialogContent 
         className="!max-w-none !w-[95vw] !max-h-[95vh] !h-[95vh] overflow-hidden p-0 m-0 rounded-xl"
+        aria-describedby="contact-warehouse-form-description"
       >
         <div className="h-full flex flex-col bg-[#F5F5F5]">
           {/* Header compacto */}
           <div className="px-6 py-3 bg-white flex-shrink-0">
-            <DialogTitle 
-              className="flex items-center gap-2"
-              style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '0.95rem' }}
-            >
-              <User className="w-4 h-4" />
-              Enregistrer un nouveau contact
-            </DialogTitle>
-            <DialogDescription id="contact-warehouse-form-description" className="sr-only">
-              Formulaire de contact pour l'entrepôt
-            </DialogDescription>
+            <DialogHeader>
+              <DialogTitle 
+                className="flex items-center gap-2"
+                style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '0.95rem' }}
+              >
+                <User className="w-4 h-4" />
+                Enregistrer un nouveau contact
+              </DialogTitle>
+              <DialogDescription id="contact-warehouse-form-description" className="sr-only">
+                Formulaire de contact pour l'entrepôt
+              </DialogDescription>
+            </DialogHeader>
           </div>
           
           <div className="flex-1 overflow-hidden flex">
@@ -255,7 +286,7 @@ export function FormularioContactoEntrepotCompacto({
 
             {/* Contenido principal */}
             <div className="flex-1 flex flex-col overflow-hidden">
-              <Tabs defaultValue="base" className="flex-1 flex flex-col">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
                 {/* Tabs en la parte superior */}
                 <div className="bg-white px-6 flex-shrink-0">
                   <TabsList className="w-full justify-start rounded-none border-0 bg-transparent px-0 py-0 h-auto">
@@ -278,14 +309,17 @@ export function FormularioContactoEntrepotCompacto({
                       <Phone className="w-4 h-4 mr-2" />
                       Contact
                     </TabsTrigger>
-                    <TabsTrigger 
-                      value="professionnel" 
-                      className="rounded-t-lg border-0 bg-transparent px-6 py-3 text-sm font-medium data-[state=active]:bg-[#F5F5F5] data-[state=active]:shadow-none"
-                      style={{ color: '#6B7280' }}
-                    >
-                      <Building2 className="w-4 h-4 mr-2" />
-                      Professionnel
-                    </TabsTrigger>
+                    {/* Ocultar pestaña Professionnel para Donador */}
+                    {mostrarPestana('professionnel') && (
+                      <TabsTrigger 
+                        value="professionnel" 
+                        className="rounded-t-lg border-0 bg-transparent px-6 py-3 text-sm font-medium data-[state=active]:bg-[#F5F5F5] data-[state=active]:shadow-none"
+                        style={{ color: '#6B7280' }}
+                      >
+                        <Building2 className="w-4 h-4 mr-2" />
+                        Professionnel
+                      </TabsTrigger>
+                    )}
                     <TabsTrigger 
                       value="disponibilites" 
                       className="rounded-t-lg border-0 bg-transparent px-6 py-3 text-sm font-medium data-[state=active]:bg-[#F5F5F5] data-[state=active]:shadow-none"
@@ -294,14 +328,17 @@ export function FormularioContactoEntrepotCompacto({
                       <Calendar className="w-4 h-4 mr-2" />
                       Disponibilités
                     </TabsTrigger>
-                    <TabsTrigger 
-                      value="autres" 
-                      className="rounded-t-lg border-0 bg-transparent px-6 py-3 text-sm font-medium data-[state=active]:bg-[#F5F5F5] data-[state=active]:shadow-none"
-                      style={{ color: '#6B7280' }}
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Autres
-                    </TabsTrigger>
+                    {/* Ocultar pestaña Autres para Donador */}
+                    {mostrarPestana('autres') && (
+                      <TabsTrigger 
+                        value="autres" 
+                        className="rounded-t-lg border-0 bg-transparent px-6 py-3 text-sm font-medium data-[state=active]:bg-[#F5F5F5] data-[state=active]:shadow-none"
+                        style={{ color: '#6B7280' }}
+                      >
+                        <Settings className="w-4 h-4 mr-2" />
+                        Autres
+                      </TabsTrigger>
+                    )}
                   </TabsList>
                 </div>
 

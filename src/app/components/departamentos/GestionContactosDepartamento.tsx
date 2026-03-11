@@ -53,6 +53,7 @@ import { Checkbox } from '../ui/checkbox';
 import { LanguageSelector } from '../ui/language-selector';
 import {
   obtenerContactosDepartamento,
+  obtenerContactosPorDepartamento,
   guardarContacto,
   actualizarContacto,
   eliminarContacto,
@@ -81,7 +82,6 @@ import {
 } from '../../utils/idiomasPersonalizadosStorage';
 import { obtenerTiposContacto } from '../../utils/tiposContactoStorage';
 import { FormularioContactoCompacto } from './FormularioContactoCompacto';
-import { FormularioContactoEmpresa } from './FormularioContactoEmpresa';
 import { CalendarioContactos } from './CalendarioContactos';
 import { AsignarRolContacto } from '../AsignarRolContacto';
 import { HistoriqueActivite } from '../benevoles/HistoriqueActivite';
@@ -239,7 +239,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
   }, [departamentoId]);
 
   const cargarContactos = () => {
-    const contactosData = obtenerContactosDepartamento(departamentoId);
+    const contactosData = obtenerContactosPorDepartamento(departamentoId);
     console.log('🔍 DEBUG - Contactos cargados pour département', departamentoId, ':', contactosData);
     console.log('🔍 DEBUG - Total contactos:', contactosData.length);
     contactosData.forEach(c => {
@@ -1140,43 +1140,25 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         </TabsContent>
       </Tabs>
 
-      {/* Dialog Créer/Éditer - Formulaire selon le type */}
-      {(formulario.tipo === 'donador' || formulario.tipo === 'fournisseur') ? (
-        <FormularioContactoEmpresa
-          abierto={dialogAbierto}
-          onCerrar={() => {
-            setDialogAbierto(false);
-            limpiarFormulario();
-          }}
-          formulario={formulario}
-          setFormulario={setFormulario}
-          modoEdicion={modoEdicion}
-          onGuardar={handleGuardar}
-          fotoPreview={fotoPreview}
-          onFotoChange={handleFotoChange}
-          getTipoConfig={getTipoConfig}
-          departamentoNombre={departamentoNombre}
-        />
-      ) : (
-        <FormularioContactoCompacto
-          abierto={dialogAbierto}
-          onCerrar={() => {
-            setDialogAbierto(false);
-            limpiarFormulario();
-          }}
-          formulario={formulario}
-          setFormulario={setFormulario}
-          modoEdicion={modoEdicion}
-          onGuardar={handleGuardar}
-          fotoPreview={fotoPreview}
-          onFotoChange={handleFotoChange}
-          getTipoConfig={getTipoConfig}
-          updateDisponibilidad={updateDisponibilidad}
-          tiposPermitidos={tiposPermitidos}
-          departamentoId={departamentoId}
-          departamentoNombre={departamentoNombre}
-        />
-      )}
+      {/* Dialog Créer/Éditer - FORMULAIRE COMPACT */}
+      <FormularioContactoCompacto
+        abierto={dialogAbierto}
+        onCerrar={() => {
+          setDialogAbierto(false);
+          limpiarFormulario();
+        }}
+        formulario={formulario}
+        setFormulario={setFormulario}
+        modoEdicion={modoEdicion}
+        onGuardar={handleGuardar}
+        fotoPreview={fotoPreview}
+        onFotoChange={handleFotoChange}
+        getTipoConfig={getTipoConfig}
+        updateDisponibilidad={updateDisponibilidad}
+        tiposPermitidos={tiposPermitidos}
+        departamentoId={departamentoId}
+        departamentoNombre={departamentoNombre}
+      />
 
       {/* Dialog Détails */}
       <Dialog open={dialogDetalle} onOpenChange={setDialogDetalle}>
