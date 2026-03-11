@@ -257,47 +257,65 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
   // New modal state
   const [newModalOpen, setNewModalOpen] = useState(false);
-  const [newForm, setNewForm] = useState({
-    tipo: 'benevole' as TipoBenevole,
-    nom: '',
-    prenom: '',
-    email: '',
-    telephone: '',
-    departement: [] as string[],
-    disponibilites: '',
-    disponibilidadesSemanal: [
-      { jour: 'Lundi', am: false, pm: false },
-      { jour: 'Mardi', am: false, pm: false },
-      { jour: 'Mercredi', am: false, pm: false },
-      { jour: 'Jeudi', am: false, pm: false },
-      { jour: 'Vendredi', am: false, pm: false },
-      { jour: 'Samedi', am: false, pm: false },
-      { jour: 'Dimanche', am: false, pm: false }
-    ],
-    statut: 'actif' as 'actif' | 'inactif' | 'en pause' | 'en attente',
-    sexe: 'Non spécifié' as 'Homme' | 'Femme' | 'Autre' | 'Non spécifié',
-    dateInscription: new Date().toISOString().split('T')[0],
-    dateNaissance: '',
-    langues: [] as string[],
-    adresse: '',
-    ville: '',
-    codePostal: '',
-    quartier: '',
-    voiture: false,
-    joursDisponibles: [] as JourDisponible[],
-    notes: [] as Note[],
-    notasGenerales: '',
-    documents: [] as Document[],
-    photo: null as string | null,
-    poste: '',
-    heuresSemaines: 0,
-    reference: '',
-    contactoEmergenciaNombre: '',
-    contactoEmergenciaRelacion: '',
-    contactoEmergenciaTelefono: '',
-    contactoEmergenciaEmail: ''
+  const [newForm, setNewForm] = useState(() => {
+    // Intentar cargar el formulario en progreso desde localStorage
+    const savedForm = localStorage.getItem('banqueAlimentaire_newBenevoleForm_temp');
+    if (savedForm) {
+      try {
+        return JSON.parse(savedForm);
+      } catch (error) {
+        console.error('Error al cargar formulario temporal:', error);
+      }
+    }
+    return {
+      tipo: 'benevole' as TipoBenevole,
+      nom: '',
+      prenom: '',
+      email: '',
+      telephone: '',
+      departement: [] as string[],
+      disponibilites: '',
+      disponibilidadesSemanal: [
+        { jour: 'Lundi', am: false, pm: false },
+        { jour: 'Mardi', am: false, pm: false },
+        { jour: 'Mercredi', am: false, pm: false },
+        { jour: 'Jeudi', am: false, pm: false },
+        { jour: 'Vendredi', am: false, pm: false },
+        { jour: 'Samedi', am: false, pm: false },
+        { jour: 'Dimanche', am: false, pm: false }
+      ],
+      statut: 'actif' as 'actif' | 'inactif' | 'en pause' | 'en attente',
+      sexe: 'Non spécifié' as 'Homme' | 'Femme' | 'Autre' | 'Non spécifié',
+      dateInscription: new Date().toISOString().split('T')[0],
+      dateNaissance: '',
+      langues: [] as string[],
+      adresse: '',
+      ville: '',
+      codePostal: '',
+      quartier: '',
+      voiture: false,
+      joursDisponibles: [] as JourDisponible[],
+      notes: [] as Note[],
+      notasGenerales: '',
+      documents: [] as Document[],
+      photo: null as string | null,
+      poste: '',
+      heuresSemaines: 0,
+      reference: '',
+      contactoEmergenciaNombre: '',
+      contactoEmergenciaRelacion: '',
+      contactoEmergenciaTelefono: '',
+      contactoEmergenciaEmail: ''
+    };
   });
   const [newFormPhotoPreview, setNewFormPhotoPreview] = useState<string | null>(null);
+
+  // Guardar formulario temporal en localStorage cuando cambie
+  React.useEffect(() => {
+    if (newModalOpen) {
+      localStorage.setItem('banqueAlimentaire_newBenevoleForm_temp', JSON.stringify(newForm));
+    }
+  }, [newForm, newModalOpen]);
 
   // Estado para dialog de asignar bénévole a departamentos
   const [dialogAsignarDepartamentos, setDialogAsignarDepartamentos] = useState(false);
@@ -1106,6 +1124,9 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     };
 
     setBenevoles([...benevoles, nouveauBenevole]);
+
+    // Limpiar el formulario temporal guardado
+    localStorage.removeItem('banqueAlimentaire_newBenevoleForm_temp');
 
     // Reset form
     setNewForm({

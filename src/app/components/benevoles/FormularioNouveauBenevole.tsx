@@ -508,25 +508,35 @@ export function FormularioNouveauBenevole({
                         <div
                           key={tipo.id}
                           onClick={() => onFormChange({ ...formData, tipo: tipo.code as TipoBenevole })}
-                          className={`p-2 rounded-lg border-2 cursor-pointer transition-all hover:shadow-sm ${
-                            isSelected ? 'ring-2' : ''
+                          className={`p-2.5 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
+                            isSelected ? 'ring-2 ring-offset-2 shadow-lg scale-105' : 'hover:scale-102'
                           }`}
                           style={{
                             borderColor: isSelected ? tipo.color : '#E0E0E0',
                             backgroundColor: isSelected ? tipo.bgColor : 'white',
-                            ringColor: tipo.color
+                            ringColor: tipo.color,
+                            boxShadow: isSelected ? `0 4px 12px ${tipo.color}40` : undefined
                           }}
                         >
                           <div className="flex items-center gap-2">
                             <div 
-                              className="p-1.5 rounded-full"
+                              className={`p-1.5 rounded-full transition-all ${isSelected ? 'scale-110' : ''}`}
                               style={{ backgroundColor: isSelected ? 'white' : tipo.bgColor }}
                             >
                               <Icon className="w-4 h-4" style={{ color: tipo.color }} />
                             </div>
-                            <span className="text-xs font-medium text-[#333333] leading-tight">
+                            <span className={`text-xs font-medium leading-tight ${isSelected ? 'font-bold' : ''}`} style={{ color: isSelected ? tipo.color : '#333333' }}>
                               {tipo.label}
                             </span>
+                            {isSelected && (
+                              <div className="ml-auto">
+                                <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: tipo.color }}>
+                                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       );
