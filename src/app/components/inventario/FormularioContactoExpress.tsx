@@ -208,8 +208,18 @@ export function FormularioContactoExpress({
     <Dialog open={abierto} onOpenChange={onCerrar}>
       <DialogContent 
         className="!max-w-2xl !max-h-[90vh] overflow-hidden p-0 rounded-xl"
-        aria-describedby="contact-express-form-description"
+        aria-describedby="formulario-express-description"
       >
+        {/* DialogHeader oculto visualmente pero presente para accesibilidad */}
+        <DialogHeader className="sr-only">
+          <DialogTitle id="formulario-express-title">
+            {modoEdicion ? 'Modifier le contact' : 'Enregistrement Express'}
+          </DialogTitle>
+          <DialogDescription id="formulario-express-description">
+            Ajoutez rapidement un nouveau contact en moins d&apos;une minute
+          </DialogDescription>
+        </DialogHeader>
+
         <div className="h-full flex flex-col bg-white">
           {/* Header con gradiente */}
           <div 
@@ -230,18 +240,19 @@ export function FormularioContactoExpress({
                   <Zap className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <DialogTitle 
+                  <h2 
                     className="text-xl font-bold text-white"
                     style={{ fontFamily: 'Montserrat, sans-serif' }}
+                    aria-hidden="true"
                   >
                     {modoEdicion ? 'Modifier le contact' : 'Enregistrement Express'}
-                  </DialogTitle>
-                  <DialogDescription 
-                    id="contact-express-form-description" 
+                  </h2>
+                  <p 
                     className="text-white/90 text-sm mt-0.5"
+                    aria-hidden="true"
                   >
                     Ajoutez rapidement un nouveau contact en moins d&apos;une minute
-                  </DialogDescription>
+                  </p>
                 </div>
               </div>
 
@@ -266,12 +277,12 @@ export function FormularioContactoExpress({
 
           {/* Contenido del formulario */}
           <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-            {/* Selector de tipo de contacto */}
+            {/* Selector de tipo de contacto - MUY VISIBLE */}
             <div>
               <Label className="text-sm font-semibold text-gray-700 mb-3 block">
                 Type de contact *
               </Label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 {tiposContacto.map((tipo) => {
                   const isSelected = formulario.tipoContacto === tipo.value;
                   const Icono = tipo.icon;
@@ -282,34 +293,51 @@ export function FormularioContactoExpress({
                       type="button"
                       onClick={() => setFormulario({ ...formulario, tipoContacto: tipo.value as any })}
                       className={`
-                        p-4 rounded-xl border-2 transition-all text-left
+                        p-6 rounded-xl border-3 transition-all duration-300 text-left
                         ${isSelected 
-                          ? 'shadow-lg scale-105' 
-                          : 'hover:border-gray-300 hover:shadow-md'
+                          ? 'shadow-2xl scale-110 ring-4 ring-opacity-30' 
+                          : 'hover:border-gray-300 hover:shadow-md opacity-60 hover:opacity-100'
                         }
                       `}
                       style={{
                         borderColor: isSelected ? tipo.color : '#E5E7EB',
-                        backgroundColor: isSelected ? `${tipo.color}08` : '#FFFFFF'
+                        backgroundColor: isSelected ? `${tipo.color}20` : '#FAFAFA',
+                        borderWidth: isSelected ? '3px' : '2px',
+                        ringColor: isSelected ? tipo.color : 'transparent'
                       }}
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex flex-col items-center text-center gap-3">
                         <div 
-                          className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: `${tipo.color}15` }}
+                          className={`w-16 h-16 rounded-xl flex items-center justify-center transition-transform duration-300 ${isSelected ? 'scale-110' : ''}`}
+                          style={{ backgroundColor: `${tipo.color}30` }}
                         >
-                          <Icono className="w-6 h-6" style={{ color: tipo.color }} />
+                          <Icono className="w-8 h-8" style={{ color: tipo.color }} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div 
-                            className="font-semibold text-sm mb-1"
-                            style={{ color: isSelected ? tipo.color : '#374151' }}
+                            className={`font-bold text-lg mb-1 transition-all ${isSelected ? 'scale-105' : ''}`}
+                            style={{ 
+                              color: isSelected ? tipo.color : '#6B7280',
+                              fontFamily: 'Montserrat, sans-serif'
+                            }}
                           >
                             {tipo.label}
                           </div>
-                          <div className="text-xs text-gray-500 leading-tight">
+                          <div className="text-xs text-gray-600 leading-tight">
                             {tipo.descripcion}
                           </div>
+                          {isSelected && (
+                            <div className="mt-2">
+                              <Badge 
+                                style={{ 
+                                  backgroundColor: tipo.color,
+                                  color: 'white'
+                                }}
+                              >
+                                ✓ SÉLECTIONNÉ
+                              </Badge>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </button>
@@ -318,8 +346,68 @@ export function FormularioContactoExpress({
               </div>
             </div>
 
+            {/* MEGA Banner informativo - IMPOSIBLE DE NO VER */}
+            <div 
+              className="p-6 rounded-xl border-4 transition-all duration-500 transform"
+              style={{ 
+                backgroundColor: tipoSeleccionado ? `${tipoSeleccionado.color}15` : '#F3F4F6',
+                borderColor: tipoSeleccionado?.color || '#9CA3AF',
+                boxShadow: tipoSeleccionado ? `0 8px 30px ${tipoSeleccionado.color}40` : 'none'
+              }}
+            >
+              <div className="flex items-start gap-4">
+                {tipoSeleccionado && (
+                  <div 
+                    className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 animate-pulse"
+                    style={{ backgroundColor: `${tipoSeleccionado.color}30` }}
+                  >
+                    <IconoTipo className="w-7 h-7" style={{ color: tipoSeleccionado.color }} />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <p className="text-lg font-bold mb-2" style={{ 
+                    color: tipoSeleccionado?.color || '#6B7280',
+                    fontFamily: 'Montserrat, sans-serif'
+                  }}>
+                    {formulario.tipoContacto === 'donador' 
+                      ? '🎁 MODE DONATEUR ACTIVÉ'
+                      : '📦 MODE FOURNISSEUR ACTIVÉ'
+                    }
+                  </p>
+                  <p className="text-sm text-gray-700 mb-3">
+                    {formulario.tipoContacto === 'donador' 
+                      ? 'Formulaire simplifié avec 6 champs essentiels pour un enregistrement rapide'
+                      : 'Formulaire avec 8 champs incluant les informations d\'entreprise et catégories de produits'
+                    }
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="secondary" style={{ backgroundColor: `${tipoSeleccionado?.color}20`, color: tipoSeleccionado?.color }}>
+                      {formulario.tipoContacto === 'donador' ? '6' : '8'} champs obligatoires
+                    </Badge>
+                    <Badge variant="secondary" style={{ backgroundColor: `${tipoSeleccionado?.color}20`, color: tipoSeleccionado?.color }}>
+                      ⚡ &lt; 60 secondes
+                    </Badge>
+                    {formulario.tipoContacto === 'fournisseur' && (
+                      <Badge variant="secondary" style={{ backgroundColor: `${tipoSeleccionado?.color}20`, color: tipoSeleccionado?.color }}>
+                        + Entreprise & Catégories
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Separador visual */}
-            <div className="border-t border-gray-200"></div>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t-2 border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white px-4 text-sm font-semibold text-gray-500" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  INFORMATIONS {formulario.tipoContacto === 'donador' ? 'DU DONATEUR' : 'DU FOURNISSEUR'}
+                </span>
+              </div>
+            </div>
 
             {/* Campos esenciales */}
             <div className="space-y-4">
@@ -364,7 +452,7 @@ export function FormularioContactoExpress({
 
               {/* Empresa (solo para Fournisseur) */}
               {formulario.tipoContacto === 'fournisseur' && (
-                <div>
+                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                   <Label htmlFor="nombreEmpresa" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
                     <Building2 className="w-4 h-4" style={{ color: branding.primaryColor }} />
                     Nom de l&apos;entreprise *
