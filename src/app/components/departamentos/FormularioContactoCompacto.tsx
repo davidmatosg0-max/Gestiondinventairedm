@@ -145,6 +145,7 @@ export function FormularioContactoCompacto({
     color: branding.primaryColor,
     bgColor: '#DBEAFE'
   });
+  const [tipoEsGlobal, setTipoEsGlobal] = useState(false); // NUEVO: Controlar si el tipo es global
 
   // Estados para gestión de tipos de documentos
   const [tiposDocumento, setTiposDocumento] = useState<TipoDocumento[]>([]);
@@ -172,7 +173,8 @@ export function FormularioContactoCompacto({
   }, [tiposPermitidos]);
 
   const cargarTipos = () => {
-    const tipos = obtenerTiposContacto();
+    // Cargar tipos globales + específicos del departamento
+    const tipos = obtenerTiposContacto(departamentoId);
     // NO filtrar aquí - mostrar todos los tipos disponibles
     setTiposContacto(tipos);
   };
@@ -186,6 +188,7 @@ export function FormularioContactoCompacto({
       bgColor: '#DBEAFE'
     });
     setTipoEditando(null);
+    setTipoEsGlobal(false); // Reset al estado por defecto (específico del departamento)
   };
 
   const abrirNuevoTipo = () => {
@@ -202,6 +205,7 @@ export function FormularioContactoCompacto({
       color: tipo.color,
       bgColor: tipo.bgColor
     });
+    setTipoEsGlobal(!tipo.departamentoId); // Establecer si es global o del departamento
     setDialogEditarTipo(true);
   };
 
@@ -211,7 +215,7 @@ export function FormularioContactoCompacto({
       return;
     }
 
-    if (existeCodigoTipo(nuevoTipo.code, tipoEditando?.id)) {
+    if (existeCodigoTipo(nuevoTipo.code, departamentoId, tipoEditando?.id)) {
       toast.error('Ce code existe déjà');
       return;
     }
@@ -221,9 +225,11 @@ export function FormularioContactoCompacto({
       actualizarTipoPersonalizado(tipoEditando.id, nuevoTipo);
       toast.success('Type mis à jour avec succès');
     } else {
-      // Crear nuevo tipo
-      guardarTipoPersonalizado(nuevoTipo);
-      toast.success('Type créé avec succès');
+      // Crear nuevo tipo: global o específico del departamento
+      const deptoId = tipoEsGlobal ? undefined : departamentoId;
+      guardarTipoPersonalizado(nuevoTipo, deptoId);
+      const scope = tipoEsGlobal ? 'global' : `pour ${departamentoNombre}`;
+      toast.success(`Type créé avec succès (${scope})`);
     }
 
     cargarTipos();
@@ -1693,9 +1699,10 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
       <Dialog open={dialogGestionTipos} onOpenChange={setDialogGestionTipos}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" aria-describedby="gestion-tipos-description">
           <DialogHeader>
-            <DialogTitle>Gestion des Types de Contact</DialogTitle>
+            <DialogTitle>Gestion des Types de Contact - {departamentoNombre}</DialogTitle>
             <DialogDescription id="gestion-tipos-description">
-              Créez, modifiez ou supprimez des types de contact personnalisés. Tous les types sont sauvegardés de manière permanente.
+              Créez des types spécifiques à {departamentoNombre} ou globaux (disponibles pour tous les départements). 
+              Les types globaux s'affichent avec un badge bleu "Global".
             </DialogDescription>
           </DialogHeader>
           
@@ -1708,6 +1715,30 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
               <Plus className="w-4 h-4 mr-2" />
               Créer un nouveau type
             </Button>
+
+            {/* Panel de estadísticas */}
+            {tiposContacto.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200">
+                <div className="text-center">
+                  <p className="text-2xl font-bold" style={{ color: branding.primaryColor }}>
+                    {tiposContacto.length}
+                  </p>
+                  <p className="text-xs text-gray-600">Total</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-blue-600">
+                    {tiposContacto.filter(t => !t.departamentoId).length}
+                  </p>
+                  <p className="text-xs text-gray-600">Globaux</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-600">
+                    {tiposContacto.filter(t => t.departamentoId === departamentoId).length}
+                  </p>
+                  <p className="text-xs text-gray-600">{departamentoNombre}</p>
+                </div>
+              </div>
+            )}
 
             {tiposContacto.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
@@ -1726,7 +1757,18 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                           <Icon className="w-5 h-5" style={{ color: tipo.color }} />
                         </div>
                         <div>
-                          <p className="font-medium text-sm">{tipo.label}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm">{tipo.label}</p>
+                            {!tipo.departamentoId ? (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                                Global
+                              </span>
+                            ) : tipo.departamentoId === departamentoId ? (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                                {departamentoNombre}
+                              </span>
+                            ) : null}
+                          </div>
                           <p className="text-xs text-[#999999]">Code: {tipo.code}</p>
                           {tipo.dateCreated && (
                             <p className="text-xs text-[#999999]">
@@ -1849,6 +1891,31 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                 })}
               </div>
             </div>
+
+            {/* NUEVO: Opción para hacer global o específico del departamento */}
+            {!tipoEditando && (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="tipo-global"
+                    checked={tipoEsGlobal}
+                    onCheckedChange={(checked) => setTipoEsGlobal(checked as boolean)}
+                  />
+                  <label
+                    htmlFor="tipo-global"
+                    className="text-sm font-medium leading-none cursor-pointer"
+                  >
+                    Type global (disponible pour tous les départements)
+                  </label>
+                </div>
+                <p className="text-xs text-gray-600 mt-2 ml-6">
+                  {tipoEsGlobal 
+                    ? "Ce type sera disponible dans tous les départements du système"
+                    : `Ce type sera spécifique au département ${departamentoNombre}`
+                  }
+                </p>
+              </div>
+            )}
 
             <div className="pt-4 border-t flex justify-end gap-3">
               <Button

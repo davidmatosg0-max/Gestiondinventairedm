@@ -2126,6 +2126,104 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     });
   }, [benevoles, statsGenerated, statsDateDebut, statsDateFin, statsFilterType, statsFilterValue]);
 
+  // ⚡ HOOKS para estadísticas - movidos fuera de renderStatistiques
+  const handleGenerateStats = useCallback(() => {
+    if (!statsDateDebut || !statsDateFin) {
+      toast.error('Veuillez sélectionner les deux dates');
+      return;
+    }
+
+    if (new Date(statsDateDebut) > new Date(statsDateFin)) {
+      toast.error('La date de début doit être antérieure à la date de fin');
+      return;
+    }
+
+    setStatsGenerated(true);
+    toast.success('Statistiques générées avec succès');
+  }, [statsDateDebut, statsDateFin]);
+
+  const handleResetStats = useCallback(() => {
+    setStatsGenerated(false);
+    setStatsFilterType('departement');
+    setStatsFilterValue('tous');
+    setStatsDateDebut('');
+    setStatsDateFin('');
+  }, []);
+
+  // ⚡ Memoizar cálculos de estadísticas demográficas
+  const statsResult = useMemo(() => {
+    // Estadísticas por sexo
+    const sexeStats = filteredBenevolesStats.reduce((acc, b) => {
+      const sexe = b.sexe || 'Non spécifié';
+      acc[sexe] = (acc[sexe] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Estadísticas por tranche d'âge
+    const ageRanges = {
+      '18-25 ans': 0,
+      '26-35 ans': 0,
+      '36-45 ans': 0,
+      '46-55 ans': 0,
+      '56-65 ans': 0,
+      '66+ ans': 0,
+      'Non spécifié': 0
+    };
+
+    filteredBenevolesStats.forEach(b => {
+      if (b.dateNaissance) {
+        const age = calculateAge(b.dateNaissance);
+        if (age >= 18 && age <= 25) ageRanges['18-25 ans']++;
+        else if (age >= 26 && age <= 35) ageRanges['26-35 ans']++;
+        else if (age >= 36 && age <= 45) ageRanges['36-45 ans']++;
+        else if (age >= 46 && age <= 55) ageRanges['46-55 ans']++;
+        else if (age >= 56 && age <= 65) ageRanges['56-65 ans']++;
+        else if (age > 65) ageRanges['66+ ans']++;
+      } else {
+        ageRanges['Non spécifié']++;
+      }
+    });
+
+    return { sexeStats, ageRanges };
+  }, [filteredBenevolesStats]);
+
+  const { sexeStats, ageRanges } = statsResult;
+
+  // ⚡ Memoizar datos para gráficos
+  const sexeData = useMemo(() => 
+    Object.entries(sexeStats).map(([sexe, count]) => ({
+      name: sexe,
+      value: count
+    }))
+  , [sexeStats]);
+
+  const ageData = useMemo(() =>
+    Object.entries(ageRanges)
+      .filter(([_, count]) => count > 0)
+      .map(([range, count]) => ({
+        name: range,
+        value: count
+      }))
+  , [ageRanges]);
+
+  // ⚡ Memoizar cálculos de edad
+  const ageCalculations = useMemo(() => {
+    const agesArray = filteredBenevolesStats
+      .filter(b => b.dateNaissance)
+      .map(b => calculateAge(b.dateNaissance!));
+    
+    const avgAge = agesArray.length > 0 
+      ? Math.round(agesArray.reduce((sum, age) => sum + age, 0) / agesArray.length)
+      : 0;
+
+    const minAge = agesArray.length > 0 ? Math.min(...agesArray) : 0;
+    const maxAge = agesArray.length > 0 ? Math.max(...agesArray) : 0;
+
+    return { avgAge, minAge, maxAge };
+  }, [filteredBenevolesStats]);
+
+  const { avgAge, minAge, maxAge } = ageCalculations;
+
   // Navigation menu items
   const menuItems = [
     { id: 'liste', label: 'Liste des bénévoles', icon: <Users className="w-5 h-5" /> },
@@ -3144,7 +3242,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
               <CardTitle>Historique des heures</CardTitle>
               <div className="text-right">
                 <p className="text-sm text-[#666666]">Total période</p>
-                <p className="text-3xl font-bold text-[#1E73BE]">{totalHeures}h</p>
+                <p className="text-3xl font-bold text-[#1E73BE]">{formatHeures(totalHeures)}</p>
               </div>
             </div>
           </CardHeader>
@@ -3194,31 +3292,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
   // RENDER: Statistiques démographiques
   const renderStatistiques = () => {
-    // ⚡ Función para generar estadísticas (useCallback)
-    const handleGenerateStats = useCallback(() => {
-      if (!statsDateDebut || !statsDateFin) {
-        toast.error('Veuillez sélectionner les deux dates');
-        return;
-      }
-
-      if (new Date(statsDateDebut) > new Date(statsDateFin)) {
-        toast.error('La date de début doit être antérieure à la date de fin');
-        return;
-      }
-
-      setStatsGenerated(true);
-      toast.success('Statistiques générées avec succès');
-    }, [statsDateDebut, statsDateFin]);
-
-    const handleResetStats = useCallback(() => {
-      setStatsGenerated(false);
-      setStatsFilterType('departement');
-      setStatsFilterValue('tous');
-      setStatsDateDebut('');
-      setStatsDateFin('');
-    }, []);
-
-    // ⚡ Usar bénévoles filtrados memoizados
+    // Usar bénévoles filtrados memoizados
     const filteredBenevoles = filteredBenevolesStats;
 
     // Opciones para el selector de filtro
@@ -3233,62 +3307,6 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       }
     };
 
-    // ⚡ Memoizar cálculos de estadísticas demográficas
-    const statsResult = useMemo(() => {
-      // Estadísticas por sexo
-      const sexeStats = filteredBenevoles.reduce((acc, b) => {
-        const sexe = b.sexe || 'Non spécifié';
-        acc[sexe] = (acc[sexe] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-
-      // Estadísticas por tranche d'âge
-      const ageRanges = {
-        '18-25 ans': 0,
-        '26-35 ans': 0,
-        '36-45 ans': 0,
-        '46-55 ans': 0,
-        '56-65 ans': 0,
-        '66+ ans': 0,
-        'Non spécifié': 0
-      };
-
-      filteredBenevoles.forEach(b => {
-        if (b.dateNaissance) {
-          const age = calculateAge(b.dateNaissance);
-          if (age >= 18 && age <= 25) ageRanges['18-25 ans']++;
-          else if (age >= 26 && age <= 35) ageRanges['26-35 ans']++;
-          else if (age >= 36 && age <= 45) ageRanges['36-45 ans']++;
-          else if (age >= 46 && age <= 55) ageRanges['46-55 ans']++;
-          else if (age >= 56 && age <= 65) ageRanges['56-65 ans']++;
-          else if (age > 65) ageRanges['66+ ans']++;
-        } else {
-          ageRanges['Non spécifié']++;
-        }
-      });
-
-      return { sexeStats, ageRanges };
-    }, [filteredBenevoles]);
-
-    const { sexeStats, ageRanges } = statsResult;
-
-    // ⚡ Memoizar datos para gráficos
-    const sexeData = useMemo(() => 
-      Object.entries(sexeStats).map(([sexe, count]) => ({
-        name: sexe,
-        value: count
-      }))
-    , [sexeStats]);
-
-    const ageData = useMemo(() =>
-      Object.entries(ageRanges)
-        .filter(([_, count]) => count > 0)
-        .map(([range, count]) => ({
-          name: range,
-          value: count
-        }))
-    , [ageRanges]);
-
     // Colores para el gráfico de sexo
     const sexeColors: Record<string, string> = {
       'Homme': '#1E73BE',
@@ -3299,24 +3317,6 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
     // Colores para el gráfico de edad
     const ageColors = ['#1E73BE', '#4CAF50', '#FFC107', '#DC3545', '#9C27B0', '#FF5722', '#999999'];
-
-    // ⚡ Memoizar cálculos de edad
-    const ageCalculations = useMemo(() => {
-      const agesArray = filteredBenevoles
-        .filter(b => b.dateNaissance)
-        .map(b => calculateAge(b.dateNaissance!));
-      
-      const avgAge = agesArray.length > 0 
-        ? Math.round(agesArray.reduce((sum, age) => sum + age, 0) / agesArray.length)
-        : 0;
-
-      const minAge = agesArray.length > 0 ? Math.min(...agesArray) : 0;
-      const maxAge = agesArray.length > 0 ? Math.max(...agesArray) : 0;
-
-      return { avgAge, minAge, maxAge };
-    }, [filteredBenevoles]);
-
-    const { avgAge, minAge, maxAge } = ageCalculations;
 
     return (
       <div className="space-y-6">

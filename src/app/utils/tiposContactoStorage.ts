@@ -9,56 +9,87 @@ export interface TipoContactoPersonalizado {
   bgColor: string;
   isPredefined: boolean;
   dateCreated: string; // Nueva propiedad para rastrear cuándo fue creado
+  departamentoId?: string; // NUEVO: ID del departamento al que pertenece (undefined = global)
 }
 
 const STORAGE_KEY = 'banque_alimentaire_tipos_contacto_personalizados';
 
-// ❌ DESHABILITADO: No inicializar tipos predefinidos automáticamente
-// Los tipos de contacto deben ser creados manualmente por el usuario
-// Esto permite que la limpieza completa del sistema funcione correctamente
-function inicializarTiposPredefinidosInicial(): void {
-  // Esta función ya no inicializa tipos automáticamente
-  // El sistema empieza completamente vacío después de la limpieza
-  return;
-}
-
-// Obtener todos los tipos de contacto
-export function obtenerTiposContacto(): TipoContactoPersonalizado[] {
+// Obtener todos los tipos de contacto (globales + de un departamento específico)
+export function obtenerTiposContacto(departamentoId?: string): TipoContactoPersonalizado[] {
   try {
-    // Ya NO llama a inicializarTiposPredefinidosInicial()
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    const todosTipos: TipoContactoPersonalizado[] = stored ? JSON.parse(stored) : [];
+    
+    if (departamentoId) {
+      // Retornar tipos globales (sin departamentoId) + tipos específicos del departamento
+      return todosTipos.filter(t => !t.departamentoId || t.departamentoId === departamentoId);
+    }
+    
+    // Si no se especifica departamento, retornar todos
+    return todosTipos;
   } catch (error) {
     console.error('Error al obtener tipos de contacto:', error);
     return [];
   }
 }
 
-export function obtenerTiposPersonalizados(): TipoContactoPersonalizado[] {
+export function obtenerTiposPersonalizados(departamentoId?: string): TipoContactoPersonalizado[] {
   // Ahora todos los tipos son "personalizados" (creados por el usuario)
-  return obtenerTiposContacto();
+  return obtenerTiposContacto(departamentoId);
 }
 
-export function guardarTipoPersonalizado(tipo: Omit<TipoContactoPersonalizado, 'id' | 'isPredefined' | 'dateCreated'>): TipoContactoPersonalizado {
-  const tipos = obtenerTiposContacto();
+// NUEVO: Obtener solo tipos globales (sin departamento asignado)
+export function obtenerTiposGlobales(): TipoContactoPersonalizado[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const todosTipos: TipoContactoPersonalizado[] = stored ? JSON.parse(stored) : [];
+    return todosTipos.filter(t => !t.departamentoId);
+  } catch (error) {
+    console.error('Error al obtener tipos globales:', error);
+    return [];
+  }
+}
+
+// NUEVO: Obtener solo tipos de un departamento específico
+export function obtenerTiposPorDepartamento(departamentoId: string): TipoContactoPersonalizado[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const todosTipos: TipoContactoPersonalizado[] = stored ? JSON.parse(stored) : [];
+    return todosTipos.filter(t => t.departamentoId === departamentoId);
+  } catch (error) {
+    console.error('Error al obtener tipos del departamento:', error);
+    return [];
+  }
+}
+
+export function guardarTipoPersonalizado(
+  tipo: Omit<TipoContactoPersonalizado, 'id' | 'isPredefined' | 'dateCreated'>,
+  departamentoId?: string
+): TipoContactoPersonalizado {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  const tipos: TipoContactoPersonalizado[] = stored ? JSON.parse(stored) : [];
+  
   const nuevoTipo: TipoContactoPersonalizado = {
     ...tipo,
     id: `tipo-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
     isPredefined: true, // Todos los tipos creados se guardan como predefinidos permanentes
-    dateCreated: new Date().toISOString() // Registrar fecha de creación
+    dateCreated: new Date().toISOString(), // Registrar fecha de creación
+    departamentoId: departamentoId // Asignar departamento (undefined = global)
   };
   
   tipos.push(nuevoTipo);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(tipos));
   
-  console.log(`✅ Tipo de contacto "${nuevoTipo.label}" (${nuevoTipo.code}) guardado permanentemente`);
+  const scope = departamentoId ? `departamento ${departamentoId}` : 'global';
+  console.log(`✅ Tipo de contacto "${nuevoTipo.label}" (${nuevoTipo.code}) guardado permanentemente [${scope}]`);
   console.log(`📊 Total de tipos de contacto: ${tipos.length}`);
   
   return nuevoTipo;
 }
 
 export function actualizarTipoPersonalizado(id: string, datos: Partial<TipoContactoPersonalizado>): void {
-  const tipos = obtenerTiposContacto();
+  const stored = localStorage.getItem(STORAGE_KEY);
+  const tipos: TipoContactoPersonalizado[] = stored ? JSON.parse(stored) : [];
   const index = tipos.findIndex(t => t.id === id);
   
   if (index !== -1) {
@@ -68,13 +99,14 @@ export function actualizarTipoPersonalizado(id: string, datos: Partial<TipoConta
 }
 
 export function eliminarTipoPersonalizado(id: string): void {
-  const tipos = obtenerTiposContacto();
+  const stored = localStorage.getItem(STORAGE_KEY);
+  const tipos: TipoContactoPersonalizado[] = stored ? JSON.parse(stored) : [];
   const tiposFiltrados = tipos.filter(t => t.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(tiposFiltrados));
 }
 
-export function existeCodigoTipo(code: string, excludeId?: string): boolean {
-  const todosTipos = obtenerTiposContacto();
+export function existeCodigoTipo(code: string, departamentoId?: string, excludeId?: string): boolean {
+  const todosTipos = obtenerTiposContacto(departamentoId);
   return todosTipos.some(t => t.code === code && t.id !== excludeId);
 }
 
@@ -182,4 +214,110 @@ export function obtenerEstadisticasTipos(): {
       ? conFecha.reduce((max, t) => t.dateCreated > max ? t.dateCreated : max, conFecha[0].dateCreated)
       : null
   };
+}
+
+/**
+ * NUEVO: Obtener estadísticas por departamento
+ */
+export function obtenerEstadisticasPorDepartamento(departamentoId?: string): {
+  total: number;
+  globales: number;
+  especificos: number;
+  porDepartamento: { [key: string]: number };
+} {
+  const todosTipos = obtenerTiposContacto();
+  const tiposDepartamento = departamentoId ? obtenerTiposContacto(departamentoId) : todosTipos;
+  
+  // Contar tipos por departamento
+  const porDepartamento: { [key: string]: number } = {};
+  todosTipos.forEach(tipo => {
+    const deptId = tipo.departamentoId || 'global';
+    porDepartamento[deptId] = (porDepartamento[deptId] || 0) + 1;
+  });
+  
+  return {
+    total: tiposDepartamento.length,
+    globales: todosTipos.filter(t => !t.departamentoId).length,
+    especificos: todosTipos.filter(t => t.departamentoId).length,
+    porDepartamento
+  };
+}
+
+/**
+ * NUEVO: Convertir tipo específico en global
+ */
+export function convertirTipoAGlobal(tipoId: string): boolean {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const tipos: TipoContactoPersonalizado[] = stored ? JSON.parse(stored) : [];
+    const index = tipos.findIndex(t => t.id === tipoId);
+    
+    if (index !== -1) {
+      tipos[index].departamentoId = undefined;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tipos));
+      console.log(`✅ Tipo "${tipos[index].label}" convertido a global`);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error al convertir tipo a global:', error);
+    return false;
+  }
+}
+
+/**
+ * NUEVO: Convertir tipo global en específico de un departamento
+ */
+export function convertirTipoAEspecifico(tipoId: string, departamentoId: string): boolean {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const tipos: TipoContactoPersonalizado[] = stored ? JSON.parse(stored) : [];
+    const index = tipos.findIndex(t => t.id === tipoId);
+    
+    if (index !== -1) {
+      tipos[index].departamentoId = departamentoId;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tipos));
+      console.log(`✅ Tipo "${tipos[index].label}" asignado al departamento ${departamentoId}`);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error al convertir tipo a específico:', error);
+    return false;
+  }
+}
+
+/**
+ * NUEVO: Duplicar tipo de un departamento a otro
+ */
+export function duplicarTipoADepartamento(
+  tipoId: string, 
+  departamentoIdDestino: string
+): TipoContactoPersonalizado | null {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    const tipos: TipoContactoPersonalizado[] = stored ? JSON.parse(stored) : [];
+    const tipoOriginal = tipos.find(t => t.id === tipoId);
+    
+    if (!tipoOriginal) return null;
+    
+    // Crear una copia con nuevo ID y departamento
+    const nuevoCodigo = `${tipoOriginal.code}-${departamentoIdDestino}`;
+    const tipoDuplicado: TipoContactoPersonalizado = {
+      ...tipoOriginal,
+      id: `tipo-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      code: nuevoCodigo,
+      departamentoId: departamentoIdDestino,
+      dateCreated: new Date().toISOString()
+    };
+    
+    tipos.push(tipoDuplicado);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tipos));
+    
+    console.log(`✅ Tipo duplicado a departamento ${departamentoIdDestino}`);
+    return tipoDuplicado;
+  } catch (error) {
+    console.error('Error al duplicar tipo:', error);
+    return null;
+  }
 }

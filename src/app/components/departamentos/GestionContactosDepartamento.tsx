@@ -181,8 +181,8 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
 
   // NUEVO: Definir types de contacto disponibles selon le département
   const getTiposPermitidos = (): TipoContacto[] => {
-    // Obtener TODOS los tipos de contacto creados por el usuario
-    const tiposCreados = obtenerTiposContacto();
+    // Obtener tipos de contacto creados para este departamento (incluye globales + específicos del departamento)
+    const tiposCreados = obtenerTiposContacto(departamentoId);
     
     // Si no hay tipos creados, devolver array vacío
     if (tiposCreados.length === 0) {
@@ -228,7 +228,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
 
   useEffect(() => {
     // Initialiser les types de contact par défaut (si première fois)
-    obtenerTiposContacto(); // Cela exécute la fonction d'initialisation automatiquement
+    obtenerTiposContacto(departamentoId); // Cargar tipos globales + específicos del departamento
     cargarContactos();
     cargarIdiomasPersonalizados();
     cargarBenevolesDisponibles();
@@ -587,8 +587,8 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
   const estadisticas = contarContactosPorTipo(departamentoId);
 
   const getTipoConfig = (tipo: TipoContacto) => {
-    // D'abord rechercher dans les types personnalisés créés par l'utilisateur
-    const tiposPersonalizados = obtenerTiposContacto();
+    // D'abord rechercher dans les types personnalisés créés par l'utilisateur (globales + departamento)
+    const tiposPersonalizados = obtenerTiposContacto(departamentoId);
     const tipoPersonalizado = tiposPersonalizados.find(t => t.code === tipo);
     
     if (tipoPersonalizado) {
