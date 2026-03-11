@@ -50,6 +50,7 @@ import { suppressFigmaWarningsConditional } from './utils/suppressFigmaWarnings'
 import './utils/proteccionEmergencia'; // 🆘 Cargar funciones de emergencia en consola
 import './utils/proteccionRestauracion'; // 🔒 Cargar funciones de protección de restauración
 import { inicializarSincronizacionAutomatica } from './utils/sincronizarVoluntariosEntrepot'; // 🔄 Sincronización automática
+import './utils/debugSincronizacion'; // 🐛 Funciones de debug para sincronización
 
 // Suprimir warnings internos de Figma Make al inicio
 suppressFigmaWarningsConditional();
