@@ -122,17 +122,104 @@ const STORAGE_KEY = 'banqueAlimentaire_contactosDepartamento';
 // Datos iniciales - MODO PRODUCCIÓN (vacío)
 const contactosIniciales: ContactoDepartamento[] = [];
 
+/**
+ * MIGRACIÓN Y NORMALIZACIÓN DE DATOS DEL BACKUP
+ * 
+ * Esta función asegura que los datos del backup sean tratados como información real
+ * y normaliza la estructura para compatibilidad con el sistema actual.
+ */
+function normalizarContactosBackup(contactos: any[]): ContactoDepartamento[] {
+  return contactos.map(contacto => {
+    // Normalizar departamentos (soporte para formato antiguo y nuevo)
+    let departamentoIds: string[] = [];
+    
+    if (contacto.departamentoIds && Array.isArray(contacto.departamentoIds)) {
+      departamentoIds = contacto.departamentoIds;
+    } else if (contacto.departamentoId) {
+      departamentoIds = [contacto.departamentoId];
+    } else {
+      // Si no tiene departamento asignado, asignar al primer departamento por defecto
+      departamentoIds = ['1']; // Entrepôt
+    }
+
+    // Normalizar campos de email y teléfono
+    const emailPrincipal = contacto.emailPrincipal || contacto.email || '';
+    const telefonoPrincipal = contacto.telefonoPrincipal || contacto.telefono || '';
+
+    // Normalizar género
+    const genero = contacto.genero || 'Non spécifié';
+
+    // Asegurar que arrays existan
+    const categoriaProductos = Array.isArray(contacto.categoriaProductos) ? contacto.categoriaProductos : [];
+    const temperaturaEspecializada = Array.isArray(contacto.temperaturaEspecializada) ? contacto.temperaturaEspecializada : [];
+    const diasOperacion = Array.isArray(contacto.diasOperacion) ? contacto.diasOperacion : [];
+    const metodoPago = Array.isArray(contacto.metodoPago) ? contacto.metodoPago : [];
+    const etiquetas = Array.isArray(contacto.etiquetas) ? contacto.etiquetas : [];
+    const certificaciones = Array.isArray(contacto.certificaciones) ? contacto.certificaciones : [];
+    const idiomas = Array.isArray(contacto.idiomas) ? contacto.idiomas : [];
+    const documents = Array.isArray(contacto.documents) ? contacto.documents : [];
+    const evenements = Array.isArray(contacto.evenements) ? contacto.evenements : [];
+    const disponibilidades = Array.isArray(contacto.disponibilidades) ? contacto.disponibilidades : [];
+
+    // Retornar contacto normalizado
+    return {
+      ...contacto,
+      departamentoId: departamentoIds[0], // Mantener compatibilidad
+      departamentoIds,
+      email: emailPrincipal,
+      emailPrincipal,
+      telefono: telefonoPrincipal,
+      telefonoPrincipal,
+      genero: genero as GeneroContacto,
+      categoriaProductos,
+      temperaturaEspecializada,
+      diasOperacion,
+      metodoPago,
+      etiquetas,
+      certificaciones,
+      idiomas,
+      documents,
+      evenements,
+      disponibilidades,
+      activo: contacto.activo !== undefined ? contacto.activo : true,
+      fechaIngreso: contacto.fechaIngreso || new Date().toISOString(),
+      id: contacto.id || Date.now().toString() + Math.random().toString(36).substr(2, 9)
+    } as ContactoDepartamento;
+  });
+}
+
 // Obtener todos los contactos
-export function obtenerContactosDepartamento(): ContactoDepartamento[] {
+export function obtenerContactosDepartamento(): ContactoDepartamento[];
+export function obtenerContactosDepartamento(departamentoId?: string): ContactoDepartamento[];
+export function obtenerContactosDepartamento(departamentoId?: string): ContactoDepartamento[] {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
+    let contactos: ContactoDepartamento[] = [];
+    
     if (stored !== null) {
-      return JSON.parse(stored);
+      const rawData = JSON.parse(stored);
+      // Normalizar datos del backup
+      contactos = normalizarContactosBackup(rawData);
+      
+      // Guardar datos normalizados de vuelta al localStorage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(contactos));
     } else {
       // Inicializar vacío en producción
       localStorage.setItem(STORAGE_KEY, JSON.stringify(contactosIniciales));
-      return contactosIniciales;
+      contactos = contactosIniciales;
     }
+
+    // Si se especifica un departamento, filtrar
+    if (departamentoId) {
+      return contactos.filter(c => {
+        if (c.departamentoIds && c.departamentoIds.length > 0) {
+          return c.departamentoIds.includes(departamentoId);
+        }
+        return c.departamentoId === departamentoId;
+      });
+    }
+
+    return contactos;
   } catch (error) {
     console.error('Error al obtener contactos de departamento:', error);
     return [];
