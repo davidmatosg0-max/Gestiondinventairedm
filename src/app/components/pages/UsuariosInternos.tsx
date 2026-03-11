@@ -21,13 +21,6 @@ import { useTranslation } from 'react-i18next';
 import { SelecteurJoursDisponibles, type JourDisponible } from '../shared/SelecteurJoursDisponibles';
 import { obtenerUsuarioSesion } from '../../utils/sesionStorage';
 import { obtenerDepartamentos } from '../../utils/departamentosStorage';
-import { 
-  obtenerUsuariosInternos, 
-  guardarUsuariosInternos, 
-  agregarUsuarioInterno, 
-  actualizarUsuarioInterno, 
-  eliminarUsuarioInterno 
-} from '../../utils/usuariosInternosStorage';
 
 type Transaccion = {
   id: string;
@@ -127,7 +120,7 @@ export function UsuariosInternos() {
   const usuarioActual = obtenerUsuarioSesion();
   const esDesarrollador = usuarioActual?.permisos?.includes('desarrollador' as any) || false;
   
-  const [usuarios, setUsuarios] = useState<UsuarioInterno[]>(obtenerUsuariosInternos());
+  const [usuarios, setUsuarios] = useState<UsuarioInterno[]>(mockUsuariosInternos);
   const [busqueda, setBusqueda] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState<string>('todos');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -238,7 +231,6 @@ export function UsuariosInternos() {
         return usuario;
       });
       setUsuarios(usuariosActualizados);
-      guardarUsuariosInternos(usuariosActualizados);
       toast.success(t('contacts.contactUpdated'));
     } else {
       // Modo creación: agregar nuevo usuario
@@ -278,7 +270,6 @@ export function UsuariosInternos() {
       };
 
       setUsuarios([...usuarios, nuevoUsuario]);
-      agregarUsuarioInterno(nuevoUsuario);
       toast.success(esEmpresa ? t('contacts.businessContactCreated') : t('contacts.contactCreated'));
     }
     
@@ -355,7 +346,6 @@ export function UsuariosInternos() {
   const confirmarEliminar = () => {
     if (usuarioAEliminar) {
       setUsuarios(usuarios.filter(u => u.id !== usuarioAEliminar.id));
-      eliminarUsuarioInterno(usuarioAEliminar.id);
       toast.success(t('contacts.contactDeleted'));
       setEliminarDialogOpen(false);
       setUsuarioAEliminar(null);
@@ -856,7 +846,6 @@ export function UsuariosInternos() {
                 };
 
                 setUsuarios(usuarios.map(u => u.id === usuarioSeleccionado.id ? usuarioActualizado : u));
-                actualizarUsuarioInterno(usuarioActualizado);
                 setUsuarioSeleccionado(usuarioActualizado);
                 
                 toast.success('Transacción registrada correctamente');

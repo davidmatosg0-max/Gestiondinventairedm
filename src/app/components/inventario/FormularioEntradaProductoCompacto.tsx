@@ -80,7 +80,6 @@ interface FormularioEntradaProductoCompactoProps {
   categorias: Categoria[];
   unidades: Unidad[];
   programasEntrada: ProgramaEntrada[];
-  modoEdicion: boolean;
 }
 
 export function FormularioEntradaProductoCompacto({
@@ -91,8 +90,7 @@ export function FormularioEntradaProductoCompacto({
   onGuardar,
   categorias,
   unidades,
-  programasEntrada,
-  modoEdicion
+  programasEntrada
 }: FormularioEntradaProductoCompactoProps) {
   const branding = useBranding();
   const { t } = useTranslation();
@@ -199,16 +197,15 @@ export function FormularioEntradaProductoCompacto({
     <Dialog open={abierto} onOpenChange={onCerrar}>
       <DialogContent 
         className="!max-w-none !w-[95vw] !max-h-[95vh] !h-[95vh] overflow-hidden p-0 m-0 rounded-xl"
-        aria-describedby="formulario-entrada-description"
       >
         <div className="h-full flex flex-col">
           <DialogHeader className="sticky top-0 z-10 bg-white border-b-2 border-[#E0E0E0] px-6 py-3 shadow-sm">
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '1.25rem' }}>
               <Package className="w-5 h-5 inline mr-2" />
-              {modoEdicion ? 'Modifier l\'entrée de produit' : 'Nouvelle Entrée de Produit'}
+              {t('warehouse.newProductEntry')}
             </DialogTitle>
-            <DialogDescription id="formulario-entrada-description" className="sr-only">
-              {modoEdicion ? 'Modifier les informations de l\'entrée de produit' : 'Enregistrer une nouvelle entrée de produit dans l\'inventaire'}
+            <DialogDescription id="product-entry-form-description">
+              {t('warehouse.productEntryDescription')}
             </DialogDescription>
           </DialogHeader>
           
@@ -752,16 +749,13 @@ export function FormularioEntradaProductoCompacto({
 
       {/* Diálogo de selección de contactos */}
       <Dialog open={dialogContactos} onOpenChange={setDialogContactos}>
-        <DialogContent 
-          className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col"
-          aria-describedby="contactos-dialog-description"
-        >
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               <Users className="w-5 h-5 inline mr-2" />
               Sélectionner un fournisseur ou donateur
             </DialogTitle>
-            <DialogDescription id="contactos-dialog-description">
+            <DialogDescription id="select-contact-description">
               Choisissez un contact du répertoire pour auto-compléter les informations
             </DialogDescription>
           </DialogHeader>

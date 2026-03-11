@@ -112,7 +112,6 @@ export function FormularioOrganismoCompacto({
     <Dialog open={abierto} onOpenChange={onCerrar}>
       <DialogContent 
         className="!max-w-none !w-[95vw] !max-h-[95vh] !h-[95vh] overflow-hidden p-0 m-0 rounded-xl"
-        aria-describedby="formulario-organismo-description"
       >
         <div className="h-full flex flex-col">
           <DialogHeader className="sticky top-0 z-10 bg-white border-b-2 border-[#E0E0E0] px-6 py-3 shadow-sm">
@@ -120,8 +119,8 @@ export function FormularioOrganismoCompacto({
               <Building2 className="w-5 h-5 inline mr-2" />
               {modoEdicion ? t('organisms.editOrganism') : t('organisms.newOrganism')}
             </DialogTitle>
-            <DialogDescription id="formulario-organismo-description" className="sr-only">
-              Formulaire pour créer ou modifier un organisme avec ses informations de contact et ses besoins
+            <DialogDescription id="organism-form-description" className="sr-only">
+              {modoEdicion ? t('organisms.editOrganismDescription') : t('organisms.newOrganismDescription')}
             </DialogDescription>
           </DialogHeader>
           

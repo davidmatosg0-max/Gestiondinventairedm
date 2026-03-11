@@ -32,13 +32,8 @@ import { DashboardPredictivo } from './components/pages/DashboardPredictivo';
 import { GestionAutenticacion } from './components/pages/GestionAutenticacion';
 import { Toaster } from './components/ui/sonner';
 import { PWAInstaller } from './components/PWAInstaller';
-import { UpdateNotification } from './components/UpdateNotification';
 // LIMPIEZA COMPLETA DEL SISTEMA
 import { ejecutarLimpiezaCompleta, yaEjecutadaLimpiezaCompleta } from './utils/limpiezaCompleta';
-// Funciones de limpieza para producción (disponibles en consola)
-import './utils/limpiarDatosProduccion';
-// Modo Producción - Control de datos reales
-import './utils/modoProduccion';
 import { inicializarUnidades } from './utils/unidadStorage';
 import { inicializarDepartamentos } from './utils/departamentosStorage';
 import { migrarClavesDeAcceso } from './utils/organismosStorage';
@@ -51,6 +46,10 @@ import { runDataMigrations } from './utils/dataMigration';
 import { inicializarAutoBackup } from './utils/autoBackupStorage';
 import { inicializarFileSystem } from './utils/fileSystemAccess';
 import { sistemaConDatosReales } from './utils/inicializarDatosEjemplo';
+import { suppressFigmaWarningsConditional } from './utils/suppressFigmaWarnings';
+
+// Suprimir warnings internos de Figma Make al inicio
+suppressFigmaWarningsConditional();
 
 // Componente interno que usa el contexto de autenticación
 function AppContent() {
@@ -231,7 +230,6 @@ function AppContent() {
       </Layout>
       <Toaster position="top-right" />
       <PWAInstaller />
-      <UpdateNotification />
     </BalanceProvider>
   );
 }

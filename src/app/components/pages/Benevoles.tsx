@@ -1127,12 +1127,16 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     });
 
     // Actualizar el bénévole con los nuevos departamentos
-    setBenevoles(prev => prev.map(b => {
+    const benevolesActualizados = benevoles.map(b => {
       if (b.id === benevoleSeleccionadoAsignar.id) {
         return { ...b, departement: departamentosAsignar };
       }
       return b;
-    }));
+    });
+    
+    // 🔒 GUARDAR EN LOCALSTORAGE - ¡ESTO FALTABA!
+    localStorage.setItem('benevoles', JSON.stringify(benevolesActualizados));
+    setBenevoles(benevolesActualizados);
 
     toast.success(`✅ Bénévole assigné à ${departamentosAsignar.length} département(s)`);
     setDialogAsignarDepartamentos(false);

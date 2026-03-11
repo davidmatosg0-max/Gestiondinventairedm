@@ -68,6 +68,15 @@ export function sistemaConDatosReales(): boolean {
 }
 
 /**
+ * 🔒 Marcar el sistema como con datos reales para protegerlos
+ * Se usa cuando se restaura un backup o se cargan datos importantes
+ */
+export function marcarComoSistemaConDatosReales(): void {
+  localStorage.setItem(FLAG_DATOS_REALES, 'true');
+  console.log('🔒 Sistema marcado como con DATOS REALES - Protección activada');
+}
+
+/**
  * Verifica si los datos de ejemplo ya fueron inicializados
  */
 export function datosEjemploInicializados(): boolean {

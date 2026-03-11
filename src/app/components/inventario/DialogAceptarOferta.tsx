@@ -202,11 +202,11 @@ export function DialogAceptarOferta({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col" aria-describedby="aceptar-oferta-description">
+      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
             <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-[#4CAF50] to-[#45A049] flex items-center justify-center">
-              <ShoppingCart className="h-5 h-5 text-white" />
+              <ShoppingCart className="h-5 w-5 text-white" />
             </div>
             Aceptar Oferta
           </DialogTitle>

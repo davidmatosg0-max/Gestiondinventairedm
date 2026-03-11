@@ -18,7 +18,6 @@ export function CentroNotificaciones() {
     marcarTodasComoLeidas,
     eliminarNotificacion,
     eliminarTodas,
-    limpiarCompletamente,
   } = useNotificaciones();
 
   const [open, setOpen] = useState(false);

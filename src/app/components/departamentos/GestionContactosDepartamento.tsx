@@ -504,6 +504,31 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
   const handleEliminar = () => {
     if (contactoSeleccionado) {
       eliminarContacto(contactoSeleccionado.id);
+      
+      // 🔄 Si es un bénévole, actualizar su lista de departamentos
+      if (contactoSeleccionado.tipo === 'benevole' && contactoSeleccionado.email) {
+        try {
+          const benevolesData = localStorage.getItem('benevoles');
+          if (benevolesData) {
+            const benevoles = JSON.parse(benevolesData);
+            const benevolesActualizados = benevoles.map((b: any) => {
+              if (b.email === contactoSeleccionado.email) {
+                // Quitar este departamento de la lista
+                const depts = Array.isArray(b.departement) ? b.departement : (b.departement ? [b.departement] : []);
+                return {
+                  ...b,
+                  departement: depts.filter((d: string) => d !== departamentoId)
+                };
+              }
+              return b;
+            });
+            localStorage.setItem('benevoles', JSON.stringify(benevolesActualizados));
+          }
+        } catch (error) {
+          console.error('Erreur lors de la mise à jour du bénévole:', error);
+        }
+      }
+      
       toast.success('Contact supprimé avec succès');
       
       // ✅ SOLUCIÓN DEFINITIVA: Actualizar el estado inmediatamente

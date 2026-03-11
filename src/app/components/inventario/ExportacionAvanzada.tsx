@@ -134,14 +134,14 @@ export function ExportacionAvanzada({ open, onOpenChange }: ExportacionAvanzadaP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="export-description">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
             <Download className="h-6 w-6 text-[#1E73BE]" />
             Exportación Avanzada de Datos
           </DialogTitle>
-          <DialogDescription id="export-description">
-            Personalice su exportación seleccionando datos específicos y formato
+          <DialogDescription id="exportacion-description">
+            Personaliza y exporta tus datos de inventario en diferentes formatos
           </DialogDescription>
         </DialogHeader>
 

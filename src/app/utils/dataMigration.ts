@@ -109,11 +109,22 @@ export function restoreLocalStorage(backupString: string) {
     
     Object.entries(backup).forEach(([key, value]) => {
       if (value !== null) {
-        localStorage.setItem(key, value);
+        localStorage.setItem(key, value as string);
       }
     });
     
     console.log('✅ Datos restaurados exitosamente');
+    
+    // 🔒 MARCAR SISTEMA COMO CON DATOS REALES después de restaurar
+    try {
+      import('./inicializarDatosEjemplo').then(({ marcarComoSistemaConDatosReales }) => {
+        marcarComoSistemaConDatosReales();
+        console.log('🔒 Backup restaurado - Sistema marcado como CON DATOS REALES');
+      });
+    } catch (error) {
+      console.warn('⚠️ No se pudo marcar el sistema como con datos reales:', error);
+    }
+    
     return true;
   } catch (error) {
     console.error('❌ Error al restaurar backup:', error);

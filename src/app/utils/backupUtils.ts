@@ -443,6 +443,19 @@ export function restoreBackup(
     }
   }
   
+  // 🔒 MARCAR SISTEMA COMO CON DATOS REALES después de restaurar backup exitoso
+  if (!dryRun && errors.length === 0) {
+    try {
+      // Importar y ejecutar la función de marcado
+      import('./inicializarDatosEjemplo').then(({ marcarComoSistemaConDatosReales }) => {
+        marcarComoSistemaConDatosReales();
+        console.log('🔒 Backup restaurado - Sistema marcado como CON DATOS REALES');
+      });
+    } catch (error) {
+      console.warn('⚠️ No se pudo marcar el sistema como con datos reales:', error);
+    }
+  }
+  
   return {
     success: errors.length === 0,
     errors

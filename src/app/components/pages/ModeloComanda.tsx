@@ -223,13 +223,10 @@ export function ModeloComanda({
 
   return (
     <Dialog open={mostrar} onOpenChange={onCerrar}>
-      <DialogContent 
-        className="w-screen h-screen max-w-none max-h-none !top-0 !left-0 !translate-x-0 !translate-y-0 p-0 overflow-y-auto print:max-w-full print:max-h-full m-0 rounded-none"
-        aria-describedby="modelo-comanda-description"
-      >
+      <DialogContent className="w-screen h-screen max-w-none max-h-none !top-0 !left-0 !translate-x-0 !translate-y-0 p-0 overflow-y-auto print:max-w-full print:max-h-full m-0 rounded-none">
         <DialogHeader className="sr-only">
           <DialogTitle>{t('orders.dialog.title', { number: comanda.numero })}</DialogTitle>
-          <DialogDescription id="modelo-comanda-description">{t('orders.dialog.description')}</DialogDescription>
+          <DialogDescription>{t('orders.dialog.description')}</DialogDescription>
         </DialogHeader>
         {/* Botones de acción (no se imprimen) */}
         <div className="sticky top-0 z-10 bg-white border-b shadow-sm flex flex-wrap justify-between items-center p-4 print:hidden gap-2">

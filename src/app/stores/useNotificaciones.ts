@@ -22,7 +22,6 @@ interface NotificacionesState {
   marcarTodasComoLeidas: () => void;
   eliminarNotificacion: (id: string) => void;
   eliminarTodas: () => void;
-  limpiarCompletamente: () => void;
   obtenerNoLeidas: () => Notificacion[];
   obtenerPorCategoria: (categoria: string) => Notificacion[];
 }
@@ -81,10 +80,6 @@ export const useNotificaciones = create<NotificacionesState>()(
       },
 
       eliminarTodas: () => {
-        set({ notificaciones: [], noLeidas: 0 });
-      },
-
-      limpiarCompletamente: () => {
         set({ notificaciones: [], noLeidas: 0 });
       },
 
