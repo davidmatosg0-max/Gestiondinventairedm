@@ -935,10 +935,12 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     return configs[tipo];
   };
 
-  // Handlers for edit modal
+  // Handlers for edit modal - Ahora usa el mismo formulario que para crear
   const handleOpenEditModal = (benevole: Benevole) => {
     setEditingBenevole(benevole);
-    setEditForm({
+    
+    // Configurar el formulario con los datos del bénévole
+    setNewForm({
       tipo: benevole.tipo || 'benevole',
       nom: benevole.nom,
       prenom: benevole.prenom,
@@ -978,8 +980,9 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       contactoEmergenciaTelefono: benevole.contactoEmergenciaTelefono || '',
       contactoEmergenciaEmail: benevole.contactoEmergenciaEmail || ''
     });
-    setEditFormPhotoPreview(benevole.photo || null);
-    setEditModalOpen(true);
+    
+    setNewFormPhotoPreview(benevole.photo || null);
+    setNewModalOpen(true); // Abrir el modal de nuevo (que ahora funciona en modo edición)
   };
 
   const handleSaveEdit = () => {
@@ -1060,7 +1063,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     return `VOL-${String(nextId).padStart(3, '0')}`;
   };
 
-  // Handlers for new modal
+  // Handlers for new modal - Ahora maneja tanto creación como edición
   const handleSaveNew = () => {
     if (!newForm.nom || !newForm.prenom || !newForm.email) {
       toast.error('Veuillez remplir tous les champs obligatoires (nom, prénom, email)');
@@ -1072,8 +1075,6 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       return;
     }
 
-    const maxId = Math.max(...benevoles.map(b => b.id), 0);
-    
     // Convertir documentos de newForm (interface de FormularioNouveauBenevole) al formato de Benevole
     const convertedDocuments = (newForm.documents || []).map((doc: any) => ({
       id: Date.now() + Math.floor(Math.random() * 10000),
@@ -1083,47 +1084,109 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       url: doc.url,
       taille: doc.size ? formatFileSize(doc.size) : doc.taille || '0 KB'
     }));
-    
-    const nouveauBenevole: Benevole = {
-      id: maxId + 1,
-      identifiant: generateIdentifiant(),
-      tipo: newForm.tipo,
-      nom: newForm.nom,
-      prenom: newForm.prenom,
-      email: newForm.email,
-      telephone: newForm.telephone,
-      departement: Array.isArray(newForm.departement) 
-        ? (newForm.departement.length > 0 ? newForm.departement[0] : '') 
-        : newForm.departement,
-      disponibilites: newForm.disponibilites,
-      disponibilidadesSemanal: newForm.disponibilidadesSemanal,
-      statut: newForm.statut,
-      heuresTotal: 0,
-      heuresMois: 0,
-      dateInscription: newForm.dateInscription,
-      sexe: newForm.sexe,
-      dateNaissance: newForm.dateNaissance,
-      langues: newForm.langues,
-      adresse: newForm.adresse,
-      ville: newForm.ville,
-      codePostal: newForm.codePostal,
-      quartier: newForm.quartier,
-      voiture: newForm.voiture,
-      joursDisponibles: newForm.joursDisponibles,
-      notes: newForm.notes,
-      notasGenerales: newForm.notasGenerales,
-      documents: convertedDocuments,
-      photo: newForm.photo,
-      poste: newForm.poste,
-      heuresSemaines: newForm.heuresSemaines,
-      reference: newForm.reference,
-      contactoEmergenciaNombre: newForm.contactoEmergenciaNombre,
-      contactoEmergenciaRelacion: newForm.contactoEmergenciaRelacion,
-      contactoEmergenciaTelefono: newForm.contactoEmergenciaTelefono,
-      contactoEmergenciaEmail: newForm.contactoEmergenciaEmail
-    };
 
-    setBenevoles([...benevoles, nouveauBenevole]);
+    // MODO EDICIÓN: Si editingBenevole existe, actualizar el bénévole existente
+    if (editingBenevole) {
+      setBenevoles(benevoles.map(b => {
+        if (b.id === editingBenevole.id) {
+          return {
+            ...b,
+            tipo: newForm.tipo,
+            nom: newForm.nom,
+            prenom: newForm.prenom,
+            email: newForm.email,
+            telephone: newForm.telephone,
+            departement: Array.isArray(newForm.departement) 
+              ? (newForm.departement.length > 0 ? newForm.departement[0] : '') 
+              : newForm.departement,
+            disponibilites: newForm.disponibilites,
+            disponibilidadesSemanal: newForm.disponibilidadesSemanal,
+            statut: newForm.statut,
+            sexe: newForm.sexe,
+            dateInscription: newForm.dateInscription,
+            dateNaissance: newForm.dateNaissance,
+            langues: newForm.langues,
+            adresse: newForm.adresse,
+            ville: newForm.ville,
+            codePostal: newForm.codePostal,
+            quartier: newForm.quartier,
+            voiture: newForm.voiture,
+            joursDisponibles: newForm.joursDisponibles,
+            notes: newForm.notes,
+            notasGenerales: newForm.notasGenerales,
+            documents: convertedDocuments,
+            photo: newForm.photo,
+            poste: newForm.poste,
+            heuresSemaines: newForm.heuresSemaines,
+            reference: newForm.reference,
+            contactoEmergenciaNombre: newForm.contactoEmergenciaNombre,
+            contactoEmergenciaRelacion: newForm.contactoEmergenciaRelacion,
+            contactoEmergenciaTelefono: newForm.contactoEmergenciaTelefono,
+            contactoEmergenciaEmail: newForm.contactoEmergenciaEmail
+          };
+        }
+        return b;
+      }));
+
+      // Update feuilles de temps names
+      setFeuillesTemps(prev => prev.map(f => {
+        if (f.benevoleId === editingBenevole.id) {
+          return {
+            ...f,
+            benevoleName: `${newForm.prenom} ${newForm.nom}`
+          };
+        }
+        return f;
+      }));
+
+      toast.success('Bénévole modifié avec succès');
+      setEditingBenevole(null);
+    } else {
+      // MODO CREACIÓN: Crear un nuevo bénévole
+      const maxId = Math.max(...benevoles.map(b => b.id), 0);
+      
+      const nouveauBenevole: Benevole = {
+        id: maxId + 1,
+        identifiant: generateIdentifiant(),
+        tipo: newForm.tipo,
+        nom: newForm.nom,
+        prenom: newForm.prenom,
+        email: newForm.email,
+        telephone: newForm.telephone,
+        departement: Array.isArray(newForm.departement) 
+          ? (newForm.departement.length > 0 ? newForm.departement[0] : '') 
+          : newForm.departement,
+        disponibilites: newForm.disponibilites,
+        disponibilidadesSemanal: newForm.disponibilidadesSemanal,
+        statut: newForm.statut,
+        heuresTotal: 0,
+        heuresMois: 0,
+        dateInscription: newForm.dateInscription,
+        sexe: newForm.sexe,
+        dateNaissance: newForm.dateNaissance,
+        langues: newForm.langues,
+        adresse: newForm.adresse,
+        ville: newForm.ville,
+        codePostal: newForm.codePostal,
+        quartier: newForm.quartier,
+        voiture: newForm.voiture,
+        joursDisponibles: newForm.joursDisponibles,
+        notes: newForm.notes,
+        notasGenerales: newForm.notasGenerales,
+        documents: convertedDocuments,
+        photo: newForm.photo,
+        poste: newForm.poste,
+        heuresSemaines: newForm.heuresSemaines,
+        reference: newForm.reference,
+        contactoEmergenciaNombre: newForm.contactoEmergenciaNombre,
+        contactoEmergenciaRelacion: newForm.contactoEmergenciaRelacion,
+        contactoEmergenciaTelefono: newForm.contactoEmergenciaTelefono,
+        contactoEmergenciaEmail: newForm.contactoEmergenciaEmail
+      };
+
+      setBenevoles([...benevoles, nouveauBenevole]);
+      toast.success('Nouveau bénévole créé avec succès');
+    }
 
     // Limpiar el formulario temporal guardado
     localStorage.removeItem('banqueAlimentaire_newBenevoleForm_temp');
@@ -4639,644 +4702,9 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         </div>
       </div>
 
-      {/* Modal de edición */}
-      {editModalOpen && (
-        <>
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50 z-50"
-            onClick={() => setEditModalOpen(false)}
-          />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin rounded-2xl" style={{ scrollBehavior: 'smooth' }}>
-              <Card className="border-0 shadow-2xl">
-              <CardHeader className="bg-gradient-to-r from-[#1E73BE] to-[#1557a0] text-white pb-8">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                      <Edit className="w-7 h-7 text-white" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-2xl font-bold mb-1">Modifier le bénévole</CardTitle>
-                      <p className="text-white/80 text-sm">Mettez à jour les informations du bénévole</p>
-                      {editingBenevole && (
-                        <div className="mt-2">
-                          <Badge variant="outline" className="border-white text-white bg-white/20 font-mono text-xs">
-                            {editingBenevole.identifiant}
-                          </Badge>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setEditModalOpen(false)}
-                    className="text-white hover:bg-white/20 rounded-xl"
-                  >
-                    <X className="w-5 h-5" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6 bg-gradient-to-b from-gray-50 to-white">
-                {/* Photo de Profil */}
-                <div className="mb-6 bg-[#F4F4F4] rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-[#333333] mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    Photo de Profil
-                  </h3>
-                  <div className="flex justify-center">
-                    <div className="relative">
-                      <div 
-                        className="w-32 h-32 rounded-full border-4 overflow-hidden bg-gray-100 flex items-center justify-center"
-                        style={{ borderColor: branding.primaryColor }}
-                      >
-                        {editFormPhotoPreview ? (
-                          <img src={editFormPhotoPreview} alt="Preview" className="w-full h-full object-cover" />
-                        ) : (
-                          <User className="w-16 h-16 text-gray-400" />
-                        )}
-                      </div>
-                      <Button
-                        size="icon"
-                        type="button"
-                        className="absolute bottom-0 right-0 rounded-full text-white"
-                        style={{ backgroundColor: branding.primaryColor }}
-                        onClick={() => editFileInputRef.current?.click()}
-                      >
-                        <Camera className="w-4 h-4" />
-                      </Button>
-                      <input
-                        ref={editFileInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleEditFormPhotoChange}
-                      />
-                    </div>
-                  </div>
-                </div>
+      {/* Modal de edición - ELIMINADO: Ahora se usa FormularioNouveauBenevole en modo edición */}
 
-                {/* Informations de Base */}
-                <div className="mb-6 bg-white border-2 border-[#E0E0E0] rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-[#333333] mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    Informations de Base
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="edit-prenom">Prénom *</Label>
-                      <Input
-                        id="edit-prenom"
-                        value={editForm.prenom}
-                        onChange={(e) => setEditForm({ ...editForm, prenom: e.target.value })}
-                        placeholder="Ej: Jean"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-nom">Nom de famille *</Label>
-                      <Input
-                        id="edit-nom"
-                        value={editForm.nom}
-                        onChange={(e) => setEditForm({ ...editForm, nom: e.target.value })}
-                        placeholder="Ej: Dupont"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-dateNaissance">Date de Naissance</Label>
-                      <Input
-                        id="edit-dateNaissance"
-                        type="date"
-                        value={editForm.dateNaissance || ''}
-                        onChange={(e) => setEditForm({ ...editForm, dateNaissance: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-sexe">Genre</Label>
-                      <Select
-                        value={editForm.sexe || 'Non spécifié'}
-                        onValueChange={(value: any) => setEditForm({ ...editForm, sexe: value })}
-                      >
-                        <SelectTrigger id="edit-sexe">
-                          <SelectValue placeholder="Sélectionner" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Homme">Homme</SelectItem>
-                          <SelectItem value="Femme">Femme</SelectItem>
-                          <SelectItem value="Autre">Autre</SelectItem>
-                          <SelectItem value="Non spécifié">Non spécifié</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="md:col-span-2">
-                      <Label htmlFor="edit-email">Email</Label>
-                      <Input
-                        id="edit-email"
-                        type="email"
-                        value={editForm.email}
-                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                        placeholder="jean.dupont@email.com"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Type de Contact */}
-                <div className="mb-6 bg-white border-2 border-[#E0E0E0] rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-[#333333] mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    Type de Contact
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                    {(['benevole', 'stagiaire', 'employe', 'coordinateur', 'responsable', 'autre'] as TipoBenevole[]).map((tipo) => {
-                      const config = getTipoBenevoleConfig(tipo);
-                      const Icon = config.icon;
-                      const isSelected = editForm.tipo === tipo;
-                      return (
-                        <div
-                          key={tipo}
-                          onClick={() => setEditForm({ ...editForm, tipo })}
-                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
-                            isSelected ? 'ring-2' : ''
-                          }`}
-                          style={{
-                            borderColor: isSelected ? config.color : '#E0E0E0',
-                            backgroundColor: isSelected ? config.bgColor : 'white',
-                            ringColor: config.color
-                          }}
-                        >
-                          <div className="flex flex-col items-center text-center gap-2">
-                            <div 
-                              className="p-3 rounded-full"
-                              style={{ backgroundColor: isSelected ? 'white' : config.bgColor }}
-                            >
-                              <Icon className="w-6 h-6" style={{ color: config.color }} />
-                            </div>
-                            <span className="text-xs font-medium text-[#333333] leading-tight">
-                              {config.label}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Informations de Contact */}
-                <div className="mb-6 bg-white border-2 border-[#E0E0E0] rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-[#333333] mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    Informations de Contact
-                  </h3>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="edit-telephone">Téléphone</Label>
-                      <Input
-                        id="edit-telephone"
-                        type="tel"
-                        value={editForm.telephone}
-                        onChange={(e) => setEditForm({ ...editForm, telephone: e.target.value })}
-                        placeholder="(514) 555-0123"
-                      />
-                    </div>
-                    <div>
-                      <Label>Adresse</Label>
-                      <AddressAutocomplete
-                        initialValue={editForm.adresse || ''}
-                        onAddressSelect={(address) => {
-                          const fullAddress = `${address.street}, ${address.city}, ${address.postalCode}${address.apt ? ', App. ' + address.apt : ''}`;
-                          setEditForm({
-                            ...editForm,
-                            adresse: fullAddress,
-                            ville: address.city,
-                            codePostal: address.postalCode
-                          });
-                        }}
-                        placeholder="Ex: 123 Boulevard Saint-Laurent Est"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="edit-ville">Ville / Secteur</Label>
-                        <Input
-                          id="edit-ville"
-                          value={editForm.ville || ''}
-                          onChange={(e) => setEditForm({ ...editForm, ville: e.target.value })}
-                          placeholder="Ex: saint-eustache"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="edit-codePostal">Code</Label>
-                        <Input
-                          id="edit-codePostal"
-                          value={editForm.codePostal || ''}
-                          onChange={(e) => setEditForm({ ...editForm, codePostal: e.target.value })}
-                          placeholder="H0H0H0"
-                        />
-                      </div>
-                    </div>
-                    
-                    {/* Selector de idiomas */}
-                    <LanguageSelector
-                      selectedLanguages={editForm.langues || []}
-                      onChange={(langues) => setEditForm({ ...editForm, langues })}
-                      predefinedLanguages={[
-                        { code: 'Français', label: 'Français', flag: '🇫🇷', color: branding.primaryColor },
-                        { code: 'Arabe', label: 'العربية', flag: '🇸🇦', color: '#F59E0B' },
-                        { code: 'Anglais', label: 'English', flag: '🇬🇧', color: branding.secondaryColor },
-                        { code: 'Espagnol', label: 'Español', flag: '🇪🇸', color: '#8B5CF6' }
-                      ]}
-                    />
-                  </div>
-                </div>
-
-                {/* Contact d'Urgence */}
-                <div className="mb-6 bg-white border-2 border-[#E0E0E0] rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-[#333333] mb-4 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    <User className="w-5 h-5" style={{ color: branding.secondaryColor }} />
-                    Contact d'Urgence
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="edit-contactoEmergenciaNombre">
-                        <User className="w-3 h-3 inline mr-1" />
-                        Nom complet
-                      </Label>
-                      <Input
-                        id="edit-contactoEmergenciaNombre"
-                        type="text"
-                        value={editForm.contactoEmergenciaNombre || ''}
-                        onChange={(e) => setEditForm({ ...editForm, contactoEmergenciaNombre: e.target.value })}
-                        placeholder="Marie Tremblay"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-contactoEmergenciaRelacion">
-                        <Users className="w-3 h-3 inline mr-1" />
-                        Relation
-                      </Label>
-                      <Input
-                        id="edit-contactoEmergenciaRelacion"
-                        type="text"
-                        value={editForm.contactoEmergenciaRelacion || ''}
-                        onChange={(e) => setEditForm({ ...editForm, contactoEmergenciaRelacion: e.target.value })}
-                        placeholder="Conjoint, Parent, Ami..."
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-contactoEmergenciaTelefono">
-                        <Phone className="w-3 h-3 inline mr-1" />
-                        Téléphone
-                      </Label>
-                      <Input
-                        id="edit-contactoEmergenciaTelefono"
-                        type="tel"
-                        value={editForm.contactoEmergenciaTelefono || ''}
-                        onChange={(e) => setEditForm({ ...editForm, contactoEmergenciaTelefono: e.target.value })}
-                        placeholder="+1 (514) 000-0000"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-contactoEmergenciaEmail">
-                        <Mail className="w-3 h-3 inline mr-1" />
-                        Email
-                      </Label>
-                      <Input
-                        id="edit-contactoEmergenciaEmail"
-                        type="email"
-                        value={editForm.contactoEmergenciaEmail || ''}
-                        onChange={(e) => setEditForm({ ...editForm, contactoEmergenciaEmail: e.target.value })}
-                        placeholder="marie.tremblay@email.com"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Informations Professionnelles */}
-                <div className="mb-6 bg-white border-2 border-[#E0E0E0] rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-[#333333] mb-4 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    <Briefcase className="w-5 h-5" style={{ color: branding.primaryColor }} />
-                    Informations Professionnelles
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="edit-poste">Poste/Rôle</Label>
-                      <Select
-                        value={editForm.poste || (Array.isArray(editForm.departement) ? editForm.departement[0] || '' : editForm.departement)}
-                        onValueChange={(value) => setEditForm({ ...editForm, poste: value, departement: value })}
-                      >
-                        <SelectTrigger id="edit-poste">
-                          <SelectValue placeholder="Sélectionner un rôle" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {departements.map(dept => (
-                            <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-heuresSemaines">Heures Semaines</Label>
-                      <Input
-                        id="edit-heuresSemaines"
-                        type="number"
-                        value={editForm.heuresSemaines || 0}
-                        onChange={(e) => setEditForm({ ...editForm, heuresSemaines: parseInt(e.target.value) || 0 })}
-                        placeholder="40"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="edit-reference">Référence</Label>
-                      <Input
-                        id="edit-reference"
-                        value={editForm.reference || ''}
-                        onChange={(e) => setEditForm({ ...editForm, reference: e.target.value })}
-                        placeholder="REF-001"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Disponibilités */}
-                <div className="mb-6 bg-white border-2 border-[#E0E0E0] rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-[#333333] mb-4 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    <Calendar className="w-5 h-5" style={{ color: branding.primaryColor }} />
-                    Disponibilités - Jours et Horaires
-                  </h3>
-                  <p className="text-sm text-[#666666] mb-4">Cliquez pour sélectionner</p>
-
-                  {/* Grid de días */}
-                  <div className="grid grid-cols-7 gap-2 mb-4">
-                    {editForm.disponibilidadesSemanal?.map((dia, index) => {
-                      const getEstadoDia = () => {
-                        if (dia.am && dia.pm) return 'both';
-                        if (dia.am) return 'am';
-                        if (dia.pm) return 'pm';
-                        return 'none';
-                      };
-
-                      const estado = getEstadoDia();
-                      
-                      const getBgColor = () => {
-                        if (estado === 'am') return '#EF444410';
-                        if (estado === 'pm') return '#8B5CF610';
-                        if (estado === 'both') return '#F59E0B10';
-                        return 'white';
-                      };
-
-                      const getBorderColor = () => {
-                        if (estado === 'am') return '#EF4444';
-                        if (estado === 'pm') return '#8B5CF6';
-                        if (estado === 'both') return '#F59E0B';
-                        return '#E0E0E0';
-                      };
-
-                      const getTextColor = () => {
-                        if (estado === 'none') return '#666666';
-                        return '#333333';
-                      };
-
-                      const getHorarioText = () => {
-                        if (estado === 'am') return 'AM';
-                        if (estado === 'pm') return 'PM';
-                        if (estado === 'both') return 'AM/PM';
-                        return '—';
-                      };
-
-                      const handleDayClick = () => {
-                        const newDisponibilidades = [...(editForm.disponibilidadesSemanal || [])];
-                        
-                        if (estado === 'none') {
-                          newDisponibilidades[index] = { ...dia, am: true, pm: false };
-                        } else if (estado === 'am') {
-                          newDisponibilidades[index] = { ...dia, am: false, pm: true };
-                        } else if (estado === 'pm') {
-                          newDisponibilidades[index] = { ...dia, am: true, pm: true };
-                        } else {
-                          newDisponibilidades[index] = { ...dia, am: false, pm: false };
-                        }
-                        
-                        setEditForm({ 
-                          ...editForm, 
-                          disponibilidadesSemanal: newDisponibilidades 
-                        });
-                      };
-
-                      return (
-                        <button
-                          key={dia.jour}
-                          type="button"
-                          onClick={handleDayClick}
-                          className="p-2.5 rounded-lg border-2 transition-all hover:shadow-sm text-center flex flex-col items-center justify-center min-h-[70px]"
-                          style={{
-                            backgroundColor: getBgColor(),
-                            borderColor: getBorderColor(),
-                            color: getTextColor()
-                          }}
-                        >
-                          <div className="text-sm font-medium mb-1">{dia.jour}</div>
-                          <div 
-                            className="text-xs font-semibold px-2 py-0.5 rounded"
-                            style={{
-                              color: estado === 'none' ? '#999999' : getBorderColor(),
-                              backgroundColor: estado === 'none' ? 'transparent' : getBgColor()
-                            }}
-                          >
-                            {getHorarioText()}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Leyenda */}
-                  <div className="flex items-center gap-6 text-xs">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: '#EF4444' }}></div>
-                      <span className="text-[#666666]">AM</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: '#8B5CF6' }}></div>
-                      <span className="text-[#666666]">PM</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: '#F59E0B' }}></div>
-                      <span className="text-[#666666]">AM/PM</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const resetDisponibilidades = editForm.disponibilidadesSemanal?.map(dia => ({
-                          ...dia,
-                          am: false,
-                          pm: false
-                        })) || [];
-                        
-                        setEditForm({ 
-                          ...editForm, 
-                          disponibilidadesSemanal: resetDisponibilidades 
-                        });
-                      }}
-                      className="text-blue-600 hover:underline ml-auto"
-                    >
-                      Cliquer pour changer
-                    </button>
-                  </div>
-                </div>
-
-                {/* Notes */}
-                <div className="mb-6 bg-white border-2 border-[#E0E0E0] rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-[#333333] mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    Notes
-                  </h3>
-                  <Textarea
-                    value={editForm.notasGenerales || ''}
-                    onChange={(e) => setEditForm({ ...editForm, notasGenerales: e.target.value })}
-                    placeholder="Ajoutez des notes sur ce contact..."
-                    rows={4}
-                    className="resize-none"
-                  />
-                </div>
-
-                {/* Documents & Images */}
-                <div className="mb-6 bg-white border-2 border-[#E0E0E0] rounded-2xl p-6">
-                  <h3 className="text-lg font-semibold text-[#333333] mb-4 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    <FileUp className="w-5 h-5" style={{ color: branding.primaryColor }} />
-                    Documents & Images
-                    {editForm.documents && editForm.documents.length > 0 && (
-                      <span 
-                        className="px-2 py-0.5 rounded-full text-white text-xs font-bold"
-                        style={{ backgroundColor: branding.secondaryColor }}
-                      >
-                        {editForm.documents.length}
-                      </span>
-                    )}
-                  </h3>
-
-                  {/* Lista de documentos existentes */}
-                  {editForm.documents && editForm.documents.length > 0 && (
-                    <div className="mb-4 space-y-2 max-h-64 overflow-y-auto">
-                      {editForm.documents.map((doc: any) => (
-                        <div
-                          key={doc.id}
-                          className="flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-blue-50 border-2 rounded-lg hover:shadow-sm transition-all"
-                          style={{ borderColor: '#E0E0E0' }}
-                        >
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div 
-                              className="p-2 rounded-lg"
-                              style={{ backgroundColor: `${branding.primaryColor}15` }}
-                            >
-                              <FileText className="w-5 h-5" style={{ color: branding.primaryColor }} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-[#333333] truncate" title={doc.nom}>
-                                {doc.nom}
-                              </p>
-                              <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
-                                <span>{doc.taille}</span>
-                                <span>•</span>
-                                <span>{new Date(doc.date).toLocaleDateString('fr-FR')}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8 text-blue-600 hover:bg-blue-100"
-                              onClick={() => window.open(doc.url, '_blank')}
-                              title="Voir le document"
-                            >
-                              <Download className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8 text-red-600 hover:bg-red-100"
-                              onClick={() => {
-                                if (confirm(`Voulez-vous vraiment supprimer "${doc.nom}" ?`)) {
-                                  handleEditFormRemoveDocument(doc.id);
-                                }
-                              }}
-                              title="Supprimer le document"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Zona de drop/upload */}
-                  <div 
-                    className="border-2 border-dashed rounded-lg p-6 text-center transition-all cursor-pointer hover:bg-gray-50"
-                    style={{ borderColor: '#CCCCCC' }}
-                    onClick={() => editDocumentInputRef.current?.click()}
-                  >
-                    <FileUp 
-                      className="w-10 h-10 mx-auto mb-2" 
-                      style={{ color: branding.secondaryColor }} 
-                    />
-                    <h4 className="text-sm font-semibold text-[#666666] mb-1">
-                      Ajouter des fichiers
-                    </h4>
-                    <p className="text-xs text-[#999999] mb-3">
-                      Contrats, certificats, photos, attestations...
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                      style={{ 
-                        borderColor: branding.secondaryColor, 
-                        color: branding.secondaryColor 
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        editDocumentInputRef.current?.click();
-                      }}
-                    >
-                      <Upload className="w-3.5 h-3.5" />
-                      Parcourir
-                    </Button>
-                    <p className="text-[10px] text-gray-400 mt-2">
-                      Formats: PDF, JPG, PNG • Taille max: 5MB
-                    </p>
-                    <input
-                      ref={editDocumentInputRef}
-                      type="file"
-                      accept="application/pdf,image/jpeg,image/jpg,image/png"
-                      className="hidden"
-                      multiple
-                      onChange={handleEditFormAddDocument}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-4 justify-end pt-4 border-t">
-                  <Button 
-                    variant="outline"
-                    onClick={() => setEditModalOpen(false)}
-                    className="px-6 py-2 rounded-xl hover:bg-gray-100 transition-colors"
-                  >
-                    Annuler
-                  </Button>
-                  <Button 
-                    className="px-8 py-2 bg-gradient-to-r from-[#1E73BE] to-[#1557a0] hover:from-[#1557a0] hover:to-[#1E73BE] text-white rounded-xl shadow-lg hover:shadow-xl transition-all"
-                    onClick={handleSaveEdit}
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    Enregistrer les modifications
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Modal de création */}
+      {/* Modal de création - Se usa FormularioNouveauBenevole */}
 
       {/* Modal d'envoi d'email */}
       {emailModalOpen && (
@@ -5432,10 +4860,13 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         />
       )}
 
-      {/* Modal de création avec tabs */}
+      {/* Modal de création/édition avec tabs */}
       <FormularioNouveauBenevole
         isOpen={newModalOpen}
-        onClose={() => setNewModalOpen(false)}
+        onClose={() => {
+          setNewModalOpen(false);
+          setEditingBenevole(null); // Limpiar el estado de edición al cerrar
+        }}
         formData={newForm}
         onFormChange={setNewForm}
         onSave={handleSaveNew}
@@ -5448,6 +4879,8 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
           setNewModalOpen(false);
           setCurrentView('contactos');
         }}
+        isEditMode={!!editingBenevole}
+        benevoleId={editingBenevole?.id}
       />
 
       {/* Dialog Asignar Bénévole a Departamentos */}

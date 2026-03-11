@@ -229,6 +229,8 @@ interface FormularioNouveauBenevoleProps {
     bgColor: string;
   };
   onOpenGestionTiposContacto?: () => void;
+  isEditMode?: boolean; // Nuevo: indica si está en modo edición
+  benevoleId?: number; // Nuevo: ID del bénévole que se está editando
 }
 
 export function FormularioNouveauBenevole({
@@ -242,7 +244,9 @@ export function FormularioNouveauBenevole({
   onPhotoChange,
   generateIdentifiant,
   getTipoBenevoleConfig,
-  onOpenGestionTiposContacto
+  onOpenGestionTiposContacto,
+  isEditMode = false,
+  benevoleId
 }: FormularioNouveauBenevoleProps) {
   const branding = useBranding();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -436,11 +440,23 @@ export function FormularioNouveauBenevole({
         <div className="h-full flex flex-col">
           <DialogHeader className="sticky top-0 z-10 bg-white border-b-2 border-[#E0E0E0] px-6 py-3 shadow-sm">
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '1.25rem' }}>
-              <Users className="w-5 h-5 inline mr-2" />
-              Enregistrer un nouveau bénévole
+              {isEditMode ? (
+                <>
+                  <Edit2 className="w-5 h-5 inline mr-2" />
+                  Modifier le bénévole
+                </>
+              ) : (
+                <>
+                  <Users className="w-5 h-5 inline mr-2" />
+                  Enregistrer un nouveau bénévole
+                </>
+              )}
             </DialogTitle>
             <DialogDescription id="nouveau-benevole-description" className="sr-only">
-              Formulaire d'enregistrement d'un nouveau bénévole avec informations personnelles, contact, et professionnelles
+              {isEditMode 
+                ? "Formulaire de modification d'un bénévole avec informations personnelles, contact, et professionnelles"
+                : "Formulaire d'enregistrement d'un nouveau bénévole avec informations personnelles, contact, et professionnelles"
+              }
             </DialogDescription>
           </DialogHeader>
           
@@ -1104,7 +1120,7 @@ export function FormularioNouveauBenevole({
               className="text-white h-9"
               style={{ backgroundColor: branding.secondaryColor }}
             >
-              Enregistrer
+              {isEditMode ? 'Enregistrer les modifications' : 'Enregistrer'}
             </Button>
           </div>
         </div>
