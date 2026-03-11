@@ -68,7 +68,9 @@ import {
   type TipoContacto,
   type IdiomaContacto,
   type GeneroContacto,
-  type DisponibilidadDia
+  type DisponibilidadDia,
+  type EvenementActivite,
+  type TipoEventoActividad
 } from '../../utils/contactosDepartamentoStorage';
 import {
   obtenerIdiomasPersonalizados,
@@ -81,6 +83,7 @@ import { obtenerTiposContacto } from '../../utils/tiposContactoStorage';
 import { FormularioContactoCompacto } from './FormularioContactoCompacto';
 import { CalendarioContactos } from './CalendarioContactos';
 import { AsignarRolContacto } from '../AsignarRolContacto';
+import { HistoriqueActivite } from '../benevoles/HistoriqueActivite';
 
 // Mapeo de iconos para tipos personalizados
 const ICON_MAP: Record<string, any> = {
@@ -464,16 +467,43 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
     console.log('  - Departamento actual (forzado):', departamentoId);
 
     if (modoEdicion && contactoSeleccionado) {
-      actualizarContacto(contactoSeleccionado.id, formulario);
+      // Crear evento de modificación
+      const eventoModificacion = {
+        id: `evt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: 'modification' as const,
+        titre: 'Informations modifiées',
+        description: 'Les informations du contact ont été mises à jour',
+        date: new Date().toISOString(),
+        utilisateur: 'David',
+        couleur: '#2196F3'
+      };
+      
+      const eventosActuales = contactoSeleccionado.evenements || [];
+      actualizarContacto(contactoSeleccionado.id, {
+        ...formulario,
+        evenements: [...eventosActuales, eventoModificacion]
+      });
       toast.success('Contact mis à jour avec succès');
       cargarContactos();
     } else {
+      // Crear evento de creación
+      const eventoCreacion = {
+        id: `evt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: 'creation' as const,
+        titre: 'Contact créé',
+        description: `Nouveau contact ajouté au département ${departamentoNombre}`,
+        date: new Date().toISOString(),
+        utilisateur: 'David',
+        couleur: '#4CAF50'
+      };
+      
       // 🔒 FORZAR EL DEPARTAMENTO ACTUAL - No permitir cambios
       const contactoParaGuardar = {
         ...formulario,
         departamentoId: departamentoId, // ✅ FORZAR el departamento actual
         departamentoIds: [departamentoId], // ✅ FORZAR el departamento actual
-        activo: true // ✅ GARANTIZAR que el campo activo esté definido
+        activo: true, // ✅ GARANTIZAR que el campo activo esté definido
+        evenements: [eventoCreacion] // ✅ Añadir evento de creación
       };
       
       console.log('📝 DEBUG - Guardando contacto en departamento actual:', contactoParaGuardar);
@@ -674,6 +704,53 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         toast.error(`⚠️ ${resultado.errores} erreur(s) lors de la migration.`);
       }
     }
+  };
+
+  // ===== FUNCIONES AUXILIARES PARA HISTORIAL DE ACTIVIDAD =====
+  
+  /**
+   * Genera eventos de ejemplo para demostración del historial de actividad
+   * Esta función es solo para fines de demostración
+   */
+  const generarEventosEjemplo = (contactoNombre: string): EvenementActivite[] => {
+    const haceUnaSemana = new Date();
+    haceUnaSemana.setDate(haceUnaSemana.getDate() - 7);
+    
+    const haceTresDias = new Date();
+    haceTresDias.setDate(haceTresDias.getDate() - 3);
+    
+    const haceUnDia = new Date();
+    haceUnDia.setDate(haceUnDia.getDate() - 1);
+    
+    return [
+      {
+        id: `evt-${Date.now()}-1`,
+        type: 'creation',
+        titre: 'Contact créé',
+        description: `${contactoNombre} a été ajouté au système`,
+        date: haceUnaSemana.toISOString(),
+        utilisateur: 'David',
+        couleur: '#4CAF50'
+      },
+      {
+        id: `evt-${Date.now()}-2`,
+        type: 'note_ajoutee',
+        titre: 'Note ajoutée',
+        description: 'Informations complémentaires sur les disponibilités',
+        date: haceTresDias.toISOString(),
+        utilisateur: 'David',
+        couleur: '#9C27B0'
+      },
+      {
+        id: `evt-${Date.now()}-3`,
+        type: 'modification',
+        titre: 'Coordonnées mises à jour',
+        description: 'Numéro de téléphone et adresse modifiés',
+        date: haceUnDia.toISOString(),
+        utilisateur: 'David',
+        couleur: '#2196F3'
+      }
+    ];
   };
 
   return (
@@ -1168,6 +1245,18 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                   <p className="text-sm mt-1 p-3 bg-[#F9FAFB] rounded">{contactoSeleccionado.notas}</p>
                 </div>
               )}
+
+              {/* Historial de actividad */}
+              <div className="mt-6 pt-6 border-t-2 border-gray-200">
+                <h4 className="font-bold text-[#333333] mb-4 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <Clock className="w-5 h-5" style={{ color: branding.primaryColor }} />
+                  Historique d'activité
+                </h4>
+                <HistoriqueActivite 
+                  evenements={contactoSeleccionado.evenements || []}
+                  isEditing={false}
+                />
+              </div>
             </div>
           )}
         </DialogContent>

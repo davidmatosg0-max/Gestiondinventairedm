@@ -2,6 +2,30 @@ export type TipoContacto = 'donador' | 'fournisseur' | 'benevole' | 'responsable
 export type IdiomaContacto = 'es' | 'fr' | 'en' | 'ar';
 export type GeneroContacto = 'Homme' | 'Femme' | 'Autre' | 'Non spécifié';
 
+// ===== TIPOS DE EVENTOS DE ACTIVIDAD =====
+export type TipoEventoActividad = 
+  | 'creation'
+  | 'modification'
+  | 'changement_statut'
+  | 'note_ajoutee'
+  | 'document_ajoute'
+  | 'document_supprime'
+  | 'assignation_departement'
+  | 'type_modifie'
+  | 'personnalise';
+
+export interface EvenementActivite {
+  id: string;
+  type: TipoEventoActividad;
+  titre: string;
+  description?: string;
+  date: string;
+  utilisateur?: string;
+  icone?: string;
+  couleur?: string;
+  metadata?: Record<string, any>;
+}
+
 export interface DisponibilidadDia {
   jour: string; // 'Lundi', 'Mardi', etc.
   am: boolean;
@@ -86,1150 +110,601 @@ export interface ContactoDepartamento {
   etiquetas?: string[]; // Etiquetas/tags
   ultimoContacto?: string; // Fecha último contacto
   imagen?: string | null; // Imagen/foto del contacto
+  
+  // Historial de actividad
+  evenements?: EvenementActivite[]; // Eventos del historial de actividad
 }
 
-const STORAGE_KEY = 'contactos_departamento'; // ✅ CORREGIDO: usar la misma clave que en el resto del código
-const MAX_FOTO_SIZE = 500 * 1024; // 500KB max por foto (incrementado para evitar pérdida de datos)
-const MAX_DOCUMENT_SIZE = 200 * 1024; // 200KB max por documento
+// ===== FUNCIONES DE GESTIÓN DE STORAGE =====
 
-/**
- * 🗜️ OPTIMIZACIÓN: Comprime y optimiza imágenes base64 grandes
- */
-function optimizarImagen(base64: string, maxSize: number = MAX_FOTO_SIZE): string {
-  if (!base64 || !base64.startsWith('data:image')) return base64;
-  
-  // Calcular tamaño aproximado (base64 es ~1.37x el tamaño original)
-  const sizeInBytes = (base64.length * 3) / 4;
-  const sizeMB = sizeInBytes / 1024;
-  
-  // Si es menor al tamaño máximo, retornar sin cambios
-  if (sizeInBytes <= maxSize) {
-    return base64;
-  }
-  
-  // Si es extremadamente grande (más de 2MB), eliminar
-  if (sizeMB > 2048) {
-    console.warn(`⚠️ Foto demasiado grande (${Math.round(sizeMB)}KB). Las fotos deben ser menores a 2MB. Foto eliminada.`);
-    return '';
-  }
-  
-  // Si es grande pero manejable, advertir pero mantener
-  console.warn(`⚠️ Foto grande (${Math.round(sizeMB)}KB) detectada. Se recomienda usar fotos de menos de 500KB para mejor rendimiento.`);
-  return base64;
-}
+const STORAGE_KEY = 'banqueAlimentaire_contactosDepartamento';
 
-/**
- * 🗜️ OPTIMIZACIÓN: Limpia y optimiza un contacto antes de guardarlo
- */
-function optimizarContacto(contacto: ContactoDepartamento): ContactoDepartamento {
-  const optimizado = { ...contacto };
-  
-  // Optimizar foto
-  if (optimizado.foto) {
-    optimizado.foto = optimizarImagen(optimizado.foto, MAX_FOTO_SIZE);
-  }
-  
-  // Optimizar imagen alternativa
-  if (optimizado.imagen) {
-    optimizado.imagen = optimizarImagen(optimizado.imagen, MAX_FOTO_SIZE);
-  }
-  
-  // Optimizar documentos
-  if (optimizado.documents && optimizado.documents.length > 0) {
-    optimizado.documents = optimizado.documents.map(doc => ({
-      ...doc,
-      url: optimizarImagen(doc.url, MAX_DOCUMENT_SIZE)
-    })).filter(doc => doc.url); // Eliminar documentos sin URL
-  }
-  
-  return optimizado;
-}
+// Datos iniciales - MODO PRODUCCIÓN (vacío)
+const contactosIniciales: ContactoDepartamento[] = [];
 
-/**
- * 💾 MANEJO DE CUOTA: Intenta guardar en localStorage con manejo de errores
- */
-function guardarEnLocalStorage(key: string, data: any): boolean {
+// Obtener todos los contactos
+export function obtenerContactosDepartamento(): ContactoDepartamento[] {
   try {
-    const jsonString = JSON.stringify(data);
-    const sizeInMB = (jsonString.length / 1024 / 1024).toFixed(2);
-    console.log(`📦 Intentando guardar ${sizeInMB}MB en localStorage...`);
-    
-    localStorage.setItem(key, jsonString);
-    console.log(`✅ Guardado exitoso (${sizeInMB}MB)`);
-    return true;
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored !== null) {
+      return JSON.parse(stored);
+    } else {
+      // Inicializar vacío en producción
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(contactosIniciales));
+      return contactosIniciales;
+    }
   } catch (error) {
-    if (error instanceof Error && error.name === 'QuotaExceededError') {
-      console.error('❌ QuotaExceededError: localStorage lleno');
-      
-      // Intentar limpiar datos antiguos
-      const contactos = data as ContactoDepartamento[];
-      const contactosOptimizados = contactos.map(optimizarContacto);
-      
-      try {
-        localStorage.setItem(key, JSON.stringify(contactosOptimizados));
-        console.log('✅ Guardado exitoso después de optimizar');
-        return true;
-      } catch (secondError) {
-        console.error('❌ No se pudo guardar ni después de optimizar');
-        alert('⚠️ Espacio de almacenamiento lleno. Por favor, elimine algunos contactos o sus fotos/documentos para liberar espacio.');
-        return false;
-      }
-    }
-    console.error('❌ Error al guardar:', error);
-    return false;
+    console.error('Error al obtener contactos de departamento:', error);
+    return [];
   }
 }
 
-/**
- * 🛡️ VALIDACIÓN: Garantiza que los contactos tengan el campo 'activo' definido
- * NOTA: Las reglas de auto-corrección de departamento están DESACTIVADAS para permitir
- * que cualquier tipo de contacto pueda ser asignado a cualquier departamento
- */
-function validarYCorregirContacto<T extends Partial<ContactoDepartamento>>(contacto: T): T {
-  const contactoValidado = { ...contacto };
-  
-  // 🔥 CRÍTICO: Garantizar que TODOS los contactos tengan el campo 'activo' definido
-  if (contacto.activo === undefined) {
-    (contactoValidado as any).activo = true;
+// Guardar todos los contactos
+function guardarTodosContactos(contactos: ContactoDepartamento[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(contactos));
+  } catch (error) {
+    console.error('Error al guardar contactos de departamento:', error);
   }
-  
-  // REGLAS DE AUTO-CORRECCIÓN DE DEPARTAMENTO - DESACTIVADAS
-  // Cualquier departamento puede tener cualquier tipo de contacto
-  // Las reglas anteriores limitaban innecesariamente la flexibilidad del sistema
-  
-  /*
-  // REGLA 1: Donadores, Fournisseurs, Transportistas y Partenaires van a Entrepôt (ID='2')
-  if (contacto.tipo === 'donador' || contacto.tipo === 'fournisseur' || 
-      contacto.tipo === 'transportista' || contacto.tipo === 'partenaire') {
-    if (contacto.departamentoId !== '2') {
-      console.warn(`⚠️ AUTO-CORRECCIÓN: ${contacto.tipo} debe tener departamentoId='2' (Entrepôt). Corrigiendo...`);
-      (contactoValidado as any).departamentoId = '2';
-      (contactoValidado as any).departamentoIds = ['2'];
-    }
-  }
-  
-  // REGLA 2: Bénévoles y Employés van a Comptoir (ID='1')
-  if (contacto.tipo === 'benevole' || contacto.tipo === 'employe') {
-    if (contacto.departamentoId !== '1') {
-      console.warn(`⚠️ AUTO-CORRECCIÓN: ${contacto.tipo} debe tener departamentoId='1' (Comptoir). Corrigiendo...`);
-      (contactoValidado as any).departamentoId = '1';
-      (contactoValidado as any).departamentoIds = ['1'];
-    }
-  }
-  */
-  
-  return contactoValidado;
 }
 
-export function obtenerContactosDepartamento(departamentoId?: string): ContactoDepartamento[] {
-  const contactosGuardados = localStorage.getItem(STORAGE_KEY);
-  const contactos = contactosGuardados ? JSON.parse(contactosGuardados) : [];
+// Guardar un nuevo contacto
+export function guardarContacto(contacto: Omit<ContactoDepartamento, 'id' | 'fechaIngreso'>): ContactoDepartamento;
+export function guardarContacto(contacto: ContactoDepartamento): ContactoDepartamento;
+export function guardarContacto(contacto: any): ContactoDepartamento {
+  const contactos = obtenerContactosDepartamento();
   
-  if (departamentoId) {
-    return contactos.filter((c: ContactoDepartamento) => c.departamentoId === departamentoId);
-  }
+  // Si el contacto ya tiene id y fechaIngreso, usarlos
+  const nuevoContacto: ContactoDepartamento = contacto.id && contacto.fechaIngreso 
+    ? contacto
+    : {
+        ...contacto,
+        id: Date.now().toString(),
+        fechaIngreso: new Date().toISOString()
+      };
   
-  return contactos;
+  contactos.push(nuevoContacto);
+  guardarTodosContactos(contactos);
+  return nuevoContacto;
 }
 
+// Actualizar un contacto existente
+export function actualizarContacto(id: string, datosActualizados: Partial<ContactoDepartamento>): boolean {
+  const contactos = obtenerContactosDepartamento();
+  const index = contactos.findIndex(c => c.id === id);
+  if (index !== -1) {
+    contactos[index] = { ...contactos[index], ...datosActualizados };
+    guardarTodosContactos(contactos);
+    return true;
+  }
+  return false;
+}
+
+// Eliminar un contacto
+export function eliminarContacto(id: string): boolean {
+  const contactos = obtenerContactosDepartamento();
+  const nuevoArray = contactos.filter(c => c.id !== id);
+  if (nuevoArray.length !== contactos.length) {
+    guardarTodosContactos(nuevoArray);
+    return true;
+  }
+  return false;
+}
+
+// Obtener contacto por ID
 export function obtenerContactoPorId(id: string): ContactoDepartamento | undefined {
   const contactos = obtenerContactosDepartamento();
   return contactos.find(c => c.id === id);
 }
 
-export function guardarContacto(contacto: Omit<ContactoDepartamento, 'id'>): ContactoDepartamento {
+// Obtener contactos por departamento
+export function obtenerContactosPorDepartamento(departamentoId: string): ContactoDepartamento[] {
   const contactos = obtenerContactosDepartamento();
-  const nuevoContacto: ContactoDepartamento = optimizarContacto({
-    ...validarYCorregirContacto(contacto),
-    id: `contacto-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-  } as ContactoDepartamento);
-  
-  console.log('💾 DEBUG - Guardando nuevo contacto:', nuevoContacto);
-  console.log('  - Nombre:', nuevoContacto.nombre, nuevoContacto.apellido);
-  console.log('  - Tipo:', nuevoContacto.tipo);
-  console.log('  - Activo:', nuevoContacto.activo);
-  console.log('  - DepartamentoId:', nuevoContacto.departamentoId);
-  
-  contactos.push(nuevoContacto);
-  
-  // Guardar con manejo de cuota
-  const guardadoExitoso = guardarEnLocalStorage(STORAGE_KEY, contactos);
-  if (!guardadoExitoso) {
-    // Si falla, intentar sin el nuevo contacto
-    throw new Error('No se pudo guardar el contacto por falta de espacio');
-  }
-  
-  console.log('✅ DEBUG - Contacto guardado. Total contactos en sistema:', contactos.length);
-  return nuevoContacto;
+  return contactos.filter(c => {
+    // Verificar tanto el campo antiguo como el nuevo array
+    if (c.departamentoIds && c.departamentoIds.length > 0) {
+      return c.departamentoIds.includes(departamentoId);
+    }
+    return c.departamentoId === departamentoId;
+  });
 }
 
-export function actualizarContacto(id: string, contactoActualizado: Partial<ContactoDepartamento>): boolean {
+// Obtener contactos por departamento y tipo(s)
+export function obtenerContactosPorDepartamentoYTipo(
+  departamentoId: string, 
+  tipos: TipoContacto[]
+): ContactoDepartamento[] {
   const contactos = obtenerContactosDepartamento();
-  const index = contactos.findIndex(c => c.id === id);
-  
-  if (index !== -1) {
-    contactos[index] = optimizarContacto({
-      ...contactos[index],
-      ...validarYCorregirContacto(contactoActualizado)
-    } as ContactoDepartamento);
+  return contactos.filter(c => {
+    // Verificar que pertenezca al departamento
+    const perteneceAlDepartamento = c.departamentoIds && c.departamentoIds.length > 0
+      ? c.departamentoIds.includes(departamentoId)
+      : c.departamentoId === departamentoId;
     
-    return guardarEnLocalStorage(STORAGE_KEY, contactos);
-  }
-  return false;
+    // Verificar que sea del tipo correcto
+    const esTipoCorrecto = tipos.includes(c.tipo);
+    
+    // Retornar solo si cumple ambas condiciones
+    return perteneceAlDepartamento && esTipoCorrecto;
+  });
 }
 
-export function eliminarContacto(id: string): boolean {
+// Obtener contactos activos
+export function obtenerContactosActivos(): ContactoDepartamento[] {
+  return obtenerContactosDepartamento().filter(c => c.activo);
+}
+
+// Contar contactos por tipo
+export function contarContactosPorTipo(tipo: TipoContacto): number {
   const contactos = obtenerContactosDepartamento();
-  const contactosFiltrados = contactos.filter(c => c.id !== id);
-  
-  if (contactosFiltrados.length < contactos.length) {
-    return guardarEnLocalStorage(STORAGE_KEY, contactosFiltrados);
-  }
-  return false;
+  return contactos.filter(c => c.tipo === tipo).length;
 }
 
-export function obtenerContactosPorTipo(departamentoId: string, tipo: TipoContacto): ContactoDepartamento[] {
-  return obtenerContactosDepartamento(departamentoId).filter(c => c.tipo === tipo && c.activo);
+// Buscar contactos
+export function buscarContactos(termino: string): ContactoDepartamento[] {
+  const contactos = obtenerContactosDepartamento();
+  const terminoLower = termino.toLowerCase();
+  return contactos.filter(c => 
+    c.nombre.toLowerCase().includes(terminoLower) ||
+    c.apellido.toLowerCase().includes(terminoLower) ||
+    c.email.toLowerCase().includes(terminoLower) ||
+    (c.cargo && c.cargo.toLowerCase().includes(terminoLower))
+  );
 }
 
-export function obtenerContactosPorDepartamentoYTipo(departamentoId: string, tipos: TipoContacto[]): ContactoDepartamento[] {
-  return obtenerContactosDepartamento(departamentoId).filter(c => tipos.includes(c.tipo) && c.activo);
+// Obtener nombre completo del contacto
+export function obtenerNombreCompleto(contacto: ContactoDepartamento): string {
+  return `${contacto.nombre} ${contacto.apellido}`.trim();
 }
 
-export function contarContactosPorTipo(departamentoId: string): Record<TipoContacto, number> {
-  const contactos = obtenerContactosDepartamento(departamentoId);
+// Actualizar última fecha de contacto
+export function actualizarUltimoContacto(id: string): void {
+  actualizarContacto(id, {
+    ultimoContacto: new Date().toISOString()
+  });
+}
+
+// Obtener estadísticas de contactos
+export function obtenerEstadisticasContactos() {
+  const contactos = obtenerContactosDepartamento();
   return {
-    donador: contactos.filter(c => c.tipo === 'donador' && c.activo).length,
-    fournisseur: contactos.filter(c => c.tipo === 'fournisseur' && c.activo).length,
-    benevole: contactos.filter(c => c.tipo === 'benevole' && c.activo).length,
-    'responsable-sante': contactos.filter(c => c.tipo === 'responsable-sante' && c.activo).length,
-    partenaire: contactos.filter(c => c.tipo === 'partenaire' && c.activo).length,
-    visiteur: contactos.filter(c => c.tipo === 'visiteur' && c.activo).length,
-    employe: contactos.filter(c => c.tipo === 'employe' && c.activo).length,
-    transportista: contactos.filter(c => c.tipo === 'transportista' && c.activo).length
+    total: contactos.length,
+    activos: contactos.filter(c => c.activo).length,
+    donadores: contactos.filter(c => c.tipo === 'donador').length,
+    fournisseurs: contactos.filter(c => c.tipo === 'fournisseur').length,
+    benevoles: contactos.filter(c => c.tipo === 'benevole').length,
+    employes: contactos.filter(c => c.tipo === 'employe').length,
+    transportistas: contactos.filter(c => c.tipo === 'transportista').length,
+    responsablesSante: contactos.filter(c => c.tipo === 'responsable-sante').length,
+    partenaires: contactos.filter(c => c.tipo === 'partenaire').length,
+    visiteurs: contactos.filter(c => c.tipo === 'visiteur').length,
   };
 }
 
-export function cambiarEstadoContacto(id: string, activo: boolean): boolean {
-  return actualizarContacto(id, { activo });
-}
+// Agregar evento al historial de actividad de un contacto
+export function agregarEventoActividad(
+  contactoId: string, 
+  evento: Omit<EvenementActivite, 'id' | 'date'>
+): boolean {
+  const contacto = obtenerContactoPorId(contactoId);
+  if (!contacto) return false;
 
-// ===== FUNCIÓN DE LIMPIEZA (OBSOLETA - Restricción eliminada) =====
-// NOTA: Esta función ya no se utiliza porque todos los departamentos ahora pueden tener
-// contactos de tipo fournisseur y donateur. Se mantiene comentada por si se necesita en el futuro.
-/*
-export function eliminarFournisseursYDonateurs(departamentoId: string = '2'): number {
-  const todosContactos = obtenerContactosDepartamento();
-  const contactosAntesCount = todosContactos.length;
+  const nuevoEvento: EvenementActivite = {
+    ...evento,
+    id: Date.now().toString(),
+    date: new Date().toISOString()
+  };
+
+  const eventosActuales = contacto.evenements || [];
   
-  // Filtrar eliminando fournisseurs et donateurs de CUALQUIER departamento que NO sea Entrepôt (id='2')
-  const contactosFiltrados = todosContactos.filter(contacto => {
-    // Si NO es del departamento Entrepôt (id='2') Y es fournisseur ou donateur, eliminarlo
-    if (contacto.departamentoId !== '2' && 
-        (contacto.tipo === 'fournisseur' || contacto.tipo === 'donador')) {
-      return false; // No incluir en la lista filtrada (eliminar)
-    }
-    return true; // Mantener el contacto
+  return actualizarContacto(contactoId, {
+    evenements: [...eventosActuales, nuevoEvento]
   });
-  
-  const contactosEliminados = contactosAntesCount - contactosFiltrados.length;
-  
-  if (contactosEliminados > 0) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(contactosFiltrados));
-    console.log(`🗑️ Eliminados ${contactosEliminados} contactos (fournisseur/donateur) de departamentos que NO son Entrepôt`);
-  }
-  
-  return contactosEliminados;
-}
-*/
-
-// Función para inicializar contactos de ejemplo
-export function inicializarContactosEjemplo(departamentoId?: string): void {
-  // Si se proporciona un departamentoId, crear contactos solo para ese departamento
-  // Si no, crear contactos para todos los departamentos (solo si no existen contactos)
-  
-  if (departamentoId) {
-    // Modo: restaurar contactos de ejemplo para un departamento específico
-    // Eliminar contactos existentes de ese departamento
-    const todosContactos = obtenerContactosDepartamento();
-    const contactosFiltrados = todosContactos.filter(c => c.departamentoId !== departamentoId);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(contactosFiltrados));
-    
-    // Crear contactos de ejemplo según el departamento
-    const contactosEjemplo = obtenerContactosEjemploPorDepartamento(departamentoId);
-    contactosEjemplo.forEach(contacto => guardarContacto(contacto));
-    return;
-  }
-  
-  // Modo: inicialización global
-  const contactosExistentes = obtenerContactosDepartamento();
-  
-  // Si no hay contactos en absoluto, inicializar con ejemplos para todos los departamentos
-  if (contactosExistentes.length === 0) {
-    console.log('🎯 Inicializando contactos de ejemplo para todos los departamentos...');
-    
-    // Crear contactos de ejemplo para departamentos principales
-    const departamentosConEjemplos = ['1', '2', '3', '4']; // Direction, Entrepôt, Achats, Comptoir
-    
-    departamentosConEjemplos.forEach(deptId => {
-      const contactosEjemplo = obtenerContactosEjemploPorDepartamento(deptId);
-      contactosEjemplo.forEach(contacto => guardarContacto(contacto));
-      console.log(`✅ Contactos de ejemplo creados para departamento ${deptId}`);
-    });
-    
-    console.log('🎉 Inicialización de contactos completada');
-  }
 }
 
-// ===== FUNCIÓN PARA INICIALIZACIÓN AUTOMÁTICA DE CONTACTOS =====
-// DESACTIVADA PARA PRODUCCIÓN - Sistema comienza sin datos de ejemplo
-export function reinicializarContactosEjemploCompleto(): void {
-  const VERSION_CONTACTOS = 'v4.0-production-clean'; // Versión de producción sin ejemplos
-  const VERSION_ACTUAL = localStorage.getItem('contactos_version');
-  
-  // Si ya se inicializó esta versión, no hacer nada
-  if (VERSION_ACTUAL === VERSION_CONTACTOS) {
-    return;
-  }
-  
-  // Solo marcar la versión sin crear datos de ejemplo
-  localStorage.setItem('contactos_version', VERSION_CONTACTOS);
-  console.log('✅ Sistema de contactos inicializado - Listo para recibir datos reales');
-}
+// ===== FUNCIONES DE MIGRACIÓN Y DIAGNÓSTICO =====
 
-// Función auxiliar para obtener contactos de ejemplo por departamento
-function obtenerContactosEjemploPorDepartamento(departamentoId: string): Omit<ContactoDepartamento, 'id'>[] {
-  const diasSemana = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-  
-  switch (departamentoId) {
-    case '1': // Direction
-      return [
-        {
-          departamentoId: '1',
-          tipo: 'benevole',
-          nombre: 'Sophie',
-          apellido: 'Leblanc',
-          fechaNacimiento: '1980-05-12',
-          genero: 'Femme',
-          email: 'sophie.leblanc@banquealimentaire.ca',
-          telefono: '(514) 555-0201',
-          cargo: 'Directrice Générale',
-          idiomas: ['fr', 'en'],
-          disponibilidades: diasSemana.map(jour => ({ jour, am: true, pm: true })),
-          notas: 'Responsable de la direction générale',
-          activo: true,
-          fechaIngreso: '2019-01-15'
-        }
-      ];
-      
-    case '2': // Entrepôt
-      return [
-        // ===== BÉNÉVOLES =====
-        {
-          departamentoId: '2',
-          tipo: 'benevole',
-          nombre: 'Jean',
-          apellido: 'Dupont',
-          fechaNacimiento: '1995-05-15',
-          genero: 'Homme',
-          email: 'jean.dupont@email.com',
-          telefono: '(514) 555-1001',
-          cargo: 'Bénévole Tri Alimentaire',
-          idiomas: ['fr', 'en'],
-          disponibilidades: diasSemana.map(jour => ({ jour, am: true, pm: false })),
-          notas: 'Bénévole expérimenté. Disponible principalement le matin.',
-          activo: true,
-          fechaIngreso: '2023-01-15',
-          direccion: '123 Rue Principale, Montréal',
-          ciudad: 'Montréal',
-          codigoPostal: 'H3B 2K4'
-        },
-        {
-          departamentoId: '2',
-          tipo: 'benevole',
-          nombre: 'Amélie',
-          apellido: 'Leblanc',
-          fechaNacimiento: '1988-08-22',
-          genero: 'Femme',
-          email: 'amelie.leblanc@email.com',
-          telefono: '(514) 555-1002',
-          cargo: 'Bénévole Réception',
-          idiomas: ['fr'],
-          disponibilidades: diasSemana.map(jour => ({ jour, am: false, pm: true })),
-          notas: 'Motivée et organisée. Excellente pour la réception des dons.',
-          activo: true,
-          fechaIngreso: '2023-03-20',
-          direccion: '456 Boulevard Saint-Laurent, Montréal',
-          ciudad: 'Montréal',
-          codigoPostal: 'H2W 1X9'
-        },
-        
-        // ===== RESPONSABLE DE SANTÉ =====
-        {
-          departamentoId: '2',
-          tipo: 'responsable-sante',
-          nombre: 'Dr. François',
-          apellido: 'Tremblay',
-          fechaNacimiento: '1975-06-08',
-          genero: 'Homme',
-          email: 'f.tremblay@santealimentaire.ca',
-          telefono: '(514) 555-4001',
-          cargo: 'Inspecteur Sanitaire',
-          idiomas: ['fr', 'en'],
-          disponibilidades: diasSemana.map(jour => ({ jour, am: true, pm: false })),
-          notas: 'Responsable de la conformité sanitaire et des inspections HACCP.',
-          activo: true,
-          fechaIngreso: '2022-02-01',
-          direccion: '567 Avenue Santé, Montréal',
-          ciudad: 'Montréal',
-          codigoPostal: 'H2X 3B8'
-        },
-        
-        // ===== PARTENAIRE =====
-        {
-          departamentoId: '2',
-          tipo: 'partenaire',
-          nombre: 'Isabelle',
-          apellido: 'Morin',
-          fechaNacimiento: '1990-09-14',
-          genero: 'Femme',
-          email: 'i.morin@partenaires.org',
-          telefono: '(514) 555-5001',
-          cargo: 'Coordinatrice Partenariat',
-          idiomas: ['fr', 'en', 'es'],
-          disponibilidades: diasSemana.map(jour => ({ jour, am: false, pm: true })),
-          notas: 'Représentante d\'une organisation partenaire. Coordination de projets communs.',
-          activo: true,
-          fechaIngreso: '2023-05-20',
-          direccion: '890 Rue Collaboration, Montréal',
-          ciudad: 'Montréal',
-          codigoPostal: 'H3H 2M4'
-        },
-        
-        // ===== VISITEUR =====
-        {
-          departamentoId: '2',
-          tipo: 'visiteur',
-          nombre: 'Thomas',
-          apellido: 'Bergeron',
-          fechaNacimiento: '1998-12-30',
-          genero: 'Homme',
-          email: 'thomas.bergeron@outlook.com',
-          telefono: '(514) 555-6001',
-          cargo: 'Étudiant Observateur',
-          idiomas: ['fr'],
-          disponibilidades: diasSemana.map(jour => ({ jour, am: true, pm: false })),
-          notas: 'Étudiant en travail social. Visite ponctuelle pour observation et apprentissage.',
-          activo: true,
-          fechaIngreso: '2024-01-10',
-          direccion: '345 Chemin Université, Montréal',
-          ciudad: 'Montréal',
-          codigoPostal: 'H3A 2T5'
-        }
-      ];
-      
-    case '3': // Achats
-      return [
-        {
-          departamentoId: '3',
-          tipo: 'fournisseur',
-          nombre: 'Carlos',
-          apellido: 'Rodriguez',
-          fechaNacimiento: '1979-02-28',
-          genero: 'Homme',
-          email: 'carlos.rodriguez@wholesale.ca',
-          telefono: '(450) 555-4004',
-          cargo: 'Directeur des Ventes',
-          idiomas: ['fr', 'es', 'en'],
-          disponibilidades: diasSemana.map(jour => ({ jour, am: true, pm: true })),
-          notas: 'Grossiste en alimentation. Offre des prix préférentiels pour organisations.',
-          activo: true,
-          fechaIngreso: '2019-11-05',
-          direccion: '321 Chemin Industriel, Longueuil',
-          ciudad: 'Longueuil',
-          codigoPostal: 'J4G 2H9'
-        }
-      ];
-      
-    case '4': // Comptoir
-      return [
-        // ===== BÉNÉVOLE =====
-        {
-          departamentoId: '4',
-          tipo: 'benevole',
-          nombre: 'Marie',
-          apellido: 'Lefebvre',
-          fechaNacimiento: '1985-07-10',
-          genero: 'Femme',
-          email: 'marie.lefebvre@banquealimentaire.ca',
-          telefono: '(514) 555-0202',
-          cargo: 'Responsable du Comptoir',
-          idiomas: ['fr', 'en'],
-          disponibilidades: diasSemana.map(jour => ({ jour, am: true, pm: true })),
-          notas: 'Responsable du comptoir de distribution des aliments.',
-          activo: true,
-          fechaIngreso: '2020-06-15',
-          direccion: '100 Rue du Comptoir, Montréal',
-          ciudad: 'Montréal',
-          codigoPostal: 'H2Y 1C6'
-        },
-        
-        // ===== RESPONSABLE DE SANTÉ =====
-        {
-          departamentoId: '4',
-          tipo: 'responsable-sante',
-          nombre: 'Dr. Lucie',
-          apellido: 'Bernard',
-          fechaNacimiento: '1978-04-22',
-          genero: 'Femme',
-          email: 'l.bernard@santealimentaire.ca',
-          telefono: '(514) 555-0203',
-          cargo: 'Hygiéniste Alimentaire',
-          idiomas: ['fr', 'en'],
-          disponibilidades: diasSemana.map(jour => ({ jour, am: true, pm: false })),
-          notas: 'Supervise les normes d\'hygiène au comptoir de distribution.',
-          activo: true,
-          fechaIngreso: '2021-08-12',
-          direccion: '200 Avenue Santé, Montréal',
-          ciudad: 'Montréal',
-          codigoPostal: 'H3A 1A1'
-        },
-        
-        // ===== PARTENAIRE =====
-        {
-          departamentoId: '4',
-          tipo: 'partenaire',
-          nombre: 'Jacques',
-          apellido: 'Gendron',
-          fechaNacimiento: '1992-11-05',
-          genero: 'Homme',
-          email: 'j.gendron@partenaires.org',
-          telefono: '(514) 555-0204',
-          cargo: 'Coordonnateur Communautaire',
-          idiomas: ['fr', 'en', 'es'],
-          disponibilidades: diasSemana.map(jour => ({ jour, am: false, pm: true })),
-          notas: 'Liaison avec les organisations communautaires partenaires du comptoir.',
-          activo: true,
-          fechaIngreso: '2022-03-25',
-          direccion: '300 Rue Communauté, Montréal',
-          ciudad: 'Montréal',
-          codigoPostal: 'H4C 2M5'
-        },
-        
-        // ===== VISITEUR =====
-        {
-          departamentoId: '4',
-          tipo: 'visiteur',
-          nombre: 'Émilie',
-          apellido: 'Chartrand',
-          fechaNacimiento: '2000-06-18',
-          genero: 'Femme',
-          email: 'emilie.chartrand@hotmail.com',
-          telefono: '(514) 555-0205',
-          cargo: 'Stagiaire Observatrice',
-          idiomas: ['fr'],
-          disponibilidades: diasSemana.map(jour => ({ jour, am: true, pm: false })),
-          notas: 'Étudiante en nutrition. Stage d\'observation au comptoir.',
-          activo: true,
-          fechaIngreso: '2024-02-01',
-          direccion: '400 Chemin Étudiant, Montréal',
-          ciudad: 'Montréal',
-          codigoPostal: 'H3B 4G7'
-        }
-      ];
-      
-    default:
-      return [];
-  }
-}
-
-// ===== FUNCIÓN DE MIGRACIÓN: Transferir contactos desde el sistema antiguo =====
+// Migrar contactos desde el sistema antiguo de entrepot
 export function migrarContactosDesdeEntrepot(): { migrados: number; errores: number } {
-  let migrados = 0;
-  let errores = 0;
-
   try {
-    // Obtener contactos del sistema antiguo
-    const STORAGE_KEY_ANTIGUO = 'banqueAlimentaire_contactosEntrepot';
-    const contactosAntiguos = localStorage.getItem(STORAGE_KEY_ANTIGUO);
-    
-    if (!contactosAntiguos) {
-      console.log('No hay contactos antiguos para migrar');
+    // Importar contactos del sistema de entrepot si existen
+    const contactosEntrepot = localStorage.getItem('banqueAlimentaire_contactosEntrepot');
+    if (!contactosEntrepot) {
       return { migrados: 0, errores: 0 };
     }
 
-    const contactosParseados = JSON.parse(contactosAntiguos);
-    console.log(`Se encontraron ${contactosParseados.length} contactos para migrar`);
+    const contactosAntiguos = JSON.parse(contactosEntrepot);
+    const contactosActuales = obtenerContactosDepartamento();
+    let migrados = 0;
+    let errores = 0;
 
-    // Mapear tipo de contacto antiguo al nuevo sistema
-    const mapearTipo = (tipoAntiguo: string): TipoContacto => {
-      switch (tipoAntiguo) {
-        case 'proveedor':
-          return 'fournisseur';
-        case 'donador':
-          return 'donador';
-        default:
-          return 'partenaire'; // Los transportistas y otros se marcan como partenaires
-      }
-    };
-
-    // Mapear género antiguo al nuevo sistema
-    const mapearGenero = (generoAntiguo?: string): GeneroContacto => {
-      if (!generoAntiguo) return 'Non spécifié';
-      switch (generoAntiguo.toLowerCase()) {
-        case 'masculino':
-        case 'homme':
-        case 'male':
-          return 'Homme';
-        case 'femenino':
-        case 'femme':
-        case 'female':
-          return 'Femme';
-        case 'otro':
-        case 'autre':
-        case 'other':
-          return 'Autre';
-        default:
-          return 'Non spécifié';
-      }
-    };
-
-    const diasSemana = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-
-    // Obtener contactos existentes para evitar duplicados
-    const contactosExistentes = obtenerContactosDepartamento('2');
-    const emailsExistentes = new Set(contactosExistentes.map(c => c.email.toLowerCase()));
-
-    // Migrar cada contacto
-    contactosParseados.forEach((contactoAntiguo: any) => {
+    contactosAntiguos.forEach((contactoAntiguo: any) => {
       try {
-        // Solo migrar donadores y proveedores al Almacén (departamentoId = '2')
-        if (contactoAntiguo.tipoContacto !== 'proveedor' && contactoAntiguo.tipoContacto !== 'donador') {
-          console.log(`Omitiendo contacto ${contactoAntiguo.nombre} (tipo: ${contactoAntiguo.tipoContacto})`);
-          return;
+        // Verificar si ya existe
+        const yaExiste = contactosActuales.some(c => 
+          c.email === contactoAntiguo.emailPrincipal || 
+          c.numeroID === contactoAntiguo.numeroID
+        );
+
+        if (!yaExiste) {
+          // Mapear tipo de contacto
+          let tipo: TipoContacto = 'fournisseur';
+          if (contactoAntiguo.tipoContacto === 'proveedor') tipo = 'fournisseur';
+          else if (contactoAntiguo.tipoContacto === 'donador') tipo = 'donador';
+          else if (contactoAntiguo.tipoContacto === 'transportista') tipo = 'transportista';
+
+          // Crear contacto migrado
+          const contactoMigrado: Omit<ContactoDepartamento, 'id' | 'fechaIngreso'> = {
+            departamentoId: 'general', // Departamento por defecto
+            tipo,
+            nombre: contactoAntiguo.nombre || '',
+            apellido: contactoAntiguo.apellido || '',
+            email: contactoAntiguo.emailPrincipal || '',
+            telefono: contactoAntiguo.telefonoPrincipal || '',
+            activo: contactoAntiguo.activo ?? true,
+            numeroID: contactoAntiguo.numeroID,
+            nombreEmpresa: contactoAntiguo.nombreEmpresa,
+            direccion: contactoAntiguo.direccion,
+            ciudad: contactoAntiguo.ciudad,
+            codigoPostal: contactoAntiguo.codigoPostal,
+            provincia: contactoAntiguo.provincia,
+            pais: contactoAntiguo.pais,
+            notas: contactoAntiguo.notas,
+          };
+
+          guardarContacto(contactoMigrado);
+          migrados++;
         }
-
-        // Verificar si ya existe el email
-        if (emailsExistentes.has(contactoAntiguo.emailPrincipal?.toLowerCase() || '')) {
-          console.log(`Contacto duplicado omitido: ${contactoAntiguo.emailPrincipal}`);
-          return;
-        }
-
-        const nuevoContacto: Omit<ContactoDepartamento, 'id'> = {
-          departamentoId: '2', // Todos van al Almacén
-          tipo: mapearTipo(contactoAntiguo.tipoContacto),
-          nombre: contactoAntiguo.nombre || '',
-          apellido: contactoAntiguo.apellido || '',
-          fechaNacimiento: contactoAntiguo.fechaNacimiento || '',
-          genero: mapearGenero(contactoAntiguo.genero),
-          email: contactoAntiguo.emailPrincipal || '',
-          telefono: contactoAntiguo.telefonoPrincipal || '',
-          cargo: '', // El cargo no está en el sistema antiguo
-          idiomas: [], // No hay idiomas en el sistema antiguo
-          disponibilidades: diasSemana.map(jour => ({ jour, am: true, pm: true })),
-          notas: contactoAntiguo.notas || '',
-          activo: contactoAntiguo.activo !== undefined ? contactoAntiguo.activo : true,
-          fechaIngreso: contactoAntiguo.fechaCreacion || new Date().toISOString().split('T')[0],
-          foto: contactoAntiguo.imagen || '',
-          direccion: contactoAntiguo.direccion || '',
-          ciudad: contactoAntiguo.ciudad || '',
-          codigoPostal: contactoAntiguo.codigoPostal || '',
-          numeroEmpleado: contactoAntiguo.numeroID || '',
-          horario: contactoAntiguo.horarioDisponible || '',
-          heuresSemaines: 0,
-          reference: contactoAntiguo.nombreEmpresa || '',
-          supervisor: '',
-          especialidad: '',
-          certificaciones: contactoAntiguo.etiquetas || [],
-          documents: [],
-          // Campos adicionales para compatibilidad con Gestión de Contactos Entrepôt
-          numeroID: contactoAntiguo.numeroID || '',
-          nombreEmpresa: contactoAntiguo.nombreEmpresa || '',
-          tipoEmpresa: contactoAntiguo.tipoEmpresa || '',
-          numeroRegistro: contactoAntiguo.numeroRegistro || '',
-          numeroTVA: contactoAntiguo.numeroTVA || '',
-          emailPrincipal: contactoAntiguo.emailPrincipal || '',
-          emailSecundario: contactoAntiguo.emailSecundario || '',
-          telefonoPrincipal: contactoAntiguo.telefonoPrincipal || '',
-          telefonoSecundario: contactoAntiguo.telefonoSecundario || '',
-          sitioWeb: contactoAntiguo.sitioWeb || '',
-          pais: contactoAntiguo.pais || '',
-          provincia: contactoAntiguo.provincia || '',
-          banco: contactoAntiguo.banco || '',
-          numeroCuenta: contactoAntiguo.numeroCuenta || '',
-          numeroRuta: contactoAntiguo.numeroRuta || '',
-          categoriaProductos: contactoAntiguo.categoriaProductos || [],
-          temperaturaEspecializada: contactoAntiguo.temperaturaEspecializada || [],
-          diasOperacion: contactoAntiguo.diasOperacion || [],
-          tiempoEntrega: contactoAntiguo.tiempoEntrega || '',
-          metodoPago: contactoAntiguo.metodoPago || [],
-          etiquetas: contactoAntiguo.etiquetas || [],
-          ultimoContacto: contactoAntiguo.ultimoContacto || '',
-          imagen: contactoAntiguo.imagen || null
-        };
-
-        guardarContacto(nuevoContacto);
-        emailsExistentes.add(nuevoContacto.email.toLowerCase());
-        migrados++;
-        console.log(`✅ Migrado: ${nuevoContacto.nombre} ${nuevoContacto.apellido} (${nuevoContacto.tipo})`);
       } catch (error) {
-        console.error('Error al migrar contacto:', contactoAntiguo, error);
+        console.error('Error al migrar contacto:', error);
         errores++;
       }
     });
 
-    console.log(`\n🎉 MIGRACIÓN COMPLETADA: ${migrados} contactos migrados, ${errores} errores`);
     return { migrados, errores };
   } catch (error) {
-    console.error('Error en la migración:', error);
-    return { migrados, errores: 1 };
+    console.error('Error durante la migración:', error);
+    return { migrados: 0, errores: 1 };
   }
 }
 
-// ===== FUNCIÓN DE DIAGNÓSTICO =====
+// Diagnosticar problemas en el sistema de contactos
 export function diagnosticarContactos(): void {
-  console.log('\n🔍 ===== DIAGNÓSTICO DE CONTACTOS =====\n');
-  
-  const todosContactos = obtenerContactosDepartamento();
-  console.log(`📊 Total de contactos en el sistema: ${todosContactos.length}`);
-  
-  // Agrupar por departamento
-  const porDepartamento: { [key: string]: ContactoDepartamento[] } = {};
-  todosContactos.forEach(c => {
-    const deptId = c.departamentoId || 'sin-departamento';
-    if (!porDepartamento[deptId]) {
-      porDepartamento[deptId] = [];
-    }
-    porDepartamento[deptId].push(c);
-  });
-  
-  console.log('\n📂 Contactos por Departamento:');
-  Object.entries(porDepartamento).forEach(([deptId, contactos]) => {
-    const nombresDepts: { [key: string]: string } = {
-      '1': 'Direction',
-      '2': 'Entrepôt',
-      '3': 'Achats',
-      '4': 'Comptoir',
-      '5': 'Finance',
-      '6': 'Communication',
-      '7': 'Recrutement',
-      '8': 'Transport',
-      '9': 'Qualité',
-      '10': 'IT'
-    };
-    const nombreDept = nombresDepts[deptId] || `Dept ${deptId}`;
-    console.log(`\n  📁 ${nombreDept} (ID: ${deptId}) - ${contactos.length} contactos:`);
-    contactos.forEach(c => {
-      console.log(`    • ${c.nombre} ${c.apellido} (tipo: ${c.tipo}, activo: ${c.activo}, email: ${c.email})`);
+  try {
+    const contactos = obtenerContactosDepartamento();
+    console.log('🔍 DIAGNÓSTICO DE CONTACTOS DEPARTAMENTO:');
+    console.log('Total de contactos:', contactos.length);
+    console.log('Contactos activos:', contactos.filter(c => c.activo).length);
+    console.log('Por tipo:', {
+      donadores: contactos.filter(c => c.tipo === 'donador').length,
+      fournisseurs: contactos.filter(c => c.tipo === 'fournisseur').length,
+      benevoles: contactos.filter(c => c.tipo === 'benevole').length,
+      employes: contactos.filter(c => c.tipo === 'employe').length,
+      transportistas: contactos.filter(c => c.tipo === 'transportista').length,
     });
-  });
-  
-  // Verificar contactos con problemas
-  console.log('\n⚠️  Verificación de problemas:');
-  const sinActivo = todosContactos.filter(c => c.activo === undefined);
-  const inactivos = todosContactos.filter(c => c.activo === false);
-  const sinDepartamento = todosContactos.filter(c => !c.departamentoId);
-  
-  if (sinActivo.length > 0) {
-    console.log(`  ⚠️  ${sinActivo.length} contactos sin campo 'activo' definido:`);
-    sinActivo.forEach(c => console.log(`    - ${c.nombre} ${c.apellido} (${c.id})`));
+
+    // Verificar integridad de datos
+    const problemas = contactos.filter(c => 
+      !c.nombre || !c.apellido || !c.email || !c.departamentoId
+    );
+    
+    if (problemas.length > 0) {
+      console.warn('⚠️ Contactos con datos incompletos:', problemas.length);
+      console.log('Contactos problemáticos:', problemas);
+    }
+
+    // Calcular tamaño en storage
+    const size = new Blob([JSON.stringify(contactos)]).size;
+    console.log('Tamaño en storage:', (size / 1024).toFixed(2), 'KB');
+  } catch (error) {
+    console.error('❌ Error durante diagnóstico:', error);
   }
-  
-  if (inactivos.length > 0) {
-    console.log(`  🚫 ${inactivos.length} contactos marcados como inactivos:`);
-    inactivos.forEach(c => console.log(`    - ${c.nombre} ${c.apellido} (${c.id})`));
-  }
-  
-  if (sinDepartamento.length > 0) {
-    console.log(`  ⚠️  ${sinDepartamento.length} contactos sin departamento asignado:`);
-    sinDepartamento.forEach(c => console.log(`    - ${c.nombre} ${c.apellido} (${c.id})`));
-  }
-  
-  if (sinActivo.length === 0 && inactivos.length === 0 && sinDepartamento.length === 0) {
-    console.log('  ✅ No se detectaron problemas');
-  }
-  
-  console.log('\n🔍 ===== FIN DEL DIAGNÓSTICO =====\n');
 }
 
-// ===== FUNCIONES PARA GESTIÓN DE DONADORES PRS =====
+// Reparar contactos con problemas
+export function repararContactosConProblemas(): { reparados: number; eliminados: number } {
+  try {
+    const contactos = obtenerContactosDepartamento();
+    let reparados = 0;
+    let eliminados = 0;
 
-/**
- * Obtiene todos los donadores participantes del programa PRS
- */
-export function obtenerDonadoresPRS(): ContactoDepartamento[] {
-  const todosContactos = obtenerContactosDepartamento();
-  return todosContactos.filter(c => 
-    c.tipo === 'donador' && 
-    c.participaPRS === true && 
-    c.activo
-  );
-}
+    const contactosReparados = contactos.map(contacto => {
+      let reparado = false;
 
-/**
- * Obtiene donadores PRS por departamento
- */
-export function obtenerDonadoresPRSPorDepartamento(departamentoId: string): ContactoDepartamento[] {
-  return obtenerDonadoresPRS().filter(d => d.departamentoId === departamentoId);
-}
+      // Reparar campos obligatorios vacíos
+      if (!contacto.nombre) {
+        contacto.nombre = 'Sin nombre';
+        reparado = true;
+      }
+      if (!contacto.apellido) {
+        contacto.apellido = '';
+        reparado = true;
+      }
+      if (!contacto.email) {
+        contacto.email = `sin-email-${contacto.id}@temp.com`;
+        reparado = true;
+      }
+      if (!contacto.departamentoId) {
+        contacto.departamentoId = 'general';
+        reparado = true;
+      }
 
-/**
- * Activa la participación de un contacto en el programa PRS
- */
-export function activarParticipacionPRS(
-  contactoId: string, 
-  datosPRS: {
-    fechaInicioPRS?: string;
-    frecuenciaPRS?: number;
-    diasRecoleccionPRS?: string[];
-    horarioRecoleccionPRS?: string;
-    contactoPRS?: string;
-    telefonoPRS?: string;
-    notasPRS?: string;
+      if (reparado) reparados++;
+      return contacto;
+    });
+
+    guardarTodosContactos(contactosReparados);
+    return { reparados, eliminados };
+  } catch (error) {
+    console.error('Error al reparar contactos:', error);
+    return { reparados: 0, eliminados: 0 };
   }
-): boolean {
-  const contacto = obtenerContactoPorId(contactoId);
-  
-  if (!contacto) {
-    console.error(`Contacto no encontrado: ${contactoId}`);
-    return false;
-  }
-  
-  if (contacto.tipo !== 'donador') {
-    console.error(`Solo los donadores pueden participar en PRS. Tipo actual: ${contacto.tipo}`);
-    return false;
-  }
-  
-  return actualizarContacto(contactoId, {
-    participaPRS: true,
-    fechaInicioPRS: datosPRS.fechaInicioPRS || new Date().toISOString().split('T')[0],
-    frecuenciaPRS: datosPRS.frecuenciaPRS || 1,
-    diasRecoleccionPRS: datosPRS.diasRecoleccionPRS || [],
-    horarioRecoleccionPRS: datosPRS.horarioRecoleccionPRS || '',
-    contactoPRS: datosPRS.contactoPRS || '',
-    telefonoPRS: datosPRS.telefonoPRS || '',
-    notasPRS: datosPRS.notasPRS || ''
-  });
 }
 
-/**
- * Desactiva la participación de un contacto en el programa PRS
- */
-export function desactivarParticipacionPRS(contactoId: string): boolean {
-  return actualizarContacto(contactoId, {
-    participaPRS: false,
-    fechaInicioPRS: undefined,
-    frecuenciaPRS: undefined,
-    diasRecoleccionPRS: undefined,
-    horarioRecoleccionPRS: undefined,
-    contactoPRS: undefined,
-    telefonoPRS: undefined,
-    notasPRS: undefined
-  });
-}
+// Obtener información detallada de almacenamiento
+export function obtenerInfoAlmacenamiento() {
+  const contactos = obtenerContactosDepartamento();
+  const size = new Blob([JSON.stringify(contactos)]).size;
+  
+  // Calcular tamaño de fotos y documentos
+  let tamañoFotos = 0;
+  let tamañoDocumentos = 0;
+  let totalFotos = 0;
+  let totalDocumentos = 0;
 
-/**
- * Actualiza la información PRS de un donador
- */
-export function actualizarInformacionPRS(
-  contactoId: string,
-  datosPRS: Partial<{
-    frecuenciaPRS: number;
-    diasRecoleccionPRS: string[];
-    horarioRecoleccionPRS: string;
-    contactoPRS: string;
-    telefonoPRS: string;
-    notasPRS: string;
-  }>
-): boolean {
-  const contacto = obtenerContactoPorId(contactoId);
-  
-  if (!contacto) {
-    console.error(`Contacto no encontrado: ${contactoId}`);
-    return false;
-  }
-  
-  if (!contacto.participaPRS) {
-    console.error(`El contacto ${contactoId} no participa en PRS`);
-    return false;
-  }
-  
-  return actualizarContacto(contactoId, datosPRS);
-}
-
-/**
- * Verifica si un contacto participa en el programa PRS
- */
-export function esParticipantePRS(contactoId: string): boolean {
-  const contacto = obtenerContactoPorId(contactoId);
-  return contacto?.participaPRS === true && contacto?.activo === true;
-}
-
-/**
- * Obtiene estadísticas del programa PRS
- */
-export function obtenerEstadisticasPRS(): {
-  totalParticipantes: number;
-  participantesPorDepartamento: Record<string, number>;
-  frecuenciaPromedio: number;
-  diasMasActivos: string[];
-} {
-  const donadoresPRS = obtenerDonadoresPRS();
-  
-  // Calcular participantes por departamento
-  const participantesPorDept: Record<string, number> = {};
-  donadoresPRS.forEach(d => {
-    participantesPorDept[d.departamentoId] = (participantesPorDept[d.departamentoId] || 0) + 1;
-  });
-  
-  // Calcular frecuencia promedio
-  const frecuencias = donadoresPRS
-    .filter(d => d.frecuenciaPRS && d.frecuenciaPRS > 0)
-    .map(d => d.frecuenciaPRS!);
-  const frecuenciaPromedio = frecuencias.length > 0
-    ? frecuencias.reduce((sum, f) => sum + f, 0) / frecuencias.length
-    : 0;
-  
-  // Calcular días más activos
-  const contadorDias: Record<string, number> = {};
-  donadoresPRS.forEach(d => {
-    if (d.diasRecoleccionPRS && d.diasRecoleccionPRS.length > 0) {
-      d.diasRecoleccionPRS.forEach(dia => {
-        contadorDias[dia] = (contadorDias[dia] || 0) + 1;
+  contactos.forEach(contacto => {
+    if (contacto.foto) {
+      tamañoFotos += contacto.foto.length;
+      totalFotos++;
+    }
+    if (contacto.documents && contacto.documents.length > 0) {
+      contacto.documents.forEach(doc => {
+        tamañoDocumentos += doc.url.length;
+        totalDocumentos++;
       });
     }
   });
-  
-  const diasMasActivos = Object.entries(contadorDias)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 3)
-    .map(([dia]) => dia);
-  
-  return {
-    totalParticipantes: donadoresPRS.length,
-    participantesPorDepartamento: participantesPorDept,
-    frecuenciaPromedio: Math.round(frecuenciaPromedio * 10) / 10,
-    diasMasActivos
-  };
-}
 
-/**
- * Obtiene donadores PRS por día de recolección
- */
-export function obtenerDonadoresPRSPorDia(dia: string): ContactoDepartamento[] {
-  const donadoresPRS = obtenerDonadoresPRS();
-  return donadoresPRS.filter(d => 
-    d.diasRecoleccionPRS && 
-    d.diasRecoleccionPRS.includes(dia)
-  );
-}
-
-/**
- * Busca donadores PRS por criterios
- */
-export function buscarDonadoresPRS(criterios: {
-  nombreEmpresa?: string;
-  ciudad?: string;
-  frecuenciaMin?: number;
-  dia?: string;
-}): ContactoDepartamento[] {
-  let resultados = obtenerDonadoresPRS();
-  
-  if (criterios.nombreEmpresa) {
-    const nombreLower = criterios.nombreEmpresa.toLowerCase();
-    resultados = resultados.filter(d => 
-      d.nombreEmpresa?.toLowerCase().includes(nombreLower) ||
-      d.nombre.toLowerCase().includes(nombreLower) ||
-      d.apellido.toLowerCase().includes(nombreLower)
-    );
-  }
-  
-  if (criterios.ciudad) {
-    const ciudadLower = criterios.ciudad.toLowerCase();
-    resultados = resultados.filter(d => 
-      d.ciudad?.toLowerCase().includes(ciudadLower)
-    );
-  }
-  
-  if (criterios.frecuenciaMin !== undefined) {
-    resultados = resultados.filter(d => 
-      d.frecuenciaPRS && d.frecuenciaPRS >= criterios.frecuenciaMin!
-    );
-  }
-  
-  if (criterios.dia) {
-    resultados = resultados.filter(d => 
-      d.diasRecoleccionPRS && d.diasRecoleccionPRS.includes(criterios.dia!)
-    );
-  }
-  
-  return resultados;
-}
-
-// ===== FUNCIONES DE UTILIDAD Y MANTENIMIENTO =====
-
-/**
- * 📊 Obtener información sobre el uso de localStorage
- */
-export function obtenerInfoAlmacenamiento(): {
-  totalContactos: number;
-  tamañoMB: number;
-  contactosConFotos: number;
-  contactosConDocumentos: number;
-  totalDocumentos: number;
-} {
-  const contactos = obtenerContactosDepartamento();
-  const jsonString = JSON.stringify(contactos);
-  const tamañoBytes = jsonString.length;
-  const tamañoMB = tamañoBytes / 1024 / 1024;
-  
-  const contactosConFotos = contactos.filter(c => c.foto || c.imagen).length;
-  const contactosConDocumentos = contactos.filter(c => c.documents && c.documents.length > 0).length;
-  const totalDocumentos = contactos.reduce((sum, c) => sum + (c.documents?.length || 0), 0);
-  
   return {
     totalContactos: contactos.length,
-    tamañoMB: parseFloat(tamañoMB.toFixed(2)),
-    contactosConFotos,
-    contactosConDocumentos,
-    totalDocumentos
+    tamañoTotal: size,
+    tamañoTotalKB: (size / 1024).toFixed(2),
+    tamañoFotos,
+    tamañoFotosKB: (tamañoFotos / 1024).toFixed(2),
+    totalFotos,
+    tamañoDocumentos,
+    tamañoDocumentosKB: (tamañoDocumentos / 1024).toFixed(2),
+    totalDocumentos,
+    tamañoPorContacto: contactos.length > 0 ? (size / contactos.length).toFixed(2) : '0',
   };
 }
 
-/**
- * 🗑️ Eliminar todas las fotos de los contactos (para liberar espacio)
- */
+// Eliminar todas las fotos para reducir tamaño
 export function eliminarTodasLasFotos(): number {
   const contactos = obtenerContactosDepartamento();
-  let fotosEliminadas = 0;
-  
-  contactos.forEach(contacto => {
-    if (contacto.foto || contacto.imagen) {
-      fotosEliminadas++;
-      contacto.foto = '';
-      contacto.imagen = null;
+  let eliminadas = 0;
+
+  const contactosActualizados = contactos.map(contacto => {
+    if (contacto.foto) {
+      eliminadas++;
+      return { ...contacto, foto: undefined };
     }
+    return contacto;
   });
-  
-  if (fotosEliminadas > 0) {
-    guardarEnLocalStorage(STORAGE_KEY, contactos);
-  }
-  
-  return fotosEliminadas;
+
+  guardarTodosContactos(contactosActualizados);
+  return eliminadas;
 }
 
-/**
- * 🗑️ Eliminar todos los documentos de los contactos (para liberar espacio)
- */
+// Eliminar todos los documentos para reducir tamaño
 export function eliminarTodosLosDocumentos(): number {
   const contactos = obtenerContactosDepartamento();
-  let documentosEliminados = 0;
-  
-  contactos.forEach(contacto => {
+  let eliminados = 0;
+
+  const contactosActualizados = contactos.map(contacto => {
     if (contacto.documents && contacto.documents.length > 0) {
-      documentosEliminados += contacto.documents.length;
-      contacto.documents = [];
+      eliminados += contacto.documents.length;
+      return { ...contacto, documents: [] };
     }
+    return contacto;
   });
-  
-  if (documentosEliminados > 0) {
-    guardarEnLocalStorage(STORAGE_KEY, contactos);
-  }
-  
-  return documentosEliminados;
+
+  guardarTodosContactos(contactosActualizados);
+  return eliminados;
 }
 
-/**
- * 🗜️ Optimizar todos los contactos existentes
- */
-export function optimizarTodosLosContactos(): void {
-  const contactos = obtenerContactosDepartamento();
-  const contactosOptimizados = contactos.map(optimizarContacto);
-  guardarEnLocalStorage(STORAGE_KEY, contactosOptimizados);
-}
-
-/**
- * FUNCIÓN DE LIMPIEZA: Eliminar contactos fournisseur obsoletos
- * Elimina los contactos "Distribution Alimentaire QC" y "Aliments Secs Laval"
- * que fueron creados como ejemplos pero no deben aparecer en el sistema
- */
+// Eliminar fournisseurs obsoletos (contactos duplicados o inválidos)
 export function eliminarFournisseursObsoletos(): number {
-  const todosContactos = obtenerContactosDepartamento();
-  const emailsAEliminar = [
-    'ventes@distalim-qc.ca',
-    'commandes@aliments-secs.ca'
-  ];
-  
-  const contactosAntesCount = todosContactos.length;
-  
-  // Filtrar eliminando los contactos con esos emails específicos
-  const contactosFiltrados = todosContactos.filter(contacto => {
-    const debeEliminar = emailsAEliminar.includes(contacto.email.toLowerCase());
-    if (debeEliminar) {
-      console.log(`🗑️ Eliminando fournisseur obsoleto: ${contacto.nombre} ${contacto.apellido} (${contacto.email})`);
+  try {
+    const contactos = obtenerContactosDepartamento();
+    const emailsVistos = new Set<string>();
+    const contactosValidos: ContactoDepartamento[] = [];
+    let eliminados = 0;
+
+    contactos.forEach(contacto => {
+      // Validar que tenga datos mínimos
+      const esValido = contacto.nombre && 
+                       contacto.email && 
+                       contacto.departamentoId;
+
+      // Verificar duplicados por email
+      const esDuplicado = emailsVistos.has(contacto.email);
+
+      if (esValido && !esDuplicado) {
+        contactosValidos.push(contacto);
+        emailsVistos.add(contacto.email);
+      } else {
+        eliminados++;
+      }
+    });
+
+    if (eliminados > 0) {
+      guardarTodosContactos(contactosValidos);
+      console.log(`🧹 ${eliminados} contacto(s) obsoleto(s) eliminado(s)`);
     }
-    return !debeEliminar;
-  });
-  
-  const contactosEliminados = contactosAntesCount - contactosFiltrados.length;
-  
-  if (contactosEliminados > 0) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(contactosFiltrados));
-    console.log(`🗑️ Eliminados ${contactosEliminados} fournisseurs obsoletos del sistema`);
-  } else {
-    console.log('✅ No se encontraron fournisseurs obsoletos para eliminar');
+
+    return eliminados;
+  } catch (error) {
+    console.error('Error al eliminar fournisseurs obsoletos:', error);
+    return 0;
   }
-  
-  return contactosEliminados;
 }
 
-/**
- * FUNCIÓN DE REPARACIÓN: Corregir contactos con problemas
- * Garantiza que todos los contactos tengan el campo 'activo' definido
- */
-export function repararContactosConProblemas(): { reparados: number; errores: number } {
-  console.log('\n🔧 ===== INICIANDO REPARACIÓN DE CONTACTOS =====\n');
-  
-  const todosContactos = obtenerContactosDepartamento();
-  let reparados = 0;
-  let errores = 0;
-  
-  console.log(`📊 Total de contactos a verificar: ${todosContactos.length}`);
-  
-  const contactosReparados = todosContactos.map(contacto => {
-    let necesitaReparacion = false;
-    const contactoReparado = { ...contacto };
+// Optimizar todos los contactos (comprimir imágenes, limpiar datos redundantes)
+export function optimizarTodosLosContactos(): { optimizados: number; ahorroKB: number } {
+  try {
+    const contactos = obtenerContactosDepartamento();
+    const tamañoOriginal = new Blob([JSON.stringify(contactos)]).size;
+    let optimizados = 0;
+
+    const contactosOptimizados = contactos.map(contacto => {
+      let optimizado = false;
+
+      // Limpiar campos vacíos o duplicados
+      const contactoLimpio: ContactoDepartamento = { ...contacto };
+
+      // Eliminar campos undefined o vacíos innecesarios
+      Object.keys(contactoLimpio).forEach(key => {
+        const value = (contactoLimpio as any)[key];
+        if (value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
+          delete (contactoLimpio as any)[key];
+          optimizado = true;
+        }
+      });
+
+      // Optimizar arrays duplicados
+      if (contactoLimpio.idiomas) {
+        const idiomasUnicos = [...new Set(contactoLimpio.idiomas)];
+        if (idiomasUnicos.length !== contactoLimpio.idiomas.length) {
+          contactoLimpio.idiomas = idiomasUnicos;
+          optimizado = true;
+        }
+      }
+
+      // Consolidar campos de email (usar solo email principal)
+      if (contactoLimpio.emailPrincipal && !contactoLimpio.email) {
+        contactoLimpio.email = contactoLimpio.emailPrincipal;
+        delete contactoLimpio.emailPrincipal;
+        optimizado = true;
+      } else if (contactoLimpio.email && contactoLimpio.emailPrincipal && contactoLimpio.email === contactoLimpio.emailPrincipal) {
+        delete contactoLimpio.emailPrincipal;
+        optimizado = true;
+      }
+
+      // Consolidar campos de teléfono
+      if (contactoLimpio.telefonoPrincipal && !contactoLimpio.telefono) {
+        contactoLimpio.telefono = contactoLimpio.telefonoPrincipal;
+        delete contactoLimpio.telefonoPrincipal;
+        optimizado = true;
+      } else if (contactoLimpio.telefono && contactoLimpio.telefonoPrincipal && contactoLimpio.telefono === contactoLimpio.telefonoPrincipal) {
+        delete contactoLimpio.telefonoPrincipal;
+        optimizado = true;
+      }
+
+      if (optimizado) optimizados++;
+      return contactoLimpio;
+    });
+
+    guardarTodosContactos(contactosOptimizados);
     
-    // REPARACIÓN 1: Garantizar campo 'activo'
-    if (contacto.activo === undefined) {
-      console.log(`⚠️  Reparando contacto sin campo 'activo': ${contacto.nombre} ${contacto.apellido}`);
-      contactoReparado.activo = true;
-      necesitaReparacion = true;
-    }
-    
-    // REPARACIÓN 2: Garantizar departamentoId
-    if (!contacto.departamentoId) {
-      console.log(`⚠️  Reparando contacto sin departamentoId: ${contacto.nombre} ${contacto.apellido}`);
-      contactoReparado.departamentoId = '1'; // Asignar a Direction por defecto
-      necesitaReparacion = true;
-    }
-    
-    if (necesitaReparacion) {
-      reparados++;
-      console.log(`✅ Contacto reparado: ${contactoReparado.nombre} ${contactoReparado.apellido}`);
-    }
-    
-    return contactoReparado;
-  });
-  
-  if (reparados > 0) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(contactosReparados));
-    console.log(`\n✅ Reparación completada: ${reparados} contactos reparados`);
-  } else {
-    console.log('\n✅ No se encontraron contactos que necesiten reparación');
+    const tamañoFinal = new Blob([JSON.stringify(contactosOptimizados)]).size;
+    const ahorroKB = ((tamañoOriginal - tamañoFinal) / 1024);
+
+    console.log(`✅ ${optimizados} contacto(s) optimizado(s). Ahorro: ${ahorroKB.toFixed(2)} KB`);
+
+    return { 
+      optimizados, 
+      ahorroKB: parseFloat(ahorroKB.toFixed(2))
+    };
+  } catch (error) {
+    console.error('Error al optimizar contactos:', error);
+    return { optimizados: 0, ahorroKB: 0 };
   }
-  
-  console.log('\n🔧 ===== FIN DE LA REPARACIÓN =====\n');
-  
-  return { reparados, errores };
+}
+
+// ===== FUNCIONES ADICIONALES DE UTILIDAD =====
+
+// Obtener contactos por tipo específico
+export function obtenerContactosPorTipo(tipo: TipoContacto): ContactoDepartamento[] {
+  const contactos = obtenerContactosDepartamento();
+  return contactos.filter(c => c.tipo === tipo);
+}
+
+// Obtener contactos activos por tipo
+export function obtenerContactosActivosPorTipo(tipo: TipoContacto): ContactoDepartamento[] {
+  const contactos = obtenerContactosDepartamento();
+  return contactos.filter(c => c.tipo === tipo && c.activo);
+}
+
+// Verificar si existe un contacto con ese email
+export function existeContactoPorEmail(email: string, excluirId?: string): boolean {
+  const contactos = obtenerContactosDepartamento();
+  return contactos.some(c => {
+    if (excluirId && c.id === excluirId) return false;
+    return c.email.toLowerCase() === email.toLowerCase() ||
+           (c.emailPrincipal && c.emailPrincipal.toLowerCase() === email.toLowerCase());
+  });
+}
+
+// Exportar contactos a JSON
+export function exportarContactosJSON(): string {
+  const contactos = obtenerContactosDepartamento();
+  return JSON.stringify(contactos, null, 2);
+}
+
+// Importar contactos desde JSON
+export function importarContactosJSON(jsonData: string): { importados: number; errores: number } {
+  try {
+    const contactosImportados = JSON.parse(jsonData);
+    
+    if (!Array.isArray(contactosImportados)) {
+      console.error('Los datos no son un array válido');
+      return { importados: 0, errores: 1 };
+    }
+
+    const contactosActuales = obtenerContactosDepartamento();
+    let importados = 0;
+    let errores = 0;
+
+    contactosImportados.forEach((contacto: any) => {
+      try {
+        // Validar campos obligatorios
+        if (!contacto.nombre || !contacto.email || !contacto.tipo || !contacto.departamentoId) {
+          errores++;
+          return;
+        }
+
+        // Verificar si ya existe
+        const yaExiste = contactosActuales.some(c => 
+          c.email === contacto.email || 
+          (contacto.id && c.id === contacto.id)
+        );
+
+        if (!yaExiste) {
+          guardarContacto(contacto);
+          importados++;
+        }
+      } catch (error) {
+        console.error('Error al importar contacto:', error);
+        errores++;
+      }
+    });
+
+    return { importados, errores };
+  } catch (error) {
+    console.error('Error al parsear JSON:', error);
+    return { importados: 0, errores: 1 };
+  }
+}
+
+// Limpiar completamente el storage (CUIDADO - solo para desarrollo)
+export function limpiarTodosLosContactos(): boolean {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+    console.log('🧹 Todos los contactos han sido eliminados');
+    return true;
+  } catch (error) {
+    console.error('Error al limpiar contactos:', error);
+    return false;
+  }
 }
