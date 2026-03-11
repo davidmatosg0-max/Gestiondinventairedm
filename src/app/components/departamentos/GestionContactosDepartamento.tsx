@@ -1057,6 +1057,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
             onVerDetalle={abrirDialogoDetalle}
             getTipoConfig={getTipoConfig}
             departamentoNombre={departamentoNombre}
+            departamentoId={departamentoId}
           />
         </TabsContent>
       </Tabs>

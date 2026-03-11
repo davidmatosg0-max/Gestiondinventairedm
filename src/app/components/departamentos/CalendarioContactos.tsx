@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useBranding } from '../../../hooks/useBranding';
 import {
   Calendar as CalendarIcon,
@@ -15,6 +15,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import type { ContactoDepartamento, TipoContacto } from '../../utils/contactosDepartamentoStorage';
+import { obtenerTareasPersonalizadas, type TareaPersonalizada } from '../../utils/tareasPersonalizadasStorage';
 
 interface CalendarioContactosProps {
   contactos: ContactoDepartamento[];
@@ -26,24 +27,68 @@ interface CalendarioContactosProps {
     bgColor: string;
   };
   departamentoNombre?: string; // NUEVO: nombre del departamento para mostrar
+  departamentoId?: string; // NUEVO: ID del departamento para tareas específicas
 }
 
-// Definición de tareas disponibles con sus colores e íconos
-const TAREAS_DISPONIBLES = [
-  { codigo: 'inventaire', label: 'Inventaire', color: '#3B82F6' },
-  { codigo: 'admin', label: 'Administration', color: '#8B5CF6' },
-  { codigo: 'distribution', label: 'Distribution', color: '#10B981' },
-  { codigo: 'accueil', label: 'Accueil', color: '#F59E0B' },
-  { codigo: 'comptoir', label: 'Comptoir', color: '#06B6D4' },
-  { codigo: 'cuisine', label: 'Cuisine', color: '#EC4899' },
-  { codigo: 'transport', label: 'Transport', color: '#6366F1' },
-  { codigo: 'nettoyage', label: 'Nettoyage', color: '#14B8A6' }
+// Definición de tareas predeterminadas (base)
+const TAREAS_PREDETERMINADAS_BASE = [
+  { codigo: 'accueil', label: 'Accueil et orientation', icon: '🤝', color: '#1a4d7a' },
+  { codigo: 'distribution', label: 'Distribution alimentaire', icon: '📦', color: '#2d9561' },
+  { codigo: 'inventaire', label: 'Gestion d\'inventaire', icon: '📋', color: '#F59E0B' },
+  { codigo: 'transport', label: 'Transport et logistique', icon: '🚛', color: '#8B5CF6' },
+  { codigo: 'comptoir', label: 'Service au comptoir', icon: '🏪', color: '#EC4899' },
+  { codigo: 'cuisine', label: 'Préparation cuisine', icon: '👨‍🍳', color: '#10B981' },
+  { codigo: 'nettoyage', label: 'Entretien et nettoyage', icon: '🧹', color: '#6B7280' },
+  { codigo: 'admin', label: 'Tâches administratives', icon: '📊', color: '#3B82F6' }
 ];
 
-export function CalendarioContactos({ contactos, onVerDetalle, getTipoConfig, departamentoNombre }: CalendarioContactosProps) {
+export function CalendarioContactos({ contactos, onVerDetalle, getTipoConfig, departamentoNombre, departamentoId }: CalendarioContactosProps) {
   const branding = useBranding();
   const [filtroTarea, setFiltroTarea] = useState<string>('todas');
   const [mostrarSoloDisponibles, setMostrarSoloDisponibles] = useState(true);
+  const [tareasDisponibles, setTareasDisponibles] = useState<Array<{codigo: string, label: string, icon: string, color: string}>>([]);
+
+  // Cargar tareas dinámicas
+  useEffect(() => {
+    cargarTareas();
+  }, [departamentoId, contactos]);
+
+  const cargarTareas = () => {
+    // Obtener tareas personalizadas
+    const tareasPersonalizadas = obtenerTareasPersonalizadas(departamentoId);
+    
+    // Obtener todas las tareas únicas de los contactos
+    const tareasEnUso = new Set<string>();
+    contactos.forEach(contacto => {
+      if (contacto.tareas && Array.isArray(contacto.tareas)) {
+        contacto.tareas.forEach(tarea => tareasEnUso.add(tarea));
+      }
+    });
+
+    // Combinar tareas predeterminadas con personalizadas
+    const todasLasTareas = [
+      ...TAREAS_PREDETERMINADAS_BASE,
+      ...tareasPersonalizadas.map(t => ({
+        codigo: t.code,
+        label: t.label,
+        icon: t.icon,
+        color: t.color
+      }))
+    ];
+
+    // Filtrar solo las tareas que están en uso
+    const tareasActivas = todasLasTareas.filter(t => tareasEnUso.has(t.codigo));
+
+    // Eliminar duplicados por código
+    const tareasUnicas = tareasActivas.reduce((acc, tarea) => {
+      if (!acc.find(t => t.codigo === tarea.codigo)) {
+        acc.push(tarea);
+      }
+      return acc;
+    }, [] as typeof tareasActivas);
+
+    setTareasDisponibles(tareasUnicas);
+  };
 
   const diasSemana = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
@@ -70,7 +115,7 @@ export function CalendarioContactos({ contactos, onVerDetalle, getTipoConfig, de
 
   // Obtener etiqueta de tarea con estilo
   const getTareaLabel = (codigoTarea: string) => {
-    const tarea = TAREAS_DISPONIBLES.find(t => t.codigo === codigoTarea);
+    const tarea = tareasDisponibles.find(t => t.codigo === codigoTarea);
     return tarea || { codigo: codigoTarea, label: codigoTarea, color: '#6B7280' };
   };
 
@@ -119,7 +164,7 @@ export function CalendarioContactos({ contactos, onVerDetalle, getTipoConfig, de
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todas">Toutes les tâches</SelectItem>
-                {TAREAS_DISPONIBLES.map(tarea => (
+                {tareasDisponibles.map(tarea => (
                   <SelectItem key={tarea.codigo} value={tarea.codigo}>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tarea.color }} />
@@ -163,7 +208,7 @@ export function CalendarioContactos({ contactos, onVerDetalle, getTipoConfig, de
           Légende des tâches
         </h4>
         <div className="flex flex-wrap gap-2">
-          {TAREAS_DISPONIBLES.map(tarea => (
+          {tareasDisponibles.map(tarea => (
             <Badge
               key={tarea.codigo}
               variant="outline"
