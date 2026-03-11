@@ -973,9 +973,9 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                               )}
                               {contacto.idiomas && contacto.idiomas.length > 0 && (
                                 <div className="flex gap-1.5 flex-wrap">
-                                  {contacto.idiomas.map(idioma => (
+                                  {contacto.idiomas.map((idioma, idx) => (
                                     <Badge 
-                                      key={idioma} 
+                                      key={`${contacto.id}-idioma-${idx}-${idioma}`} 
                                       variant="outline" 
                                       className="text-xs rounded-md border-slate-300"
                                       style={{ fontFamily: 'Roboto, sans-serif' }}
@@ -1155,8 +1155,8 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                 <div>
                   <span className="font-semibold text-sm">Langues:</span>
                   <div className="flex gap-2 mt-1">
-                    {contactoSeleccionado.idiomas.map(idioma => (
-                      <Badge key={idioma} variant="outline">{idioma.toUpperCase()}</Badge>
+                    {contactoSeleccionado.idiomas.map((idioma, idx) => (
+                      <Badge key={`detalle-idioma-${idx}-${idioma}`} variant="outline">{idioma.toUpperCase()}</Badge>
                     ))}
                   </div>
                 </div>

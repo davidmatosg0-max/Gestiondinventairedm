@@ -151,12 +151,12 @@ export function LanguageSelector({
             </button>
           </div>
           <div className="flex flex-wrap gap-1">
-            {selectedLanguages.map((code) => {
+            {selectedLanguages.map((code, idx) => {
               const idioma = todosLosIdiomas.find((i: any) => i.code === code);
               if (!idioma) return null;
               return (
                 <div
-                  key={code}
+                  key={`selected-lang-${idx}-${code}`}
                   className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-white text-[10px] font-medium shadow-sm"
                   style={{ backgroundColor: idioma.color }}
                 >

@@ -4,7 +4,9 @@ import {
   User, Phone, Mail, MapPin, Calendar, AlertCircle, 
   Save, ChevronDown, ChevronUp, Edit2, Plus, Printer,
   Clock, Award, Languages, Car, Briefcase, CalendarDays,
-  StickyNote, FileText, Upload, File, Trash2, Building2, Eye, Download
+  StickyNote, FileText, Upload, File, Trash2, Building2, Eye, Download,
+  Activity, UserPlus, UserCheck, Edit3, FileCheck, FileMinus,
+  TrendingUp, MessageSquare, Sparkles
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -16,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { toast } from 'sonner';
 import { AddressAutocomplete } from '../ui/address-autocomplete';
 import { Checkbox } from '../ui/checkbox';
+import { HistoriqueActivite } from './HistoriqueActivite';
 
 // ===== UTILITÉ: Formatage des heures =====
 /**
@@ -70,6 +73,30 @@ interface FeuilleTemps {
   notes: string;
 }
 
+// Tipos de eventos para el historial de actividad
+type TipoEvento = 
+  | 'creation'           // Creación del contacto
+  | 'modification'       // Modificación de datos
+  | 'changement_statut'  // Cambio de estado (actif, inactif, en pause)
+  | 'note_ajoutee'       // Nota agregada
+  | 'document_ajoute'    // Documento agregado
+  | 'document_supprime'  // Documento eliminado
+  | 'heure_enregistree'  // Horas registradas
+  | 'type_modifie'       // Tipo de bénévole modificado
+  | 'personnalise';      // Evento personalizado
+
+interface EvenementActivite {
+  id: string;
+  type: TipoEvento;
+  titre: string;
+  description?: string;
+  date: string;
+  utilisateur?: string; // Usuario que realizó la acción
+  icone?: string; // Nombre del ícono lucide
+  couleur?: string; // Color del evento
+  metadata?: Record<string, any>; // Datos adicionales
+}
+
 // Tipo de bénévole similar a ContactoDepartamento
 type TipoBenevole = 'benevole' | 'stagiaire' | 'employe' | 'coordinateur' | 'responsable' | 'autre';
 
@@ -107,6 +134,7 @@ interface Benevole {
   contactoEmergenciaRelacion?: string;
   contactoEmergenciaTelefono?: string;
   contactoEmergenciaEmail?: string;
+  historiqueActivite?: EvenementActivite[]; // Historial de actividad del contacto
 }
 
 interface FicheBenevoleProps {
@@ -126,6 +154,7 @@ export function FicheBenevole({ benevole, onNavigate, onUpdate }: FicheBenevoleP
   const [notesExpanded, setNotesExpanded] = useState(true);
   const [documentsExpanded, setDocumentsExpanded] = useState(true);
   const [contactUrgenceExpanded, setContactUrgenceExpanded] = useState(true);
+  const [activiteExpanded, setActiviteExpanded] = useState(true);
   
   // Form states
   const [formData, setFormData] = useState<Benevole>(benevole);
@@ -849,54 +878,201 @@ export function FicheBenevole({ benevole, onNavigate, onUpdate }: FicheBenevoleP
         icon={Award}
         headerColor="#FFC107"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="border-l-4 border-l-[#1E73BE] bg-gradient-to-r from-[#E3F2FD] to-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-[#666666] mb-1 flex items-center gap-2">
-                    <Award className="w-4 h-4" />
-                    Heures totales accumulées
-                  </p>
-                  <p className="text-5xl font-bold text-[#1E73BE]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {formaterHeures(formData.heuresTotal)}
-                  </p>
-                  <p className="text-xs text-[#666666] mt-2">
-                    Depuis l'inscription
-                  </p>
+        <div className="space-y-6">
+          {/* Cartes de statistiques principales */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="border-l-4 border-l-[#1E73BE] bg-gradient-to-r from-[#E3F2FD] to-white">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-[#666666] mb-1 flex items-center gap-2">
+                      <Award className="w-4 h-4" />
+                      Heures totales accumulées
+                    </p>
+                    <p className="text-5xl font-bold text-[#1E73BE]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      {formaterHeures(formData.heuresTotal)}
+                    </p>
+                    <p className="text-xs text-[#666666] mt-2">
+                      Depuis l'inscription
+                    </p>
+                  </div>
+                  <Award className="w-20 h-20 text-[#1E73BE] opacity-20" />
                 </div>
-                <Award className="w-20 h-20 text-[#1E73BE] opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="border-l-4 border-l-[#4CAF50] bg-gradient-to-r from-[#E8F5E9] to-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-[#666666] mb-1 flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    Heures ce mois-ci
-                  </p>
-                  <p className="text-5xl font-bold text-[#4CAF50]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {formaterHeures(formData.heuresMois)}
-                  </p>
-                  <p className="text-xs text-[#666666] mt-2">
-                    {new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
-                  </p>
+            <Card className="border-l-4 border-l-[#4CAF50] bg-gradient-to-r from-[#E8F5E9] to-white">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-[#666666] mb-1 flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Heures ce mois-ci
+                    </p>
+                    <p className="text-5xl font-bold text-[#4CAF50]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      {formaterHeures(formData.heuresMois)}
+                    </p>
+                    <p className="text-xs text-[#666666] mt-2">
+                      {new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+                    </p>
+                  </div>
+                  <Calendar className="w-20 h-20 text-[#4CAF50] opacity-20" />
                 </div>
-                <Calendar className="w-20 h-20 text-[#4CAF50] opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <div className="md:col-span-2 bg-[#F9F9F9] p-4 rounded-lg border border-[#E0E0E0]">
+            <Card className="border-l-4 border-l-[#FF9800] bg-gradient-to-r from-[#FFF3E0] to-white">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-[#666666] mb-1 flex items-center gap-2">
+                      <CalendarDays className="w-4 h-4" />
+                      Jours travaillés
+                    </p>
+                    <p className="text-5xl font-bold text-[#FF9800]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      {(() => {
+                        const uniqueDates = new Set(
+                          (formData.feuillesTemps || []).map(f => f.date)
+                        );
+                        return uniqueDates.size;
+                      })()}
+                    </p>
+                    <p className="text-xs text-[#666666] mt-2">
+                      Jours uniques
+                    </p>
+                  </div>
+                  <CalendarDays className="w-20 h-20 text-[#FF9800] opacity-20" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Heures par département */}
+          {(() => {
+            const heuresParDept = (formData.feuillesTemps || []).reduce((acc, feuille) => {
+              acc[feuille.departement] = (acc[feuille.departement] || 0) + feuille.duree;
+              return acc;
+            }, {} as Record<string, number>);
+
+            const totalHeures = Object.values(heuresParDept).reduce((sum, h) => sum + h, 0);
+
+            return Object.keys(heuresParDept).length > 0 && (
+              <div className="p-5 bg-gradient-to-br from-[#F5F5F5] to-white rounded-lg border-2 border-[#E0E0E0]">
+                <div className="flex items-center gap-2 mb-4">
+                  <Building2 className="w-5 h-5 text-[#1E73BE]" />
+                  <h4 className="font-bold text-[#333333]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    Heures par département
+                  </h4>
+                </div>
+                
+                <div className="space-y-3">
+                  {Object.entries(heuresParDept)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([dept, heures]) => {
+                      const percentage = totalHeures > 0 ? (heures / totalHeures) * 100 : 0;
+                      
+                      const deptColors: Record<string, string> = {
+                        'Comptoir': '#1E73BE',
+                        'Logistique': '#4CAF50',
+                        'Entrepôt': '#FF9800',
+                        'Distribution': '#9C27B0',
+                        'Administration': '#00BCD4',
+                        'Collecte': '#FF5722'
+                      };
+                      const color = deptColors[dept] || '#607D8B';
+                      
+                      return (
+                        <div key={dept}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium text-[#333333]">{dept}</span>
+                            <div className="flex items-center gap-2">
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs"
+                                style={{ borderColor: color, color: color }}
+                              >
+                                {formaterHeures(heures)}
+                              </Badge>
+                              <span className="text-xs text-[#999999]">
+                                {percentage.toFixed(0)}%
+                              </span>
+                            </div>
+                          </div>
+                          <div className="w-full h-2 bg-[#E0E0E0] rounded-full overflow-hidden">
+                            <div 
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{ 
+                                width: `${percentage}%`,
+                                backgroundColor: color
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Activités récentes */}
+          {formData.feuillesTemps && formData.feuillesTemps.length > 0 && (
+            <div className="p-5 bg-gradient-to-br from-[#E8F5E9] to-white rounded-lg border-2 border-[#4CAF50]/30">
+              <div className="flex items-center gap-2 mb-4">
+                <Clock className="w-5 h-5 text-[#4CAF50]" />
+                <h4 className="font-bold text-[#333333]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  Activités récentes
+                </h4>
+              </div>
+              
+              <div className="space-y-2">
+                {formData.feuillesTemps
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .slice(0, 5)
+                  .map((feuille) => (
+                    <div 
+                      key={feuille.id}
+                      className="flex items-center justify-between p-3 bg-white rounded-lg border border-[#E0E0E0] hover:border-[#4CAF50] transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-[#4CAF50]/10 flex items-center justify-center">
+                          <Calendar className="w-5 h-5 text-[#4CAF50]" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-[#333333]">
+                            {new Date(feuille.date).toLocaleDateString('fr-FR', {
+                              weekday: 'short',
+                              day: 'numeric',
+                              month: 'short'
+                            })}
+                          </p>
+                          <p className="text-xs text-[#666666]">{feuille.departement}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="text-right">
+                        <div className="flex items-center gap-1 text-xs text-[#666666] mb-1">
+                          <Clock className="w-3 h-3" />
+                          <span className="font-mono">{feuille.heureDebut} - {feuille.heureFin}</span>
+                        </div>
+                        <Badge className="bg-[#4CAF50] text-white text-xs">
+                          {feuille.duree}h
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Engagement et reconnaissance */}
+          <div className="bg-[#F9F9F9] p-4 rounded-lg border border-[#E0E0E0]">
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-[#FFC107] mt-0.5" />
               <div>
                 <h4 className="font-semibold text-[#333333] mb-1">Engagement et reconnaissance</h4>
                 <p className="text-sm text-[#666666]">
-                  Ce bénévole a contribué <strong>{Math.round(formData.heuresTotal)} heures</strong> au total. 
+                  Ce bénévole a contribué <strong>{Math.round(formData.heuresTotal)} heures</strong> au total.
                   {formData.heuresTotal >= 100 && ' 🏆 Bénévole hautement engagé!'}
                   {formData.heuresTotal >= 50 && formData.heuresTotal < 100 && ' ⭐ Bénvole actif!'}
                   {formData.heuresTotal < 50 && ' Nouveau bénévole en formation.'}
@@ -1260,6 +1436,26 @@ export function FicheBenevole({ benevole, onNavigate, onUpdate }: FicheBenevoleP
             </div>
           )}
         </div>
+      </CollapsibleSection>
+
+      {/* Section: Activité */}
+      <CollapsibleSection
+        title={`Historique d'activité (${formData.historiqueActivite?.length || 0})`}
+        expanded={activiteExpanded}
+        onToggle={() => setActiviteExpanded(!activiteExpanded)}
+        icon={Activity}
+        headerColor="#607D8B"
+      >
+        <HistoriqueActivite
+          evenements={formData.historiqueActivite || []}
+          onAjouterEvenement={(evt) => {
+            setFormData({
+              ...formData,
+              historiqueActivite: [...(formData.historiqueActivite || []), evt]
+            });
+          }}
+          isEditing={isEditing}
+        />
       </CollapsibleSection>
 
       {/* Styles pour l'impression */}
