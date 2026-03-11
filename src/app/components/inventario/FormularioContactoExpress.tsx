@@ -2,51 +2,8 @@
  * ====================================================================
  * FORMULARIO EXPRESS: Registro Rápido de Contactos (Donador/Proveedor)
  * ====================================================================
- * 
- * MÓDULO: Entrepôt (Inventaire)
- * UBICACIÓN: /src/app/components/inventario/FormularioContactoExpress.tsx
- * TIPO: Formulario Simplificado - Nivel 1
- * 
- * PROPÓSITO:
- * - Registro ultra-rápido de donadores y proveedores simples
- * - Solo campos esenciales (8 campos máximo)
- * - Sin pestañas - Todo en una pantalla
- * - Tiempo de registro: < 1 minuto
- * 
- * TIPOS DE CONTACTO SOPORTADOS:
- * - Donateur (Donador) - 6 campos mínimos
- * - Fournisseur (Proveedor) - 8 campos con datos de empresa
- * 
- * CAMPOS INCLUIDOS:
- * 
- * DONATEUR (6 campos):
- * ✅ Tipo de contacto (selector visual)
- * ✅ Prénom + Nom (en línea)
- * ✅ Téléphone
- * ✅ Email
- * ✅ Ville
- * ✅ Notes (opcional)
- * 
- * FOURNISSEUR (8 campos):
- * ✅ Tipo de contacto (selector visual)
- * ✅ Prénom + Nom (en línea)
- * ✅ Entreprise
- * ✅ Téléphone
- * ✅ Email
- * ✅ Ville
- * ✅ Catégorie de produits
- * ✅ Notes (opcional)
- * 
- * STORAGE:
- * - Key: 'banqueAlimentaire_contactosDepartamento'
- * - Compatible con sistema unificado
- * 
- * ACCESIBILIDAD:
- * - aria-describedby: "contact-express-form-description"
- * 
- * VERSIÓN: 1.0
- * CREADO: 11 marzo 2026
- * ====================================================================
+ * VERSIÓN: 2.0 - SOLUCIÓN DEFINITIVA
+ * GARANTIZA: Formularios completamente diferentes y visibles
  */
 
 import React, { useState, useEffect } from 'react';
@@ -73,18 +30,16 @@ interface FormContactoExpressData {
   tipoContacto: 'fournisseur' | 'donador';
   nombre: string;
   apellido: string;
-  nombreEmpresa: string; // Solo para Fournisseur
+  nombreEmpresa: string;
   emailPrincipal: string;
   telefonoPrincipal: string;
   ciudad: string;
-  categoriaProductos: string[]; // Solo para Fournisseur
+  categoriaProductos: string[];
   notas: string;
-  // Campos auto-completados
   activo: boolean;
   departamentosAsignados: string[];
   imagen: string | null;
   numeroID: string;
-  // Resto de campos con valores por defecto
   apellido2?: string;
   tipoEmpresa: string;
   numeroRegistro: string;
@@ -118,44 +73,186 @@ interface FormularioContactoExpressProps {
   modoEdicion?: boolean;
 }
 
-export function FormularioContactoExpress({
-  abierto,
-  onCerrar,
-  formulario,
+// ==========================================
+// COMPONENTE PARA DONATEUR (VERDE)
+// ==========================================
+function FormularioDonateur({ 
+  formulario, 
   setFormulario,
-  onGuardar,
-  modoEdicion = false
-}: FormularioContactoExpressProps) {
-  const branding = useBranding();
-  const [mostrarCampoOpcional, setMostrarCampoOpcional] = useState(false);
+  mostrarCampoOpcional,
+  setMostrarCampoOpcional 
+}: {
+  formulario: FormContactoExpressData;
+  setFormulario: React.Dispatch<React.SetStateAction<FormContactoExpressData>>;
+  mostrarCampoOpcional: boolean;
+  setMostrarCampoOpcional: (val: boolean) => void;
+}) {
+  return (
+    <div className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-500">
+      {/* Banner DONATEUR VERDE */}
+      <div 
+        className="p-4 rounded-xl border-2 animate-pulse"
+        style={{ 
+          backgroundColor: '#4CAF5010',
+          borderColor: '#4CAF50',
+          boxShadow: '0 0 20px #4CAF5030'
+        }}
+      >
+        <p className="text-center font-bold text-lg" style={{ color: '#4CAF50', fontFamily: 'Montserrat, sans-serif' }}>
+          🎁 FORMULAIRE DONATEUR - 6 CHAMPS UNIQUEMENT
+        </p>
+      </div>
 
-  // Efecto para auto-asignar departamento Entrepôt
-  useEffect(() => {
-    if (abierto && !formulario.departamentosAsignados.includes('1')) {
-      setFormulario(prev => ({
-        ...prev,
-        departamentosAsignados: ['1']
-      }));
-    }
-  }, [abierto]);
+      {/* Prénom + Nom */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="nombre-d" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+            <User className="w-4 h-4" style={{ color: '#4CAF50' }} />
+            Prénom *
+          </Label>
+          <Input
+            id="nombre-d"
+            value={formulario.nombre}
+            onChange={(e) => setFormulario({ ...formulario, nombre: e.target.value })}
+            placeholder="Jean"
+            className="h-11 text-sm border-2"
+            style={{ 
+              borderColor: formulario.nombre ? '#4CAF50' : '#E5E7EB',
+              boxShadow: formulario.nombre ? '0 0 0 3px #4CAF5020' : 'none'
+            }}
+          />
+        </div>
+        <div>
+          <Label htmlFor="apellido-d" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+            <User className="w-4 h-4" style={{ color: '#4CAF50' }} />
+            Nom *
+          </Label>
+          <Input
+            id="apellido-d"
+            value={formulario.apellido}
+            onChange={(e) => setFormulario({ ...formulario, apellido: e.target.value })}
+            placeholder="Dupont"
+            className="h-11 text-sm border-2"
+            style={{ 
+              borderColor: formulario.apellido ? '#4CAF50' : '#E5E7EB',
+              boxShadow: formulario.apellido ? '0 0 0 3px #4CAF5020' : 'none'
+            }}
+          />
+        </div>
+      </div>
 
-  const tiposContacto = [
-    { 
-      value: 'donador', 
-      label: 'Donateur', 
-      icon: Gift,
-      color: '#FF5722',
-      descripcion: 'Personne ou organisation qui fait des dons'
-    },
-    { 
-      value: 'fournisseur', 
-      label: 'Fournisseur', 
-      icon: Package,
-      color: '#1E73BE',
-      descripcion: 'Entreprise qui fournit des produits'
-    }
-  ];
+      {/* Téléphone + Email */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="tel-d" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+            <Phone className="w-4 h-4" style={{ color: '#4CAF50' }} />
+            Téléphone *
+          </Label>
+          <Input
+            id="tel-d"
+            type="tel"
+            value={formulario.telefonoPrincipal}
+            onChange={(e) => setFormulario({ ...formulario, telefonoPrincipal: e.target.value })}
+            placeholder="(514) 555-0123"
+            className="h-11 text-sm border-2"
+            style={{ 
+              borderColor: formulario.telefonoPrincipal ? '#4CAF50' : '#E5E7EB',
+              boxShadow: formulario.telefonoPrincipal ? '0 0 0 3px #4CAF5020' : 'none'
+            }}
+          />
+        </div>
+        <div>
+          <Label htmlFor="email-d" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+            <Mail className="w-4 h-4" style={{ color: '#4CAF50' }} />
+            Email *
+          </Label>
+          <Input
+            id="email-d"
+            type="email"
+            value={formulario.emailPrincipal}
+            onChange={(e) => setFormulario({ ...formulario, emailPrincipal: e.target.value })}
+            placeholder="contact@exemple.com"
+            className="h-11 text-sm border-2"
+            style={{ 
+              borderColor: formulario.emailPrincipal ? '#4CAF50' : '#E5E7EB',
+              boxShadow: formulario.emailPrincipal ? '0 0 0 3px #4CAF5020' : 'none'
+            }}
+          />
+        </div>
+      </div>
 
+      {/* Ville */}
+      <div>
+        <Label htmlFor="ciudad-d" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+          <MapPin className="w-4 h-4" style={{ color: '#4CAF50' }} />
+          Ville
+        </Label>
+        <Input
+          id="ciudad-d"
+          value={formulario.ciudad}
+          onChange={(e) => setFormulario({ ...formulario, ciudad: e.target.value })}
+          placeholder="Laval"
+          className="h-11 text-sm border-2"
+          style={{ 
+            borderColor: formulario.ciudad ? '#4CAF50' : '#E5E7EB',
+            boxShadow: formulario.ciudad ? '0 0 0 3px #4CAF5020' : 'none'
+          }}
+        />
+      </div>
+
+      {/* Botón para notas */}
+      {!mostrarCampoOpcional && (
+        <button
+          type="button"
+          onClick={() => setMostrarCampoOpcional(true)}
+          className="text-sm hover:text-gray-700 flex items-center gap-2 w-full p-3 rounded-lg border-2 border-dashed hover:border-solid transition-all"
+          style={{ color: '#4CAF50', borderColor: '#4CAF5040' }}
+        >
+          <FileText className="w-4 h-4" />
+          + Ajouter des notes (optionnel)
+        </button>
+      )}
+
+      {/* Notes */}
+      {mostrarCampoOpcional && (
+        <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+          <Label htmlFor="notas-d" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+            <FileText className="w-4 h-4" style={{ color: '#4CAF50' }} />
+            Notes
+            <span className="text-xs text-gray-400 font-normal ml-1">(optionnel)</span>
+          </Label>
+          <Textarea
+            id="notas-d"
+            value={formulario.notas}
+            onChange={(e) => setFormulario({ ...formulario, notas: e.target.value })}
+            placeholder="Notes additionnelles..."
+            rows={3}
+            className="text-sm border-2 resize-none"
+            style={{ 
+              borderColor: formulario.notas ? '#4CAF50' : '#E5E7EB',
+              boxShadow: formulario.notas ? '0 0 0 3px #4CAF5020' : 'none'
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==========================================
+// COMPONENTE PARA FOURNISSEUR (NARANJA)
+// ==========================================
+function FormularioFournisseur({ 
+  formulario, 
+  setFormulario,
+  mostrarCampoOpcional,
+  setMostrarCampoOpcional 
+}: {
+  formulario: FormContactoExpressData;
+  setFormulario: React.Dispatch<React.SetStateAction<FormContactoExpressData>>;
+  mostrarCampoOpcional: boolean;
+  setMostrarCampoOpcional: (val: boolean) => void;
+}) {
   const categoriesProductos = [
     { value: 'sec', label: '🥫 Produits secs', color: '#795548' },
     { value: 'frais', label: '🥬 Produits frais', color: '#4CAF50' },
@@ -181,8 +278,259 @@ export function FormularioContactoExpress({
     }
   };
 
+  return (
+    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
+      {/* Banner FOURNISSEUR NARANJA */}
+      <div 
+        className="p-4 rounded-xl border-2 animate-pulse"
+        style={{ 
+          backgroundColor: '#FF980010',
+          borderColor: '#FF9800',
+          boxShadow: '0 0 20px #FF980030'
+        }}
+      >
+        <p className="text-center font-bold text-lg" style={{ color: '#FF9800', fontFamily: 'Montserrat, sans-serif' }}>
+          📦 FORMULAIRE FOURNISSEUR - 8 CHAMPS + ENTREPRISE
+        </p>
+      </div>
+
+      {/* Prénom + Nom */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="nombre-f" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+            <User className="w-4 h-4" style={{ color: '#FF9800' }} />
+            Prénom *
+          </Label>
+          <Input
+            id="nombre-f"
+            value={formulario.nombre}
+            onChange={(e) => setFormulario({ ...formulario, nombre: e.target.value })}
+            placeholder="Jean"
+            className="h-11 text-sm border-2"
+            style={{ 
+              borderColor: formulario.nombre ? '#FF9800' : '#E5E7EB',
+              boxShadow: formulario.nombre ? '0 0 0 3px #FF980020' : 'none'
+            }}
+          />
+        </div>
+        <div>
+          <Label htmlFor="apellido-f" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+            <User className="w-4 h-4" style={{ color: '#FF9800' }} />
+            Nom *
+          </Label>
+          <Input
+            id="apellido-f"
+            value={formulario.apellido}
+            onChange={(e) => setFormulario({ ...formulario, apellido: e.target.value })}
+            placeholder="Dupont"
+            className="h-11 text-sm border-2"
+            style={{ 
+              borderColor: formulario.apellido ? '#FF9800' : '#E5E7EB',
+              boxShadow: formulario.apellido ? '0 0 0 3px #FF980020' : 'none'
+            }}
+          />
+        </div>
+      </div>
+
+      {/* EMPRESA - EXCLUSIVO FOURNISSEUR */}
+      <div className="relative">
+        <div className="absolute -left-3 top-0 bottom-0 w-1 rounded-full" style={{ background: 'linear-gradient(180deg, #FF9800 0%, #F57C00 100%)' }}></div>
+        <Label htmlFor="empresa-f" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+          <Building2 className="w-4 h-4" style={{ color: '#FF9800' }} />
+          Nom de l&apos;entreprise *
+          <Badge style={{ backgroundColor: '#FF9800', color: 'white' }}>EXCLUSIF FOURNISSEUR</Badge>
+        </Label>
+        <Input
+          id="empresa-f"
+          value={formulario.nombreEmpresa}
+          onChange={(e) => setFormulario({ ...formulario, nombreEmpresa: e.target.value })}
+          placeholder="Aliments ABC Inc."
+          className="h-11 text-sm border-2"
+          style={{ 
+            borderColor: formulario.nombreEmpresa ? '#FF9800' : '#E5E7EB',
+            boxShadow: formulario.nombreEmpresa ? '0 0 0 3px #FF980020' : 'none'
+          }}
+        />
+      </div>
+
+      {/* Téléphone + Email */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="tel-f" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+            <Phone className="w-4 h-4" style={{ color: '#FF9800' }} />
+            Téléphone *
+          </Label>
+          <Input
+            id="tel-f"
+            type="tel"
+            value={formulario.telefonoPrincipal}
+            onChange={(e) => setFormulario({ ...formulario, telefonoPrincipal: e.target.value })}
+            placeholder="(514) 555-0123"
+            className="h-11 text-sm border-2"
+            style={{ 
+              borderColor: formulario.telefonoPrincipal ? '#FF9800' : '#E5E7EB',
+              boxShadow: formulario.telefonoPrincipal ? '0 0 0 3px #FF980020' : 'none'
+            }}
+          />
+        </div>
+        <div>
+          <Label htmlFor="email-f" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+            <Mail className="w-4 h-4" style={{ color: '#FF9800' }} />
+            Email *
+          </Label>
+          <Input
+            id="email-f"
+            type="email"
+            value={formulario.emailPrincipal}
+            onChange={(e) => setFormulario({ ...formulario, emailPrincipal: e.target.value })}
+            placeholder="contact@exemple.com"
+            className="h-11 text-sm border-2"
+            style={{ 
+              borderColor: formulario.emailPrincipal ? '#FF9800' : '#E5E7EB',
+              boxShadow: formulario.emailPrincipal ? '0 0 0 3px #FF980020' : 'none'
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Ville */}
+      <div>
+        <Label htmlFor="ciudad-f" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+          <MapPin className="w-4 h-4" style={{ color: '#FF9800' }} />
+          Ville
+        </Label>
+        <Input
+          id="ciudad-f"
+          value={formulario.ciudad}
+          onChange={(e) => setFormulario({ ...formulario, ciudad: e.target.value })}
+          placeholder="Laval"
+          className="h-11 text-sm border-2"
+          style={{ 
+            borderColor: formulario.ciudad ? '#FF9800' : '#E5E7EB',
+            boxShadow: formulario.ciudad ? '0 0 0 3px #FF980020' : 'none'
+          }}
+        />
+      </div>
+
+      {/* CATEGORÍAS - EXCLUSIVO FOURNISSEUR */}
+      <div className="relative">
+        <div className="absolute -left-3 top-0 bottom-0 w-1 rounded-full" style={{ background: 'linear-gradient(180deg, #FF9800 0%, #F57C00 100%)' }}></div>
+        <Label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+          <Package className="w-4 h-4" style={{ color: '#FF9800' }} />
+          Catégories de produits
+          {formulario.categoriaProductos.length > 0 && (
+            <Badge style={{ backgroundColor: '#FF9800', color: 'white' }}>
+              {formulario.categoriaProductos.length} sélectionnée{formulario.categoriaProductos.length > 1 ? 's' : ''}
+            </Badge>
+          )}
+        </Label>
+        <div className="grid grid-cols-2 gap-2">
+          {categoriesProductos.map((cat) => {
+            const isSelected = formulario.categoriaProductos.includes(cat.value);
+            return (
+              <button
+                key={cat.value}
+                type="button"
+                onClick={() => toggleCategoria(cat.value)}
+                className={`px-3 py-2 rounded-lg text-xs font-medium border-2 transition-all text-left ${isSelected ? 'shadow-lg scale-105' : 'hover:border-gray-300'}`}
+                style={{
+                  borderColor: isSelected ? cat.color : '#E5E7EB',
+                  backgroundColor: isSelected ? `${cat.color}20` : '#FFFFFF',
+                  color: isSelected ? cat.color : '#6B7280'
+                }}
+              >
+                {cat.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Botón para notas */}
+      {!mostrarCampoOpcional && (
+        <button
+          type="button"
+          onClick={() => setMostrarCampoOpcional(true)}
+          className="text-sm hover:text-gray-700 flex items-center gap-2 w-full p-3 rounded-lg border-2 border-dashed hover:border-solid transition-all"
+          style={{ color: '#FF9800', borderColor: '#FF980040' }}
+        >
+          <FileText className="w-4 h-4" />
+          + Ajouter des notes (optionnel)
+        </button>
+      )}
+
+      {/* Notes */}
+      {mostrarCampoOpcional && (
+        <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+          <Label htmlFor="notas-f" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+            <FileText className="w-4 h-4" style={{ color: '#FF9800' }} />
+            Notes
+            <span className="text-xs text-gray-400 font-normal ml-1">(optionnel)</span>
+          </Label>
+          <Textarea
+            id="notas-f"
+            value={formulario.notas}
+            onChange={(e) => setFormulario({ ...formulario, notas: e.target.value })}
+            placeholder="Notes additionnelles..."
+            rows={3}
+            className="text-sm border-2 resize-none"
+            style={{ 
+              borderColor: formulario.notas ? '#FF9800' : '#E5E7EB',
+              boxShadow: formulario.notas ? '0 0 0 3px #FF980020' : 'none'
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==========================================
+// COMPONENTE PRINCIPAL
+// ==========================================
+export function FormularioContactoExpress({
+  abierto,
+  onCerrar,
+  formulario,
+  setFormulario,
+  onGuardar,
+  modoEdicion = false
+}: FormularioContactoExpressProps) {
+  const branding = useBranding();
+  const [mostrarCampoOpcional, setMostrarCampoOpcional] = useState(false);
+
+  // Reset campo opcional cuando cambia el tipo
+  useEffect(() => {
+    setMostrarCampoOpcional(false);
+  }, [formulario.tipoContacto]);
+
+  useEffect(() => {
+    if (abierto && !formulario.departamentosAsignados.includes('1')) {
+      setFormulario(prev => ({
+        ...prev,
+        departamentosAsignados: ['1']
+      }));
+    }
+  }, [abierto]);
+
+  const tiposContacto = [
+    { 
+      value: 'donador', 
+      label: 'Donateur', 
+      icon: Gift,
+      color: '#4CAF50',
+      descripcion: 'Personne ou organisation qui fait des dons'
+    },
+    { 
+      value: 'fournisseur', 
+      label: 'Fournisseur', 
+      icon: Package,
+      color: '#FF9800',
+      descripcion: 'Entreprise qui fournit des produits'
+    }
+  ];
+
   const handleGuardarRapido = () => {
-    // Validación mínima
     if (!formulario.nombre || !formulario.apellido) {
       alert('Prénom et Nom sont obligatoires');
       return;
@@ -204,58 +552,29 @@ export function FormularioContactoExpress({
   const tipoSeleccionado = tiposContacto.find(t => t.value === formulario.tipoContacto);
   const IconoTipo = tipoSeleccionado?.icon || Package;
 
-  // FORZAR RE-RENDER cuando cambia el tipo de contacto
-  const [keyFormulario, setKeyFormulario] = React.useState(0);
-
-  // Observar cambios en tipoContacto y forzar re-render
-  React.useEffect(() => {
-    setKeyFormulario(prev => prev + 1);
-  }, [formulario.tipoContacto]);
-
-  const validarFormulario = () => {
-    // Validación mínima
-    if (!formulario.nombre || !formulario.apellido) {
-      alert('Prénom et Nom sont obligatoires');
-      return false;
-    }
-
-    if (!formulario.telefonoPrincipal && !formulario.emailPrincipal) {
-      alert('Téléphone ou Email est obligatoire');
-      return false;
-    }
-
-    if (formulario.tipoContacto === 'fournisseur' && !formulario.nombreEmpresa) {
-      alert('Le nom de l\'entreprise est obligatoire pour un fournisseur');
-      return false;
-    }
-
-    return true;
-  };
-
   return (
     <Dialog open={abierto} onOpenChange={onCerrar}>
       <DialogContent 
         className="!max-w-2xl !max-h-[90vh] overflow-hidden p-0 rounded-xl"
+        aria-describedby="formulario-contacto-express-desc"
       >
-        {/* DialogHeader oculto visualmente pero presente para accesibilidad */}
         <DialogHeader className="sr-only">
-          <DialogTitle>
+          <DialogTitle id="formulario-contacto-express-title">
             {modoEdicion ? 'Modifier le contact' : 'Enregistrement Express'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="formulario-contacto-express-desc">
             Ajoutez rapidement un nouveau contact en moins d&apos;une minute
           </DialogDescription>
         </DialogHeader>
 
         <div className="h-full flex flex-col bg-white">
-          {/* Header con gradiente */}
+          {/* Header */}
           <div 
             className="px-6 py-5 text-white relative overflow-hidden"
             style={{
               background: `linear-gradient(135deg, ${branding.primaryColor} 0%, ${branding.secondaryColor} 100%)`
             }}
           >
-            {/* Patrón decorativo */}
             <div className="absolute inset-0 opacity-10">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-12 -translate-x-12"></div>
@@ -283,7 +602,6 @@ export function FormularioContactoExpress({
                 </div>
               </div>
 
-              {/* Badge de tiempo estimado */}
               <div className="flex items-center gap-2 mt-3">
                 <Badge 
                   variant="secondary" 
@@ -302,9 +620,9 @@ export function FormularioContactoExpress({
             </div>
           </div>
 
-          {/* Contenido del formulario */}
+          {/* Contenido */}
           <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-            {/* Selector de tipo de contacto - MUY VISIBLE */}
+            {/* Selector de tipo */}
             <div>
               <Label className="text-sm font-semibold text-gray-700 mb-3 block">
                 Type de contact *
@@ -319,13 +637,7 @@ export function FormularioContactoExpress({
                       key={tipo.value}
                       type="button"
                       onClick={() => setFormulario({ ...formulario, tipoContacto: tipo.value as any })}
-                      className={`
-                        p-6 rounded-xl border-3 transition-all duration-300 text-left
-                        ${isSelected 
-                          ? 'shadow-2xl scale-110 ring-4 ring-opacity-30' 
-                          : 'hover:border-gray-300 hover:shadow-md opacity-60 hover:opacity-100'
-                        }
-                      `}
+                      className={`p-6 rounded-xl border-3 transition-all duration-300 text-left ${isSelected ? 'shadow-2xl scale-110 ring-4 ring-opacity-30' : 'hover:border-gray-300 hover:shadow-md opacity-60 hover:opacity-100'}`}
                       style={{
                         borderColor: isSelected ? tipo.color : '#E5E7EB',
                         backgroundColor: isSelected ? `${tipo.color}20` : '#FAFAFA',
@@ -373,7 +685,7 @@ export function FormularioContactoExpress({
               </div>
             </div>
 
-            {/* MEGA Banner informativo - IMPOSIBLE DE NO VER */}
+            {/* Banner informativo */}
             <div 
               className="p-6 rounded-xl border-4 transition-all duration-500 transform"
               style={{ 
@@ -392,14 +704,17 @@ export function FormularioContactoExpress({
                   </div>
                 )}
                 <div className="flex-1">
-                  <p className="text-lg font-bold mb-2" style={{ 
+                  <p className="text-2xl font-bold mb-2" style={{ 
                     color: tipoSeleccionado?.color || '#6B7280',
                     fontFamily: 'Montserrat, sans-serif'
                   }}>
                     {formulario.tipoContacto === 'donador' 
-                      ? '🎁 MODE DONATEUR ACTIVÉ'
-                      : '📦 MODE FOURNISSEUR ACTIVÉ'
+                      ? '🎁 MODE DONATEUR ACTIVÉ (VERT #4CAF50)'
+                      : '📦 MODE FOURNISSEUR ACTIVÉ (ORANGE #FF9800)'
                     }
+                  </p>
+                  <p className="text-base font-bold mb-3" style={{ color: tipoSeleccionado?.color }}>
+                    VALEUR ACTUELLE: {formulario.tipoContacto}
                   </p>
                   <p className="text-sm text-gray-700 mb-3">
                     {formulario.tipoContacto === 'donador' 
@@ -424,7 +739,7 @@ export function FormularioContactoExpress({
               </div>
             </div>
 
-            {/* Separador visual */}
+            {/* Separador */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t-2 border-gray-300"></div>
@@ -436,357 +751,22 @@ export function FormularioContactoExpress({
               </div>
             </div>
 
-            {/* Campos esenciales */}
-            <div className="space-y-4" key={`formulario-${formulario.tipoContacto}-${keyFormulario}`}>
-              {/* SECCIÓN EXCLUSIVA PARA DONATEUR */}
-              {formulario.tipoContacto === 'donador' && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-500">
-                  {/* Banner DONATEUR */}
-                  <div 
-                    className="p-4 rounded-xl border-2 animate-pulse"
-                    style={{ 
-                      backgroundColor: '#FF572210',
-                      borderColor: '#FF5722',
-                      boxShadow: '0 0 20px #FF572230'
-                    }}
-                  >
-                    <p className="text-center font-bold text-lg" style={{ color: '#FF5722', fontFamily: 'Montserrat, sans-serif' }}>
-                      🎁 FORMULAIRE DONATEUR - 6 CHAMPS UNIQUEMENT
-                    </p>
-                  </div>
-
-                  {/* Fila 1: Prénom + Nom */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="nombre" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                        <User className="w-4 h-4" style={{ color: '#FF5722' }} />
-                        Prénom *
-                      </Label>
-                      <Input
-                        id="nombre"
-                        value={formulario.nombre}
-                        onChange={(e) => setFormulario({ ...formulario, nombre: e.target.value })}
-                        placeholder="Jean"
-                        className="h-11 text-sm border-2"
-                        style={{ 
-                          borderColor: formulario.nombre ? '#FF5722' : '#E5E7EB',
-                          boxShadow: formulario.nombre ? '0 0 0 3px #FF572220' : 'none'
-                        }}
-                        autoFocus
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="apellido" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                        <User className="w-4 h-4" style={{ color: '#FF5722' }} />
-                        Nom *
-                      </Label>
-                      <Input
-                        id="apellido"
-                        value={formulario.apellido}
-                        onChange={(e) => setFormulario({ ...formulario, apellido: e.target.value })}
-                        placeholder="Dupont"
-                        className="h-11 text-sm border-2"
-                        style={{ 
-                          borderColor: formulario.apellido ? '#FF5722' : '#E5E7EB',
-                          boxShadow: formulario.apellido ? '0 0 0 3px #FF572220' : 'none'
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Fila 2: Téléphone + Email */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="telefonoPrincipal" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                        <Phone className="w-4 h-4" style={{ color: '#FF5722' }} />
-                        Téléphone *
-                      </Label>
-                      <Input
-                        id="telefonoPrincipal"
-                        type="tel"
-                        value={formulario.telefonoPrincipal}
-                        onChange={(e) => setFormulario({ ...formulario, telefonoPrincipal: e.target.value })}
-                        placeholder="(514) 555-0123"
-                        className="h-11 text-sm border-2"
-                        style={{ 
-                          borderColor: formulario.telefonoPrincipal ? '#FF5722' : '#E5E7EB',
-                          boxShadow: formulario.telefonoPrincipal ? '0 0 0 3px #FF572220' : 'none'
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="emailPrincipal" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                        <Mail className="w-4 h-4" style={{ color: '#FF5722' }} />
-                        Email *
-                      </Label>
-                      <Input
-                        id="emailPrincipal"
-                        type="email"
-                        value={formulario.emailPrincipal}
-                        onChange={(e) => setFormulario({ ...formulario, emailPrincipal: e.target.value })}
-                        placeholder="contact@exemple.com"
-                        className="h-11 text-sm border-2"
-                        style={{ 
-                          borderColor: formulario.emailPrincipal ? '#FF5722' : '#E5E7EB',
-                          boxShadow: formulario.emailPrincipal ? '0 0 0 3px #FF572220' : 'none'
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Ville */}
-                  <div>
-                    <Label htmlFor="ciudad" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                      <MapPin className="w-4 h-4" style={{ color: '#FF5722' }} />
-                      Ville
-                    </Label>
-                    <Input
-                      id="ciudad"
-                      value={formulario.ciudad}
-                      onChange={(e) => setFormulario({ ...formulario, ciudad: e.target.value })}
-                      placeholder="Laval"
-                      className="h-11 text-sm border-2"
-                      style={{ 
-                        borderColor: formulario.ciudad ? '#FF5722' : '#E5E7EB',
-                        boxShadow: formulario.ciudad ? '0 0 0 3px #FF572220' : 'none'
-                      }}
-                    />
-                  </div>
-
-                  {/* Botón para mostrar campo opcional */}
-                  {!mostrarCampoOpcional && (
-                    <button
-                      type="button"
-                      onClick={() => setMostrarCampoOpcional(true)}
-                      className="text-sm hover:text-gray-700 flex items-center gap-2 w-full p-3 rounded-lg border-2 border-dashed hover:border-solid transition-all"
-                      style={{ color: '#FF5722', borderColor: '#FF572240' }}
-                    >
-                      <FileText className="w-4 h-4" />
-                      + Ajouter des notes (optionnel)
-                    </button>
-                  )}
-
-                  {/* Notes (opcional) */}
-                  {mostrarCampoOpcional && (
-                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                      <Label htmlFor="notas" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                        <FileText className="w-4 h-4" style={{ color: '#FF5722' }} />
-                        Notes
-                        <span className="text-xs text-gray-400 font-normal ml-1">(optionnel)</span>
-                      </Label>
-                      <Textarea
-                        id="notas"
-                        value={formulario.notas}
-                        onChange={(e) => setFormulario({ ...formulario, notas: e.target.value })}
-                        placeholder="Notes additionnelles..."
-                        rows={3}
-                        className="text-sm border-2 resize-none"
-                        style={{ 
-                          borderColor: formulario.notas ? '#FF5722' : '#E5E7EB',
-                          boxShadow: formulario.notas ? '0 0 0 3px #FF572220' : 'none'
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* SECCIÓN EXCLUSIVA PARA FOURNISSEUR */}
-              {formulario.tipoContacto === 'fournisseur' && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
-                  {/* Banner FOURNISSEUR */}
-                  <div 
-                    className="p-4 rounded-xl border-2 animate-pulse"
-                    style={{ 
-                      backgroundColor: '#1E73BE10',
-                      borderColor: '#1E73BE',
-                      boxShadow: '0 0 20px #1E73BE30'
-                    }}
-                  >
-                    <p className="text-center font-bold text-lg" style={{ color: '#1E73BE', fontFamily: 'Montserrat, sans-serif' }}>
-                      📦 FORMULAIRE FOURNISSEUR - 8 CHAMPS + ENTREPRISE
-                    </p>
-                  </div>
-
-                  {/* Fila 1: Prénom + Nom */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="nombre-f" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                        <User className="w-4 h-4" style={{ color: '#1E73BE' }} />
-                        Prénom *
-                      </Label>
-                      <Input
-                        id="nombre-f"
-                        value={formulario.nombre}
-                        onChange={(e) => setFormulario({ ...formulario, nombre: e.target.value })}
-                        placeholder="Jean"
-                        className="h-11 text-sm border-2"
-                        style={{ 
-                          borderColor: formulario.nombre ? '#1E73BE' : '#E5E7EB',
-                          boxShadow: formulario.nombre ? '0 0 0 3px #1E73BE20' : 'none'
-                        }}
-                        autoFocus
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="apellido-f" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                        <User className="w-4 h-4" style={{ color: '#1E73BE' }} />
-                        Nom *
-                      </Label>
-                      <Input
-                        id="apellido-f"
-                        value={formulario.apellido}
-                        onChange={(e) => setFormulario({ ...formulario, apellido: e.target.value })}
-                        placeholder="Dupont"
-                        className="h-11 text-sm border-2"
-                        style={{ 
-                          borderColor: formulario.apellido ? '#1E73BE' : '#E5E7EB',
-                          boxShadow: formulario.apellido ? '0 0 0 3px #1E73BE20' : 'none'
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Empresa - CAMPO ÚNICO PARA FOURNISSEUR */}
-                  <div className="relative">
-                    <div className="absolute -left-3 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-blue-700 rounded-full"></div>
-                    <Label htmlFor="nombreEmpresa" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                      <Building2 className="w-4 h-4" style={{ color: '#1E73BE' }} />
-                      Nom de l&apos;entreprise *
-                      <Badge style={{ backgroundColor: '#1E73BE', color: 'white' }}>REQUIS</Badge>
-                    </Label>
-                    <Input
-                      id="nombreEmpresa"
-                      value={formulario.nombreEmpresa}
-                      onChange={(e) => setFormulario({ ...formulario, nombreEmpresa: e.target.value })}
-                      placeholder="Aliments ABC Inc."
-                      className="h-11 text-sm border-2"
-                      style={{ 
-                        borderColor: formulario.nombreEmpresa ? '#1E73BE' : '#E5E7EB',
-                        boxShadow: formulario.nombreEmpresa ? '0 0 0 3px #1E73BE20' : 'none'
-                      }}
-                    />
-                  </div>
-
-                  {/* Fila 2: Téléphone + Email */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="telefonoPrincipal-f" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                        <Phone className="w-4 h-4" style={{ color: '#1E73BE' }} />
-                        Téléphone *
-                      </Label>
-                      <Input
-                        id="telefonoPrincipal-f"
-                        type="tel"
-                        value={formulario.telefonoPrincipal}
-                        onChange={(e) => setFormulario({ ...formulario, telefonoPrincipal: e.target.value })}
-                        placeholder="(514) 555-0123"
-                        className="h-11 text-sm border-2"
-                        style={{ 
-                          borderColor: formulario.telefonoPrincipal ? '#1E73BE' : '#E5E7EB',
-                          boxShadow: formulario.telefonoPrincipal ? '0 0 0 3px #1E73BE20' : 'none'
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="emailPrincipal-f" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                        <Mail className="w-4 h-4" style={{ color: '#1E73BE' }} />
-                        Email *
-                      </Label>
-                      <Input
-                        id="emailPrincipal-f"
-                        type="email"
-                        value={formulario.emailPrincipal}
-                        onChange={(e) => setFormulario({ ...formulario, emailPrincipal: e.target.value })}
-                        placeholder="contact@exemple.com"
-                        className="h-11 text-sm border-2"
-                        style={{ 
-                          borderColor: formulario.emailPrincipal ? '#1E73BE' : '#E5E7EB',
-                          boxShadow: formulario.emailPrincipal ? '0 0 0 3px #1E73BE20' : 'none'
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Ville */}
-                  <div>
-                    <Label htmlFor="ciudad-f" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                      <MapPin className="w-4 h-4" style={{ color: '#1E73BE' }} />
-                      Ville
-                    </Label>
-                    <Input
-                      id="ciudad-f"
-                      value={formulario.ciudad}
-                      onChange={(e) => setFormulario({ ...formulario, ciudad: e.target.value })}
-                      placeholder="Laval"
-                      className="h-11 text-sm border-2"
-                      style={{ 
-                        borderColor: formulario.ciudad ? '#1E73BE' : '#E5E7EB',
-                        boxShadow: formulario.ciudad ? '0 0 0 3px #1E73BE20' : 'none'
-                      }}
-                    />
-                  </div>
-
-                  {/* Catégories de produits - CAMPO ÚNICO PARA FOURNISSEUR */}
-                  <div className="relative">
-                    <div className="absolute -left-3 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-blue-700 rounded-full"></div>
-                    <Label className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                      <Package className="w-4 h-4" style={{ color: '#1E73BE' }} />
-                      Catégories de produits
-                      {formulario.categoriaProductos.length > 0 && (
-                        <Badge style={{ backgroundColor: '#1E73BE', color: 'white' }}>
-                          {formulario.categoriaProductos.length} sélectionnée{formulario.categoriaProductos.length > 1 ? 's' : ''}
-                        </Badge>
-                      )}
-                    </Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {categoriesProductos.map((cat) => {
-                        const isSelected = formulario.categoriaProductos.includes(cat.value);
-                        return (
-                          <button
-                            key={cat.value}
-                            type="button"
-                            onClick={() => toggleCategoria(cat.value)}
-                            className={`\n                              px-3 py-2 rounded-lg text-xs font-medium border-2 transition-all text-left\n                              ${isSelected ? 'shadow-lg scale-105' : 'hover:border-gray-300'}\n                            `}\n                            style={{\n                              borderColor: isSelected ? cat.color : '#E5E7EB',\n                              backgroundColor: isSelected ? `${cat.color}20` : '#FFFFFF',\n                              color: isSelected ? cat.color : '#6B7280'\n                            }}\n                          >\n                            {cat.label}\n                          </button>\n                        );\n                      })}\n                    </div>\n                  </div>
-
-                  {/* Botón para mostrar campo opcional */}
-                  {!mostrarCampoOpcional && (
-                    <button
-                      type="button"
-                      onClick={() => setMostrarCampoOpcional(true)}
-                      className="text-sm hover:text-gray-700 flex items-center gap-2 w-full p-3 rounded-lg border-2 border-dashed hover:border-solid transition-all"
-                      style={{ color: '#1E73BE', borderColor: '#1E73BE40' }}
-                    >
-                      <FileText className="w-4 h-4" />
-                      + Ajouter des notes (optionnel)
-                    </button>
-                  )}
-
-                  {/* Notes (opcional) */}
-                  {mostrarCampoOpcional && (
-                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                      <Label htmlFor="notas-f" className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
-                        <FileText className="w-4 h-4" style={{ color: '#1E73BE' }} />
-                        Notes
-                        <span className="text-xs text-gray-400 font-normal ml-1">(optionnel)</span>
-                      </Label>
-                      <Textarea
-                        id="notas-f"
-                        value={formulario.notas}
-                        onChange={(e) => setFormulario({ ...formulario, notas: e.target.value })}
-                        placeholder="Notes additionnelles..."
-                        rows={3}
-                        className="text-sm border-2 resize-none"
-                        style={{ 
-                          borderColor: formulario.notas ? '#1E73BE' : '#E5E7EB',
-                          boxShadow: formulario.notas ? '0 0 0 3px #1E73BE20' : 'none'
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            {/* FORMULARIOS SEPARADOS - SOLUCIÓN DEFINITIVA */}
+            {formulario.tipoContacto === 'donador' ? (
+              <FormularioDonateur 
+                formulario={formulario}
+                setFormulario={setFormulario}
+                mostrarCampoOpcional={mostrarCampoOpcional}
+                setMostrarCampoOpcional={setMostrarCampoOpcional}
+              />
+            ) : (
+              <FormularioFournisseur 
+                formulario={formulario}
+                setFormulario={setFormulario}
+                mostrarCampoOpcional={mostrarCampoOpcional}
+                setMostrarCampoOpcional={setMostrarCampoOpcional}
+              />
+            )}
 
             {/* Info box */}
             <div 
@@ -809,7 +789,7 @@ export function FormularioContactoExpress({
             </div>
           </div>
 
-          {/* Footer con botones */}
+          {/* Footer */}
           <div className="px-6 py-4 bg-gray-50 flex justify-between items-center border-t border-gray-200">
             <div className="text-xs text-gray-500">
               * Champs obligatoires

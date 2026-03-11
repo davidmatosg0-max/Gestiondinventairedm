@@ -119,10 +119,10 @@ export function FormularioContactoEntrepotCompacto({
   };
 
   const tiposContacto = [
-    { value: 'fournisseur', label: 'Fournisseur', icon: '📦', color: '#1E73BE' },
-    { value: 'donador', label: 'Donateur', icon: '🎁', color: '#FF5722' },
-    { value: 'transportista', label: 'Transporteur', icon: '🚚', color: '#4CAF50' },
-    { value: 'partenaire', label: 'Partenaire', icon: '⭐', color: '#FF9800' }
+    { value: 'donador', label: 'Donateur', icon: '🎁', color: '#4CAF50' }, // Verde
+    { value: 'fournisseur', label: 'Fournisseur', icon: '📦', color: '#FF9800' }, // Naranja
+    { value: 'transportista', label: 'Transporteur', icon: '🚚', color: '#2196F3' }, // Azul claro
+    { value: 'partenaire', label: 'Partenaire', icon: '⭐', color: '#9C27B0' } // Morado
   ];
 
   const temperaturasEspecializadas = [
@@ -345,6 +345,34 @@ export function FormularioContactoEntrepotCompacto({
                 {/* Tab: Base */}
                 <TabsContent value="base" className="flex-1 overflow-y-auto px-6 py-6 scrollbar-thin m-0 bg-[#F5F5F5]">
                   <div className="max-w-5xl">
+                    {/* BANNER DE DIAGNÓSTICO */}
+                    <div 
+                      className="mb-6 p-6 rounded-xl border-4"
+                      style={{
+                        backgroundColor: formulario.tipoContacto === 'donador' ? '#4CAF5015' : '#FF980015',
+                        borderColor: formulario.tipoContacto === 'donador' ? '#4CAF50' : '#FF9800',
+                        boxShadow: `0 0 20px ${formulario.tipoContacto === 'donador' ? '#4CAF5030' : '#FF980030'}`
+                      }}
+                    >
+                      <p className="text-2xl font-bold mb-2" style={{ 
+                        color: formulario.tipoContacto === 'donador' ? '#4CAF50' : '#FF9800',
+                        fontFamily: 'Montserrat, sans-serif' 
+                      }}>
+                        {formulario.tipoContacto === 'donador' 
+                          ? '🎁 DIAGNOSTIC: DONATEUR SÉLECTIONNÉ (DEVRAIT ÊTRE VERT #4CAF50)' 
+                          : '📦 DIAGNOSTIC: FOURNISSEUR SÉLECTIONNÉ (DEVRAIT ÊTRE ORANGE #FF9800)'
+                        }
+                      </p>
+                      <p className="text-lg font-bold" style={{ 
+                        color: formulario.tipoContacto === 'donador' ? '#4CAF50' : '#FF9800'
+                      }}>
+                        VALEUR ACTUELLE: {formulario.tipoContacto}
+                      </p>
+                      <p className="text-sm text-gray-600 mt-2">
+                        Si vous ne voyez pas de différence de couleur en changeant de type dans la sidebar, il y a un problème de cache.
+                      </p>
+                    </div>
+
                     {/* Fila 1: Prénom, Nom, Email */}
                     <div className="grid grid-cols-3 gap-4 mb-4">
                       <div>
