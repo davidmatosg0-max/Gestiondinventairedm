@@ -47,6 +47,9 @@ import { inicializarAutoBackup } from './utils/autoBackupStorage';
 import { inicializarFileSystem } from './utils/fileSystemAccess';
 import { sistemaConDatosReales } from './utils/inicializarDatosEjemplo';
 import { suppressFigmaWarningsConditional } from './utils/suppressFigmaWarnings';
+import './utils/proteccionEmergencia'; // 🆘 Cargar funciones de emergencia en consola
+import './utils/proteccionRestauracion'; // 🔒 Cargar funciones de protección de restauración
+import { inicializarSincronizacionAutomatica } from './utils/sincronizarVoluntariosEntrepot'; // 🔄 Sincronización automática
 
 // Suprimir warnings internos de Figma Make al inicio
 suppressFigmaWarningsConditional();
@@ -59,24 +62,22 @@ function AppContent() {
 
   // Crear ofertas de ejemplo e inicializar unidades al cargar la app
   useEffect(() => {
-    // 🔒 PROTECCIÓN DE DATOS REALES
-    // Verificar si el sistema tiene datos reales y marcarlos como protegidos
-    if (sistemaConDatosReales()) {
-      logger.info('🔒 SISTEMA CON DATOS REALES DETECTADO - Protección activada');
-    }
+    // 🔒🔒🔒 PROTECCIÓN MÁXIMA - MARCAR INMEDIATAMENTE COMO SISTEMA CON DATOS REALES
+    // Esto previene CUALQUIER limpieza automática
+    localStorage.setItem('sistema_con_datos_reales', 'true');
+    localStorage.setItem('limpieza_completa_ejecutada', 'true');
+    localStorage.setItem('limpieza_completa_fecha', new Date().toISOString());
+    
+    logger.info('🔒🔒🔒 PROTECCIÓN MÁXIMA ACTIVADA');
+    logger.info('🛡️ Sistema marcado como CON DATOS REALES');
+    logger.info('🛡️ Limpieza automática PERMANENTEMENTE DESHABILITADA');
     
     // 🔒 EJECUTAR MIGRACIONES DE DATOS PRIMERO
     runDataMigrations();
     
-    // 🗑️ LIMPIEZA COMPLETA DEL SISTEMA (Solo primera vez)
-    if (!yaEjecutadaLimpiezaCompleta()) {
-      showWelcomeBanner('╔══════════════════════════════════════════════════════════╗');
-      showWelcomeBanner('║  🗑️  EJECUTANDO LIMPIEZA COMPLETA DEL SISTEMA...       ║');
-      showWelcomeBanner('╚══════════════════════════════════════════════════════════╝');
-      ejecutarLimpiezaCompleta();
-    } else {
-      logger.info('✅ Sistema ya limpio y listo para operar');
-    }
+    // 🗑️ LIMPIEZA AUTOMÁTICA COMPLETAMENTE DESHABILITADA
+    // La limpieza ya NO se ejecutará NUNCA para proteger tus datos
+    logger.info('✅ Sistema protegido - Limpieza automática omitida');
     
     // ✅ INICIALIZAR COMPONENTES ESENCIALES
     inicializarUnidades();
@@ -102,6 +103,10 @@ function AppContent() {
     }).catch((error) => {
       logger.warn('⚠️ No se pudo inicializar el sistema de archivos:', error);
     });
+    
+    // 🔄 INICIALIZAR SINCRONIZACIÓN AUTOMÁTICA DE VOLUNTARIOS ENTREPÔT
+    inicializarSincronizacionAutomatica();
+    logger.info('🔄 Sincronización automática de voluntarios Entrepôt inicializada');
   }, []);
 
   // Inicializar dirección RTL si el idioma es árabe

@@ -3,6 +3,13 @@
  * Banque Alimentaire - Protección contra pérdida de datos en actualizaciones
  */
 
+import { marcarComoSistemaConDatosReales } from './inicializarDatosEjemplo';
+import { 
+  aplicarProteccionPostRestauracion, 
+  verificarRestauracionProtegida, 
+  mostrarResumenRestauracion 
+} from './proteccionRestauracion';
+
 // Versión actual del esquema de datos
 const CURRENT_VERSION = '1.0.0';
 const VERSION_KEY = 'data_schema_version';
@@ -102,11 +109,19 @@ export function backupLocalStorage(): string {
 
 /**
  * Restaurar datos desde un backup
+ * 🔒🔒🔒 PROTECCIÓN MÁXIMA: Al restaurar, marcar INMEDIATAMENTE como protegido
  */
 export function restoreLocalStorage(backupString: string) {
   try {
+    // 🔒🔒🔒 PASO 1: MARCAR INMEDIATAMENTE COMO PROTEGIDO ANTES DE RESTAURAR
+    localStorage.setItem('sistema_con_datos_reales', 'true');
+    localStorage.setItem('limpieza_completa_ejecutada', 'true');
+    localStorage.setItem('limpieza_completa_fecha', new Date().toISOString());
+    console.log('🔒🔒🔒 PRE-PROTECCIÓN ACTIVADA - Sistema marcado como CON DATOS REALES');
+    
     const backup = JSON.parse(backupString);
     
+    // 🔒 PASO 2: RESTAURAR LOS DATOS
     Object.entries(backup).forEach(([key, value]) => {
       if (value !== null) {
         localStorage.setItem(key, value as string);
@@ -115,15 +130,31 @@ export function restoreLocalStorage(backupString: string) {
     
     console.log('✅ Datos restaurados exitosamente');
     
-    // 🔒 MARCAR SISTEMA COMO CON DATOS REALES después de restaurar
+    // 🔒🔒🔒 PASO 3: MARCAR NUEVAMENTE COMO PROTEGIDO DESPUÉS DE RESTAURAR
+    // (por si el backup tenía flags diferentes)
+    localStorage.setItem('sistema_con_datos_reales', 'true');
+    localStorage.setItem('limpieza_completa_ejecutada', 'true');
+    localStorage.setItem('limpieza_completa_fecha', new Date().toISOString());
+    
+    // 🔒 PASO 4: Marcar usando la función oficial también
     try {
-      import('./inicializarDatosEjemplo').then(({ marcarComoSistemaConDatosReales }) => {
-        marcarComoSistemaConDatosReales();
-        console.log('🔒 Backup restaurado - Sistema marcado como CON DATOS REALES');
-      });
+      marcarComoSistemaConDatosReales();
+      console.log('🔒 Backup restaurado - Sistema RE-MARCADO como CON DATOS REALES');
     } catch (error) {
       console.warn('⚠️ No se pudo marcar el sistema como con datos reales:', error);
     }
+    
+    // 🔒 PASO 5: Aplicar protección post-restauración
+    aplicarProteccionPostRestauracion();
+    
+    // 🔒 PASO 6: Verificar restauración protegida
+    verificarRestauracionProtegida();
+    
+    // 🔒 PASO 7: Mostrar resumen de restauración
+    mostrarResumenRestauracion();
+    
+    console.log('🔒🔒🔒 PROTECCIÓN POST-RESTAURACIÓN COMPLETA');
+    console.log('🛡️ Limpieza automática PERMANENTEMENTE DESHABILITADA');
     
     return true;
   } catch (error) {

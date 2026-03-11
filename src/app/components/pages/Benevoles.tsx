@@ -23,6 +23,7 @@ import { SelecteurJoursDisponibles, type JourDisponible } from '../shared/Select
 import { obtenerDepartamentos } from '../../utils/departamentosStorage';
 import { obtenerUsuarioSesion, tienePermiso } from '../../utils/sesionStorage';
 import { guardarContacto, type ContactoDepartamento } from '../../utils/contactosDepartamentoStorage';
+import { sincronizarVoluntariosEntrepot } from '../../utils/sincronizarVoluntariosEntrepot';
 import { BoutonRetourHeader } from '../shared/BoutonRetour';
 import { 
   UserPlus, 
@@ -1129,14 +1130,30 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     // Actualizar el bénévole con los nuevos departamentos
     const benevolesActualizados = benevoles.map(b => {
       if (b.id === benevoleSeleccionadoAsignar.id) {
-        return { ...b, departement: departamentosAsignar };
+        // 🔧 FIX: Convertir array a string con comas para compatibilidad
+        const departementString = Array.isArray(departamentosAsignar) 
+          ? departamentosAsignar.join(', ') 
+          : departamentosAsignar;
+        return { ...b, departement: departementString };
       }
       return b;
     });
     
     // 🔒 GUARDAR EN LOCALSTORAGE - ¡ESTO FALTABA!
     localStorage.setItem('benevoles', JSON.stringify(benevolesActualizados));
+    localStorage.setItem('banqueAlimentaire_benevoles', JSON.stringify(benevolesActualizados));
     setBenevoles(benevolesActualizados);
+
+    // 🔄 SINCRONIZAR AUTOMÁTICAMENTE SI SE ASIGNÓ A ENTREPÔT
+    if (departamentosAsignar.some(dept => dept.toLowerCase().includes('entrepôt') || dept.toLowerCase().includes('entrepot'))) {
+      console.log('🔄 Sincronizando bénévole a contactos de Entrepôt...');
+      setTimeout(() => {
+        const resultado = sincronizarVoluntariosEntrepot();
+        if (resultado.sincronizados > 0) {
+          toast.success('✅ Bénévole synchronisé automatiquement vers Contacts Entrepôt');
+        }
+      }, 500);
+    }
 
     toast.success(`✅ Bénévole assigné à ${departamentosAsignar.length} département(s)`);
     setDialogAsignarDepartamentos(false);

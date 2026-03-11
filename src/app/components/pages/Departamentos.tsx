@@ -47,6 +47,7 @@ import {
   type Departamento
 } from '../../utils/departamentosStorage';
 import { obtenerContactosDepartamento } from '../../utils/contactosDepartamentoStorage';
+import { sincronizarVoluntariosEntrepot } from '../../utils/sincronizarVoluntariosEntrepot';
 
 // Mapa de iconos disponibles
 const iconosDisponibles: Record<string, React.ElementType> = {

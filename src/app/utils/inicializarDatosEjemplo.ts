@@ -319,8 +319,14 @@ export function inicializarTodosDatosEjemplo(): void {
 
 /**
  * Limpia TODOS los datos de ejemplo del sistema
+ * 🔒 FUNCIÓN DESHABILITADA - NO HACE NADA
  */
 export function limpiarDatosEjemplo(): void {
+  console.log('🔒 limpiarDatosEjemplo() - DESHABILITADA para protección de datos');
+  console.log('🔒 Esta función ya NO limpia datos para proteger tu información');
+  return; // NO HACER NADA
+  
+  /* CÓDIGO DESHABILITADO
   console.log('🧹 Limpiando datos de ejemplo...');
 
   const keys = [
@@ -342,6 +348,7 @@ export function limpiarDatosEjemplo(): void {
   });
 
   console.log('✅ Datos de ejemplo limpiados');
+  */
 }
 
 /**

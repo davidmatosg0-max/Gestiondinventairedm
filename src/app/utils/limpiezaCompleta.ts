@@ -1,25 +1,27 @@
 /**
- * Limpieza Completa del Sistema
- * Vacía todos los datos de ejemplo manteniendo:
- * - Departamentos estructurados
- * - Configuraciones del sistema
- * - Usuarios permanentes (David y admin)
- * 
- * ⚠️ PROTECCIÓN: NUNCA se ejecuta si hay datos reales del usuario
- */
-
-import { obtenerUsuarios, guardarUsuarios } from './usuarios';
-import { sistemaConDatosReales } from './inicializarDatosEjemplo';
-
-const USUARIOS_PERMANENTES = ['David', 'admin'];
-
-/**
  * Ejecuta una limpieza completa del sistema
  * Elimina todos los datos de ejemplo pero mantiene configuraciones esenciales
  * 
  * ⚠️ PROTECCIÓN: Si detecta datos reales, NO ejecuta la limpieza
+ * 🔒🔒🔒 PROTECCIÓN MÁXIMA: ESTA FUNCIÓN ESTÁ PERMANENTEMENTE DESHABILITADA
  */
 export function ejecutarLimpiezaCompleta(): void {
+  // 🔒🔒🔒 PROTECCIÓN MÁXIMA - NUNCA EJECUTAR ESTA FUNCIÓN
+  console.log('🔒 ========================================');
+  console.log('🔒 LIMPIEZA AUTOMÁTICA PERMANENTEMENTE DESHABILITADA');
+  console.log('🔒 ========================================');
+  console.log('🔒 Esta función ya NO se ejecuta para proteger tus datos.');
+  console.log('🔒 El sistema está configurado para preservar todos los datos.');
+  console.log('🔒 Si necesitas limpiar manualmente, usa la opción en Configuración.');
+  
+  // Marcar como ejecutada sin hacer nada
+  localStorage.setItem('limpieza_completa_ejecutada', 'true');
+  localStorage.setItem('limpieza_completa_fecha', new Date().toISOString());
+  localStorage.setItem('sistema_con_datos_reales', 'true');
+  
+  return; // Salir inmediatamente sin hacer nada
+  
+  /* CÓDIGO DESHABILITADO - NO SE EJECUTARÁ NUNCA
   // 🔒 PROTECCIÓN: Verificar si hay datos reales antes de limpiar
   if (sistemaConDatosReales()) {
     console.log('🔒 ========================================');
@@ -80,8 +82,13 @@ export function ejecutarLimpiezaCompleta(): void {
 
 /**
  * Limpia todos los datos de ejemplo del sistema
+ * 🔒 FUNCIÓN DESHABILITADA - NO HACE NADA
  */
 function limpiarDatosEjemplo(): void {
+  console.log('🔒 limpiarDatosEjemplo() - DESHABILITADA para protección de datos');
+  return; // NO HACER NADA
+  
+  /* CÓDIGO DESHABILITADO
   console.log('🗑️  Limpiando datos de ejemplo...');
   
   const clavesEjemplo = [
@@ -157,8 +164,13 @@ function limpiarDatosEjemplo(): void {
 
 /**
  * Limpia datos operacionales pero mantiene la estructura
+ * 🔒 FUNCIÓN DESHABILITADA - NO HACE NADA
  */
 function limpiarDatosOperacionales(): void {
+  console.log('🔒 limpiarDatosOperacionales() - DESHABILITADA para protección de datos');
+  return; // NO HACER NADA
+  
+  /* CÓDIGO DESHABILITADO
   console.log('🗑️  Limpiando datos operacionales...');
   
   // Limpiar categorías predeterminadas
@@ -271,9 +283,22 @@ export function obtenerFechaUltimaLimpieza(): string | null {
 
 /**
  * Fuerza una nueva limpieza (ignora si ya se ejecutó)
+ * 🔒 FUNCIÓN DESHABILITADA - NO HACE NADA
  */
 export function forzarLimpiezaCompleta(): void {
+  console.log('🔒 forzarLimpiezaCompleta() - DESHABILITADA para protección de datos');
+  console.log('🔒 No se puede forzar la limpieza. Todos los datos están protegidos.');
+  
+  // Asegurar que los flags de protección estén activos
+  localStorage.setItem('limpieza_completa_ejecutada', 'true');
+  localStorage.setItem('limpieza_completa_fecha', new Date().toISOString());
+  localStorage.setItem('sistema_con_datos_reales', 'true');
+  
+  return; // NO HACER NADA
+  
+  /* CÓDIGO DESHABILITADO
   localStorage.removeItem('limpieza_completa_ejecutada');
   localStorage.removeItem('limpieza_completa_fecha');
   ejecutarLimpiezaCompleta();
+  */
 }

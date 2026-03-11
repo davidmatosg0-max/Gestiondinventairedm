@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Download, Upload, Database, CheckCircle, AlertTriangle, Info } from 'lucide-react';
+import { Download, Upload, Database, CheckCircle, AlertTriangle, Info, Shield } from 'lucide-react';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
 import { backupLocalStorage, restoreLocalStorage, downloadBackup, inspectLocalStorage } from '../utils/dataMigration';
 import { AutoBackupConfig } from './backup/AutoBackupConfig';
+import { marcarComoSistemaConDatosReales, sistemaConDatosReales } from '../utils/inicializarDatosEjemplo';
 
 export function BackupManager() {
   const [backupInfo, setBackupInfo] = useState<string>('');
+  const [datosProtegidos, setDatosProtegidos] = useState<boolean>(sistemaConDatosReales());
 
   const handleDownloadBackup = () => {
     try {
@@ -29,13 +31,33 @@ export function BackupManager() {
       const content = e.target?.result as string;
       
       if (confirm('⚠️ ATTENTION: Cette opération remplacera toutes les données actuelles. Voulez-vous continuer?')) {
+        // 🔒 MARCAR COMO PROTEGIDO ANTES DE RESTAURAR
+        localStorage.setItem('sistema_con_datos_reales', 'true');
+        localStorage.setItem('limpieza_completa_ejecutada', 'true');
+        localStorage.setItem('limpieza_completa_fecha', new Date().toISOString());
+        
         const success = restoreLocalStorage(content);
         
         if (success) {
-          toast.success('Données restaurées avec succès', {
-            description: 'La page va se recharger...'
+          // 🔒 MARCAR NUEVAMENTE COMO PROTEGIDO DESPUÉS DE RESTAURAR
+          localStorage.setItem('sistema_con_datos_reales', 'true');
+          localStorage.setItem('limpieza_completa_ejecutada', 'true');
+          localStorage.setItem('limpieza_completa_fecha', new Date().toISOString());
+          marcarComoSistemaConDatosReales();
+          
+          // Actualizar estado de protección
+          setDatosProtegidos(true);
+          
+          toast.success('✅ Données restaurées avec succès!', {
+            description: '🔒 Système protégé - Rechargez manuellement (F5) si nécessaire',
+            duration: 5000
           });
-          setTimeout(() => window.location.reload(), 1500);
+          
+          // 🔒 NO RECARGAR AUTOMÁTICAMENTE - Dejar que el usuario lo haga manualmente
+          // setTimeout(() => window.location.reload(), 1500);
+          
+          console.log('🔒🔒🔒 BACKUP RESTAURÉ ET PROTÉGÉ');
+          console.log('🛡️ Vous pouvez recharger la page en toute sécurité (F5)');
         } else {
           toast.error('Erreur lors de la restauration des données');
         }
@@ -54,8 +76,62 @@ export function BackupManager() {
     toast.info('Inspection complète affichée dans la console');
   };
 
+  const handleProtegerDatos = () => {
+    if (confirm('🔒 PROTEGER DATOS\n\nEsta acción marcará sus datos actuels comme DATOS REALES et evitará que se eliminen automatiquement.\n\n¿Desea continuar?')) {
+      marcarComoSistemaConDatosReales();
+      setDatosProtegidos(true);
+      toast.success('✅ Datos protegidos avec succès', {
+        description: 'Sus datos no se eliminarán automatiquement al recargar la page'
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* 🔒 PANEL DE PROTECCIÓN DE DATOS - EMERGENCIA */}
+      <div className={`rounded-xl border p-6 shadow-sm ${datosProtegidos ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3 flex-1">
+            <div className={`p-3 rounded-lg ${datosProtegidos ? 'bg-green-100' : 'bg-red-100'}`}>
+              <Shield className={`w-6 h-6 ${datosProtegidos ? 'text-green-600' : 'text-red-600'}`} />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold mb-1" style={{ fontFamily: 'Montserrat, sans-serif', color: datosProtegidos ? '#059669' : '#DC2626' }}>
+                {datosProtegidos ? '🔒 Données Protégées' : '⚠️ Données Non Protégées'}
+              </h3>
+              <p className={`text-sm mb-2 ${datosProtegidos ? 'text-green-800' : 'text-red-800'}`}>
+                {datosProtegidos 
+                  ? 'Vos données sont marquées comme DONNÉES RÉELLES et ne seront PAS supprimées automatiquement lors du rechargement de la page.'
+                  : 'ATTENTION: Vos données peuvent être supprimées lors du rechargement. Protégez-les maintenant!'
+                }
+              </p>
+              {!datosProtegidos && (
+                <ul className="text-xs text-red-700 space-y-1 ml-4">
+                  <li>• La première fois que vous rechargez, le système nettoie les données d'exemple</li>
+                  <li>• Si vos données ne sont pas protégées, elles seront supprimées</li>
+                  <li>• Utilisez le bouton ci-dessous pour les protéger IMMÉDIATEMENT</li>
+                </ul>
+              )}
+            </div>
+          </div>
+          {!datosProtegidos && (
+            <Button
+              onClick={handleProtegerDatos}
+              className="bg-red-600 hover:bg-red-700 text-white flex-shrink-0"
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              Protéger Maintenant
+            </Button>
+          )}
+          {datosProtegidos && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-green-100 rounded-lg flex-shrink-0">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              <span className="text-sm font-semibold text-green-700">Activé</span>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
           <div className="bg-blue-100 p-3 rounded-lg">

@@ -245,11 +245,15 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
     if (!('serial' in navigator)) return [];
     
     try {
+      // 🔇 SILENCIAR ERROR - Verificar permisos primero
+      if (!navigator.serial || !navigator.serial.getPorts) return [];
+      
       const ports = await navigator.serial.getPorts();
       setAvailablePorts(ports);
       console.log(`📡 Pennsylvania Scale: ${ports.length} puerto(s) disponible(s)`);
       return ports;
     } catch (err: any) {
+      // 🔇 SILENCIAR COMPLETAMENTE - No mostrar error en consola
       // Ignorar errores de permisos - es normal en algunos contextos
       return [];
     }
@@ -260,17 +264,16 @@ export function useBalance(customConfig?: Partial<BalanceConfig>) {
     if (!('serial' in navigator)) return false;
     
     try {
+      // 🔇 SILENCIAR ERROR DE PERMISOS - NO INTENTAR ACCEDER SI NO HAY POLÍTICA
+      // Verificar primero si la función existe antes de llamarla
+      if (!navigator.serial.getPorts) return false;
+      
       // Intentar acceder a getPorts - si falla, no tenemos permisos
       await navigator.serial.getPorts();
       return true;
     } catch (err: any) {
-      // Silenciar completamente errores de permisos
+      // 🔇 SILENCIAR COMPLETAMENTE - No mostrar ningún error en consola
       // Es normal que no haya permisos hasta que el usuario conecte manualmente
-      if (err.message && err.message.includes('permissions policy')) {
-        // Este es el error esperado cuando no hay permisos de política
-        return false;
-      }
-      // No tenemos permisos - el usuario debe conectar manualmente primero
       return false;
     }
   }, []);
