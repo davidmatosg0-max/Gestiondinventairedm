@@ -223,7 +223,7 @@ export function ModeloComanda({
 
   return (
     <Dialog open={mostrar} onOpenChange={onCerrar}>
-      <DialogContent className="w-screen h-screen max-w-none max-h-none !top-0 !left-0 !translate-x-0 !translate-y-0 p-0 overflow-y-auto print:max-w-full print:max-h-full m-0 rounded-none">
+      <DialogContent className="w-screen h-screen max-w-none max-h-none !top-0 !left-0 !translate-x-0 !translate-y-0 p-0 overflow-y-auto print:max-w-full print:max-h-full m-0 rounded-none" aria-describedby={undefined}>
         <DialogHeader className="sr-only">
           <DialogTitle>{t('orders.dialog.title', { number: comanda.numero })}</DialogTitle>
           <DialogDescription>{t('orders.dialog.description')}</DialogDescription>

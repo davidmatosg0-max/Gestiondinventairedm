@@ -17,6 +17,32 @@ import { toast } from 'sonner';
 import { AddressAutocomplete } from '../ui/address-autocomplete';
 import { Checkbox } from '../ui/checkbox';
 
+// ===== UTILITÉ: Formatage des heures =====
+/**
+ * Formate les heures décimales en format lisible
+ * @param heures - Nombre d'heures en décimal (ex: 26.97)
+ * @param format - 'short' pour "27h" ou 'long' pour "26h 58m"
+ * @returns Chaîne formatée
+ */
+const formaterHeures = (heures: number, format: 'short' | 'long' = 'short'): string => {
+  if (format === 'short') {
+    // Format court: arrondir à l'entier le plus proche
+    return `${Math.round(heures)}h`;
+  } else {
+    // Format long: afficher heures et minutes
+    const heuresEntieres = Math.floor(heures);
+    const minutes = Math.round((heures - heuresEntieres) * 60);
+    
+    if (minutes === 0) {
+      return `${heuresEntieres}h`;
+    } else if (minutes === 60) {
+      return `${heuresEntieres + 1}h`;
+    } else {
+      return `${heuresEntieres}h ${minutes}m`;
+    }
+  }
+};
+
 interface Note {
   id: number;
   text: string;
@@ -833,7 +859,7 @@ export function FicheBenevole({ benevole, onNavigate, onUpdate }: FicheBenevoleP
                     Heures totales accumulées
                   </p>
                   <p className="text-5xl font-bold text-[#1E73BE]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {formData.heuresTotal}h
+                    {formaterHeures(formData.heuresTotal)}
                   </p>
                   <p className="text-xs text-[#666666] mt-2">
                     Depuis l'inscription
@@ -853,7 +879,7 @@ export function FicheBenevole({ benevole, onNavigate, onUpdate }: FicheBenevoleP
                     Heures ce mois-ci
                   </p>
                   <p className="text-5xl font-bold text-[#4CAF50]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {formData.heuresMois}h
+                    {formaterHeures(formData.heuresMois)}
                   </p>
                   <p className="text-xs text-[#666666] mt-2">
                     {new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
@@ -870,7 +896,7 @@ export function FicheBenevole({ benevole, onNavigate, onUpdate }: FicheBenevoleP
               <div>
                 <h4 className="font-semibold text-[#333333] mb-1">Engagement et reconnaissance</h4>
                 <p className="text-sm text-[#666666]">
-                  Ce bénévole a contribué <strong>{formData.heuresTotal} heures</strong> au total. 
+                  Ce bénévole a contribué <strong>{Math.round(formData.heuresTotal)} heures</strong> au total. 
                   {formData.heuresTotal >= 100 && ' 🏆 Bénévole hautement engagé!'}
                   {formData.heuresTotal >= 50 && formData.heuresTotal < 100 && ' ⭐ Bénvole actif!'}
                   {formData.heuresTotal < 50 && ' Nouveau bénévole en formation.'}

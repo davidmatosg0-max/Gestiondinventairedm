@@ -1,5 +1,5 @@
-// Module Bénévoles - Version 2.1 (Fix: Support pour statut 'en attente')
-import React, { useState, useRef } from 'react';
+// Module Bénévoles - Version 2.2 (Optimización de rendimiento)
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBranding } from '../../../hooks/useBranding';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -84,6 +84,32 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+// ===== UTILITÉ: Formatage des heures =====
+/**
+ * Formate les heures décimales en format lisible
+ * @param heures - Nombre d'heures en décimal (ex: 26.97)
+ * @param format - 'short' pour "27h" ou 'long' pour "26h 58m"
+ * @returns Chaîne formatée
+ */
+const formaterHeures = (heures: number, format: 'short' | 'long' = 'short'): string => {
+  if (format === 'short') {
+    // Format court: arrondir à l'entier le plus proche
+    return `${Math.round(heures)}h`;
+  } else {
+    // Format long: afficher heures et minutes
+    const heuresEntieres = Math.floor(heures);
+    const minutes = Math.round((heures - heuresEntieres) * 60);
+    
+    if (minutes === 0) {
+      return `${heuresEntieres}h`;
+    } else if (minutes === 60) {
+      return `${heuresEntieres + 1}h`;
+    } else {
+      return `${heuresEntieres}h ${minutes}m`;
+    }
+  }
+};
 
 // Types
 interface Note {
@@ -176,6 +202,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
   const [currentView, setCurrentView] = useState<BenevoleView>(isPublicAccess ? 'feuilles-temps' : 'liste');
   const [selectedBenevoleId, setSelectedBenevoleId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(''); // ⚡ Debounced search
   const [filterDepartement, setFilterDepartement] = useState<string>('all');
   const [filterStatut, setFilterStatut] = useState<string>('all');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -456,6 +483,15 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
   React.useEffect(() => {
     localStorage.setItem('banqueAlimentaire_benevoles', JSON.stringify(benevoles));
   }, [benevoles]);
+
+  // ⚡ OPTIMIZACIÓN: Debounce del searchTerm para mejorar rendimiento
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms de delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Mock Data - Feuilles de temps
   const [feuillesTemps, setFeuillesTemps] = useState<FeuilleTemps[]>(() => {
@@ -1455,19 +1491,20 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
 
   // Handlers for email
-  const handleOpenEmailModal = (benevoleIds: number[]) => {
+  // ⚡ OPTIMIZACIÓN: useCallback para handlers de email
+  const handleOpenEmailModal = useCallback((benevoleIds: number[]) => {
     setSelectedBenevolesForEmail(benevoleIds);
     setEmailModalOpen(true);
-  };
+  }, []);
 
-  const handleTemplateChange = (template: 'custom' | 'invitation' | 'rappel' | 'remerciement' | 'annonce') => {
+  const handleTemplateChange = useCallback((template: 'custom' | 'invitation' | 'rappel' | 'remerciement' | 'annonce') => {
     const selectedTemplate = emailTemplates[template];
     setEmailForm({
       template,
       subject: selectedTemplate.subject,
       message: selectedTemplate.message
     });
-  };
+  }, [emailTemplates]);
 
   const handleSendEmail = () => {
     if (!emailForm.subject || !emailForm.message) {
@@ -1500,7 +1537,8 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     });
   };
 
-  const toggleBenevoleSelection = (benevoleId: number) => {
+  // ⚡ OPTIMIZACIÓN: useCallback para toggleBenevoleSelection
+  const toggleBenevoleSelection = useCallback((benevoleId: number) => {
     setSelectedBenevolesForEmail(prev => {
       if (prev.includes(benevoleId)) {
         return prev.filter(id => id !== benevoleId);
@@ -1508,28 +1546,31 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         return [...prev, benevoleId];
       }
     });
-  };
+  }, []);
 
-  // Calcular bénévoles filtrados (necesario para toggleSelectAll)
-  const filteredBenevoles = benevoles.filter(b => {
-    const matchesSearch = 
-      `${b.prenom} ${b.nom}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDept = filterDepartement === 'all' || 
-      (Array.isArray(b.departement) 
-        ? b.departement.includes(filterDepartement)
-        : b.departement === filterDepartement);
-    const matchesStatut = filterStatut === 'all' || b.statut === filterStatut;
-    return matchesSearch && matchesDept && matchesStatut;
-  });
+  // ⚡ OPTIMIZACIÓN: Memoizar bénévoles filtrados con debounced search
+  const filteredBenevoles = useMemo(() => {
+    return benevoles.filter(b => {
+      const matchesSearch = 
+        `${b.prenom} ${b.nom}`.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        b.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+      const matchesDept = filterDepartement === 'all' || 
+        (Array.isArray(b.departement) 
+          ? b.departement.includes(filterDepartement)
+          : b.departement === filterDepartement);
+      const matchesStatut = filterStatut === 'all' || b.statut === filterStatut;
+      return matchesSearch && matchesDept && matchesStatut;
+    });
+  }, [benevoles, debouncedSearchTerm, filterDepartement, filterStatut]);
 
-  const toggleSelectAll = () => {
+  // ⚡ OPTIMIZACIÓN: useCallback para evitar recrear funciones
+  const toggleSelectAll = useCallback(() => {
     if (selectedBenevolesForEmail.length === filteredBenevoles.length && filteredBenevoles.length > 0) {
       setSelectedBenevolesForEmail([]);
     } else {
       setSelectedBenevolesForEmail(filteredBenevoles.map(b => b.id));
     }
-  };
+  }, [selectedBenevolesForEmail.length, filteredBenevoles]);
 
   // Handler pour l'impression du formulaire
   const handlePrint = () => {
@@ -1804,11 +1845,11 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
               <div class="section-title">Statistiques</div>
               <div class="field-group">
                 <div class="stats-box">
-                  <div class="stats-value" style="color: #1E73BE;">${selectedBenevole.heuresTotal}h</div>
+                  <div class="stats-value" style="color: #1E73BE;">${Math.round(selectedBenevole.heuresTotal)}h</div>
                   <div class="stats-label">Heures totales</div>
                 </div>
                 <div class="stats-box">
-                  <div class="stats-value" style="color: #4CAF50;">${selectedBenevole.heuresMois}h</div>
+                  <div class="stats-value" style="color: #4CAF50;">${Math.round(selectedBenevole.heuresMois)}h</div>
                   <div class="stats-label">Mois courant</div>
                 </div>
               </div>
@@ -2007,8 +2048,8 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     return age;
   };
 
-  // Calcular estadísticas demográficas
-  const getDemographicStats = () => {
+  // ⚡ OPTIMIZACIÓN: Memoizar estadísticas demográficas
+  const getDemographicStats = useMemo(() => {
     // Estadísticas por sexo
     const sexeStats = benevoles.reduce((acc, b) => {
       const sexe = b.sexe || 'Non spécifié';
@@ -2042,7 +2083,48 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     });
 
     return { sexeStats, ageRanges };
-  };
+  }, [benevoles]);
+
+  // ⚡ OPTIMIZACIÓN: Memoizar estadísticas generales
+  const statsGenerales = useMemo(() => ({
+    total: benevoles.length,
+    actifs: benevoles.filter(b => b.statut === 'actif').length,
+    heuresTotal: benevoles.reduce((sum, b) => sum + b.heuresTotal, 0),
+    heuresMois: benevoles.reduce((sum, b) => sum + b.heuresMois, 0)
+  }), [benevoles]);
+
+  // ⚡ OPTIMIZACIÓN: Memoizar horas por departamento
+  const heuresByDepartement = useMemo(() => {
+    return departements.map(dept => {
+      const total = feuillesTemps
+        .filter(f => f.departement === dept)
+        .reduce((sum, f) => sum + f.duree, 0);
+      return { departement: dept, heures: total };
+    }).filter(d => d.heures > 0);
+  }, [departements, feuillesTemps]);
+
+  // ⚡ OPTIMIZACIÓN: Memoizar bénévoles filtrados para estadísticas
+  const filteredBenevolesStats = useMemo(() => {
+    if (!statsGenerated) return benevoles;
+    
+    return benevoles.filter(b => {
+      // Filtro por fecha de inscripción
+      if (statsDateDebut && statsDateFin) {
+        const dateInscription = new Date(b.dateInscription);
+        const dateDebut = new Date(statsDateDebut);
+        const dateFin = new Date(statsDateFin);
+        if (dateInscription < dateDebut || dateInscription > dateFin) return false;
+      }
+
+      // Filtro por tipo
+      if (statsFilterValue !== 'tous') {
+        if (statsFilterType === 'departement' && b.departement !== statsFilterValue) return false;
+        if (statsFilterType === 'statut' && b.statut !== statsFilterValue) return false;
+      }
+
+      return true;
+    });
+  }, [benevoles, statsGenerated, statsDateDebut, statsDateFin, statsFilterType, statsFilterValue]);
 
   // Navigation menu items
   const menuItems = [
@@ -2083,13 +2165,8 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
   // RENDER: Liste des bénévoles
   const renderListeBenevoles = () => {
-    // Stats
-    const stats = {
-      total: benevoles.length,
-      actifs: benevoles.filter(b => b.statut === 'actif').length,
-      heuresTotal: benevoles.reduce((sum, b) => sum + b.heuresTotal, 0),
-      heuresMois: benevoles.reduce((sum, b) => sum + b.heuresMois, 0)
-    };
+    // ⚡ Usar stats memoizadas
+    const stats = statsGenerales;
 
     return (
       <div className="space-y-4">
@@ -2158,7 +2235,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                   className="text-2xl sm:text-3xl md:text-4xl font-bold text-white group-hover:scale-110 transition-transform duration-300" 
                   style={{ fontFamily: 'Montserrat, sans-serif' }}
                 >
-                  {stats.heuresTotal}h
+                  {formaterHeures(stats.heuresTotal)}
                 </p>
                 <Clock className="w-8 h-8 sm:w-10 sm:h-10 text-white/40 group-hover:rotate-12 transition-transform duration-300" />
               </div>
@@ -2184,7 +2261,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                   className="text-2xl sm:text-3xl md:text-4xl font-bold text-white group-hover:scale-110 transition-transform duration-300" 
                   style={{ fontFamily: 'Montserrat, sans-serif' }}
                 >
-                  {stats.heuresMois}h
+                  {formaterHeures(stats.heuresMois)}
                 </p>
                 <Calendar className="w-8 h-8 sm:w-10 sm:h-10 text-white/40 group-hover:rotate-12 transition-transform duration-300" />
               </div>
@@ -2308,10 +2385,10 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                       </td>
                       <td className="px-6 py-4 text-[#666666]">{benevole.departement}</td>
                       <td className="px-6 py-4 text-right">
-                        <span className="font-bold text-[#1E73BE]">{benevole.heuresTotal}h</span>
+                        <span className="font-bold text-[#1E73BE]">{formaterHeures(benevole.heuresTotal)}</span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <span className="font-semibold text-[#4CAF50]">{benevole.heuresMois}h</span>
+                        <span className="font-semibold text-[#4CAF50]">{formaterHeures(benevole.heuresMois)}</span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         {getStatusBadge(benevole.statut)}
@@ -3117,8 +3194,8 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
   // RENDER: Statistiques démographiques
   const renderStatistiques = () => {
-    // Función para generar estadísticas
-    const handleGenerateStats = () => {
+    // ⚡ Función para generar estadísticas (useCallback)
+    const handleGenerateStats = useCallback(() => {
       if (!statsDateDebut || !statsDateFin) {
         toast.error('Veuillez sélectionner les deux dates');
         return;
@@ -3131,34 +3208,18 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
       setStatsGenerated(true);
       toast.success('Statistiques générées avec succès');
-    };
+    }, [statsDateDebut, statsDateFin]);
 
-    const handleResetStats = () => {
+    const handleResetStats = useCallback(() => {
       setStatsGenerated(false);
       setStatsFilterType('departement');
       setStatsFilterValue('tous');
       setStatsDateDebut('');
       setStatsDateFin('');
-    };
+    }, []);
 
-    // Filtrar bénévoles según criterios y fecha de inscripción
-    const filteredBenevoles = benevoles.filter(b => {
-      // Filtro por fecha de inscripción
-      if (statsGenerated && statsDateDebut && statsDateFin) {
-        const dateInscription = new Date(b.dateInscription);
-        const dateDebut = new Date(statsDateDebut);
-        const dateFin = new Date(statsDateFin);
-        if (dateInscription < dateDebut || dateInscription > dateFin) return false;
-      }
-
-      // Filtro por tipo
-      if (statsGenerated && statsFilterValue !== 'tous') {
-        if (statsFilterType === 'departement' && b.departement !== statsFilterValue) return false;
-        if (statsFilterType === 'statut' && b.statut !== statsFilterValue) return false;
-      }
-
-      return true;
-    });
+    // ⚡ Usar bénévoles filtrados memoizados
+    const filteredBenevoles = filteredBenevolesStats;
 
     // Opciones para el selector de filtro
     const getStatsFilterOptions = () => {
@@ -3172,8 +3233,8 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       }
     };
 
-    // Calcular estadísticas demográficas con datos filtrados
-    const statsResult = (() => {
+    // ⚡ Memoizar cálculos de estadísticas demográficas
+    const statsResult = useMemo(() => {
       // Estadísticas por sexo
       const sexeStats = filteredBenevoles.reduce((acc, b) => {
         const sexe = b.sexe || 'Non spécifié';
@@ -3207,23 +3268,26 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       });
 
       return { sexeStats, ageRanges };
-    })();
+    }, [filteredBenevoles]);
 
     const { sexeStats, ageRanges } = statsResult;
 
-    // Datos para el gráfico de sexo
-    const sexeData = Object.entries(sexeStats).map(([sexe, count]) => ({
-      name: sexe,
-      value: count
-    }));
-
-    // Datos para el gráfico de edad
-    const ageData = Object.entries(ageRanges)
-      .filter(([_, count]) => count > 0)
-      .map(([range, count]) => ({
-        name: range,
+    // ⚡ Memoizar datos para gráficos
+    const sexeData = useMemo(() => 
+      Object.entries(sexeStats).map(([sexe, count]) => ({
+        name: sexe,
         value: count
-      }));
+      }))
+    , [sexeStats]);
+
+    const ageData = useMemo(() =>
+      Object.entries(ageRanges)
+        .filter(([_, count]) => count > 0)
+        .map(([range, count]) => ({
+          name: range,
+          value: count
+        }))
+    , [ageRanges]);
 
     // Colores para el gráfico de sexo
     const sexeColors: Record<string, string> = {
@@ -3236,17 +3300,23 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     // Colores para el gráfico de edad
     const ageColors = ['#1E73BE', '#4CAF50', '#FFC107', '#DC3545', '#9C27B0', '#FF5722', '#999999'];
 
-    // Calcular edad promedio
-    const agesArray = filteredBenevoles
-      .filter(b => b.dateNaissance)
-      .map(b => calculateAge(b.dateNaissance!));
-    const avgAge = agesArray.length > 0 
-      ? Math.round(agesArray.reduce((sum, age) => sum + age, 0) / agesArray.length)
-      : 0;
+    // ⚡ Memoizar cálculos de edad
+    const ageCalculations = useMemo(() => {
+      const agesArray = filteredBenevoles
+        .filter(b => b.dateNaissance)
+        .map(b => calculateAge(b.dateNaissance!));
+      
+      const avgAge = agesArray.length > 0 
+        ? Math.round(agesArray.reduce((sum, age) => sum + age, 0) / agesArray.length)
+        : 0;
 
-    // Calcular edad mínima y máxima
-    const minAge = agesArray.length > 0 ? Math.min(...agesArray) : 0;
-    const maxAge = agesArray.length > 0 ? Math.max(...agesArray) : 0;
+      const minAge = agesArray.length > 0 ? Math.min(...agesArray) : 0;
+      const maxAge = agesArray.length > 0 ? Math.max(...agesArray) : 0;
+
+      return { avgAge, minAge, maxAge };
+    }, [filteredBenevoles]);
+
+    const { avgAge, minAge, maxAge } = ageCalculations;
 
     return (
       <div className="space-y-6">
@@ -3468,6 +3538,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
+                    key="sexe-pie-chart"
                     data={sexeData}
                     cx="50%"
                     cy="50%"
@@ -3478,7 +3549,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                     dataKey="value"
                   >
                     {sexeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={sexeColors[entry.name] || '#999999'} />
+                      <Cell key={`sexe-cell-${index}`} fill={sexeColors[entry.name] || '#999999'} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -3534,9 +3605,9 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                       borderRadius: '8px'
                     }}
                   />
-                  <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                  <Bar dataKey="value" key="age-bar-chart" radius={[8, 8, 0, 0]}>
                     {ageData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={ageColors[index % ageColors.length]} />
+                      <Cell key={`age-cell-${index}`} fill={ageColors[index % ageColors.length]} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -3590,13 +3661,8 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
   // RENDER: Répartition
   const renderRepartition = () => {
-    // Calculate hours by department
-    const heuresByDept = departements.map(dept => {
-      const total = feuillesTemps
-        .filter(f => f.departement === dept)
-        .reduce((sum, f) => sum + f.duree, 0);
-      return { departement: dept, heures: total };
-    }).filter(d => d.heures > 0);
+    // ⚡ Usar heures by department memoizadas
+    const heuresByDept = heuresByDepartement;
 
     const COLORS = ['#1E73BE', '#4CAF50', '#FFC107', '#DC3545', '#9C27B0', '#FF9800'];
 
@@ -3659,6 +3725,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
+                    key="dept-pie-chart"
                     data={heuresByDept}
                     dataKey="heures"
                     nameKey="departement"
@@ -3668,7 +3735,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                     label={(entry) => `${entry.heures}h`}
                   >
                     {heuresByDept.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`dept-cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -3689,7 +3756,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                   <XAxis dataKey="departement" angle={-45} textAnchor="end" height={100} />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="heures" fill="#1E73BE" />
+                  <Bar dataKey="heures" key="heures-dept-bar" fill="#1E73BE" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -3856,7 +3923,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
             <div className="mt-2 text-sm text-[#1E73BE]">
               <strong>Période:</strong> {new Date(rapportDateDebut).toLocaleDateString('fr-FR')} au {new Date(rapportDateFin).toLocaleDateString('fr-FR')}
               {rapportFilterValue !== 'tous' && <> • <strong>Filtre:</strong> {rapportFilterValue}</>}
-              <> • <strong>{nombreActivitesRapport}</strong> activité(s) • <strong>{totalHeuresRapport}h</strong> totales</>
+              <> • <strong>{nombreActivitesRapport}</strong> activité(s) • <strong>{formaterHeures(totalHeuresRapport)}</strong> totales</>
             </div>
           )}
         </div>
@@ -4027,7 +4094,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-[#666666] mb-1">Heures totales</p>
-                      <p className="text-4xl font-bold text-[#1E73BE]">{totalHeuresRapport}h</p>
+                      <p className="text-4xl font-bold text-[#1E73BE]">{formaterHeures(totalHeuresRapport)}</p>
                     </div>
                     <Clock className="w-16 h-16 text-[#1E73BE] opacity-20" />
                   </div>
@@ -4084,7 +4151,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                           borderRadius: '8px'
                         }}
                       />
-                      <Bar dataKey="heures" fill="#1E73BE" name="Heures" radius={[8, 8, 0, 0]} />
+                      <Bar dataKey="heures" key="rapport-heures-bar" fill="#1E73BE" name="Heures" radius={[8, 8, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -4142,7 +4209,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                             Total:
                           </td>
                           <td className="px-4 py-3 text-right text-[#1E73BE] text-lg">
-                            {totalHeuresRapport}h
+                            {formaterHeures(totalHeuresRapport)}
                           </td>
                           <td></td>
                         </tr>
@@ -4179,7 +4246,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     );
   };
 
-  // Main render
+  // Main render - Se renderiza basado en la vista actual
   const renderCurrentView = () => {
     switch (currentView) {
       case 'liste':
@@ -4189,7 +4256,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       case 'feuilles-temps':
         return renderFeuillesTemps();
       case 'statistiques':
-        return null; // Temporalmente comentado: renderStatistiques();
+        return renderStatistiques(); // ✅ Re-activado con optimizaciones
       case 'historique':
         return renderHistorique();
       case 'repartition':
@@ -4818,7 +4885,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                     <div>
                       <Label htmlFor="edit-poste">Poste/Rôle</Label>
                       <Select
-                        value={editForm.poste || editForm.departement}
+                        value={editForm.poste || (Array.isArray(editForm.departement) ? editForm.departement[0] || '' : editForm.departement)}
                         onValueChange={(value) => setEditForm({ ...editForm, poste: value, departement: value })}
                       >
                         <SelectTrigger id="edit-poste">
