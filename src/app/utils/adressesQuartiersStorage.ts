@@ -9,6 +9,7 @@ import { obtenirRuesLavalParQuartier } from './ruesLavalStorage';
 // CLÉS DE STOCKAGE
 // ============================================================================
 const STORAGE_KEY = 'villes_quartiers_adresses';
+const STORAGE_INITIALIZED_KEY = 'villes_quartiers_initialized';
 
 // ============================================================================
 // INTERFACES ET TYPES
@@ -472,11 +473,21 @@ export function initialiserDonneesExemple(): boolean {
       synchroniserRuesLaval();
     }
     
+    // Marquer les données comme initialisées
+    localStorage.setItem(STORAGE_INITIALIZED_KEY, 'true');
+    
     return true;
   } catch (error) {
     console.error('Erreur lors de l\'initialisation des données:', error);
     return false;
   }
+}
+
+/**
+ * Vérifier si les données ont été initialisées
+ */
+export function sontDonneesInitialisees(): boolean {
+  return localStorage.getItem(STORAGE_INITIALIZED_KEY) === 'true';
 }
 
 // ============================================================================

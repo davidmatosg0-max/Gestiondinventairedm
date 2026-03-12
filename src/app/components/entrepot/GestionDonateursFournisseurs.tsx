@@ -11,7 +11,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from '../ui/badge';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
-import { AddressAutocomplete } from '../ui/address-autocomplete';
 
 interface PersonneContact {
   id: string;
@@ -551,6 +550,7 @@ export function GestionDonateursFournisseurs() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-20">Logo</TableHead>
                       <TableHead>Entreprise</TableHead>
                       <TableHead>Téléphone</TableHead>
                       <TableHead>Adresse</TableHead>
@@ -563,7 +563,7 @@ export function GestionDonateursFournisseurs() {
                   <TableBody>
                     {donneesFiltrees.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-[#999999] italic py-8">
+                        <TableCell colSpan={8} className="text-center text-[#999999] italic py-8">
                           Aucun donateur trouvé
                         </TableCell>
                       </TableRow>
@@ -571,8 +571,20 @@ export function GestionDonateursFournisseurs() {
                       donneesFiltrees.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell>
+                            <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-gray-200 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+                              {item.logo ? (
+                                <img 
+                                  src={item.logo} 
+                                  alt={item.nomEntreprise}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <Building2 className="w-6 h-6 text-gray-400" />
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
                             <div className="flex items-center gap-2">
-                              <Building2 className="w-4 h-4 text-[#4CAF50]" />
                               <div className="flex flex-col gap-1">
                                 <span className="font-medium">{item.nomEntreprise}</span>
                                 {item.participantPRS && (
@@ -660,6 +672,7 @@ export function GestionDonateursFournisseurs() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-20">Logo</TableHead>
                       <TableHead>Entreprise</TableHead>
                       <TableHead>Téléphone</TableHead>
                       <TableHead>Adresse</TableHead>
@@ -672,7 +685,7 @@ export function GestionDonateursFournisseurs() {
                   <TableBody>
                     {donneesFiltrees.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-[#999999] italic py-8">
+                        <TableCell colSpan={8} className="text-center text-[#999999] italic py-8">
                           Aucun fournisseur trouvé
                         </TableCell>
                       </TableRow>
@@ -680,8 +693,20 @@ export function GestionDonateursFournisseurs() {
                       donneesFiltrees.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell>
+                            <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-gray-200 flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+                              {item.logo ? (
+                                <img 
+                                  src={item.logo} 
+                                  alt={item.nomEntreprise}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <Building2 className="w-6 h-6 text-gray-400" />
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
                             <div className="flex items-center gap-2">
-                              <Building2 className="w-4 h-4 text-[#FF9800]" />
                               <div className="flex flex-col gap-1">
                                 <span className="font-medium">{item.nomEntreprise}</span>
                                 {item.participantPRS && (
@@ -886,12 +911,16 @@ export function GestionDonateursFournisseurs() {
                           Adresse Complète
                           <span className="text-red-500">*</span>
                         </Label>
-                        <AddressAutocomplete
-                          value={formulaire.adresse}
-                          onChange={(value) => setFormulaire({ ...formulaire, adresse: value })}
-                          placeholder="123 Rue Example, Laval, QC"
-                          showAdditionalFields={false}
-                        />
+                        <div className="relative">
+                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999999]" />
+                          <Input
+                            id="adresse"
+                            value={formulaire.adresse}
+                            onChange={(e) => setFormulaire({ ...formulaire, adresse: e.target.value })}
+                            placeholder="123 Rue Example, Laval, QC H7G 2W5"
+                            className="pl-10 h-11"
+                          />
+                        </div>
                       </div>
                     </div>
 

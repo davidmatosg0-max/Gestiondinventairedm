@@ -17,6 +17,7 @@ import {
   mettreAJourQuartier,
   supprimerQuartier,
   initialiserDonneesExemple,
+  sontDonneesInitialisees,
   exporterDonnees,
   synchroniserAvecInternet,
   synchroniserQuartiersVille,
@@ -56,7 +57,7 @@ export function GestionAdressesQuartiers() {
 
   const cargarVilles = () => {
     const villesData = obtenirVilles();
-    if (villesData.length === 0) {
+    if (villesData.length === 0 && !sontDonneesInitialisees()) {
       initialiserDonneesExemple();
       setVilles(obtenirVilles());
     } else {
@@ -109,7 +110,7 @@ export function GestionAdressesQuartiers() {
         setDialogVilleOpen(false);
       }
     } else {
-      ajouterVille({ ...formVille, quartiers: [] });
+      ajouterVille(formVille.nom, formVille.province, formVille.pays);
       toast.success(`Ville "${formVille.nom}" ajoutée avec succès`);
       cargarVilles();
       setDialogVilleOpen(false);
@@ -164,8 +165,13 @@ export function GestionAdressesQuartiers() {
         setDialogQuartierOpen(false);
       }
     } else {
-      const success = ajouterQuartier(villeSeleccionada.id, formQuartier);
-      if (success) {
+      const quartier = ajouterQuartier(
+        villeSeleccionada.id, 
+        formQuartier.nom, 
+        formQuartier.codePostal, 
+        formQuartier.description
+      );
+      if (quartier) {
         toast.success(`Quartier "${formQuartier.nom}" ajouté avec succès`);
         cargarVilles();
         setDialogQuartierOpen(false);
@@ -464,7 +470,7 @@ export function GestionAdressesQuartiers() {
 
       {/* Dialog Ville */}
       <Dialog open={dialogVilleOpen} onOpenChange={setDialogVilleOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="ville-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               <div className="flex items-center gap-2">
@@ -472,7 +478,7 @@ export function GestionAdressesQuartiers() {
                 {villeEditando ? 'Modifier la Ville' : 'Nouvelle Ville'}
               </div>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="ville-dialog-description">
               {villeEditando ? 'Modifiez les informations de la ville' : 'Ajoutez une nouvelle ville au système'}
             </DialogDescription>
           </DialogHeader>
@@ -528,7 +534,7 @@ export function GestionAdressesQuartiers() {
 
       {/* Dialog Quartier */}
       <Dialog open={dialogQuartierOpen} onOpenChange={setDialogQuartierOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="quartier-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               <div className="flex items-center gap-2">
@@ -536,7 +542,7 @@ export function GestionAdressesQuartiers() {
                 {quartierEditando ? 'Modifier le Quartier' : 'Nouveau Quartier'}
               </div>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="quartier-dialog-description">
               {villeSeleccionada ? (
                 quartierEditando 
                   ? `Modifiez le quartier dans ${villeSeleccionada.nom}` 
