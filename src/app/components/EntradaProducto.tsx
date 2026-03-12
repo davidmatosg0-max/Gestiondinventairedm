@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ArrowDownToLine, Save, X, Upload, Image as ImageIcon, Plus, Printer, Package, Copy, Building2, Mail, Phone, User, Search, Thermometer } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Button } from './ui/button';
@@ -10,8 +10,11 @@ import { toast } from 'sonner';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { Badge } from './ui/badge';
 import { Card, CardContent } from './ui/card';
-import { mockProductos, mockUsuariosInternos } from '../data/mockData';
 import { ICONOS_PRINCIPALES } from '../data/iconosAlimentos';
+import { obtenerCategorias, type Categoria } from '../utils/categoriaStorage';
+import { obtenerProgramasActivos, type ProgramaEntrada } from '../utils/programaEntradaStorage';
+import { obtenerContactosPorDepartamentoYTipo, type ContactoDepartamento } from '../utils/contactosDepartamentoStorage';
+import { guardarEntrada } from '../utils/entradaInventarioStorage';
 
 type Producto = {
   id: string;
@@ -31,12 +34,9 @@ type FormData = {
   programaEntradaId: string;
   lote: string;
   fechaCaducidad: string;
-  proveedor: string;
+  donadorId: string; // Cambiado de 'proveedor' a 'donadorId'
   observaciones: string;
 };
-
-// Datos de configuración - VACÍO (Configurar desde el módulo Configuración)
-const categorias = [];
 
 const unidades = [
   { id: '1', nombre: 'Paleta', abreviatura: 'PLT' },
@@ -47,12 +47,6 @@ const unidades = [
   { id: '6', nombre: 'Kilogramo', abreviatura: 'kg' },
 ];
 
-const programasEntrada = [
-  { id: '1', nombre: 'Achat', codigo: 'ACH', color: '#1E73BE' },
-  { id: '2', nombre: 'Don', codigo: 'DON', color: '#4CAF50' },
-  { id: '3', nombre: 'CPN', codigo: 'CPN', color: '#FFC107' },
-];
-
 const temperaturasAlmacenamiento = [
   { value: 'ambiente', label: 'Temperatura Ambiente (15°C - 25°C)' },
   { value: 'refrigerado', label: 'Refrigerado (0°C - 8°C)' },
@@ -60,27 +54,30 @@ const temperaturasAlmacenamiento = [
   { value: 'fresco', label: 'Fresco (8°C - 15°C)' },
 ];
 
-// Productos registrados en el sistema - VACÍO (Se carga desde mockData)
-const productosIniciales: Producto[] = [];
-
 export function EntradaProducto() {
   const [open, setOpen] = useState(false);
   const [nuevoProductoDialogOpen, setNuevoProductoDialogOpen] = useState(false);
   const [imprimirDialogOpen, setImprimirDialogOpen] = useState(false);
-  const [productos, setProductos] = useState<Producto[]>(productosIniciales);
+  const [productos, setProductos] = useState<Producto[]>([]);
   const [productoRegistrado, setProductoRegistrado] = useState<FormData | null>(null);
+  
+  // 🔄 Estados sincronizados con localStorage
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [programas, setProgramas] = useState<ProgramaEntrada[]>([]);
+  const [contactos, setContactos] = useState<ContactoDepartamento[]>([]);
+  
   const [formData, setFormData] = useState<FormData>({
     categoriaId: '',
     subcategoriaId: '',
     unidadId: '',
     cantidad: 0,
-    multiplicador: 0, // Mantenido en el tipo pero no se usa en el formulario simplificado
+    multiplicador: 0,
     peso: 0,
     temperatura: '',
     programaEntradaId: '',
     lote: '',
     fechaCaducidad: '',
-    proveedor: '',
+    donadorId: '', // Cambiado de 'proveedor'
     observaciones: '',
   });
 
@@ -96,6 +93,72 @@ export function EntradaProducto() {
   });
 
   const [imagenPreviewNuevo, setImagenPreviewNuevo] = useState<string | null>(null);
+
+  // 🔄 Cargar datos iniciales desde localStorage
+  useEffect(() => {
+    if (open) {
+      const cats = obtenerCategorias();
+      const progs = obtenerProgramasActivos();
+      
+      // 🎯 OBTENER CONTACTOS REALES: donadores y fournisseurs del departamento Entrepôt (ID='2')
+      const contactosEntrepot = obtenerContactosPorDepartamentoYTipo('2', ['donador', 'fournisseur']);
+      
+      setCategorias(cats.filter(c => c.activa));
+      setProgramas(progs);
+      setContactos(contactosEntrepot);
+      
+      console.log('📋 Contactos cargados en EntradaProducto:', contactosEntrepot.length, contactosEntrepot);
+    }
+  }, [open]);
+
+  // 🔄 Escuchar cambios en contactos (cuando se agregan/editan desde Gestión de Contactos)
+  useEffect(() => {
+    const handleContactosActualizados = () => {
+      const contactosActualizados = obtenerContactosPorDepartamentoYTipo('2', ['donador', 'fournisseur']);
+      setContactos(contactosActualizados);
+      console.log('🔄 Contactos actualizados en EntradaProducto:', contactosActualizados.length);
+    };
+
+    window.addEventListener('contactos-actualizados', handleContactosActualizados);
+    window.addEventListener('contactos-restaurados', handleContactosActualizados);
+
+    return () => {
+      window.removeEventListener('contactos-actualizados', handleContactosActualizados);
+      window.removeEventListener('contactos-restaurados', handleContactosActualizados);
+    };
+  }, []);
+
+  // Determinar qué tipos de contactos mostrar según el programa de entrada
+  const tipoContactoPermitido = useMemo(() => {
+    if (!formData.programaEntradaId) return null;
+    
+    const programaSeleccionado = programas.find(p => p.id === formData.programaEntradaId);
+    if (!programaSeleccionado) return null;
+    
+    // ACH/ACHAT → solo fournisseurs
+    if (programaSeleccionado.codigo.toLowerCase() === 'ach' || programaSeleccionado.codigo.toLowerCase() === 'achat') {
+      return 'fournisseur';
+    }
+    
+    // DON → solo donadores
+    if (programaSeleccionado.codigo.toLowerCase() === 'don') {
+      return 'donador';
+    }
+    
+    // CPN → ambos tipos (donadores y fournisseurs)
+    if (programaSeleccionado.codigo.toLowerCase() === 'cpn') {
+      return null; // null = mostrar todos
+    }
+    
+    // Otros programas → mostrar ambos
+    return null;
+  }, [formData.programaEntradaId, programas]);
+
+  // Filtrar contactos según el tipo de entrada
+  const contactosFiltrados = useMemo(() => {
+    if (!tipoContactoPermitido) return contactos;
+    return contactos.filter(c => c.tipo === tipoContactoPermitido);
+  }, [contactos, tipoContactoPermitido]);
 
   const categoriaSeleccionada = categorias.find(c => c.id === formData.categoriaId);
   const subcategoriasDisponibles = categoriaSeleccionada?.subcategorias || [];
@@ -163,6 +226,10 @@ export function EntradaProducto() {
       toast.error('La unidad es requerida');
       return;
     }
+    if (formData.cantidad <= 0) {
+      toast.error('La cantidad debe ser mayor a 0');
+      return;
+    }
     if (formData.peso <= 0) {
       toast.error('El peso debe ser mayor a 0');
       return;
@@ -173,6 +240,10 @@ export function EntradaProducto() {
     }
     if (!formData.programaEntradaId) {
       toast.error('El programa de entrada es requerido');
+      return;
+    }
+    if (!formData.donadorId) {
+      toast.error('El donador/fournisseur es requerido');
       return;
     }
 
@@ -195,7 +266,7 @@ export function EntradaProducto() {
       const categoria = categorias.find(c => c.id === productoRegistrado.categoriaId);
       const subcategoria = categoria?.subcategorias.find(s => s.id === productoRegistrado.subcategoriaId);
       const unidad = unidades.find(u => u.id === productoRegistrado.unidadId);
-      const programa = programasEntrada.find(p => p.id === productoRegistrado.programaEntradaId);
+      const programa = programas.find(p => p.id === productoRegistrado.programaEntradaId);
       
       console.log('Imprimiendo etiqueta:', productoRegistrado);
       toast.success('Etiqueta enviada a impresión');
@@ -215,7 +286,7 @@ export function EntradaProducto() {
       programaEntradaId: '',
       lote: '',
       fechaCaducidad: '',
-      proveedor: '',
+      donadorId: '', // Cambiado de 'proveedor'
       observaciones: '',
     });
   };
@@ -232,12 +303,12 @@ export function EntradaProducto() {
             Entrada de Producto
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="entrada-producto-description">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '1.5rem' }}>
               Registrar Entrada de Producto
             </DialogTitle>
-            <DialogDescription id="entrada-producto-description">
+            <DialogDescription>
               Complete la información del producto que está ingresando al inventario
             </DialogDescription>
           </DialogHeader>
@@ -379,35 +450,102 @@ export function EntradaProducto() {
               </div>
             </div>
 
-            {/* Sección: Programa de Entrada */}
+            {/* Sección: Programa de Entrada y Donador/Fournisseur */}
             <div className="space-y-4">
               <h3 className="font-medium text-[#333333] pb-2 border-b" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                Programa de Entrada
+                Programa y Procedencia
               </h3>
               
-              <div className="space-y-2">
-                <Label>Programa de Entrada *</Label>
-                <Select 
-                  value={formData.programaEntradaId} 
-                  onValueChange={(value) => setFormData({ ...formData, programaEntradaId: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar programa" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {programasEntrada.map(programa => (
-                      <SelectItem key={programa.id} value={programa.id}>
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="w-3 h-3 rounded-full" 
-                            style={{ backgroundColor: programa.color }}
-                          />
-                          {programa.nombre} ({programa.codigo})
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Programa de Entrada *</Label>
+                  <Select 
+                    value={formData.programaEntradaId} 
+                    onValueChange={(value) => setFormData({ ...formData, programaEntradaId: value, donadorId: '' })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar programa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {programas.map(programa => (
+                        <SelectItem key={programa.id} value={programa.id}>
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-3 h-3 rounded-full" 
+                              style={{ backgroundColor: programa.color }}
+                            />
+                            {programa.nombre} ({programa.codigo})
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>
+                    {tipoContactoPermitido === 'fournisseur' 
+                      ? '📦 Fournisseur *' 
+                      : tipoContactoPermitido === 'donador' 
+                        ? '🎁 Donateur *' 
+                        : 'Fournisseur / Donateur *'}
+                  </Label>
+                  <Select 
+                    value={formData.donadorId} 
+                    onValueChange={(value) => setFormData({ ...formData, donadorId: value })}
+                    disabled={!formData.programaEntradaId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={
+                        !formData.programaEntradaId 
+                          ? "Sélectionner d'abord un programme..."
+                          : tipoContactoPermitido === 'fournisseur'
+                            ? "Sélectionner un fournisseur..."
+                            : tipoContactoPermitido === 'donador'
+                              ? "Sélectionner un donateur..."
+                              : "Sélectionner fournisseur ou donateur..."
+                      } />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {contactosFiltrados.length === 0 ? (
+                        <SelectItem value="__none__" disabled>
+                          {tipoContactoPermitido === 'fournisseur' 
+                            ? 'Aucun fournisseur disponible'
+                            : tipoContactoPermitido === 'donador'
+                              ? 'Aucun donateur disponible'
+                              : 'Aucun contact disponible'}
+                        </SelectItem>
+                      ) : (
+                        <>
+                          {contactosFiltrados
+                            .sort((a, b) => {
+                              const nombreA = a.nombreEmpresa || `${a.nombre} ${a.apellido}`;
+                              const nombreB = b.nombreEmpresa || `${b.nombre} ${b.apellido}`;
+                              return nombreA.localeCompare(nombreB);
+                            })
+                            .map((contacto) => {
+                              const nombreCompleto = contacto.nombreEmpresa || `${contacto.nombre} ${contacto.apellido}`;
+                              const icono = contacto.tipo === 'donador' ? '🎁' : '📦';
+                              
+                              return (
+                                <SelectItem key={contacto.id} value={contacto.id}>
+                                  <div className="flex items-center gap-2">
+                                    <span>{icono}</span>
+                                    <span className="truncate">{nombreCompleto}</span>
+                                  </div>
+                                </SelectItem>
+                              );
+                            })}
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {contactosFiltrados.length === 0 && formData.programaEntradaId && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      💡 Ajouter des contacts depuis le module &quot;Entrepôt &gt; Gestion des Contacts&quot;
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -461,12 +599,12 @@ export function EntradaProducto() {
                     <Plus className="w-5 h-5" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md" aria-describedby="nuevo-producto-description">
+                <DialogContent className="max-w-md">
                   <DialogHeader>
                     <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                       Crear Nuevo Producto
                     </DialogTitle>
-                    <DialogDescription id="nuevo-producto-description">
+                    <DialogDescription>
                       Configure la información básica del nuevo producto
                     </DialogDescription>
                   </DialogHeader>
@@ -725,12 +863,12 @@ export function EntradaProducto() {
 
       {/* Diálogo de Confirmación para Imprimir */}
       <Dialog open={imprimirDialogOpen} onOpenChange={setImprimirDialogOpen}>
-        <DialogContent className="max-w-md" aria-describedby="imprimir-dialog-description">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               Producto Registrado Exitosamente
             </DialogTitle>
-            <DialogDescription id="imprimir-dialog-description">
+            <DialogDescription>
               El producto se ha registrado correctamente en el inventario
             </DialogDescription>
           </DialogHeader>
