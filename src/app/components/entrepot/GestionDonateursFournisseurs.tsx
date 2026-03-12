@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useBranding } from '../../../hooks/useBranding';
-import { Plus, Search, Edit2, Trash2, Building2, Phone, MapPin, User, Mail, X, Save, ChevronRight, UserPlus, Upload, Image as ImageIcon, Check, Eye, History, Clock, Package, ShoppingCart, TrendingUp } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Building2, Phone, MapPin, User, Mail, X, Save, ChevronRight, UserPlus, Upload, Image as ImageIcon, Check, Eye, History, Clock, Package, ShoppingCart, TrendingUp, LayoutGrid, List, Table as TableIcon } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from '../ui/badge';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
+import { obtenerUsuarioSesion } from '../../utils/sesionStorage';
 
 interface PersonneContact {
   id: string;
@@ -100,6 +101,9 @@ export function GestionDonateursFournisseurs() {
   const [dialogHistoriqueOpen, setDialogHistoriqueOpen] = useState(false);
   const [itemVisualization, setItemVisualization] = useState<DonateurFournisseur | null>(null);
   const [historiqueTab, setHistoriqueTab] = useState<'modifications' | 'activites'>('modifications');
+  
+  // Estado para la vista de contactos
+  const [vistaContactos, setVistaContactos] = useState<'cards' | 'table' | 'compact'>('cards');
 
   // Función para redimensionar y optimizar imagen
   const optimiserImage = (file: File): Promise<string> => {
@@ -326,6 +330,87 @@ export function GestionDonateursFournisseurs() {
       return;
     }
 
+    // Obtener usuario actual
+    const usuarioActual = obtenerUsuarioSesion();
+    const nombreUsuario = usuarioActual?.nombre || usuarioActual?.username || 'Système';
+
+    // Preparar historial de modificaciones si es edición
+    let historiqueModifications: ModificationHistorique[] = [];
+    if (modeEdition && itemEnEdition) {
+      historiqueModifications = [...(itemEnEdition.historiqueModifications || [])];
+      
+      // Detectar cambios y registrarlos
+      const cambios: Array<{champ: string, ancienne: string, nouvelle: string}> = [];
+      
+      if (itemEnEdition.nomEntreprise !== formulaire.nomEntreprise.trim()) {
+        cambios.push({
+          champ: 'Nom de l\'entreprise',
+          ancienne: itemEnEdition.nomEntreprise,
+          nouvelle: formulaire.nomEntreprise.trim()
+        });
+      }
+      
+      if (itemEnEdition.telephone !== formulaire.telephone.trim()) {
+        cambios.push({
+          champ: 'Téléphone',
+          ancienne: itemEnEdition.telephone,
+          nouvelle: formulaire.telephone.trim()
+        });
+      }
+      
+      if (itemEnEdition.adresse !== formulaire.adresse.trim()) {
+        cambios.push({
+          champ: 'Adresse',
+          ancienne: itemEnEdition.adresse,
+          nouvelle: formulaire.adresse.trim()
+        });
+      }
+
+      if (itemEnEdition.isDonateur !== estDonateur) {
+        cambios.push({
+          champ: 'Type Donateur',
+          ancienne: itemEnEdition.isDonateur ? 'Oui' : 'Non',
+          nouvelle: estDonateur ? 'Oui' : 'Non'
+        });
+      }
+
+      if (itemEnEdition.isFournisseur !== estFournisseur) {
+        cambios.push({
+          champ: 'Type Fournisseur',
+          ancienne: itemEnEdition.isFournisseur ? 'Oui' : 'Non',
+          nouvelle: estFournisseur ? 'Oui' : 'Non'
+        });
+      }
+
+      if (itemEnEdition.participantPRS !== estParticipantPRS) {
+        cambios.push({
+          champ: 'Participant PRS',
+          ancienne: itemEnEdition.participantPRS ? 'Oui' : 'Non',
+          nouvelle: estParticipantPRS ? 'Oui' : 'Non'
+        });
+      }
+
+      if (itemEnEdition.logo !== logo) {
+        cambios.push({
+          champ: 'Logo',
+          ancienne: itemEnEdition.logo ? 'Logo existant' : 'Aucun logo',
+          nouvelle: logo ? 'Logo mis à jour' : 'Logo supprimé'
+        });
+      }
+      
+      // Agregar modificaciones al historial
+      cambios.forEach(cambio => {
+        historiqueModifications.push({
+          id: Date.now().toString() + Math.random(),
+          date: new Date().toISOString(),
+          champ: cambio.champ,
+          ancienneValeur: cambio.ancienne,
+          nouvelleValeur: cambio.nouvelle,
+          utilisateur: nombreUsuario
+        });
+      });
+    }
+
     const nouvelleDonnee: DonateurFournisseur = {
       id: modeEdition && itemEnEdition ? itemEnEdition.id : Date.now().toString(),
       isDonateur: estDonateur,
@@ -342,7 +427,9 @@ export function GestionDonateursFournisseurs() {
         telephone: c.telephone.trim()
       })),
       actif: true,
-      dateCreation: modeEdition && itemEnEdition ? itemEnEdition.dateCreation : new Date().toISOString()
+      dateCreation: modeEdition && itemEnEdition ? itemEnEdition.dateCreation : new Date().toISOString(),
+      historiqueModifications: modeEdition ? historiqueModifications : [],
+      historiqueActivites: modeEdition && itemEnEdition ? itemEnEdition.historiqueActivites : []
     };
 
     let nouvellesDonnees: DonateurFournisseur[];
@@ -796,13 +883,13 @@ export function GestionDonateursFournisseurs() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 gap-0">
           <DialogHeader className="sr-only">
-            <DialogTitle>
-              {modeEdition ? 'Modifier' : 'Nouveau'} {activeTab === 'donateurs' ? 'Donateur' : 'Fournisseur'}
-            </DialogTitle>
-            <DialogDescription>
-              {modeEdition ? 'Mettez à jour les informations du partenaire' : 'Ajoutez un nouveau partenaire à votre réseau'}
-            </DialogDescription>
-          </DialogHeader>
+              <DialogTitle>
+                {modeEdition ? 'Modifier' : 'Nouveau'} {activeTab === 'donateurs' ? 'Donateur' : 'Fournisseur'}
+              </DialogTitle>
+              <DialogDescription>
+                {modeEdition ? 'Mettez à jour les informations du partenaire' : 'Ajoutez un nouveau partenaire à votre réseau'}
+              </DialogDescription>
+            </DialogHeader>
 
           {/* Header con degradado */}
           <div 
@@ -1151,96 +1238,215 @@ export function GestionDonateursFournisseurs() {
                       <p className="text-xs text-[#999999]">Coordonnées des personnes responsables</p>
                     </div>
                   </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => {
-                      setContactos([...contactos, { id: Date.now().toString(), nom: '', email: '', telephone: '' }]);
-                    }}
-                    className="gap-2"
-                    style={{ backgroundColor: branding.secondaryColor }}
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    Ajouter Contact
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {/* Botones de cambio de vista */}
+                    <div className="flex items-center rounded-lg border-2 p-1" style={{ borderColor: `${branding.secondaryColor}30` }}>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setVistaContactos('cards')}
+                        className={`h-8 px-3 ${vistaContactos === 'cards' ? 'shadow-sm' : ''}`}
+                        style={vistaContactos === 'cards' ? { backgroundColor: branding.secondaryColor, color: 'white' } : {}}
+                        title="Vue Cartes"
+                      >
+                        <LayoutGrid className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setVistaContactos('table')}
+                        className={`h-8 px-3 ${vistaContactos === 'table' ? 'shadow-sm' : ''}`}
+                        style={vistaContactos === 'table' ? { backgroundColor: branding.secondaryColor, color: 'white' } : {}}
+                        title="Vue Tableau"
+                      >
+                        <TableIcon className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setVistaContactos('compact')}
+                        className={`h-8 px-3 ${vistaContactos === 'compact' ? 'shadow-sm' : ''}`}
+                        style={vistaContactos === 'compact' ? { backgroundColor: branding.secondaryColor, color: 'white' } : {}}
+                        title="Vue Compacte"
+                      >
+                        <List className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => {
+                        setContactos([...contactos, { id: Date.now().toString(), nom: '', email: '', telephone: '' }]);
+                      }}
+                      className="gap-2"
+                      style={{ backgroundColor: branding.secondaryColor }}
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      Ajouter Contact
+                    </Button>
+                  </div>
                 </div>
 
-                {/* Lista de contactos */}
-                <div className="space-y-4">
-                  {contactos.map((contacto, index) => (
-                    <motion.div
-                      key={contacto.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ duration: 0.2 }}
-                      className="rounded-2xl p-6 border-2 relative"
-                      style={{ 
-                        background: 'linear-gradient(135deg, rgba(45,149,97,0.05) 0%, rgba(45,149,97,0.02) 100%)',
-                        borderColor: `${branding.secondaryColor}20`,
-                        boxShadow: '0 4px 20px rgba(45,149,97,0.08)'
-                      }}
-                    >
-                      {/* Badge de número y botón eliminar */}
-                      <div className="flex items-center justify-between mb-4">
-                        <Badge 
-                          variant="outline" 
-                          className="gap-2"
-                          style={{ 
-                            borderColor: branding.secondaryColor, 
-                            color: branding.secondaryColor 
-                          }}
-                        >
-                          <User className="w-3 h-3" />
-                          Contact #{index + 1}
-                        </Badge>
-                        {contactos.length > 1 && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setContactos(contactos.filter((_, i) => i !== index));
-                            }}
-                            className="h-8 w-8 p-0 hover:bg-red-50 text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-
-                      <div className="grid gap-6">
-                        {/* Nom Contact - Destacado */}
-                        <div className="space-y-2">
-                          <Label className="text-sm font-semibold flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                            <User className="w-4 h-4" style={{ color: branding.secondaryColor }} />
-                            Nom Complet
-                          </Label>
-                          <Input
-                            value={contacto.nom}
-                            onChange={(e) => {
-                              const nuevosContactos = [...contactos];
-                              nuevosContactos[index] = { ...contacto, nom: e.target.value };
-                              setContactos(nuevosContactos);
-                            }}
-                            placeholder="Ex: Jean Dupont"
-                            className="h-12 text-base border-2 focus:ring-2"
+                {/* Lista de contactos - Vista Cards (Por defecto) */}
+                {vistaContactos === 'cards' && (
+                  <div className="space-y-4">
+                    {contactos.map((contacto, index) => (
+                      <motion.div
+                        key={contacto.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.2 }}
+                        className="rounded-2xl p-6 border-2 relative"
+                        style={{ 
+                          background: 'linear-gradient(135deg, rgba(45,149,97,0.05) 0%, rgba(45,149,97,0.02) 100%)',
+                          borderColor: `${branding.secondaryColor}20`,
+                          boxShadow: '0 4px 20px rgba(45,149,97,0.08)'
+                        }}
+                      >
+                        {/* Badge de número y botón eliminar */}
+                        <div className="flex items-center justify-between mb-4">
+                          <Badge 
+                            variant="outline" 
+                            className="gap-2"
                             style={{ 
-                              borderColor: contacto.nom ? branding.secondaryColor : '#e5e7eb',
-                              transition: 'all 0.2s'
+                              borderColor: branding.secondaryColor, 
+                              color: branding.secondaryColor 
                             }}
-                          />
+                          >
+                            <User className="w-3 h-3" />
+                            Contact #{index + 1}
+                          </Badge>
+                          {contactos.length > 1 && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setContactos(contactos.filter((_, i) => i !== index));
+                              }}
+                              className="h-8 w-8 p-0 hover:bg-red-50 text-red-600"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
 
-                        {/* Grid de 2 columnas */}
-                        <div className="grid md:grid-cols-2 gap-6">
+                        <div className="grid gap-6">
+                          {/* Nom Contact - Destacado */}
                           <div className="space-y-2">
                             <Label className="text-sm font-semibold flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                              <Mail className="w-4 h-4 text-[#666666]" />
-                              Email
+                              <User className="w-4 h-4" style={{ color: branding.secondaryColor }} />
+                              Nom Complet
                             </Label>
-                            <div className="relative">
-                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999999]" />
+                            <Input
+                              value={contacto.nom}
+                              onChange={(e) => {
+                                const nuevosContactos = [...contactos];
+                                nuevosContactos[index] = { ...contacto, nom: e.target.value };
+                                setContactos(nuevosContactos);
+                              }}
+                              placeholder="Ex: Jean Dupont"
+                              className="h-12 text-base border-2 focus:ring-2"
+                              style={{ 
+                                borderColor: contacto.nom ? branding.secondaryColor : '#e5e7eb',
+                                transition: 'all 0.2s'
+                              }}
+                            />
+                          </div>
+
+                          {/* Grid de 2 columnas */}
+                          <div className="grid md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                              <Label className="text-sm font-semibold flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                <Mail className="w-4 h-4 text-[#666666]" />
+                                Email
+                              </Label>
+                              <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999999]" />
+                                <Input
+                                  type="email"
+                                  value={contacto.email}
+                                  onChange={(e) => {
+                                    const nuevosContactos = [...contactos];
+                                    nuevosContactos[index] = { ...contacto, email: e.target.value };
+                                    setContactos(nuevosContactos);
+                                  }}
+                                  placeholder="jean.dupont@example.com"
+                                  className="pl-10 h-11"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label className="text-sm font-semibold flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                                <Phone className="w-4 h-4 text-[#666666]" />
+                                Téléphone
+                              </Label>
+                              <div className="relative">
+                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999999]" />
+                                <Input
+                                  value={contacto.telephone}
+                                  onChange={(e) => {
+                                    const nuevosContactos = [...contactos];
+                                    nuevosContactos[index] = { ...contacto, telephone: e.target.value };
+                                    setContactos(nuevosContactos);
+                                  }}
+                                  placeholder="(514) 555-5678"
+                                  className="pl-10 h-11"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Vista Tabla */}
+                {vistaContactos === 'table' && (
+                  <div className="rounded-xl border-2 overflow-hidden" style={{ borderColor: `${branding.secondaryColor}20` }}>
+                    <Table>
+                      <TableHeader>
+                        <TableRow style={{ backgroundColor: `${branding.secondaryColor}10` }}>
+                          <TableHead className="font-bold" style={{ color: branding.secondaryColor }}>#</TableHead>
+                          <TableHead className="font-bold" style={{ color: branding.secondaryColor }}>Nom Complet</TableHead>
+                          <TableHead className="font-bold" style={{ color: branding.secondaryColor }}>Email</TableHead>
+                          <TableHead className="font-bold" style={{ color: branding.secondaryColor }}>Téléphone</TableHead>
+                          <TableHead className="font-bold text-center" style={{ color: branding.secondaryColor }}>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {contactos.map((contacto, index) => (
+                          <TableRow key={contacto.id} className="hover:bg-gray-50">
+                            <TableCell>
+                              <Badge 
+                                variant="outline"
+                                style={{ 
+                                  borderColor: branding.secondaryColor, 
+                                  color: branding.secondaryColor 
+                                }}
+                              >
+                                {index + 1}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                value={contacto.nom}
+                                onChange={(e) => {
+                                  const nuevosContactos = [...contactos];
+                                  nuevosContactos[index] = { ...contacto, nom: e.target.value };
+                                  setContactos(nuevosContactos);
+                                }}
+                                placeholder="Ex: Jean Dupont"
+                                className="h-9"
+                              />
+                            </TableCell>
+                            <TableCell>
                               <Input
                                 type="email"
                                 value={contacto.email}
@@ -1250,18 +1456,10 @@ export function GestionDonateursFournisseurs() {
                                   setContactos(nuevosContactos);
                                 }}
                                 placeholder="jean.dupont@example.com"
-                                className="pl-10 h-11"
+                                className="h-9"
                               />
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label className="text-sm font-semibold flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                              <Phone className="w-4 h-4 text-[#666666]" />
-                              Téléphone
-                            </Label>
-                            <div className="relative">
-                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999999]" />
+                            </TableCell>
+                            <TableCell>
                               <Input
                                 value={contacto.telephone}
                                 onChange={(e) => {
@@ -1270,15 +1468,108 @@ export function GestionDonateursFournisseurs() {
                                   setContactos(nuevosContactos);
                                 }}
                                 placeholder="(514) 555-5678"
-                                className="pl-10 h-11"
+                                className="h-9"
                               />
-                            </div>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {contactos.length > 1 && (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setContactos(contactos.filter((_, i) => i !== index));
+                                  }}
+                                  className="h-8 w-8 p-0 hover:bg-red-50 text-red-600"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+                {/* Vista Compacta */}
+                {vistaContactos === 'compact' && (
+                  <div className="space-y-2">
+                    {contactos.map((contacto, index) => (
+                      <motion.div
+                        key={contacto.id}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="rounded-lg p-4 border-2 hover:shadow-md transition-all"
+                        style={{ 
+                          borderColor: `${branding.secondaryColor}20`,
+                          background: 'white'
+                        }}
+                      >
+                        <div className="flex items-center gap-4">
+                          <Badge 
+                            variant="outline"
+                            className="flex-shrink-0"
+                            style={{ 
+                              borderColor: branding.secondaryColor, 
+                              color: branding.secondaryColor 
+                            }}
+                          >
+                            #{index + 1}
+                          </Badge>
+                          <div className="flex-1 grid grid-cols-3 gap-3">
+                            <Input
+                              value={contacto.nom}
+                              onChange={(e) => {
+                                const nuevosContactos = [...contactos];
+                                nuevosContactos[index] = { ...contacto, nom: e.target.value };
+                                setContactos(nuevosContactos);
+                              }}
+                              placeholder="Nom complet"
+                              className="h-9"
+                            />
+                            <Input
+                              type="email"
+                              value={contacto.email}
+                              onChange={(e) => {
+                                const nuevosContactos = [...contactos];
+                                nuevosContactos[index] = { ...contacto, email: e.target.value };
+                                setContactos(nuevosContactos);
+                              }}
+                              placeholder="Email"
+                              className="h-9"
+                            />
+                            <Input
+                              value={contacto.telephone}
+                              onChange={(e) => {
+                                const nuevosContactos = [...contactos];
+                                nuevosContactos[index] = { ...contacto, telephone: e.target.value };
+                                setContactos(nuevosContactos);
+                              }}
+                              placeholder="Téléphone"
+                              className="h-9"
+                            />
                           </div>
+                          {contactos.length > 1 && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setContactos(contactos.filter((_, i) => i !== index));
+                              }}
+                              className="h-8 w-8 p-0 hover:bg-red-50 text-red-600 flex-shrink-0"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
               </motion.div>
 
               {/* Info note */}
@@ -1334,11 +1625,11 @@ export function GestionDonateursFournisseurs() {
       <Dialog open={dialogHistoriqueOpen} onOpenChange={setDialogHistoriqueOpen}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden p-0 gap-0">
           <DialogHeader className="sr-only">
-            <DialogTitle>Historique du Partenaire</DialogTitle>
-            <DialogDescription>
-              Consultez l'historique des modifications et des activités
-            </DialogDescription>
-          </DialogHeader>
+              <DialogTitle>Historique du Partenaire</DialogTitle>
+              <DialogDescription>
+                Consultez l'historique des modifications et des activités
+              </DialogDescription>
+            </DialogHeader>
 
           {/* Header con logo e info del partenaire */}
           {itemVisualization && (
