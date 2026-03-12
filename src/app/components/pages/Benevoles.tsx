@@ -532,56 +532,6 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     localStorage.setItem('banqueAlimentaire_feuillesTemps', JSON.stringify(feuillesTemps));
   }, [feuillesTemps]);
 
-  // Inicializar datos de ejemplo para feuilles de temps si hay bénévoles pero no hay registros
-  React.useEffect(() => {
-    if (benevoles.length > 0 && feuillesTemps.length === 0) {
-      const departements = ['Comptoir', 'Logistique', 'Entrepôt', 'Distribution', 'Administration', 'Collecte'];
-      const feuillesDeDemo: FeuilleTemps[] = [];
-      
-      // Generar datos de ejemplo para cada bénévole
-      benevoles.slice(0, 5).forEach((benevole, bIndex) => {
-        // Generar entre 8 y 20 registros por bénévole
-        const numRegistros = Math.floor(Math.random() * 13) + 8;
-        
-        for (let i = 0; i < numRegistros; i++) {
-          // Fecha aleatoria en los últimos 90 días
-          const diasAtras = Math.floor(Math.random() * 90);
-          const fecha = new Date();
-          fecha.setDate(fecha.getDate() - diasAtras);
-          
-          // Hora de inicio aleatoria (8:00 - 14:00)
-          const heureDebutHeure = Math.floor(Math.random() * 7) + 8;
-          const heureDebutMinute = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
-          const heureDebut = `${heureDebutHeure.toString().padStart(2, '0')}:${heureDebutMinute.toString().padStart(2, '0')}`;
-          
-          // Duración aleatoria (2-8 horas)
-          const duree = Math.floor(Math.random() * 7) + 2;
-          const heureFinHeure = heureDebutHeure + duree;
-          const heureFin = `${heureFinHeure.toString().padStart(2, '0')}:${heureDebutMinute.toString().padStart(2, '0')}`;
-          
-          // Departamento aleatorio (con mayor probabilidad para el departamento principal del bénévole)
-          const deptPrincipal = benevole.departement || departements[0];
-          const dept = Math.random() > 0.3 ? deptPrincipal : departements[Math.floor(Math.random() * departements.length)];
-          
-          feuillesDeDemo.push({
-            id: feuillesDeDemo.length + 1,
-            benevoleId: benevole.id,
-            benevoleName: `${benevole.prenom} ${benevole.nom}`,
-            departement: dept,
-            date: fecha.toISOString().split('T')[0],
-            heureDebut,
-            heureFin,
-            duree,
-            notes: Math.random() > 0.7 ? ['Excellente journée', 'Bonne organisation', 'Très productif', 'Session régulière'][Math.floor(Math.random() * 4)] : ''
-          });
-        }
-      });
-      
-      setFeuillesTemps(feuillesDeDemo);
-      console.log(`✅ ${feuillesDeDemo.length} feuilles de temps de démonstration créées`);
-    }
-  }, [benevoles]);
-
   // Form states
   const [newFeuilleTemps, setNewFeuilleTemps] = useState({
     benevoleId: '',
