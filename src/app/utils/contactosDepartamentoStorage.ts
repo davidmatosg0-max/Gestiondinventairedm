@@ -252,6 +252,12 @@ export function guardarContacto(contacto: any): ContactoDepartamento {
   
   contactos.push(nuevoContacto);
   guardarTodosContactos(contactos);
+  
+  // 🔥 Disparar evento para sincronizar otros componentes
+  window.dispatchEvent(new CustomEvent('contactos-actualizados', {
+    detail: { departamentoId: nuevoContacto.departamentoId, contactoId: nuevoContacto.id }
+  }));
+  
   return nuevoContacto;
 }
 
@@ -262,6 +268,12 @@ export function actualizarContacto(id: string, datosActualizados: Partial<Contac
   if (index !== -1) {
     contactos[index] = { ...contactos[index], ...datosActualizados };
     guardarTodosContactos(contactos);
+    
+    // 🔥 Disparar evento para sincronizar otros componentes
+    window.dispatchEvent(new CustomEvent('contactos-actualizados', {
+      detail: { departamentoId: contactos[index].departamentoId, contactoId: id }
+    }));
+    
     return true;
   }
   return false;

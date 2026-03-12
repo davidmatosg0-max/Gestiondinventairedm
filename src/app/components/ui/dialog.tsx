@@ -60,11 +60,11 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentProps<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
-  const descriptionId = React.useId();
+  const generatedId = React.useId();
   
-  // Use explicit aria-describedby if provided
+  // Use explicit aria-describedby if provided, otherwise use generated ID
   const { 'aria-describedby': ariaDescribedBy, ...restProps} = props;
-  const finalAriaDescribedBy = ariaDescribedBy || descriptionId;
+  const finalAriaDescribedBy = ariaDescribedBy || generatedId;
   
   return (
     <DialogDescriptionContext.Provider value={{ descriptionId: finalAriaDescribedBy, setDescriptionId: () => {} }}>
@@ -82,7 +82,7 @@ const DialogContent = React.forwardRef<
           )}
         >
           {/* Always render a hidden description as fallback */}
-          <DialogPrimitive.Description id={descriptionId} className="sr-only">
+          <DialogPrimitive.Description id={finalAriaDescribedBy} className="sr-only">
             Dialog content
           </DialogPrimitive.Description>
           {children}

@@ -79,6 +79,7 @@ export function EntradaDonAchat() {
   const [contactosAlmacen, setContactosAlmacen] = useState<ContactoDepartamento[]>([]);
   const [contactoDialogOpen, setContactoDialogOpen] = useState(false);
   const [searchContactoQuery, setSearchContactoQuery] = useState('');
+  const [selectContactoOpen, setSelectContactoOpen] = useState(false);
   
   // Estado para productos agregados en la sesión actual
   const [productosAgregados, setProductosAgregados] = useState<Array<{
@@ -1600,74 +1601,168 @@ export function EntradaDonAchat() {
                 </div>
               )}
               
-              <Select
-                value={formData.donadorId}
-                onValueChange={(value) => {
-                  setFormData(prev => ({ ...prev, donadorId: value }));
-                  const contacto = contactosAlmacen.find(c => c.id === value);
-                  if (contacto) {
-                    const tipo = contacto.tipo === 'donador' ? 'donateur' : 'fournisseur';
-                    toast.success(`✅ ${contacto.nombre} ${contacto.apellido} (${tipo}) sélectionné`);
-                  }
-                }}
-                disabled={contactosDisponibles.length === 0 || !formData.tipoEntrada}
-              >
-                <SelectTrigger
-                  className={cn(
-                    "w-full h-10 border-2 transition-all",
-                    contactoSeleccionado
-                      ? "border-[#4CAF50] bg-[#F1F8F4]"
-                      : "border-[#E0E0E0] hover:border-[#4CAF50]"
-                  )}
-                >
-                  <SelectValue 
-                    placeholder={
-                      !formData.tipoEntrada
-                        ? "Sélectionner d'abord un type d'entrée..."
-                        : formData.tipoEntrada === 'don' 
-                          ? 'Sélectionner un donateur...' 
-                          : formData.tipoEntrada === 'achat'
-                            ? 'Sélectionner un fournisseur...'
-                            : t('entradaDonAchat.rechercherContact')
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent className="max-h-[400px]">
-                  {contactosDisponibles.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-gray-500">
-                      {formData.tipoEntrada === 'don' 
-                        ? 'Aucun donateur disponible' 
-                        : formData.tipoEntrada === 'achat'
-                          ? 'Aucun fournisseur disponible'
-                          : 'Sélectionner un type d\'entrée d\'abord'}
+              {/* Selector de contacto con botón de crear */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <Select
+                    value={formData.donadorId}
+                    onValueChange={(value) => {
+                      setFormData(prev => ({ ...prev, donadorId: value }));
+                      const contacto = contactosAlmacen.find(c => c.id === value);
+                      if (contacto) {
+                        const tipo = contacto.tipo === 'donador' ? 'donateur' : 'fournisseur';
+                        toast.success(`✅ ${contacto.nombre} ${contacto.apellido} (${tipo}) sélectionné`);
+                      }
+                    }}
+                    open={selectContactoOpen}
+                    onOpenChange={(open) => {
+                      console.log('🔵 Select onOpenChange:', open);
+                      console.log('   - contactosDisponibles.length:', contactosDisponibles.length);
+                      setSelectContactoOpen(open);
+                    }}
+                    disabled={!formData.tipoEntrada}
+                  >
+                    <SelectTrigger
+                      className={cn(
+                        "w-full h-10 border-2 transition-all",
+                        contactoSeleccionado
+                          ? "border-[#4CAF50] bg-[#F1F8F4]"
+                          : "border-[#E0E0E0] hover:border-[#4CAF50]"
+                      )}
+                    >
+                      <SelectValue 
+                        placeholder={
+                          !formData.tipoEntrada
+                            ? "Sélectionner d'abord un type d'entrée..."
+                            : formData.tipoEntrada === 'don' 
+                              ? 'Sélectionner un donateur...' 
+                              : formData.tipoEntrada === 'achat'
+                                ? 'Sélectionner un fournisseur...'
+                                : t('entradaDonAchat.rechercherContact')
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent 
+                      className="max-h-[400px] z-[9999]"
+                      position="popper"
+                      side="bottom"
+                      align="start"
+                    >
+                      {(() => {
+                        console.log('🔍 DEBUG SELECT:');
+                        console.log('   - contactosAlmacen.length:', contactosAlmacen.length);
+                        console.log('   - contactosDisponibles.length:', contactosDisponibles.length);
+                        console.log('   - tipoEntrada:', formData.tipoEntrada);
+                        console.log('   - contactosDisponibles:', contactosDisponibles.map(c => ({
+                          nombre: `${c.nombre} ${c.apellido}`,
+                          tipo: c.tipo,
+                          empresa: c.nombreEmpresa
+                        })));
+                        return null;
+                      })()}
+                      {contactosDisponibles.length === 0 ? (
+                        <div className="p-4 text-center text-sm text-gray-500">
+                          {formData.tipoEntrada === 'don' 
+                            ? 'Aucun donateur disponible' 
+                            : formData.tipoEntrada === 'achat'
+                              ? 'Aucun fournisseur disponible'
+                              : 'Sélectionner un type d\'entrée d\'abord'}
+                        </div>
+                      ) : (
+                        contactosDisponibles
+                          .sort((a, b) => {
+                            const nombreA = a.nombreEmpresa || `${a.nombre} ${a.apellido}`;
+                            const nombreB = b.nombreEmpresa || `${b.nombre} ${b.apellido}`;
+                            return nombreA.localeCompare(nombreB);
+                          })
+                          .map((contacto) => {
+                            const nombreCompleto = contacto.nombreEmpresa || `${contacto.nombre} ${contacto.apellido}`;
+                            const icono = contacto.tipo === 'donador' ? '🎁' : '📦';
+                            
+                            return (
+                              <SelectItem key={contacto.id} value={contacto.id}>
+                                <div className="flex items-center gap-2">
+                                  <Building2 className="h-4 w-4 text-[#4CAF50]" />
+                                  <span>{icono}</span>
+                                  <span className="font-medium">{nombreCompleto}</span>
+                                  {contacto.telefono && (
+                                    <span className="text-xs text-gray-500">• {contacto.telefono}</span>
+                                  )}
+                                </div>
+                              </SelectItem>
+                            );
+                          })
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {/* Botón para crear nuevo contacto */}
+                {formData.tipoEntrada && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const tipoCrear = formData.tipoEntrada === 'don' ? 'donador' : 'fournisseur';
+                      const tipoLabel = formData.tipoEntrada === 'don' ? 'donateur' : 'fournisseur';
+                      
+                      toast.info(
+                        `💡 Pour créer un nouveau ${tipoLabel}, allez dans:\nInventaire → Gestion de Contactos → Entrepôt`,
+                        { duration: 6000 }
+                      );
+                      
+                      // Disparar evento personalizado para que otros componentes puedan reaccionar
+                      window.dispatchEvent(new CustomEvent('solicitar-creacion-contacto', {
+                        detail: { tipo: tipoCrear }
+                      }));
+                    }}
+                    className="shrink-0 h-10 border-2 border-[#4CAF50] text-[#4CAF50] hover:bg-[#4CAF50] hover:text-white"
+                    title={`Créer un nouveau ${formData.tipoEntrada === 'don' ? 'donateur' : 'fournisseur'}`}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    <Building2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              
+              {/* Información del contacto seleccionado */}
+              {contactoSeleccionado && (
+                <div className="mt-2 p-3 bg-gradient-to-r from-[#F1F8F4] to-white border-l-4 border-[#4CAF50] rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Building2 className="h-4 w-4 text-[#4CAF50]" />
+                        <span className="font-semibold text-sm text-[#2d9561]">
+                          {contactoSeleccionado.nombreEmpresa || `${contactoSeleccionado.nombre} ${contactoSeleccionado.apellido}`}
+                        </span>
+                        <Badge variant="outline" className="text-xs">
+                          {contactoSeleccionado.tipo === 'donador' ? '🎁 Donateur' : '📦 Fournisseur'}
+                        </Badge>
+                      </div>
+                      {contactoSeleccionado.telefono && (
+                        <p className="text-xs text-gray-600 flex items-center gap-1">
+                          📞 {contactoSeleccionado.telefono}
+                        </p>
+                      )}
+                      {contactoSeleccionado.email && (
+                        <p className="text-xs text-gray-600 flex items-center gap-1">
+                          📧 {contactoSeleccionado.email}
+                        </p>
+                      )}
                     </div>
-                  ) : (
-                    contactosDisponibles
-                      .sort((a, b) => {
-                        const nombreA = a.nombreEmpresa || `${a.nombre} ${a.apellido}`;
-                        const nombreB = b.nombreEmpresa || `${b.nombre} ${b.apellido}`;
-                        return nombreA.localeCompare(nombreB);
-                      })
-                      .map((contacto) => {
-                        const nombreCompleto = contacto.nombreEmpresa || `${contacto.nombre} ${contacto.apellido}`;
-                        const icono = contacto.tipo === 'donador' ? '🎁' : '📦';
-                        
-                        return (
-                          <SelectItem key={contacto.id} value={contacto.id}>
-                            <div className="flex items-center gap-2">
-                              <Building2 className="h-4 w-4 text-[#4CAF50]" />
-                              <span>{icono}</span>
-                              <span className="font-medium">{nombreCompleto}</span>
-                              {contacto.telefono && (
-                                <span className="text-xs text-gray-500">• {contacto.telefono}</span>
-                              )}
-                            </div>
-                          </SelectItem>
-                        );
-                      })
-                  )}
-                </SelectContent>
-              </Select>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setFormData(prev => ({ ...prev, donadorId: '' }))}
+                      className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               {/* Dialog de búsqueda mantenido pero oculto */}
               {false && (
