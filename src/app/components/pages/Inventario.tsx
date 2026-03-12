@@ -78,7 +78,6 @@ import { PlantillasConversion } from '../conversion/PlantillasConversion';
 import { GuiaConversiones } from '../conversion/GuiaConversiones';
 import { EscanerQRInventario } from '../inventario/EscanerQRInventario';
 import { useBranding } from '../../../hooks/useBranding';
-import { GestionContactosDepartamento } from '../departamentos/GestionContactosDepartamento';
 
 type CarritoItem = {
   productoId: string;
@@ -1362,7 +1361,7 @@ export function Inventario() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="grid w-full grid-cols-7 flex-shrink-0">
+        <TabsList className="grid w-full grid-cols-6 flex-shrink-0">
           <TabsTrigger value="productos">{t('inventory.products')}</TabsTrigger>
           <TabsTrigger value="movimientos">{t('inventory.movements')}</TabsTrigger>
           <TabsTrigger value="conversions">🔄 Conversions</TabsTrigger>
@@ -2171,13 +2170,7 @@ export function Inventario() {
           <AnalisisPredictivoStock />
         </TabsContent>
 
-        {/* Contactos Tab - NUEVO */}
-        <TabsContent value="contactos" className="flex-1 flex flex-col overflow-hidden space-y-3 mt-3">
-          <GestionContactosDepartamento 
-            departamentoId="2"
-            departamentoNombre="Entrepôt"
-          />
-        </TabsContent>
+
       </Tabs>
         </CardContent>
       </Card>

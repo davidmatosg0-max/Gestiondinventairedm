@@ -198,7 +198,7 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
         { id: 'ofertas-organismo', label: t('nav.offers'), icon: <Tags className="w-4 h-4" /> },
         { id: 'transporte', label: t('nav.transport'), icon: <Truck className="w-4 h-4" /> },
         { id: 'reportes', label: t('nav.reports'), icon: <FileText className="w-4 h-4" /> },
-        { id: 'contactos-almacen', label: 'Contacts', icon: <Users className="w-4 h-4" /> },
+        { id: 'donateurs-fournisseurs', label: 'Donateurs & Fournisseurs', icon: <Building className="w-4 h-4" /> },
       ]
     },
     { id: 'cuisine', label: t('common.cuisine'), icon: <ChefHat className="w-5 h-5" /> },

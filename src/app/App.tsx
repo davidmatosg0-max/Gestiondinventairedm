@@ -25,13 +25,14 @@ import { Contact } from './components/pages/Contact';
 import { Login } from './components/pages/Login';
 import { CommunicationInterne } from './components/CommunicationInterne';
 import { CuisinePage } from './components/pages/CuisinePage';
-import { ContactosAlmacen } from './components/pages/ContactosAlmacen';
 import { SystemDiagnostics } from './components/SystemDiagnostics';
 import { APIKeysPage } from './components/pages/APIKeysPage';
 import { DashboardPredictivo } from './components/pages/DashboardPredictivo';
 import { GestionAutenticacion } from './components/pages/GestionAutenticacion';
+import { GestionDonateursFournisseurs } from './components/entrepot/GestionDonateursFournisseurs';
 import { Toaster } from './components/ui/sonner';
 import { PWAInstaller } from './components/PWAInstaller';
+// CACHE BUSTER v3.0 - TIMESTAMP: 2025-03-11-20-45 - Corrección de colores contactos
 // LIMPIEZA COMPLETA DEL SISTEMA
 import { ejecutarLimpiezaCompleta, yaEjecutadaLimpiezaCompleta } from './utils/limpiezaCompleta';
 import { inicializarUnidades } from './utils/unidadStorage';
@@ -175,8 +176,8 @@ function AppContent() {
         return <CommunicationInterne />;
       case 'cuisine':
         return <CuisinePage onNavigate={setCurrentPage} />;
-      case 'contactos-almacen':
-        return <ContactosAlmacen />;
+      case 'donateurs-fournisseurs':
+        return <GestionDonateursFournisseurs />;
       case 'diagnosticos':
         return <SystemDiagnostics />;
       default:

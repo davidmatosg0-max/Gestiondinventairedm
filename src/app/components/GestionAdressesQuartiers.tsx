@@ -537,12 +537,14 @@ export function GestionAdressesQuartiers() {
               </div>
             </DialogTitle>
             <DialogDescription>
-              {villeSeleccionada && (
-                <span>
-                  {quartierEditando 
-                    ? `Modifiez le quartier dans ${villeSeleccionada.nom}` 
-                    : `Ajoutez un nouveau quartier à ${villeSeleccionada.nom}`}
-                </span>
+              {villeSeleccionada ? (
+                quartierEditando 
+                  ? `Modifiez le quartier dans ${villeSeleccionada.nom}` 
+                  : `Ajoutez un nouveau quartier à ${villeSeleccionada.nom}`
+              ) : (
+                quartierEditando 
+                  ? 'Modifiez les informations du quartier' 
+                  : 'Ajoutez un nouveau quartier'
               )}
             </DialogDescription>
           </DialogHeader>
