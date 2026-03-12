@@ -159,7 +159,7 @@ export function VerificacionesRecientes() {
           </Button>
         </DialogTrigger>
         
-        <DialogContent className="max-w-none !w-[95vw] !h-[95vh] overflow-hidden !p-0">
+        <DialogContent className="max-w-none !w-[95vw] !h-[95vh] overflow-hidden !p-0" aria-describedby={undefined}>
           {/* Header - No se imprime */}
           <div className="print:hidden">
             <DialogHeader 

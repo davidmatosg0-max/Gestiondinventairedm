@@ -1238,7 +1238,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
 
       {/* Dialog para crear nueva subcategoría */}
       <Dialog open={dialogSubcategoria} onOpenChange={setDialogSubcategoria}>
-        <DialogContent className="max-w-2xl bg-gradient-to-br from-white to-gray-50">
+        <DialogContent className="max-w-2xl bg-gradient-to-br from-white to-gray-50" aria-describedby="subcategoria-nueva-description">
           <DialogHeader className="pb-4">
             <DialogTitle className="text-xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
               <div className="flex items-center gap-4">
@@ -1248,7 +1248,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                 <span>Crear Nueva Subcategoría</span>
               </div>
             </DialogTitle>
-            <DialogDescription className="text-sm text-[#666666] pl-16">
+            <DialogDescription id="subcategoria-nueva-description" className="text-sm text-[#666666] pl-16">
               Añadir una nueva subcategoría a: <span className="font-medium text-[#1E73BE]">{categoriaSeleccionada?.nombre}</span>
             </DialogDescription>
           </DialogHeader>

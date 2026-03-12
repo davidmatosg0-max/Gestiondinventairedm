@@ -317,7 +317,7 @@ export function TypesAide({ onNavigate, aidTypes, setAidTypes, systemAidTypes }:
 
       {/* Create/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="aid-type-form-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Package className="w-5 h-5" />

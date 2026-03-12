@@ -1,0 +1,63 @@
+╔════════════════════════════════════════════════════════════════╗
+║                                                                ║
+║        🚀 SOLUCIÓN RÁPIDA - ERROR AL SUBIR A GITHUB 🚀        ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+
+PROBLEMA:
+--------
+No puedes hacer "git push" a GitHub
+
+SOLUCIÓN MÁS RÁPIDA:
+--------------------
+
+En tu terminal, ejecuta:
+
+    bash fix-github-rapido.sh
+
+Este script hará TODO automáticamente:
+✓ Limpia archivos problemáticos
+✓ Agrega solo lo necesario
+✓ Crea el commit
+✓ Hace push a GitHub
+
+
+ALTERNATIVAS:
+-------------
+
+1. Ver qué está pasando:
+   bash diagnostico-git.sh
+
+2. Preparar archivos manualmente:
+   bash preparar-github.sh
+
+3. Reiniciar Git (último recurso):
+   bash reiniciar-git-limpio.sh
+
+
+MÁS INFORMACIÓN:
+----------------
+
+Lee: COMO_SUBIR_A_GITHUB.md
+     SOLUCION_ERROR_GITHUB.md
+
+
+SOLUCIÓN MANUAL RÁPIDA:
+-----------------------
+
+Si prefieres hacerlo tú mismo:
+
+git reset
+git add .gitignore package.json vite.config.ts index.html src/ public/
+git commit -m "Sistema Banque Alimentaire completo"
+git push origin main
+
+Si falla:
+git push -f origin main
+
+
+═══════════════════════════════════════════════════════════════
+
+         🎯 RECOMENDACIÓN: Usa fix-github-rapido.sh 🎯
+
+═══════════════════════════════════════════════════════════════

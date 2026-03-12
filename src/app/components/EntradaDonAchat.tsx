@@ -28,7 +28,7 @@ import { actualizarPesoUnitarioSubcategoria, actualizarPesoUnitarioVariante, obt
 import { obtenerUnidades, type Unidad, inicializarUnidades } from '../utils/unidadStorage';
 import { GestionUnidades } from './inventario/GestionUnidades';
 import { type Variante } from '../data/configuracionData';
-import { obtenerContactosDepartamento, type ContactoDepartamento, eliminarFournisseursObsoletos, diagnosticarContactos } from '../utils/contactosDepartamentoStorage';
+import { obtenerContactosDepartamento, type ContactoDepartamento, eliminarFournisseursObsoletos, diagnosticarContactos, sincronizarDonateursFournisseurs } from '../utils/contactosDepartamentoStorage';
 import { debeRegistrarPaletasIndividuales, registrarPaletasIndividuales, type DatosEntradaPaleta } from '../utils/paletaStorage';
 
 type FormDataDonAchat = {
@@ -162,11 +162,9 @@ export function EntradaDonAchat() {
     if (open) {
       console.log('🚪 Diálogo abierto, cargando datos...');
       
-      // 🔍 DIAGNÓSTICO COMPLETO DEL SISTEMA
-      diagnosticarContactos();
-      
-      // Limpiar fournisseurs obsoletos del sistema
-      eliminarFournisseursObsoletos();
+      // ✅ SINCRONIZAR DONATEURS/FOURNISSEURS CON CONTACTOS PRIMERO
+      const resultado = sincronizarDonateursFournisseurs();
+      console.log(`✅ Sincronización: ${resultado.sincronizados} donateurs/fournisseurs sincronizados, ${resultado.errores} errores`);
       
       const productosActivos = obtenerProductosActivos();
       const categoriasGuardadas = obtenerCategorias();
@@ -269,15 +267,25 @@ export function EntradaDonAchat() {
     };
   }, []);
 
-  // Escuchar cambios en los contactos del almacén
+  // 🔧 CARGAR CONTACTOS INICIALMENTE Y ESCUCHAR CAMBIOS
   useEffect(() => {
+    // ✅ CARGA INICIAL INMEDIATA de contactos
+    console.log('🚀 Cargando contactos inicialmente...');
+    const todosContactosInicial = obtenerContactosDepartamento();
+    const contactosIniciales = todosContactosInicial.filter(c => 
+      (c.tipo === 'donador' || c.tipo === 'fournisseur') && c.activo
+    );
+    console.log('✅ Contactos iniciales cargados:', contactosIniciales.length);
+    console.log('📋 Detalle:', contactosIniciales.map(c => `${c.nombre} ${c.apellido} (${c.tipo})`));
+    setContactosAlmacen(contactosIniciales);
+    
     const handleContactosRestaurados = (event: any) => {
       const { departamentoId } = event.detail || {};
       console.log('🔄 Evento contactos-restaurados recibido', { departamentoId });
-      // Recargar todos los contactos donador/fournisseur
+      // Recargar todos los contactos donador/fournisseur ACTIVOS
       const todosContactos = obtenerContactosDepartamento();
       const contactosDonadoresFournisseurs = todosContactos.filter(c => 
-        c.tipo === 'donador' || c.tipo === 'fournisseur'
+        (c.tipo === 'donador' || c.tipo === 'fournisseur') && c.activo
       );
       console.log('📋 Contactos donador/fournisseur recargados:', contactosDonadoresFournisseurs.length);
       setContactosAlmacen(contactosDonadoresFournisseurs);
@@ -289,7 +297,7 @@ export function EntradaDonAchat() {
       console.log('🔄 Evento contactos-actualizados recibido');
       const todosContactos = obtenerContactosDepartamento();
       const contactosDonadoresFournisseurs = todosContactos.filter(c => 
-        c.tipo === 'donador' || c.tipo === 'fournisseur'
+        (c.tipo === 'donador' || c.tipo === 'fournisseur') && c.activo
       );
       console.log('📋 Contactos donador/fournisseur recargados:', contactosDonadoresFournisseurs.length);
       setContactosAlmacen(contactosDonadoresFournisseurs);
@@ -309,7 +317,7 @@ export function EntradaDonAchat() {
         console.log('💾 Storage actualizado, recargando contactos');
         const todosContactos = obtenerContactosDepartamento();
         const contactosDonadoresFournisseurs = todosContactos.filter(c => 
-          c.tipo === 'donador' || c.tipo === 'fournisseur'
+          (c.tipo === 'donador' || c.tipo === 'fournisseur') && c.activo
         );
         console.log('📋 Contactos donador/fournisseur recargados desde storage:', contactosDonadoresFournisseurs.length);
         setContactosAlmacen(contactosDonadoresFournisseurs);
@@ -338,7 +346,7 @@ export function EntradaDonAchat() {
   const programasActivos = programasDB;
   const programaSeleccionado = programasActivos.find(p => p.codigo.toLowerCase() === formData.tipoEntrada);
   
-  // Filtrar contactos según el tipo de entrada seleccionado
+  // ✅ FILTRAR CONTACTOS SEGÚN EL TIPO DE ENTRADA SELECCIONADO
   const contactosDisponibles = React.useMemo(() => {
     console.log('🔄 Recalculando contactosDisponibles...');
     console.log(`   - contactosAlmacen.length: ${contactosAlmacen.length}`);
@@ -1643,29 +1651,17 @@ export function EntradaDonAchat() {
                       />
                     </SelectTrigger>
                     <SelectContent 
-                      className="max-h-[400px] z-[9999]"
+                      className="max-h-[400px]"
                       position="popper"
                       side="bottom"
                       align="start"
                     >
-                      {(() => {
-                        console.log('🔍 DEBUG SELECT:');
-                        console.log('   - contactosAlmacen.length:', contactosAlmacen.length);
-                        console.log('   - contactosDisponibles.length:', contactosDisponibles.length);
-                        console.log('   - tipoEntrada:', formData.tipoEntrada);
-                        console.log('   - contactosDisponibles:', contactosDisponibles.map(c => ({
-                          nombre: `${c.nombre} ${c.apellido}`,
-                          tipo: c.tipo,
-                          empresa: c.nombreEmpresa
-                        })));
-                        return null;
-                      })()}
                       {contactosDisponibles.length === 0 ? (
                         <div className="p-4 text-center text-sm text-gray-500">
                           {formData.tipoEntrada === 'don' 
-                            ? 'Aucun donateur disponible' 
+                            ? 'Aucun donateur disponible. Créez-en un dans Inventaire → Contactos' 
                             : formData.tipoEntrada === 'achat'
-                              ? 'Aucun fournisseur disponible'
+                              ? 'Aucun fournisseur disponible. Créez-en un dans Inventaire → Contactos'
                               : 'Sélectionner un type d\'entrée d\'abord'}
                         </div>
                       ) : (

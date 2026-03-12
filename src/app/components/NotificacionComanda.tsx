@@ -106,12 +106,12 @@ Si tienes alguna pregunta, no dudes en contactarnos.`;
           Notificar al Organismo
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="notificacion-comanda-description">
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
             Enviar Notificación de Comanda Lista
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="notificacion-comanda-description">
             Envía una notificación al organismo para informarle que su comanda está lista para ser recogida.
           </DialogDescription>
         </DialogHeader>

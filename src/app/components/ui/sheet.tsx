@@ -54,12 +54,20 @@ const SheetContent = React.forwardRef<
     side?: "top" | "right" | "bottom" | "left";
   }
 >(({ className, children, side = "right", ...props }, ref) => {
+  const generatedId = React.useId();
+  
+  // Use explicit aria-describedby if provided, otherwise use generated ID
+  const { 'aria-describedby': ariaDescribedBy, ...restProps} = props;
+  const finalAriaDescribedBy = ariaDescribedBy || generatedId;
+  
   return (
     <SheetPortal>
       <SheetOverlay />
       <SheetPrimitive.Content
         ref={ref}
         data-slot="sheet-content"
+        aria-describedby={finalAriaDescribedBy}
+        {...restProps}
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
           side === "right" &&
@@ -72,8 +80,11 @@ const SheetContent = React.forwardRef<
             "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t",
           className,
         )}
-        {...props}
       >
+        {/* Always render a hidden description as fallback */}
+        <SheetPrimitive.Description id={finalAriaDescribedBy} className="sr-only">
+          Sheet content
+        </SheetPrimitive.Description>
         {children}
         <SheetPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
           <XIcon className="size-4" />

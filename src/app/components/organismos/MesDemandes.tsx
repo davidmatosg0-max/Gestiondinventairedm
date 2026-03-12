@@ -463,7 +463,7 @@ export const MesDemandes: React.FC<MesDemandesProps> = ({ organismeId, organisme
 
         {/* Dialog nouvelle demande */}
         <Dialog open={dialogNouvelledemAnde} onOpenChange={setDialogNouvelledemAnde}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl" aria-describedby="nouvelle-demande-description">
             <DialogHeader>
               <DialogTitle className="text-2xl" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                 📝 Nouvelle Demande à Liaison

@@ -202,16 +202,16 @@ export function DialogAceptarOferta({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col" aria-describedby="aceptar-oferta-description">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
             <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-[#4CAF50] to-[#45A049] flex items-center justify-center">
-              <ShoppingCart className="h-5 w-5 text-white" />
+              <CheckCircle className="h-6 w-6 text-white" />
             </div>
-            Aceptar Oferta
+            <span className="text-xl">Aceptar Oferta</span>
           </DialogTitle>
           <DialogDescription id="aceptar-oferta-description">
-            Seleccione los productos y cantidades que desea aceptar de esta oferta. Puede aceptar la oferta completa o seleccionar productos específicos con cantidades personalizadas.
+            Revisa y acepta los productos de esta oferta para tu organismo
           </DialogDescription>
         </DialogHeader>
 

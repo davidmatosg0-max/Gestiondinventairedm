@@ -164,13 +164,13 @@ export function HistorialProductoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col" aria-describedby="historial-producto-description">
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '1.5rem' }}>
             Historial del Producto
           </DialogTitle>
-          <DialogDescription id="historial-description">
-            {t('inventory.productHistoryInfo')}
+          <DialogDescription id="historial-producto-description">
+            Revisa todas las entradas, salidas y movimientos de este producto
           </DialogDescription>
         </DialogHeader>
 

@@ -137,14 +137,14 @@ export function ValidacionEntradasDialog({ open, onOpenChange }: ValidacionEntra
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh]">
+      <DialogContent className="max-w-6xl max-h-[90vh]" aria-describedby="validacion-entradas-description">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
             <AlertTriangle className="h-6 w-6 text-[#FFC107]" />
-            Validación de Entradas Recientes
+            Validación de Entradas Pendientes
           </DialogTitle>
           <DialogDescription id="validacion-entradas-description">
-            Revisa y valida las entradas de inventario de los últimos 7 días
+            Revisa y valida las entradas de productos que esperan aprobación
           </DialogDescription>
         </DialogHeader>
 

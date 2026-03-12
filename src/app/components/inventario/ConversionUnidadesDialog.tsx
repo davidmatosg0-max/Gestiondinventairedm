@@ -236,13 +236,13 @@ export function ConversionUnidadesDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl" aria-describedby="conversion-unidades-description">
         <DialogHeader>
           <DialogTitle className="text-xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
             Conversión de Unidades
           </DialogTitle>
-          <DialogDescription id="conversion-description">
-            {producto ? `Producto: ${producto.nombre} - Stock actual: ${producto.stockActual} ${producto.unidad}` : 'Convierte productos de una unidad a otra'}
+          <DialogDescription id="conversion-unidades-description">
+            Convierte cantidades entre diferentes unidades de medida
           </DialogDescription>
         </DialogHeader>
 

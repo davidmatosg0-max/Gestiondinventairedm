@@ -335,7 +335,7 @@ export function VerificacionVehiculo() {
 
       {/* Diálogo Nueva Verificación */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" aria-describedby="verificacion-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               🔍 {t('transport.saaqVerification.newVerificationSAAQ')}
@@ -546,7 +546,7 @@ export function VerificacionVehiculo() {
 
       {/* Diálogo Historial */}
       <Dialog open={historialOpen} onOpenChange={setHistorialOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto" aria-describedby="historial-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               📋 {t('transport.saaqVerification.verificationHistory')}
@@ -644,7 +644,7 @@ export function VerificacionVehiculo() {
 
       {/* Diálogo Detalle */}
       <Dialog open={detalleOpen} onOpenChange={setDetalleOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto" aria-describedby="detalle-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               📋 {t('transport.saaqVerification.verificationDetail')}

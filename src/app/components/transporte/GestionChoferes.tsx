@@ -459,7 +459,7 @@ export function GestionChoferes() {
 
       {/* Dialog Agregar/Editar Chofer */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="chofer-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               {editando ? '✏️ Editar Chofer' : '➕ Agregar Nuevo Chofer'}

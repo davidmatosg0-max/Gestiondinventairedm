@@ -192,16 +192,18 @@ export function TransformarProductoDialog({ open, onOpenChange, productoInicial 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" aria-describedby="transformar-producto-description">
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
             <div className="flex items-center gap-2">
-              <Shuffle className="w-6 h-6 text-[#1E73BE]" />
-              Transformar Producto
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-[#9C27B0] to-[#7B1FA2] flex items-center justify-center text-white text-2xl">
+                🔄
+              </div>
+              <span className="text-xl">Transformar Producto</span>
             </div>
           </DialogTitle>
-          <DialogDescription id="transformar-description">
-            {t('inventory.transformProductDescription')}
+          <DialogDescription id="transformar-producto-description">
+            Convierte este producto en uno o varios productos diferentes
           </DialogDescription>
         </DialogHeader>
 

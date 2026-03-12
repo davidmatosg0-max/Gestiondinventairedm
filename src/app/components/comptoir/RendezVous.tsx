@@ -132,7 +132,7 @@ export function RendezVous({ onNavigate, aidRequests = [], aidTypes = [] }: Rend
                   {t('comptoir.newAppointment')}
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md" aria-describedby="rdv-description">
                 <DialogHeader>
                   <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     {t('comptoir.createAppointment')}

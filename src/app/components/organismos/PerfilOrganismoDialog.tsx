@@ -400,6 +400,7 @@ export function PerfilOrganismoDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className="!max-w-none !w-screen !h-screen !top-0 !left-0 !translate-x-0 !translate-y-0 !rounded-none overflow-y-auto p-0 m-0"
+        aria-describedby={undefined}
       >
         <DialogHeader className="sticky top-0 z-10 bg-white border-b px-6 py-4 shadow-sm">
           <div className="flex items-center justify-between gap-4">

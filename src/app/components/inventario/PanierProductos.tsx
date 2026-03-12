@@ -369,6 +369,7 @@ export function PanierProductos({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className="max-w-7xl max-h-[90vh] overflow-hidden flex flex-col"
+        aria-describedby="panier-description"
       >
         <DialogHeader>
           <DialogTitle 
@@ -617,17 +618,17 @@ export function PanierProductos({
       
       {/* Diálogo de Generar Comanda */}
       <Dialog open={generarComandaOpen} onOpenChange={setGenerarComandaOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="generar-comanda-description">
           <DialogHeader>
             <DialogTitle 
               className="flex items-center gap-2" 
-              style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '1.25rem', color: '#1E73BE' }}
+              style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
             >
-              <FileText className="w-6 h-6" />
-              {t('inventory.generateOrderFromCart')}
+              <ShoppingCart className="w-6 h-6 text-[#1E73BE]" />
+              Generar Comanda del Panier
             </DialogTitle>
             <DialogDescription id="generar-comanda-description">
-              {t('inventory.selectOrganismForOrder')}
+              Crea una comanda con los productos del panier actual
             </DialogDescription>
           </DialogHeader>
 

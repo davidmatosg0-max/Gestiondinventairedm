@@ -636,10 +636,10 @@ export function AuditLogViewer() {
       
       {/* Dialog Detalle de Log */}
       <Dialog open={dialogDetalleOpen} onOpenChange={setDialogDetalleOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto" aria-describedby="detalle-log-description">
           <DialogHeader>
             <DialogTitle>Detalle del Log</DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="detalle-log-description">
               Información completa del registro de auditoría
             </DialogDescription>
           </DialogHeader>

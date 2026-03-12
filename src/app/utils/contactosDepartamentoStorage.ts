@@ -540,6 +540,113 @@ export function repararContactosConProblemas(): { reparados: number; eliminados:
   }
 }
 
+// ✅ SINCRONIZACIÓN DE DONATEURS/FOURNISSEURS
+// Sincronizar donadores/fournisseurs del sistema antiguo con contactos departamento
+export function sincronizarDonateursFournisseurs(): { sincronizados: number; errores: number } {
+  try {
+    console.log('🔄 Iniciando sincronización Donateurs & Fournisseurs...');
+    
+    // Leer datos del sistema de donateurs/fournisseurs
+    const donateursData = localStorage.getItem('banque_alimentaire_donateurs_fournisseurs');
+    if (!donateursData) {
+      console.log('ℹ️ No hay donateurs/fournisseurs para sincronizar');
+      return { sincronizados: 0, errores: 0 };
+    }
+
+    const donateurs: any[] = JSON.parse(donateursData);
+    console.log(`📋 ${donateurs.length} donateurs/fournisseurs encontrados`);
+
+    // Obtener contactos existentes
+    const contactosExistentes = obtenerContactosDepartamento();
+    let sincronizados = 0;
+    let errores = 0;
+
+    donateurs.forEach(donateur => {
+      try {
+        // Buscar si ya existe un contacto con este ID o nombre de empresa
+        const contactoExistente = contactosExistentes.find(
+          c => c.id === donateur.id || c.nombreEmpresa === donateur.nomEntreprise
+        );
+
+        if (contactoExistente) {
+          // Actualizar contacto existente
+          contactoExistente.activo = donateur.actif;
+          contactoExistente.nombreEmpresa = donateur.nomEntreprise;
+          contactoExistente.telefono = donateur.telephone || '';
+          contactoExistente.direccion = donateur.adresse || '';
+          contactoExistente.tipo = donateur.isDonateur ? 'donador' : 'fournisseur';
+          contactoExistente.participaPRS = donateur.participantPRS;
+          
+          // Si tiene personas de contacto, usar la primera como contacto principal
+          if (donateur.personnesContact && donateur.personnesContact.length > 0) {
+            const primeraPersona = donateur.personnesContact[0];
+            contactoExistente.nombre = primeraPersona.nom.split(' ')[0] || 'Contact';
+            contactoExistente.apellido = primeraPersona.nom.split(' ').slice(1).join(' ') || '';
+            contactoExistente.email = primeraPersona.email || contactoExistente.email;
+            contactoExistente.telefonoPrincipal = primeraPersona.telephone || contactoExistente.telefono;
+          }
+          
+          // ✅ REPARAR DATOS FALTANTES
+          if (!contactoExistente.nombre || contactoExistente.nombre === '') {
+            contactoExistente.nombre = donateur.nomEntreprise || 'Contact';
+          }
+          if (!contactoExistente.apellido) {
+            contactoExistente.apellido = '';
+          }
+          if (!contactoExistente.email || contactoExistente.email === '') {
+            contactoExistente.email = `contact-${contactoExistente.id}@banquealimentaire.ca`;
+          }
+          if (!contactoExistente.departamentoId || contactoExistente.departamentoId === '') {
+            contactoExistente.departamentoId = '1'; // Entrepôt ID
+          }
+          
+          sincronizados++;
+        } else {
+          // Crear nuevo contacto con datos válidos garantizados
+          const nombrePersona = donateur.personnesContact?.[0]?.nom?.split(' ')[0] || donateur.nomEntreprise || 'Contact';
+          const apellidoPersona = donateur.personnesContact?.[0]?.nom?.split(' ').slice(1).join(' ') || '';
+          const emailPersona = donateur.personnesContact?.[0]?.email || `contact-${donateur.id}@banquealimentaire.ca`;
+          
+          const nuevoContacto: ContactoDepartamento = {
+            id: donateur.id,
+            departamentoId: '1', // Entrepôt ID
+            tipo: donateur.isDonateur ? 'donador' : 'fournisseur',
+            nombre: nombrePersona,
+            apellido: apellidoPersona,
+            email: emailPersona,
+            telefono: donateur.telephone || '',
+            activo: donateur.actif,
+            fechaIngreso: donateur.dateCreation || new Date().toISOString(),
+            nombreEmpresa: donateur.nomEntreprise,
+            direccion: donateur.adresse,
+            participaPRS: donateur.participantPRS,
+            telefonoPrincipal: donateur.personnesContact?.[0]?.telephone || donateur.telephone,
+          };
+
+          contactosExistentes.push(nuevoContacto);
+          sincronizados++;
+        }
+      } catch (error) {
+        console.error(`❌ Error al sincronizar donateur ${donateur.id}:`, error);
+        errores++;
+      }
+    });
+
+    // Guardar contactos actualizados
+    guardarTodosContactos(contactosExistentes);
+    
+    console.log(`✅ Sincronización completada: ${sincronizados} sincronizados, ${errores} errores`);
+    
+    // Disparar evento de actualización
+    window.dispatchEvent(new CustomEvent('contactos-actualizados'));
+    
+    return { sincronizados, errores };
+  } catch (error) {
+    console.error('❌ Error durante sincronización:', error);
+    return { sincronizados: 0, errores: 1 };
+  }
+}
+
 // Obtener información detallada de almacenamiento
 export function obtenerInfoAlmacenamiento() {
   const contactos = obtenerContactosDepartamento();

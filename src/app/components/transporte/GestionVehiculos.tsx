@@ -337,7 +337,7 @@ export function GestionVehiculos() {
 
       {/* Diálogo Crear/Editar Vehículo */}
       <Dialog open={vehiculoDialogOpen} onOpenChange={setVehiculoDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="vehiculo-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               {modoEdicion ? t('transport.vehicles.editVehicle') : t('transport.vehicles.addVehicle')}

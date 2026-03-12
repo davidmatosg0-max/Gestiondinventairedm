@@ -24,7 +24,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { useTranslation } from 'react-i18next';
 import { 
   obtenerContactosDepartamento,
-  type ContactoDepartamento
+  type ContactoDepartamento,
+  sincronizarDonateursFournisseurs
 } from '../../utils/contactosDepartamentoStorage';
 import { Badge } from '../ui/badge';
 
@@ -129,12 +130,22 @@ export function FormularioEntradaProductoCompacto({
   // Cargar contactos al abrir el diálogo
   React.useEffect(() => {
     if (abierto) {
-      // Obtener contactos del departamento Entrepôt (ID='2' según departamentosStorage.ts)
-      const todosContactos = obtenerContactosDepartamento('2');
+      // ✅ SINCRONIZAR DONATEURS/FOURNISSEURS PRIMERO
+      console.log('🔄 Sincronizando donateurs/fournisseurs con contactos...');
+      const resultado = sincronizarDonateursFournisseurs();
+      console.log(`✅ Sincronización completada: ${resultado.sincronizados} sincronizados, ${resultado.errores} errores`);
+      
+      // Obtener contactos del departamento Entrepôt (ID='1' según departamentosStorage.ts)
+      const todosContactos = obtenerContactosDepartamento('1');
+      console.log(`📋 Total contactos en Entrepôt: ${todosContactos.length}`);
+      
       // Filtrar solo proveedores (fournisseur) y donadores (donador)
       const contactosFiltrados = todosContactos.filter(
         c => c.tipo === 'fournisseur' || c.tipo === 'donador'
       );
+      console.log(`📦 Fournisseurs: ${contactosFiltrados.filter(c => c.tipo === 'fournisseur').length}`);
+      console.log(`🎁 Donateurs: ${contactosFiltrados.filter(c => c.tipo === 'donador').length}`);
+      
       setContactos(contactosFiltrados);
     }
   }, [abierto]);
@@ -143,9 +154,9 @@ export function FormularioEntradaProductoCompacto({
   React.useEffect(() => {
     const handleContactosRestaurados = (event: any) => {
       const { departamentoId } = event.detail || {};
-      if (departamentoId === '2') {
-        // Recargar contactos automáticamente (Entrepôt = ID '2' según departamentosStorage.ts)
-        const todosContactos = obtenerContactosDepartamento('2');
+      if (departamentoId === '1') {
+        // Recargar contactos automáticamente (Entrepôt = ID '1' según departamentosStorage.ts)
+        const todosContactos = obtenerContactosDepartamento('1');
         const contactosFiltrados = todosContactos.filter(
           c => c.tipo === 'fournisseur' || c.tipo === 'donador'
         );
@@ -197,6 +208,7 @@ export function FormularioEntradaProductoCompacto({
     <Dialog open={abierto} onOpenChange={onCerrar}>
       <DialogContent 
         className="!max-w-none !w-[95vw] !max-h-[95vh] !h-[95vh] overflow-hidden p-0 m-0 rounded-xl"
+        aria-describedby="product-entry-form-description"
       >
         <div className="h-full flex flex-col">
           <DialogHeader className="sticky top-0 z-10 bg-white border-b-2 border-[#E0E0E0] px-6 py-3 shadow-sm">
@@ -749,7 +761,10 @@ export function FormularioEntradaProductoCompacto({
 
       {/* Diálogo de selección de contactos */}
       <Dialog open={dialogContactos} onOpenChange={setDialogContactos}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogContent 
+          className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col"
+          aria-describedby="select-contact-description"
+        >
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               <Users className="w-5 h-5 inline mr-2" />
@@ -761,13 +776,13 @@ export function FormularioEntradaProductoCompacto({
           </DialogHeader>
           <div className="flex-1 overflow-y-auto space-y-4 py-4">
             {/* Proveedores */}
-            {contactos.filter(c => c.tipoContacto === 'proveedor').length > 0 && (
+            {contactos.filter(c => c.tipo === 'fournisseur').length > 0 && (
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                  📦 Fournisseurs ({contactos.filter(c => c.tipoContacto === 'proveedor').length})
+                  📦 Fournisseurs ({contactos.filter(c => c.tipo === 'fournisseur').length})
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
-                  {contactos.filter(c => c.tipoContacto === 'proveedor').map((contacto) => (
+                  {contactos.filter(c => c.tipo === 'fournisseur').map((contacto) => (
                     <div
                       key={contacto.id}
                       onClick={() => handleSeleccionarContacto(contacto)}
@@ -788,10 +803,10 @@ export function FormularioEntradaProductoCompacto({
                             {contacto.nombre} {contacto.apellido}
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            📞 {contacto.telefonoPrincipal}
+                            📞 {contacto.telefono}
                           </p>
                           <p className="text-xs text-gray-500 truncate">
-                            ✉️ {contacto.emailPrincipal}
+                            ✉️ {contacto.email}
                           </p>
                         </div>
                       </div>
@@ -802,13 +817,13 @@ export function FormularioEntradaProductoCompacto({
             )}
 
             {/* Donateurs */}
-            {contactos.filter(c => c.tipoContacto === 'donador').length > 0 && (
+            {contactos.filter(c => c.tipo === 'donador').length > 0 && (
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                  🎁 Donateurs ({contactos.filter(c => c.tipoContacto === 'donador').length})
+                  🎁 Donateurs ({contactos.filter(c => c.tipo === 'donador').length})
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
-                  {contactos.filter(c => c.tipoContacto === 'donador').map((contacto) => (
+                  {contactos.filter(c => c.tipo === 'donador').map((contacto) => (
                     <div
                       key={contacto.id}
                       onClick={() => handleSeleccionarContacto(contacto)}
@@ -829,10 +844,10 @@ export function FormularioEntradaProductoCompacto({
                             {contacto.nombre} {contacto.apellido}
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            📞 {contacto.telefonoPrincipal}
+                            📞 {contacto.telefono}
                           </p>
                           <p className="text-xs text-gray-500 truncate">
-                            ✉️ {contacto.emailPrincipal}
+                            ✉️ {contacto.email}
                           </p>
                         </div>
                       </div>

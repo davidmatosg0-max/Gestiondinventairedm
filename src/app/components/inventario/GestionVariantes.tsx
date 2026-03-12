@@ -320,16 +320,13 @@ export function GestionVariantes({ subcategoria, categoriaId, onActualizar }: Ge
 
       {/* Diálogo Crear/Editar Variante */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="gestion-variantes-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               {modoEdicion ? '✏️ Editar Variante' : '✨ Nueva Variante'}
             </DialogTitle>
-            <DialogDescription id="gestion-variante-description">
-              {modoEdicion 
-                ? `Modifica los datos de la variante de ${subcategoria.nombre}` 
-                : `Crea una nueva variante para ${subcategoria.nombre}`
-              }
+            <DialogDescription id="gestion-variantes-description">
+              {modoEdicion ? 'Modifica la información de la variante existente' : 'Crea una nueva variante para este producto'}
             </DialogDescription>
           </DialogHeader>
 
