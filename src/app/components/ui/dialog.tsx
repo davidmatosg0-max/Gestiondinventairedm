@@ -62,60 +62,8 @@ const DialogContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => {
   const descriptionId = React.useId();
   
-  // Check if children contains a DialogDescription using multiple detection methods
-  const hasDescription = React.useMemo(() => {
-    let found = false;
-    const checkChildren = (children: React.ReactNode): void => {
-      React.Children.forEach(children, (child) => {
-        if (React.isValidElement(child)) {
-          // Method 1: Check by type
-          if (child.type === DialogDescription || 
-              child.type === DialogPrimitive.Description) {
-            found = true;
-            return;
-          }
-          
-          // Method 2: Check by displayName
-          const displayName = (child.type as any)?.displayName;
-          if (displayName === 'DialogDescription') {
-            found = true;
-            return;
-          }
-          
-          // Method 3: Check by data-slot prop
-          if (child.props?.['data-slot'] === 'dialog-description') {
-            found = true;
-            return;
-          }
-          
-          // Method 4: Check if it's a Radix DialogPrimitive.Description by checking props
-          const childType = child.type as any;
-          if (childType?.render?.displayName === 'DialogPrimitive.Description' ||
-              childType?.__docgenInfo?.displayName === 'DialogDescription') {
-            found = true;
-            return;
-          }
-          
-          // Method 5: Check if child has id matching common description patterns
-          if (child.props?.id && typeof child.props.id === 'string' && 
-              child.props.id.includes('description')) {
-            found = true;
-            return;
-          }
-          
-          // Recursively check children
-          if (child.props && child.props.children) {
-            checkChildren(child.props.children);
-          }
-        }
-      });
-    };
-    checkChildren(children);
-    return found;
-  }, [children]);
-
-  // Use explicit aria-describedby if provided, otherwise use generated descriptionId
-  const { 'aria-describedby': ariaDescribedBy, ...restProps } = props;
+  // Use explicit aria-describedby if provided
+  const { 'aria-describedby': ariaDescribedBy, ...restProps} = props;
   const finalAriaDescribedBy = ariaDescribedBy || descriptionId;
   
   return (
@@ -133,12 +81,10 @@ const DialogContent = React.forwardRef<
             className,
           )}
         >
-          {/* Always render a description element - either visible or hidden */}
-          {!hasDescription && (
-            <DialogPrimitive.Description id={descriptionId} className="sr-only">
-              Dialog content
-            </DialogPrimitive.Description>
-          )}
+          {/* Always render a hidden description as fallback */}
+          <DialogPrimitive.Description id={descriptionId} className="sr-only">
+            Dialog content
+          </DialogPrimitive.Description>
           {children}
           <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
             <XIcon />

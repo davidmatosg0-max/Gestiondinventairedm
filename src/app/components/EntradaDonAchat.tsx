@@ -171,14 +171,22 @@ export function EntradaDonAchat() {
       const categoriasGuardadas = obtenerCategorias();
       const programasActivos = obtenerProgramasActivos();
       const unidadesCargadas = obtenerUnidades();
-      const contactosEntrepot = obtenerContactosDepartamento('2'); // Departamento Entrepôt (ID='2')
+      // 🔧 CORRECCIÓN: Cargar TODOS los contactos, no solo del departamento Entrepôt
+      // Los donadores y fournisseurs pueden estar en cualquier departamento
+      const todosContactos = obtenerContactosDepartamento(); // Sin filtro de departamento
+      console.log('🔍 Total de contactos en el sistema:', todosContactos.length);
+      console.log('🔍 Tipos de contactos:', todosContactos.map(c => `${c.nombre}: ${c.tipo}`));
+      
+      const contactosEntrepot = todosContactos.filter(c => 
+        c.tipo === 'donador' || c.tipo === 'fournisseur'
+      );
       
       console.log('📦 Productos cargados:', productosActivos.length);
       console.log('🏷️ Productos PRS:', productosActivos.filter(p => p.esPRS).length);
       console.log('📋 Detalle productos PRS:', productosActivos.filter(p => p.esPRS).map(p => ({ nombre: p.nombre, peso: p.peso, pesoUnitario: p.pesoUnitario })));
       
       // 🔍 DIAGNÓSTICO: Log detallado de contactos cargados
-      console.log('👥 Total contactos Entrepôt cargados:', contactosEntrepot.length);
+      console.log('👥 Total contactos donador/fournisseur cargados:', contactosEntrepot.length);
       console.log('🔍 Desglose de contactos:');
       contactosEntrepot.forEach(c => {
         console.log(`  - ${c.nombre} ${c.apellido}: tipo="${c.tipo}", activo=${c.activo}, dept="${c.departamentoId}"`);
@@ -265,21 +273,25 @@ export function EntradaDonAchat() {
     const handleContactosRestaurados = (event: any) => {
       const { departamentoId } = event.detail || {};
       console.log('🔄 Evento contactos-restaurados recibido', { departamentoId });
-      if (departamentoId === '2' || !departamentoId) {
-        // Recargar contactos automáticamente
-        const contactosEntrepot = obtenerContactosDepartamento('2');
-        console.log('📋 Contactos recargados:', contactosEntrepot.length);
-        setContactosAlmacen(contactosEntrepot);
-        toast.success('🔄 Contacts synchronisés automatiquement');
-      }
+      // Recargar todos los contactos donador/fournisseur
+      const todosContactos = obtenerContactosDepartamento();
+      const contactosDonadoresFournisseurs = todosContactos.filter(c => 
+        c.tipo === 'donador' || c.tipo === 'fournisseur'
+      );
+      console.log('📋 Contactos donador/fournisseur recargados:', contactosDonadoresFournisseurs.length);
+      setContactosAlmacen(contactosDonadoresFournisseurs);
+      toast.success('🔄 Contacts synchronisés automatiquement');
     };
 
     const handleContactosActualizados = () => {
       // Recargar contactos cuando se crea o edita uno nuevo
       console.log('🔄 Evento contactos-actualizados recibido');
-      const contactosEntrepot = obtenerContactosDepartamento('2');
-      console.log('📋 Contactos recargados:', contactosEntrepot.length);
-      setContactosAlmacen(contactosEntrepot);
+      const todosContactos = obtenerContactosDepartamento();
+      const contactosDonadoresFournisseurs = todosContactos.filter(c => 
+        c.tipo === 'donador' || c.tipo === 'fournisseur'
+      );
+      console.log('📋 Contactos donador/fournisseur recargados:', contactosDonadoresFournisseurs.length);
+      setContactosAlmacen(contactosDonadoresFournisseurs);
     };
 
     // Listener para productos actualizados
@@ -294,9 +306,12 @@ export function EntradaDonAchat() {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'contactos_departamentos' || e.key === null) {
         console.log('💾 Storage actualizado, recargando contactos');
-        const contactosEntrepot = obtenerContactosDepartamento('2'); // Entrepôt = ID '2' según departamentosStorage.ts
-        console.log('📋 Contactos recargados desde storage:', contactosEntrepot.length);
-        setContactosAlmacen(contactosEntrepot);
+        const todosContactos = obtenerContactosDepartamento();
+        const contactosDonadoresFournisseurs = todosContactos.filter(c => 
+          c.tipo === 'donador' || c.tipo === 'fournisseur'
+        );
+        console.log('📋 Contactos donador/fournisseur recargados desde storage:', contactosDonadoresFournisseurs.length);
+        setContactosAlmacen(contactosDonadoresFournisseurs);
       }
       if (e.key === 'banco_alimentos_productos' || e.key === null) {
         console.log('💾 Storage actualizado, recargando productos');
@@ -324,6 +339,10 @@ export function EntradaDonAchat() {
   
   // Filtrar contactos según el tipo de entrada seleccionado
   const contactosDisponibles = React.useMemo(() => {
+    console.log('🔄 Recalculando contactosDisponibles...');
+    console.log(`   - contactosAlmacen.length: ${contactosAlmacen.length}`);
+    console.log(`   - tipoEntrada: "${formData.tipoEntrada}"`);
+    
     const filtrados = contactosAlmacen.filter(contacto => {
       if (!contacto.activo) {
         console.log(`⏭️ Contacto "${contacto.nombre} ${contacto.apellido}" excluido: activo=false`);
@@ -1545,8 +1564,25 @@ export function EntradaDonAchat() {
               </div>
               
               <div className="flex items-center justify-between mb-1.5">
-                <Label className="text-[#555555] text-xs font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  {t('entradaDonAchat.nomDonateur')}
+                <Label className="text-[#555555] text-xs font-medium flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  {formData.tipoEntrada === 'don' 
+                    ? '🎁 Donateur' 
+                    : formData.tipoEntrada === 'achat'
+                      ? '📦 Fournisseur'
+                      : t('entradaDonAchat.nomDonateur')}
+                  {formData.tipoEntrada && (
+                    <Badge 
+                      variant="outline" 
+                      className="text-[9px] px-1.5 py-0"
+                      style={{
+                        backgroundColor: formData.tipoEntrada === 'achat' ? '#E3F2FD' : '#E8F5E9',
+                        borderColor: formData.tipoEntrada === 'achat' ? '#2196F3' : '#4CAF50',
+                        color: formData.tipoEntrada === 'achat' ? '#1976D2' : '#2E7D32'
+                      }}
+                    >
+                      Filtré: {formData.tipoEntrada === 'achat' ? 'Fournisseurs' : 'Donateurs'}
+                    </Badge>
+                  )}
                 </Label>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="text-xs">
@@ -1564,34 +1600,80 @@ export function EntradaDonAchat() {
                 </div>
               )}
               
+              <Select
+                value={formData.donadorId}
+                onValueChange={(value) => {
+                  setFormData(prev => ({ ...prev, donadorId: value }));
+                  const contacto = contactosAlmacen.find(c => c.id === value);
+                  if (contacto) {
+                    const tipo = contacto.tipo === 'donador' ? 'donateur' : 'fournisseur';
+                    toast.success(`✅ ${contacto.nombre} ${contacto.apellido} (${tipo}) sélectionné`);
+                  }
+                }}
+                disabled={contactosDisponibles.length === 0 || !formData.tipoEntrada}
+              >
+                <SelectTrigger
+                  className={cn(
+                    "w-full h-10 border-2 transition-all",
+                    contactoSeleccionado
+                      ? "border-[#4CAF50] bg-[#F1F8F4]"
+                      : "border-[#E0E0E0] hover:border-[#4CAF50]"
+                  )}
+                >
+                  <SelectValue 
+                    placeholder={
+                      !formData.tipoEntrada
+                        ? "Sélectionner d'abord un type d'entrée..."
+                        : formData.tipoEntrada === 'don' 
+                          ? 'Sélectionner un donateur...' 
+                          : formData.tipoEntrada === 'achat'
+                            ? 'Sélectionner un fournisseur...'
+                            : t('entradaDonAchat.rechercherContact')
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent className="max-h-[400px]">
+                  {contactosDisponibles.length === 0 ? (
+                    <div className="p-4 text-center text-sm text-gray-500">
+                      {formData.tipoEntrada === 'don' 
+                        ? 'Aucun donateur disponible' 
+                        : formData.tipoEntrada === 'achat'
+                          ? 'Aucun fournisseur disponible'
+                          : 'Sélectionner un type d\'entrée d\'abord'}
+                    </div>
+                  ) : (
+                    contactosDisponibles
+                      .sort((a, b) => {
+                        const nombreA = a.nombreEmpresa || `${a.nombre} ${a.apellido}`;
+                        const nombreB = b.nombreEmpresa || `${b.nombre} ${b.apellido}`;
+                        return nombreA.localeCompare(nombreB);
+                      })
+                      .map((contacto) => {
+                        const nombreCompleto = contacto.nombreEmpresa || `${contacto.nombre} ${contacto.apellido}`;
+                        const icono = contacto.tipo === 'donador' ? '🎁' : '📦';
+                        
+                        return (
+                          <SelectItem key={contacto.id} value={contacto.id}>
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-4 w-4 text-[#4CAF50]" />
+                              <span>{icono}</span>
+                              <span className="font-medium">{nombreCompleto}</span>
+                              {contacto.telefono && (
+                                <span className="text-xs text-gray-500">• {contacto.telefono}</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        );
+                      })
+                  )}
+                </SelectContent>
+              </Select>
+
+              {/* Dialog de búsqueda mantenido pero oculto */}
+              {false && (
               <Dialog open={contactoDialogOpen} onOpenChange={setContactoDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start h-10 px-4 text-sm border-2 transition-all rounded-lg",
-                      contactoSeleccionado
-                        ? "border-[#4CAF50] bg-[#F1F8F4] hover:bg-[#E8F5E9]"
-                        : "border-[#E0E0E0] hover:border-[#4CAF50] hover:bg-[#F1F8F4]"
-                    )}
-                    disabled={contactosDisponibles.length === 0}
-                  >
-                    <div className="flex items-center gap-2 flex-1 text-left">
-                      {contactoSeleccionado ? (
-                        <>
-                          <Building2 className="h-4 w-4 text-[#4CAF50]" />
-                          <span className="text-[#333333] font-medium">
-                            {contactoSeleccionado.empresa || contactoSeleccionado.nombreEmpresa || contactoSeleccionado.nombre}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-[#555555]">
-                          {t('entradaDonAchat.rechercherContact')}
-                        </span>
-                      )}
-                    </div>
-                    <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 text-[#4CAF50]" />
-                  </Button>
+                  <Button variant="outline" className="hidden">Hidden</Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[600px]" aria-describedby="seleccionar-contacto-description">
                   <DialogHeader>
@@ -1741,6 +1823,7 @@ export function EntradaDonAchat() {
                   </div>
                 </DialogContent>
               </Dialog>
+              )}
 
               {/* ELIMINADO: Campo personalizado - ahora solo se pueden seleccionar contactos existentes */}
               {/* La creación de donadores y proveedores solo está disponible en Gestión de Contactos del Almacén */}
@@ -3093,13 +3176,13 @@ export function EntradaDonAchat() {
 
     {/* Diálogo de Ayuda - Configuración de Impresión Automática */}
     <Dialog open={ayudaImpresionOpen} onOpenChange={setAyudaImpresionOpen}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="ayuda-impresion-description">
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }} className="flex items-center gap-2 text-xl">
             <Printer className="w-6 h-6 text-[#1E73BE]" />
             Impresión Automática - Guía de Configuración
           </DialogTitle>
-          <DialogDescription className="text-sm mt-2">
+          <DialogDescription id="ayuda-impresion-description" className="text-sm mt-2">
             Cómo lograr impresión completamente automática sin diálogos
           </DialogDescription>
         </DialogHeader>
@@ -3215,7 +3298,7 @@ export function EntradaDonAchat() {
 
     {/* Diálogo Crear Producto PRS */}
     <Dialog open={crearProductoPRSOpen} onOpenChange={setCrearProductoPRSOpen}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="crear-producto-prs-description">
         <DialogHeader className="pb-4 border-b">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#E91E63] to-[#C2185B] flex items-center justify-center text-white text-2xl">
@@ -3225,7 +3308,7 @@ export function EntradaDonAchat() {
               <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }} className="text-xl">
                 Créer un Produit PRS
               </DialogTitle>
-              <DialogDescription className="text-sm mt-1">
+              <DialogDescription id="crear-producto-prs-description" className="text-sm mt-1">
                 Créez rapidement un produit dédié au Programme de Récupération Spéciale
               </DialogDescription>
             </div>

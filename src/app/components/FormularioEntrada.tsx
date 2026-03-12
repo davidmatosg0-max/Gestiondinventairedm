@@ -143,6 +143,15 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
               : null;
         
         if (tipoPermitido && contactoSeleccionado.tipo !== tipoPermitido) {
+          const nombreContacto = contactoSeleccionado.nombreEmpresa || `${contactoSeleccionado.nombre} ${contactoSeleccionado.apellido}`;
+          const tipoContactoTexto = contactoSeleccionado.tipo === 'donador' ? 'donateur' : 'fournisseur';
+          const tipoRequeridoTexto = tipoPermitido === 'donador' ? 'donateur' : 'fournisseur';
+          
+          toast.info(
+            `🔄 "${nombreContacto}" est un ${tipoContactoTexto}. Veuillez sélectionner un ${tipoRequeridoTexto} pour ce type d'entrée.`,
+            { duration: 4000 }
+          );
+          
           setFormData(prev => ({ ...prev, donadorId: '' }));
         }
       }
@@ -524,18 +533,20 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
   const tipoContactoPermitido = useMemo(() => {
     if (!formData.tipoEntrada) return null;
     
+    const tipoLower = formData.tipoEntrada.toLowerCase();
+    
     // ACH/ACHAT → solo fournisseurs
-    if (formData.tipoEntrada.toLowerCase() === 'ach' || formData.tipoEntrada.toLowerCase() === 'achat') {
+    if (tipoLower === 'ach' || tipoLower === 'achat') {
       return 'fournisseur';
     }
     
     // DON → solo donadores
-    if (formData.tipoEntrada.toLowerCase() === 'don') {
+    if (tipoLower === 'don') {
       return 'donador';
     }
     
     // CPN → ambos tipos (donadores y fournisseurs)
-    if (formData.tipoEntrada.toLowerCase() === 'cpn') {
+    if (tipoLower === 'cpn') {
       return null; // null = mostrar todos
     }
     
@@ -548,6 +559,23 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
     if (!tipoContactoPermitido) return contactos;
     return contactos.filter(c => c.tipo === tipoContactoPermitido);
   }, [contactos, tipoContactoPermitido]);
+  
+  // Debug: Mostrar información de filtrado en consola
+  useEffect(() => {
+    if (formData.tipoEntrada) {
+      console.log('🔍 Filtrado de contactos:', {
+        tipoEntrada: formData.tipoEntrada,
+        tipoPermitido: tipoContactoPermitido,
+        totalContactos: contactos.length,
+        contactosFiltrados: contactosFiltrados.length,
+        contactosFiltradosDetalle: contactosFiltrados.map(c => ({
+          id: c.id,
+          nombre: c.nombreEmpresa || `${c.nombre} ${c.apellido}`,
+          tipo: c.tipo
+        }))
+      });
+    }
+  }, [formData.tipoEntrada, tipoContactoPermitido, contactos, contactosFiltrados]);
 
   return (
     <>
@@ -617,9 +645,23 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                     </SelectContent>
                   </Select>
                   {programaSeleccionado && (
-                    <div className="flex items-center gap-2 mt-2 p-2 bg-blue-50 rounded-lg border border-blue-100">
-                      <span className="text-lg">{programaSeleccionado.icono}</span>
-                      <span className="text-xs text-[#1E73BE] font-medium">{programaSeleccionado.nombre}</span>
+                    <div className="flex items-center justify-between gap-2 mt-2 p-2 bg-blue-50 rounded-lg border border-blue-100">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{programaSeleccionado.icono}</span>
+                        <span className="text-xs text-[#1E73BE] font-medium">{programaSeleccionado.nombre}</span>
+                      </div>
+                      {tipoContactoPermitido && (
+                        <Badge 
+                          variant="secondary" 
+                          className="text-[9px] px-2 py-0.5"
+                          style={{
+                            backgroundColor: tipoContactoPermitido === 'fournisseur' ? '#E3F2FD' : '#E8F5E9',
+                            color: tipoContactoPermitido === 'fournisseur' ? '#1976D2' : '#2E7D32'
+                          }}
+                        >
+                          {tipoContactoPermitido === 'fournisseur' ? '📦 Fournisseurs' : '🎁 Donateurs'}
+                        </Badge>
+                      )}
                     </div>
                   )}
                 </div>
@@ -633,6 +675,19 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                         ? '🎁 Donateur' 
                         : (t('common.donorProvider') || 'Fournisseur / Donateur')}
                     <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Requerido</Badge>
+                    {tipoContactoPermitido && (
+                      <Badge 
+                        variant="outline" 
+                        className="text-[10px] px-1.5 py-0"
+                        style={{
+                          backgroundColor: tipoContactoPermitido === 'fournisseur' ? '#E3F2FD' : '#E8F5E9',
+                          borderColor: tipoContactoPermitido === 'fournisseur' ? '#2196F3' : '#4CAF50',
+                          color: tipoContactoPermitido === 'fournisseur' ? '#1976D2' : '#2E7D32'
+                        }}
+                      >
+                        Filtré: {tipoContactoPermitido === 'fournisseur' ? 'Fournisseurs seulement' : 'Donateurs seulement'}
+                      </Badge>
+                    )}
                   </Label>
                   <Select 
                     value={formData.donadorId} 
@@ -667,13 +722,22 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                               const nombreB = b.nombreEmpresa || `${b.nombre} ${b.apellido}`;
                               return nombreA.localeCompare(nombreB);
                             })
-                            .map((contacto, index) => (
-                              <SelectItem key={contacto.id} value={contacto.id}>
-                                {index === 0 && (contacto.tipo === 'fournisseur' ? '📦 ' : '🎁 ')}
-                                {contacto.nombreEmpresa || `${contacto.nombre} ${contacto.apellido}`}
-                                {contacto.telefono && ` • ${contacto.telefono}`}
-                              </SelectItem>
-                            ))}
+                            .map((contacto) => {
+                              const nombreCompleto = contacto.nombreEmpresa || `${contacto.nombre} ${contacto.apellido}`;
+                              const icono = contacto.tipo === 'donador' ? '🎁' : '📦';
+                              
+                              return (
+                                <SelectItem key={contacto.id} value={contacto.id}>
+                                  <div className="flex items-center gap-2">
+                                    <span>{icono}</span>
+                                    <span className="font-medium">{nombreCompleto}</span>
+                                    {contacto.telefono && (
+                                      <span className="text-xs text-gray-500">• {contacto.telefono}</span>
+                                    )}
+                                  </div>
+                                </SelectItem>
+                              );
+                            })}
                         </>
                       )}
                     </SelectContent>
@@ -1176,22 +1240,17 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
       <Dialog open={dialogSubcategoria} onOpenChange={setDialogSubcategoria}>
         <DialogContent className="max-w-2xl bg-gradient-to-br from-white to-gray-50">
           <DialogHeader className="pb-4">
-            <DialogDescription className="sr-only">
-              Formulario para crear una nueva subcategoría en {categoriaSeleccionada?.nombre}
+            <DialogTitle className="text-xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#4CAF50] to-[#388E3C] flex items-center justify-center shadow-lg">
+                  <Plus className="h-6 w-6 text-white" />
+                </div>
+                <span>Crear Nueva Subcategoría</span>
+              </div>
+            </DialogTitle>
+            <DialogDescription className="text-sm text-[#666666] pl-16">
+              Añadir una nueva subcategoría a: <span className="font-medium text-[#1E73BE]">{categoriaSeleccionada?.nombre}</span>
             </DialogDescription>
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#4CAF50] to-[#388E3C] flex items-center justify-center shadow-lg">
-                <Plus className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <DialogTitle className="text-xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
-                  Crear Nueva Subcategoría
-                </DialogTitle>
-                <p className="text-sm text-[#666666]">
-                  Añadir una nueva subcategoría a: <span className="font-medium text-[#1E73BE]">{categoriaSeleccionada?.nombre}</span>
-                </p>
-              </div>
-            </div>
           </DialogHeader>
 
           <div className="space-y-5 py-4">
