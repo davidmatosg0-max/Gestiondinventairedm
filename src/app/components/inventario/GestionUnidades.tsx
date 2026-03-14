@@ -81,7 +81,8 @@ export function GestionUnidades() {
   const [formData, setFormData] = useState({
     nombre: '',
     abreviatura: '',
-    icono: '📦'
+    icono: '📦',
+    pesoUnidad: 0
   });
 
   useEffect(() => {
@@ -99,7 +100,8 @@ export function GestionUnidades() {
     setFormData({
       nombre: '',
       abreviatura: '',
-      icono: '📦'
+      icono: '📦',
+      pesoUnidad: 0
     });
     setDialogOpen(true);
   };
@@ -110,7 +112,8 @@ export function GestionUnidades() {
     setFormData({
       nombre: unidad.nombre,
       abreviatura: unidad.abreviatura,
-      icono: unidad.icono || '📦'
+      icono: unidad.icono || '📦',
+      pesoUnidad: unidad.pesoUnidad || 0
     });
     setDialogOpen(true);
   };
@@ -130,7 +133,8 @@ export function GestionUnidades() {
       id: modoEdicion && unidadEditando ? unidadEditando.id : Date.now().toString(),
       nombre: formData.nombre.trim(),
       abreviatura: formData.abreviatura.trim().toUpperCase(),
-      icono: formData.icono
+      icono: formData.icono,
+      pesoUnidad: formData.pesoUnidad
     };
 
     const guardado = guardarUnidad(unidad);
@@ -265,6 +269,22 @@ export function GestionUnidades() {
               />
               <p className="text-xs text-[#666666]">
                 Maximum 5 caractères
+              </p>
+            </div>
+
+            {/* Peso de la Unidad (Tara) */}
+            <div className="space-y-2">
+              <Label>⚖️ Poids de l'unité vide (Tare) en kg</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.pesoUnidad}
+                onChange={(e) => setFormData({ ...formData, pesoUnidad: parseFloat(e.target.value) || 0 })}
+                placeholder="Ex: 30 (pour une palette de 30 kg)"
+              />
+              <p className="text-xs text-[#666666]">
+                💡 Ce poids sera automatiquement déduit lors de la pesée avec la balance
               </p>
             </div>
 

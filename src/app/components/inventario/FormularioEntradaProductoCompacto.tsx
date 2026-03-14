@@ -63,6 +63,7 @@ interface Unidad {
   id: string;
   nombre: string;
   abreviatura: string;
+  pesoUnidad?: number; // Peso de la unidad en kg
 }
 
 interface ProgramaEntrada {
@@ -457,7 +458,11 @@ export function FormularioEntradaProductoCompacto({
                       <div>
                         <Label htmlFor="peso" className="text-xs">
                           <Scale className="w-3 h-3 inline mr-1" />
-                          {t('warehouse.weight')} (kg) *
+                          {(() => {
+                            const unidadSeleccionada = unidades.find(u => u.id === formulario.unidadId);
+                            const tieneTara = unidadSeleccionada?.pesoUnidad && unidadSeleccionada.pesoUnidad > 0;
+                            return tieneTara ? 'Poids total (avec l\'unité)' : t('warehouse.weight');
+                          })()} (kg) *
                         </Label>
                         <Input
                           id="peso"
@@ -470,6 +475,49 @@ export function FormularioEntradaProductoCompacto({
                         />
                       </div>
                     </div>
+                    
+                    {/* Información de deducción de tara */}
+                    {(() => {
+                      const unidadSeleccionada = unidades.find(u => u.id === formulario.unidadId);
+                      const tieneTara = unidadSeleccionada?.pesoUnidad && unidadSeleccionada.pesoUnidad > 0;
+                      
+                      if (tieneTara) {
+                        const pesoTara = unidadSeleccionada!.pesoUnidad!;
+                        const pesoNeto = Math.max(0, formulario.peso - pesoTara);
+                        
+                        return (
+                          <div className="p-4 bg-amber-50 border-2 border-amber-200 rounded-lg">
+                            <div className="flex items-start gap-3">
+                              <div className="text-2xl">⚖️</div>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-sm text-amber-900 mb-2">
+                                  Calcul automatique avec déduction de tare
+                                </h4>
+                                <div className="grid grid-cols-3 gap-3 text-xs">
+                                  <div className="bg-white p-2 rounded border border-amber-300">
+                                    <p className="text-amber-700 font-medium mb-1">Poids total:</p>
+                                    <p className="text-lg font-bold text-amber-900">{formulario.peso.toFixed(2)} kg</p>
+                                  </div>
+                                  <div className="bg-white p-2 rounded border border-amber-300">
+                                    <p className="text-amber-700 font-medium mb-1">Tare ({unidadSeleccionada!.abreviatura}):</p>
+                                    <p className="text-lg font-bold text-red-600">- {pesoTara.toFixed(2)} kg</p>
+                                  </div>
+                                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-2 rounded border-2 border-green-400">
+                                    <p className="text-green-700 font-medium mb-1">Poids net:</p>
+                                    <p className="text-lg font-bold text-green-700">= {pesoNeto.toFixed(2)} kg</p>
+                                  </div>
+                                </div>
+                                <p className="text-xs text-amber-700 mt-2">
+                                  💡 Le poids de l'unité ({pesoTara.toFixed(2)} kg) sera automatiquement déduit lors de l'enregistrement
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+                    
                     <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
                       <div className="flex items-start gap-2">
                         <Package className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
@@ -481,7 +529,19 @@ export function FormularioEntradaProductoCompacto({
                             {t('warehouse.totalQuantity')}: <strong>{formulario.cantidad}</strong> {unidades.find(u => u.id === formulario.unidadId)?.abreviatura || 'unités'}
                           </p>
                           <p className="text-xs text-blue-700">
-                            {t('warehouse.totalWeight')}: <strong>{formulario.peso}</strong> kg
+                            {t('warehouse.totalWeight')}: <strong>{(() => {
+                              const unidadSeleccionada = unidades.find(u => u.id === formulario.unidadId);
+                              const tieneTara = unidadSeleccionada?.pesoUnidad && unidadSeleccionada.pesoUnidad > 0;
+                              if (tieneTara) {
+                                const pesoNeto = Math.max(0, formulario.peso - unidadSeleccionada!.pesoUnidad!);
+                                return pesoNeto.toFixed(2);
+                              }
+                              return formulario.peso.toFixed(2);
+                            })()}</strong> kg {(() => {
+                              const unidadSeleccionada = unidades.find(u => u.id === formulario.unidadId);
+                              const tieneTara = unidadSeleccionada?.pesoUnidad && unidadSeleccionada.pesoUnidad > 0;
+                              return tieneTara ? '(net)' : '';
+                            })()}
                           </p>
                         </div>
                       </div>

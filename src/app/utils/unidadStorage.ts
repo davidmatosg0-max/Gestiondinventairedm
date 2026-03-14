@@ -5,6 +5,7 @@ export type Unidad = {
   nombre: string;
   abreviatura: string;
   icono?: string;
+  pesoUnidad?: number; // Peso de la unidad vacía en kg (tara)
 };
 
 const STORAGE_KEY = 'banco_alimentos_unidades';
