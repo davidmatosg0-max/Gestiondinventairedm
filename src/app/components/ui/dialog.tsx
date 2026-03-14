@@ -53,9 +53,10 @@ const DialogContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => {
   const generatedId = React.useId();
   
-  // Check if aria-describedby was explicitly provided with a truthy value
-  const hasExplicitDescribedBy = Boolean(props['aria-describedby']);
-  const finalAriaDescribedBy = hasExplicitDescribedBy ? props['aria-describedby'] : generatedId;
+  // Check if aria-describedby was explicitly provided with a truthy non-empty value
+  const ariaDescribedBy = props['aria-describedby'];
+  const hasExplicitDescribedBy = ariaDescribedBy !== undefined && ariaDescribedBy !== null && ariaDescribedBy !== '';
+  const finalAriaDescribedBy = hasExplicitDescribedBy ? ariaDescribedBy : generatedId;
   
   return (
     <DialogPortal>

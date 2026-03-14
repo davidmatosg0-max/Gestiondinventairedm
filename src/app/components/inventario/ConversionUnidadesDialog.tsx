@@ -8,6 +8,7 @@ import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Card } from '../ui/card';
 import { toast } from 'sonner';
+import { obtenerUnidades, type Unidad } from '../../utils/unidadStorage';
 
 interface Producto {
   id: string;
@@ -29,13 +30,6 @@ interface ConversionUnidadesDialogProps {
   onConversion: (productoId: string, cantidadOrigen: number, unidadOrigen: string, cantidadDestino: number, unidadDestino: string) => void;
 }
 
-const UNIDADES_DISPONIBLES = [
-  { valor: 'Paleta', icono: Layers, label: 'Paleta' },
-  { valor: 'Caja', icono: Box, label: 'Caja' },
-  { valor: 'Unidad', icono: Package, label: 'Unidad' },
-  { valor: 'Saco', icono: ShoppingBag, label: 'Saco' }
-];
-
 export function ConversionUnidadesDialog({
   open,
   onOpenChange,
@@ -43,6 +37,7 @@ export function ConversionUnidadesDialog({
   onConversion
 }: ConversionUnidadesDialogProps) {
   const { t } = useTranslation();
+  const [unidades, setUnidades] = useState<Unidad[]>([]);
   const [unidadOrigen, setUnidadOrigen] = useState('');
   const [unidadDestino, setUnidadDestino] = useState('');
   const [cantidadOrigen, setCantidadOrigen] = useState('');
@@ -50,7 +45,28 @@ export function ConversionUnidadesDialog({
   const [cantidadDestino, setCantidadDestino] = useState(0);
   const [pesoUnitarioDestino, setPesoUnitarioDestino] = useState<number | null>(null);
   const [pesoUnitarioOrigen, setPesoUnitarioOrigen] = useState<number | null>(null); // 🎯 NUEVO: guardar peso unitario origen
-  const [unidadesDestino, setUnidadesDestino] = useState<typeof UNIDADES_DISPONIBLES>([]);
+  const [unidadesDestino, setUnidadesDestino] = useState<Unidad[]>([]);
+
+  // Cargar unidades dinámicas al montar el componente
+  useEffect(() => {
+    const cargarUnidades = () => {
+      const unidadesCargadas = obtenerUnidades();
+      setUnidades(unidadesCargadas);
+    };
+
+    cargarUnidades();
+
+    // Escuchar cambios en las unidades
+    const handleUnidadesActualizadas = (event: CustomEvent) => {
+      setUnidades(event.detail);
+    };
+
+    window.addEventListener('unidadesActualizadas', handleUnidadesActualizadas as EventListener);
+
+    return () => {
+      window.removeEventListener('unidadesActualizadas', handleUnidadesActualizadas as EventListener);
+    };
+  }, []);
 
   // Inicializar unidad origen cuando se abre el diálogo
   useEffect(() => {
@@ -81,24 +97,37 @@ export function ConversionUnidadesDialog({
       return;
     }
 
-    let disponibles: typeof UNIDADES_DISPONIBLES = [];
+    let disponibles: Unidad[] = [];
     
     // Normalizar la unidad origen (case insensitive y variaciones)
     const unidadOrigenNorm = unidadOrigen.toLowerCase();
 
-    if (unidadOrigenNorm.includes('paleta') || unidadOrigenNorm.includes('pallet')) {
-      disponibles = UNIDADES_DISPONIBLES.filter(u => ['Caja', 'Unidad', 'Saco'].includes(u.valor));
-    } else if (unidadOrigenNorm.includes('caja') || unidadOrigenNorm.includes('box')) {
-      disponibles = UNIDADES_DISPONIBLES.filter(u => ['Unidad', 'Saco'].includes(u.valor));
+    if (unidadOrigenNorm.includes('paleta') || unidadOrigenNorm.includes('pallet') || unidadOrigenNorm.includes('palette')) {
+      disponibles = unidades.filter(u => 
+        u.nombre.toLowerCase().includes('caja') || 
+        u.nombre.toLowerCase().includes('box') ||
+        u.nombre.toLowerCase().includes('boîte') ||
+        u.nombre.toLowerCase().includes('unidad') || 
+        u.nombre.toLowerCase().includes('unité') ||
+        u.nombre.toLowerCase().includes('saco') ||
+        u.nombre.toLowerCase().includes('sac')
+      );
+    } else if (unidadOrigenNorm.includes('caja') || unidadOrigenNorm.includes('box') || unidadOrigenNorm.includes('boîte')) {
+      disponibles = unidades.filter(u => 
+        u.nombre.toLowerCase().includes('unidad') || 
+        u.nombre.toLowerCase().includes('unité') ||
+        u.nombre.toLowerCase().includes('saco') ||
+        u.nombre.toLowerCase().includes('sac')
+      );
     } else {
-      // Si no es paleta ni caja, mostrar todas las opciones
-      disponibles = UNIDADES_DISPONIBLES;
+      // Si no es paleta ni caja, mostrar todas las opciones excepto la misma unidad origen
+      disponibles = unidades.filter(u => u.nombre !== unidadOrigen);
     }
 
     setUnidadesDestino(disponibles);
     
     // No resetear unidadDestino aquí para no perder la selección
-  }, [unidadOrigen]);
+  }, [unidadOrigen, unidades]);
 
   // Actualizar factor de conversión sugerido cuando cambia la unidad destino
   useEffect(() => {
@@ -227,8 +256,12 @@ export function ConversionUnidadesDialog({
   };
 
   const getIconoUnidad = (unidad: string) => {
-    const unidadData = UNIDADES_DISPONIBLES.find(u => u.valor === unidad);
-    return unidadData?.icono || Package;
+    const unidadData = unidades.find(u => u.nombre === unidad || u.abreviatura === unidad);
+    // Si tiene icono, mostrar el emoji
+    if (unidadData?.icono) {
+      return () => <span className="text-2xl">{unidadData.icono}</span>;
+    }
+    return Package;
   };
 
   const IconoOrigen = getIconoUnidad(unidadOrigen);
@@ -303,17 +336,14 @@ export function ConversionUnidadesDialog({
                       No hay conversiones disponibles para {unidadOrigen}
                     </div>
                   ) : (
-                    unidadesDestino.map((unidad) => {
-                      const Icono = unidad.icono;
-                      return (
-                        <SelectItem key={unidad.valor} value={unidad.valor}>
-                          <div className="flex items-center gap-2">
-                            <Icono className="h-4 w-4" />
-                            {unidad.label}
-                          </div>
-                        </SelectItem>
-                      );
-                    })
+                    unidadesDestino.map((unidad) => (
+                      <SelectItem key={unidad.id} value={unidad.nombre}>
+                        <div className="flex items-center gap-2">
+                          {unidad.icono && <span>{unidad.icono}</span>}
+                          {unidad.nombre} ({unidad.abreviatura})
+                        </div>
+                      </SelectItem>
+                    ))
                   )}
                 </SelectContent>
               </Select>
