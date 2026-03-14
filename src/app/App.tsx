@@ -30,6 +30,7 @@ import { APIKeysPage } from './components/pages/APIKeysPage';
 import { DashboardPredictivo } from './components/pages/DashboardPredictivo';
 import { GestionAutenticacion } from './components/pages/GestionAutenticacion';
 import { GestionDonateursFournisseurs } from './components/entrepot/GestionDonateursFournisseurs';
+import { ContactosAlmacenPage } from './components/pages/ContactosAlmacenPage';
 import { Toaster } from './components/ui/sonner';
 import { PWAInstaller } from './components/PWAInstaller';
 // CACHE BUSTER v3.0 - TIMESTAMP: 2025-03-11-20-45 - Corrección de colores contactos
@@ -197,6 +198,8 @@ function AppContent() {
         return <CuisinePage onNavigate={setCurrentPage} />;
       case 'donateurs-fournisseurs':
         return <GestionDonateursFournisseurs />;
+      case 'contactos-almacen':
+        return <ContactosAlmacenPage onNavigate={setCurrentPage} />;
       case 'diagnosticos':
         return <SystemDiagnostics />;
       default:
