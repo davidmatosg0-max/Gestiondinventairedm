@@ -289,6 +289,18 @@ export function Inventario() {
     setConversionesRecientes(conversiones);
     const plantillas = obtenerPlantillasConversion();
     setPlantillasConversion(plantillas);
+    
+    // 🔄 Escuchar evento de restauración de backup para recargar datos
+    const handleBackupRestored = () => {
+      console.log('🔄 Backup restaurado - Recargando inventario...');
+      setRefreshKey(prev => prev + 1);
+    };
+
+    window.addEventListener('backupRestored', handleBackupRestored);
+
+    return () => {
+      window.removeEventListener('backupRestored', handleBackupRestored);
+    };
   }, []);
 
   const getStockStatus = (producto: typeof todosLosProductos[0]) => {

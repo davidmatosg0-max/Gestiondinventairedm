@@ -10,7 +10,12 @@ export function obtenerCategorias(): Categoria[] {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored !== null) {
-      return JSON.parse(stored);
+      const categorias: Categoria[] = JSON.parse(stored);
+      // Convertir valorMonetario a enteros para compatibilidad
+      return categorias.map(cat => ({
+        ...cat,
+        valorMonetario: Math.round(cat.valorMonetario)
+      }));
     } else {
       // Solo inicializar la primera vez
       guardarCategorias(categoriasIniciales);

@@ -156,6 +156,14 @@ export function restoreLocalStorage(backupString: string) {
     console.log('🔒🔒🔒 PROTECCIÓN POST-RESTAURACIÓN COMPLETA');
     console.log('🛡️ Limpieza automática PERMANENTEMENTE DESHABILITADA');
     
+    // 🔄 PASO 8: Disparar evento para que los componentes recarguen sus datos
+    try {
+      window.dispatchEvent(new CustomEvent('backupRestored'));
+      console.log('🔄 Evento backupRestored disparado - Componentes recargando datos...');
+    } catch (error) {
+      console.warn('⚠️ No se pudo disparar evento backupRestored:', error);
+    }
+    
     return true;
   } catch (error) {
     console.error('❌ Error al restaurar backup:', error);

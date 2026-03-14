@@ -56,7 +56,7 @@ type Categoria = {
   id: string;
   nombre: string;
   descripcion: string;
-  valorMonetario: number;
+  valorMonetario: number | string; // Permite string mientras se edita con punto decimal
   color: string;
   icono: string;
   subcategorias: Subcategoria[];
@@ -136,7 +136,7 @@ const categoriasIniciales: Categoria[] = [
     descripcion: 'Productos de cereales, arroz, pasta y otros granos',
     icono: '🌾',
     color: '#FFC107',
-    valorMonetario: 1.5,
+    valorMonetario: 2,
     activa: true,
     subcategorias: [
       { id: 'sub-1-1', nombre: 'Arroz', descripcion: 'Arroz blanco, integral y variedades', icono: '🍚', cantidad: 100, peso: 50, pesoUnitario: 0.5, unidad: 'kg', unidadesPermitidas: ['6', '3'], activa: true },
@@ -150,7 +150,7 @@ const categoriasIniciales: Categoria[] = [
     descripcion: 'Frutas y vegetales frescos',
     icono: '🥬',
     color: '#4CAF50',
-    valorMonetario: 2.0,
+    valorMonetario: 2,
     activa: true,
     subcategorias: [
       { id: 'sub-2-1', nombre: 'Manzanas', descripcion: 'Manzanas frescas de diversas variedades', icono: '🍎', cantidad: 200, peso: 100, pesoUnitario: 0.5, unidad: 'kg', unidadesPermitidas: ['6', '3', '2'], activa: true },
@@ -164,7 +164,7 @@ const categoriasIniciales: Categoria[] = [
     descripcion: 'Productos lácteos y derivados',
     icono: '🥛',
     color: '#1E73BE',
-    valorMonetario: 3.0,
+    valorMonetario: 3,
     activa: true,
     subcategorias: [
       { id: 'sub-3-1', nombre: 'Leche', descripcion: 'Leche fresca y ultrapasteurizada', icono: '🥛', cantidad: 120, peso: 0, pesoUnitario: 1.0, unidad: 'L', unidadesPermitidas: ['7', '3'], activa: true },
@@ -247,6 +247,20 @@ export function Configuracion() {
   useEffect(() => {
     const categoriasGuardadas = obtenerCategorias();
     setCategorias(categoriasGuardadas);
+    
+    // 🔄 Escuchar evento de restauración de backup para recargar categorías
+    const handleBackupRestored = () => {
+      console.log('🔄 Backup restaurado - Recargando categorías...');
+      const categoriasActualizadas = obtenerCategorias();
+      setCategorias(categoriasActualizadas);
+      toast.success('Catégories rechargées avec succès');
+    };
+
+    window.addEventListener('backupRestored', handleBackupRestored);
+
+    return () => {
+      window.removeEventListener('backupRestored', handleBackupRestored);
+    };
   }, []);
 
 
@@ -450,10 +464,15 @@ export function Configuracion() {
     // Generar icono automático si no hay uno definido
     const iconoFinal = formCategoria.icono || generarIconoProducto(formCategoria.nombre);
     
+    // Convertir valorMonetario a número si es string
+    const valorMonetarioNumerico = typeof formCategoria.valorMonetario === 'string' 
+      ? parseFloat(formCategoria.valorMonetario) || 0 
+      : formCategoria.valorMonetario;
+    
     if (editandoCategoria) {
       setCategorias(categorias.map(c => 
         c.id === editandoCategoria.id 
-          ? { ...c, ...formCategoria, icono: iconoFinal }
+          ? { ...c, ...formCategoria, icono: iconoFinal, valorMonetario: valorMonetarioNumerico }
           : c
       ));
       toast.success(t('configuration.categoryUpdated'));
@@ -462,6 +481,7 @@ export function Configuracion() {
         id: Date.now().toString(),
         ...formCategoria,
         icono: iconoFinal,
+        valorMonetario: valorMonetarioNumerico,
         subcategorias: []
       };
       setCategorias([...categorias, nueva]);
@@ -1482,12 +1502,12 @@ export function Configuracion() {
                         {t('configuration.newSubcategory')}
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="subcategoria-dialog-description">
+                    <DialogContent className="max-h-[90vh] overflow-y-auto scrollbar-thin">
                       <DialogHeader>
                         <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                           {editandoSubcategoria ? t('configuration.editSubcategory') : t('configuration.newSubcategoryForm')}
                         </DialogTitle>
-                        <DialogDescription id="subcategoria-dialog-description">
+                        <DialogDescription>
                           {editandoSubcategoria ? 'Modifique los datos de la subcategoría' : 'Complete la información de la nueva subcategoría'}
                         </DialogDescription>
                       </DialogHeader>
@@ -1718,12 +1738,12 @@ export function Configuracion() {
                         {t('configuration.newCategory')}
                       </Button>
                     </DialogTrigger>
-                    <DialogContent aria-describedby="categoria-dialog-description">
+                    <DialogContent>
                       <DialogHeader>
                         <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                           {editandoCategoria ? t('configuration.editCategory') : t('configuration.newCategory')}
                         </DialogTitle>
-                        <DialogDescription id="categoria-dialog-description">
+                        <DialogDescription>
                           {editandoCategoria ? 'Modifique los datos de la categoría' : 'Complete la información de la nueva categoría'}
                         </DialogDescription>
                       </DialogHeader>
@@ -1759,11 +1779,28 @@ export function Configuracion() {
                           <div className="relative">
                             <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#666666]" />
                             <Input
-                              type="number"
-                              step="0.01"
-                              placeholder="0.00"
-                              value={formCategoria.valorMonetario || 0}
-                              onChange={(e) => setFormCategoria({ ...formCategoria, valorMonetario: parseFloat(e.target.value) || 0 })}
+                              type="text"
+                              inputMode="decimal"
+                              placeholder="0"
+                              value={formCategoria.valorMonetario === 0 ? '' : formCategoria.valorMonetario}
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/[^0-9.]/g, ''); // Solo dígitos y punto decimal
+                                
+                                // Permitir solo un punto decimal
+                                const parts = value.split('.');
+                                const finalValue = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : value;
+                                
+                                // Guardar como string si termina en punto o está vacío, o como número si es completo
+                                if (finalValue === '' || finalValue === '.') {
+                                  setFormCategoria({ ...formCategoria, valorMonetario: 0 });
+                                } else if (finalValue.endsWith('.') || finalValue.includes('.')) {
+                                  // Mantener como string mientras tiene punto decimal
+                                  setFormCategoria({ ...formCategoria, valorMonetario: finalValue });
+                                } else {
+                                  // Convertir a número cuando no hay punto
+                                  setFormCategoria({ ...formCategoria, valorMonetario: parseFloat(finalValue) || 0 });
+                                }
+                              }}
                               className="pl-10"
                             />
                           </div>
@@ -2309,12 +2346,12 @@ export function Configuracion() {
                     {t('configuration.newProgram')}
                   </Button>
                 </DialogTrigger>
-                <DialogContent aria-describedby="programa-dialog-description">
+                <DialogContent>
                   <DialogHeader>
                     <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                       {editandoPrograma ? t('configuration.editProgram') : t('configuration.newProgramForm')}
                     </DialogTitle>
-                    <DialogDescription id="programa-dialog-description">
+                    <DialogDescription>
                       {editandoPrograma ? t('configuration.modifyProgramData') : t('configuration.completeProgramInfo')}
                     </DialogDescription>
                   </DialogHeader>
@@ -2720,7 +2757,7 @@ export function Configuracion() {
           setProductoPRSDialogOpen(open);
           if (!open) resetFormProductoPRS();
         }}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="producto-prs-description">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                 <div className="flex items-center gap-2">
@@ -2728,7 +2765,7 @@ export function Configuracion() {
                   {editandoProductoPRS ? 'Modifier le Produit PRS' : 'Nouveau Produit PRS'}
                 </div>
               </DialogTitle>
-              <DialogDescription id="producto-prs-description">
+              <DialogDescription>
                 {editandoProductoPRS 
                   ? 'Modifiez les informations du produit PRS' 
                   : 'Créez un nouveau produit pour le Programme de Récupération Spéciale'}
@@ -3066,7 +3103,7 @@ export function Configuracion() {
 
       {/* Dialog Eliminar Categoría */}
       <Dialog open={dialogEliminarCategoria} onOpenChange={setDialogEliminarCategoria}>
-        <DialogContent className="max-w-md" aria-describedby="eliminar-categoria-description">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', color: '#DC3545' }}>
               <div className="flex items-center gap-2">
@@ -3074,7 +3111,7 @@ export function Configuracion() {
                 {t('configuration.deleteCategory')}
               </div>
             </DialogTitle>
-            <DialogDescription id="eliminar-categoria-description">
+            <DialogDescription>
               Esta acción no se puede deshacer. Se eliminarán todas las subcategorías asociadas.
             </DialogDescription>
           </DialogHeader>
@@ -3136,7 +3173,7 @@ export function Configuracion() {
 
       {/* Dialog Eliminar Subcategoría */}
       <Dialog open={dialogEliminarSubcategoria} onOpenChange={setDialogEliminarSubcategoria}>
-        <DialogContent className="max-w-md" aria-describedby="eliminar-subcategoria-description">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', color: '#DC3545' }}>
               <div className="flex items-center gap-2">
@@ -3144,7 +3181,7 @@ export function Configuracion() {
                 {t('configuration.deleteSubcategory')}
               </div>
             </DialogTitle>
-            <DialogDescription id="eliminar-subcategoria-description">
+            <DialogDescription>
               Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
@@ -3171,7 +3208,7 @@ export function Configuracion() {
                         {subcategoriaParaEliminar.nombre}
                       </p>
                       <p className="text-xs text-[#999999] mt-1">
-                        {t('configuration.inheritedValue')}: ${(editandoCategoria?.valorMonetario || 0).toFixed(2)} / kg
+                        {t('configuration.inheritedValue')}: ${(editandoCategoria?.valorMonetario || 0)} / kg
                       </p>
                     </div>
                   </div>
@@ -3209,7 +3246,7 @@ export function Configuracion() {
 
       {/* Dialog Crear Variante */}
       <Dialog open={varianteDialogOpen} onOpenChange={setVarianteDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="variante-description">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', color: '#1E73BE' }}>
               <div className="flex items-center gap-2">
@@ -3217,7 +3254,7 @@ export function Configuracion() {
                 {t('configuration.createVariant') || 'Crear Variante de Producto'}
               </div>
             </DialogTitle>
-            <DialogDescription id="variante-description">
+            <DialogDescription>
               {t('configuration.variantDescription') || 'Crea una variante basada en un producto existente'}
             </DialogDescription>
           </DialogHeader>
@@ -3462,7 +3499,7 @@ export function Configuracion() {
           setSubcategoriaBase(null);
         }
       }}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="variante-subcategoria-description">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin">
           <DialogHeader className="pb-4 border-b">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#9C27B0] to-[#7B1FA2] flex items-center justify-center text-white text-2xl">
@@ -3472,7 +3509,7 @@ export function Configuracion() {
                 <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }} className="text-xl">
                   {editandoVariante ? 'Editar Variante' : 'Nueva Variante de Subcategoría'}
                 </DialogTitle>
-                <DialogDescription id="variante-subcategoria-description" className="text-sm mt-1">
+                <DialogDescription className="text-sm mt-1">
                   {editandoVariante ? 'Editando' : 'Creando'} variante para: <span className="font-medium text-[#9C27B0]">{subcategoriaBase?.subcategoria.nombre}</span>
                 </DialogDescription>
               </div>

@@ -64,7 +64,8 @@ export const BACKUP_MODULES = {
   TRANSPORT: 'transport',
   USERS: 'users',
   SETTINGS: 'settings',
-  AUDIT: 'audit'
+  AUDIT: 'audit',
+  CATEGORIES: 'banco_alimentos_categorias'
 } as const;
 
 // ==================== UTILIDADES DE CHECKSUM ====================
@@ -99,7 +100,9 @@ export function verifyChecksum(backup: BackupData): boolean {
  */
 function getModuleData(module: string): any {
   try {
-    const data = localStorage.getItem(`ba_${module}`);
+    // Las categorías usan una clave diferente sin el prefijo ba_
+    const storageKey = module === 'banco_alimentos_categorias' ? module : `ba_${module}`;
+    const data = localStorage.getItem(storageKey);
     return data ? JSON.parse(data) : null;
   } catch (error) {
     console.error(`Error loading module ${module}:`, error);
@@ -112,7 +115,9 @@ function getModuleData(module: string): any {
  */
 function setModuleData(module: string, data: any): void {
   try {
-    localStorage.setItem(`ba_${module}`, JSON.stringify(data));
+    // Las categorías usan una clave diferente sin el prefijo ba_
+    const storageKey = module === 'banco_alimentos_categorias' ? module : `ba_${module}`;
+    localStorage.setItem(storageKey, JSON.stringify(data));
   } catch (error) {
     console.error(`Error saving module ${module}:`, error);
     throw error;
