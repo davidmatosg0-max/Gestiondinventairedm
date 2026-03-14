@@ -1808,35 +1808,81 @@ export function Configuracion() {
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label>{t('configuration.icon')}</Label>
-                            <div className="border rounded-lg max-h-64 overflow-y-auto p-3 bg-gray-50">
+                            <div className="border rounded-lg max-h-80 overflow-y-auto p-3 bg-gray-50">
                               {/* Sección: Alimentarios */}
-                              <div className="mb-3">
-                                <p className="text-xs font-semibold text-[#1a4d7a] mb-2">ALIMENTAIRES</p>
-                                <div className="grid grid-cols-6 gap-2">
-                                  {['🍚', '🍝', '🥫', '🥛', '🥬', '🫒', '🍞', '🥩', '🐟', '🧀', '🥚', '🍎', '🥕', '🥔', '🌽', '🥤', '☕', '🍯', '🧈', '🥗', '🌮', '🍲', '🥘', '🛒', '🍽️', '📦'].map(icono => (
-                                    <button
-                                      key={icono}
-                                      onClick={() => setFormCategoria({ ...formCategoria, icono })}
-                                      className={`text-2xl p-2 rounded hover:bg-blue-100 transition-colors ${
-                                        formCategoria.icono === icono ? 'bg-blue-100 ring-2 ring-blue-500' : ''
-                                      }`}
-                                      type="button"
-                                    >
-                                      {icono}
-                                    </button>
-                                  ))}
+                              <div className="mb-4">
+                                <p className="text-xs font-semibold text-[#1a4d7a] mb-2">🍽️ ALIMENTAIRES</p>
+                                
+                                {/* Cereales y Granos */}
+                                <div className="mb-2">
+                                  <p className="text-[10px] text-gray-500 mb-1">Céréales & Grains</p>
+                                  <div className="grid grid-cols-8 gap-1">
+                                    {['🍚', '🍝', '🍞', '🥖', '🥣', '🥐', '🥯', '🥨', '🧇', '🥞', '🌾'].map(icono => (
+                                      <button key={icono} onClick={() => setFormCategoria({ ...formCategoria, icono })} className={`text-lg p-1 rounded hover:bg-blue-100 ${formCategoria.icono === icono ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`} type="button">{icono}</button>
+                                    ))}
+                                  </div>
+                                </div>
+                                
+                                {/* Frutas y Verduras */}
+                                <div className="mb-2">
+                                  <p className="text-[10px] text-gray-500 mb-1">Fruits & Légumes</p>
+                                  <div className="grid grid-cols-8 gap-1">
+                                    {['🍎', '🍊', '🍌', '🍇', '🍓', '🍋', '🍉', '🍍', '🥝', '🥭', '🍏', '🍐', '🥥', '🥬', '🥕', '🥔', '🌽', '🥦', '🍅', '🫑', '🥒', '🧅', '🧄', '🍆', '🥑', '🌶️', '🫛', '🍄'].map(icono => (
+                                      <button key={icono} onClick={() => setFormCategoria({ ...formCategoria, icono })} className={`text-lg p-1 rounded hover:bg-blue-100 ${formCategoria.icono === icono ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`} type="button">{icono}</button>
+                                    ))}
+                                  </div>
+                                </div>
+                                
+                                {/* Proteínas y Lácteos */}
+                                <div className="mb-2">
+                                  <p className="text-[10px] text-gray-500 mb-1">Protéines & Produits Laitiers</p>
+                                  <div className="grid grid-cols-8 gap-1">
+                                    {['🥩', '🍗', '🐟', '🍤', '🥚', '🍖', '🥓', '🌭', '🍔', '🥛', '🧀', '🧈', '🍦', '🧁'].map(icono => (
+                                      <button key={icono} onClick={() => setFormCategoria({ ...formCategoria, icono })} className={`text-lg p-1 rounded hover:bg-blue-100 ${formCategoria.icono === icono ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`} type="button">{icono}</button>
+                                    ))}
+                                  </div>
+                                </div>
+                                
+                                {/* Bebidas */}
+                                <div className="mb-2">
+                                  <p className="text-[10px] text-gray-500 mb-1">Boissons</p>
+                                  <div className="grid grid-cols-8 gap-1">
+                                    {['☕', '🧃', '🥤', '🍵', '🧋', '🍶', '🍾', '🍷', '🍺', '🍻', '🥂', '🍹', '🍸', '🧊'].map(icono => (
+                                      <button key={icono} onClick={() => setFormCategoria({ ...formCategoria, icono })} className={`text-lg p-1 rounded hover:bg-blue-100 ${formCategoria.icono === icono ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`} type="button">{icono}</button>
+                                    ))}
+                                  </div>
+                                </div>
+                                
+                                {/* Condimentos y Dulces */}
+                                <div className="mb-2">
+                                  <p className="text-[10px] text-gray-500 mb-1">Condiments & Sucreries</p>
+                                  <div className="grid grid-cols-8 gap-1">
+                                    {['🍯', '🧂', '🫙', '🥫', '🫒', '🌻', '🧴', '🍫', '🍬', '🍪', '🍩', '🍰', '🎂', '🥧', '🍮', '🍭', '🍡'].map(icono => (
+                                      <button key={icono} onClick={() => setFormCategoria({ ...formCategoria, icono })} className={`text-lg p-1 rounded hover:bg-blue-100 ${formCategoria.icono === icono ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`} type="button">{icono}</button>
+                                    ))}
+                                  </div>
+                                </div>
+                                
+                                {/* Comidas y Genéricos */}
+                                <div className="mb-2">
+                                  <p className="text-[10px] text-gray-500 mb-1">Plats & Génériques</p>
+                                  <div className="grid grid-cols-8 gap-1">
+                                    {['🥗', '🍲', '🌮', '🍕', '🍱', '🥜', '🍿', '📦', '🛒', '🍽️', '🥘', '🍴', '🫘'].map(icono => (
+                                      <button key={icono} onClick={() => setFormCategoria({ ...formCategoria, icono })} className={`text-lg p-1 rounded hover:bg-blue-100 ${formCategoria.icono === icono ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`} type="button">{icono}</button>
+                                    ))}
+                                  </div>
                                 </div>
                               </div>
                               
                               {/* Sección: No Alimentarios */}
                               <div>
-                                <p className="text-xs font-semibold text-[#2d9561] mb-2">NON-ALIMENTAIRES</p>
-                                <div className="grid grid-cols-6 gap-2">
-                                  {['🧴', '🧼', '🪥', '🧻', '🪒', '💊', '🩹', '🧹', '🧺', '🪣', '🧽', '🍼', '👶', '🧸', '👕', '👖', '🧥', '👟', '🧦', '🎒', '📚', '📓', '✏️', '🖊️', '🐕', '🐈', '🦴', '🎁', '💝', '🔋', '💡', '🏥'].map(icono => (
+                                <p className="text-xs font-semibold text-[#2d9561] mb-2">🧴 NON-ALIMENTAIRES</p>
+                                <div className="grid grid-cols-8 gap-1">
+                                  {['🧴', '🧼', '🪥', '🧻', '🪒', '💊', '🩹', '🧹', '🧺', '🪣', '🧽', '🍼', '👶', '🧸', '👕', '👖', '🧥', '👟', '🧦', '🎒', '📚', '📓', '✏️', '🖊️', '📏', '✂️', '🖍️', '🐕', '🐈', '🦴', '🎁', '💝', '🔋', '💡', '🏥', '🕯️', '🧰', '🌡️'].map(icono => (
                                     <button
                                       key={icono}
                                       onClick={() => setFormCategoria({ ...formCategoria, icono })}
-                                      className={`text-2xl p-2 rounded hover:bg-green-100 transition-colors ${
+                                      className={`text-lg p-1 rounded hover:bg-green-100 ${
                                         formCategoria.icono === icono ? 'bg-green-100 ring-2 ring-green-500' : ''
                                       }`}
                                       type="button"

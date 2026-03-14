@@ -18,6 +18,11 @@ export const ICONOS_CATEGORIAS: IconoAlimento[] = [
   { emoji: '🥖', nombre: 'Baguette', categoria: 'Granos y Cereales' },
   { emoji: '🥣', nombre: 'Cereales', categoria: 'Granos y Cereales' },
   { emoji: '🥐', nombre: 'Croissant', categoria: 'Granos y Cereales' },
+  { emoji: '🥯', nombre: 'Bagel', categoria: 'Granos y Cereales' },
+  { emoji: '🥨', nombre: 'Pretzel', categoria: 'Granos y Cereales' },
+  { emoji: '🧇', nombre: 'Waffle', categoria: 'Granos y Cereales' },
+  { emoji: '🥞', nombre: 'Pancakes', categoria: 'Granos y Cereales' },
+  { emoji: '🌾', nombre: 'Granos/Trigo', categoria: 'Granos y Cereales' },
   
   // Legumbres
   { emoji: '🫘', nombre: 'Legumbres', categoria: 'Legumbres' },
@@ -30,6 +35,8 @@ export const ICONOS_CATEGORIAS: IconoAlimento[] = [
   { emoji: '🧀', nombre: 'Queso', categoria: 'Lácteos' },
   { emoji: '🧈', nombre: 'Mantequilla', categoria: 'Lácteos' },
   { emoji: '🥤', nombre: 'Yogurt/Bebida', categoria: 'Lácteos' },
+  { emoji: '🍦', nombre: 'Helado', categoria: 'Lácteos' },
+  { emoji: '🧁', nombre: 'Postre', categoria: 'Lácteos' },
   
   // Frutas
   { emoji: '🍎', nombre: 'Manzana', categoria: 'Frutas' },
@@ -41,6 +48,12 @@ export const ICONOS_CATEGORIAS: IconoAlimento[] = [
   { emoji: '🍒', nombre: 'Cerezas', categoria: 'Frutas' },
   { emoji: '🍉', nombre: 'Sandía', categoria: 'Frutas' },
   { emoji: '🍋', nombre: 'Limón', categoria: 'Frutas' },
+  { emoji: '🍍', nombre: 'Piña', categoria: 'Frutas' },
+  { emoji: '🥝', nombre: 'Kiwi', categoria: 'Frutas' },
+  { emoji: '🥭', nombre: 'Mango', categoria: 'Frutas' },
+  { emoji: '🍏', nombre: 'Manzana Verde', categoria: 'Frutas' },
+  { emoji: '🍐', nombre: 'Pera', categoria: 'Frutas' },
+  { emoji: '🥥', nombre: 'Coco', categoria: 'Frutas' },
   
   // Verduras
   { emoji: '🥬', nombre: 'Verduras de Hoja', categoria: 'Verduras' },
@@ -53,6 +66,11 @@ export const ICONOS_CATEGORIAS: IconoAlimento[] = [
   { emoji: '🥒', nombre: 'Pepino', categoria: 'Verduras' },
   { emoji: '🧅', nombre: 'Cebolla', categoria: 'Verduras' },
   { emoji: '🧄', nombre: 'Ajo', categoria: 'Verduras' },
+  { emoji: '🍆', nombre: 'Berenjena', categoria: 'Verduras' },
+  { emoji: '🥑', nombre: 'Aguacate', categoria: 'Verduras' },
+  { emoji: '🌶️', nombre: 'Chile/Pimiento picante', categoria: 'Verduras' },
+  { emoji: '🫛', nombre: 'Guisantes', categoria: 'Verduras' },
+  { emoji: '🍄', nombre: 'Hongos', categoria: 'Verduras' },
   
   // Proteínas
   { emoji: '🥩', nombre: 'Carne', categoria: 'Proteínas' },
@@ -60,22 +78,53 @@ export const ICONOS_CATEGORIAS: IconoAlimento[] = [
   { emoji: '🐟', nombre: 'Pescado', categoria: 'Proteínas' },
   { emoji: '🍤', nombre: 'Camarón', categoria: 'Proteínas' },
   { emoji: '🥚', nombre: 'Huevos', categoria: 'Proteínas' },
+  { emoji: '🍖', nombre: 'Carne con hueso', categoria: 'Proteínas' },
+  { emoji: '🥓', nombre: 'Tocino', categoria: 'Proteínas' },
+  { emoji: '🌭', nombre: 'Salchicha', categoria: 'Proteínas' },
+  { emoji: '🍔', nombre: 'Hamburguesa', categoria: 'Proteínas' },
   
   // Aceites y Grasas
   { emoji: '🫒', nombre: 'Aceitunas/Aceite', categoria: 'Aceites y Grasas' },
   { emoji: '🌻', nombre: 'Aceite de Girasol', categoria: 'Aceites y Grasas' },
+  { emoji: '🧴', nombre: 'Botella de Aceite', categoria: 'Aceites y Grasas' },
   
   // Bebidas
   { emoji: '☕', nombre: 'Café', categoria: 'Bebidas' },
-  { emoji: '🧃', nombre: 'Jugo', categoria: 'Bebidas' },
+  { emoji: '🧃', nombre: 'Jugo en Caja', categoria: 'Bebidas' },
   { emoji: '🧊', nombre: 'Agua/Bebidas frías', categoria: 'Bebidas' },
+  { emoji: '🥤', nombre: 'Bebida con sorbete', categoria: 'Bebidas' },
+  { emoji: '🍵', nombre: 'Té', categoria: 'Bebidas' },
+  { emoji: '🧋', nombre: 'Té de Burbujas', categoria: 'Bebidas' },
+  { emoji: '🍶', nombre: 'Sake/Botella', categoria: 'Bebidas' },
+  { emoji: '🍾', nombre: 'Champagne/Botella', categoria: 'Bebidas' },
+  { emoji: '🍷', nombre: 'Copa de Vino', categoria: 'Bebidas' },
+  { emoji: '🍺', nombre: 'Cerveza', categoria: 'Bebidas' },
+  { emoji: '🍻', nombre: 'Cervezas', categoria: 'Bebidas' },
+  { emoji: '🥂', nombre: 'Brindis', categoria: 'Bebidas' },
+  { emoji: '🍹', nombre: 'Bebida Tropical', categoria: 'Bebidas' },
+  { emoji: '🍸', nombre: 'Cóctel', categoria: 'Bebidas' },
   
-  // Condimentos y Dulces
-  { emoji: '🍯', nombre: 'Miel', categoria: 'Condimentos y Dulces' },
-  { emoji: '🧂', nombre: 'Sal', categoria: 'Condimentos y Dulces' },
-  { emoji: '🍫', nombre: 'Chocolate', categoria: 'Condimentos y Dulces' },
-  { emoji: '🍬', nombre: 'Dulces', categoria: 'Condimentos y Dulces' },
-  { emoji: '🍪', nombre: 'Galletas', categoria: 'Condimentos y Dulces' },
+  // Condimentos y Salsas
+  { emoji: '🍯', nombre: 'Miel', categoria: 'Condimentos y Salsas' },
+  { emoji: '🧂', nombre: 'Sal', categoria: 'Condimentos y Salsas' },
+  { emoji: '🫙', nombre: 'Frasco/Condimento', categoria: 'Condimentos y Salsas' },
+  { emoji: '🧈', nombre: 'Mantequilla/Margarina', categoria: 'Condimentos y Salsas' },
+  { emoji: '🥫', nombre: 'Salsa en Lata', categoria: 'Condimentos y Salsas' },
+  { emoji: '🌶️', nombre: 'Salsa Picante', categoria: 'Condimentos y Salsas' },
+  { emoji: '🧄', nombre: 'Ajo en Polvo', categoria: 'Condimentos y Salsas' },
+  
+  // Dulces y Postres
+  { emoji: '🍫', nombre: 'Chocolate', categoria: 'Dulces y Postres' },
+  { emoji: '🍬', nombre: 'Dulces', categoria: 'Dulces y Postres' },
+  { emoji: '🍪', nombre: 'Galletas', categoria: 'Dulces y Postres' },
+  { emoji: '🍩', nombre: 'Donas', categoria: 'Dulces y Postres' },
+  { emoji: '🍰', nombre: 'Pastel', categoria: 'Dulces y Postres' },
+  { emoji: '🎂', nombre: 'Torta', categoria: 'Dulces y Postres' },
+  { emoji: '🧁', nombre: 'Cupcake', categoria: 'Dulces y Postres' },
+  { emoji: '🥧', nombre: 'Pie', categoria: 'Dulces y Postres' },
+  { emoji: '🍮', nombre: 'Flan', categoria: 'Dulces y Postres' },
+  { emoji: '🍭', nombre: 'Paleta', categoria: 'Dulces y Postres' },
+  { emoji: '🍡', nombre: 'Dulces Japoneses', categoria: 'Dulces y Postres' },
   
   // Comidas Preparadas
   { emoji: '🥗', nombre: 'Ensalada', categoria: 'Comidas Preparadas' },
