@@ -11,26 +11,65 @@ import { obtenerUnidades, guardarUnidad, eliminarUnidad, type Unidad } from '../
 import { cn } from '../ui/utils';
 
 const iconosDisponibles = [
-  { icono: '📦', nombre: 'Paleta' },
-  { icono: '📦', nombre: 'Caja' },
-  { icono: '💼', nombre: 'Saco' },
-  { icono: '🏷️', nombre: 'Unidad' },
-  { icono: '⚫', nombre: 'Bac Noir' },
-  { icono: '⚖️', nombre: 'Kilogramo' },
-  { icono: '📏', nombre: 'Metro' },
-  { icono: '🥤', nombre: 'Litro' },
-  { icono: '🧊', nombre: 'Pieza' },
-  { icono: '🎯', nombre: 'Set' },
+  // Paletas y contenedores grandes
+  { icono: '📦', nombre: 'Paleta/Caja' },
   { icono: '🗃️', nombre: 'Contenedor' },
-  { icono: '📋', nombre: 'Lote' },
-  { icono: '🧃', nombre: 'Botella' },
-  { icono: '🥫', nombre: 'Lata' },
-  { icono: '📦', nombre: 'Paquete' },
-  { icono: '🛒', nombre: 'Carrito' },
-  { icono: '🎁', nombre: 'Regalo' },
+  { icono: '📐', nombre: 'Paleta Grande' },
+  { icono: '🧱', nombre: 'Paleta Industrial' },
+  { icono: '🎛️', nombre: 'Paleta Apilable' },
+  
+  // Sacos y bolsas
+  { icono: '💼', nombre: 'Saco' },
+  { icono: '🎒', nombre: 'Saco Grande' },
   { icono: '📮', nombre: 'Bolsa' },
+  { icono: '🛍️', nombre: 'Bolsa Comercial' },
+  { icono: '🧳', nombre: 'Maleta/Saco Industrial' },
+  
+  // Cajas
+  { icono: '📦', nombre: 'Caja Estándar' },
+  { icono: '📫', nombre: 'Caja Pequeña' },
+  { icono: '📪', nombre: 'Caja Mediana' },
+  { icono: '📬', nombre: 'Caja Grande' },
+  { icono: '🎁', nombre: 'Caja Regalo' },
+  
+  // Líquidos y galones
+  { icono: '🥤', nombre: 'Litro' },
+  { icono: '🧃', nombre: 'Botella' },
+  { icono: '🍾', nombre: 'Botella Grande' },
+  { icono: '🫙', nombre: 'Jarra/Galón' },
+  { icono: '⛽', nombre: 'Galón Industrial' },
+  { icono: '🪣', nombre: 'Cubeta/Garrafa' },
+  
+  // Latas y conservas
+  { icono: '🥫', nombre: 'Lata' },
+  { icono: '🫘', nombre: 'Lata de Conserva' },
+  
+  // Unidades y piezas
+  { icono: '🏷️', nombre: 'Unidad' },
+  { icono: '🧊', nombre: 'Pieza' },
+  { icono: '🎯', nombre: 'Set/Conjunto' },
+  { icono: '📋', nombre: 'Lote' },
+  { icono: '🔢', nombre: 'Cantidad' },
+  
+  // Canastas y cestas
   { icono: '🧺', nombre: 'Canasta' },
-  { icono: '🪣', nombre: 'Cubeta' },
+  { icono: '🗑️', nombre: 'Bac/Contenedor' },
+  { icono: '⚫', nombre: 'Bac Noir' },
+  
+  // Medidas de peso
+  { icono: '⚖️', nombre: 'Kilogramo' },
+  { icono: '⚗️', nombre: 'Gramo' },
+  { icono: '🪨', nombre: 'Tonelada' },
+  
+  // Medidas de longitud
+  { icono: '📏', nombre: 'Metro' },
+  { icono: '📐', nombre: 'Metro Cuadrado' },
+  
+  // Otros
+  { icono: '🛒', nombre: 'Carrito' },
+  { icono: '📦', nombre: 'Paquete' },
+  { icono: '🎪', nombre: 'Pallet Completo' },
+  { icono: '🏗️', nombre: 'Industrial' },
 ];
 
 export function GestionUnidades() {
@@ -232,22 +271,27 @@ export function GestionUnidades() {
             {/* Selector de Icono */}
             <div className="space-y-2">
               <Label>Icono</Label>
-              <div className="grid grid-cols-5 gap-2">
-                {iconosDisponibles.map((item) => (
-                  <button
-                    key={item.icono}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, icono: item.icono })}
-                    className={cn(
-                      "p-3 text-2xl border rounded-lg hover:bg-gray-100 transition-colors",
-                      formData.icono === item.icono ? 'border-[#1E73BE] bg-blue-50' : 'border-gray-200'
-                    )}
-                    title={item.nombre}
-                  >
-                    {item.icono}
-                  </button>
-                ))}
+              <div className="max-h-[240px] overflow-y-auto border rounded-lg p-2">
+                <div className="grid grid-cols-6 gap-2">
+                  {iconosDisponibles.map((item, index) => (
+                    <button
+                      key={`${item.icono}-${index}`}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, icono: item.icono })}
+                      className={cn(
+                        "p-2 text-2xl border rounded-lg hover:bg-gray-100 transition-colors",
+                        formData.icono === item.icono ? 'border-[#1E73BE] bg-blue-50' : 'border-gray-200'
+                      )}
+                      title={item.nombre}
+                    >
+                      {item.icono}
+                    </button>
+                  ))}
+                </div>
               </div>
+              <p className="text-xs text-[#666666]">
+                {iconosDisponibles.length} iconos disponibles - Desplázate para ver más
+              </p>
             </div>
 
             {/* Vista Previa */}
