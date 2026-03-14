@@ -305,7 +305,7 @@ export function OfertasDisponibles({ onOfertaAceptada }: OfertasDisponiblesProps
 
       {/* Modal de detalles */}
       <Dialog open={modalDetallesOpen} onOpenChange={setModalDetallesOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="oferta-detalles-description">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl">
               <ChefHat className="w-6 h-6 text-[#FF9800]" />

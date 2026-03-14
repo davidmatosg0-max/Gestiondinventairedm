@@ -369,7 +369,7 @@ export function PanierProductos({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className="max-w-7xl max-h-[90vh] overflow-hidden flex flex-col"
-        aria-describedby="panier-description"
+        aria-describedby={undefined}
       >
         <DialogHeader>
           <DialogTitle 

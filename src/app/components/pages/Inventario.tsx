@@ -2327,7 +2327,7 @@ export function Inventario() {
                   <Eye className="h-5 w-5 text-[#1a4d7a]" />
                   Vista Previa: {listaGenerada?.nombre}
                 </DialogTitle>
-                <DialogDescription id="preview-lista-description">
+                <DialogDescription>
                   {t('inventory.reviewListAndSelectOrganisms')}
                 </DialogDescription>
               </DialogHeader>

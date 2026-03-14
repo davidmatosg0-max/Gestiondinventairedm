@@ -124,13 +124,13 @@ export function ContactFormSimple({ open, onOpenChange, onGuardar }: ContactForm
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="contact-form-description">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
             <Building2 className="w-6 h-6 text-[#1a4d7a]" />
             {t('contacts.createNew', 'Crear Nuevo Contacto')}
           </DialogTitle>
-          <DialogDescription id="contact-form-description">
+          <DialogDescription>
             {t('contacts.fillBasicInfo', 'Complete la información básica del contacto')}
           </DialogDescription>
         </DialogHeader>

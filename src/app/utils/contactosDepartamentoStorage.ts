@@ -113,6 +113,10 @@ export interface ContactoDepartamento {
   
   // Historial de actividad
   evenements?: EvenementActivite[]; // Eventos del historial de actividad
+  
+  // 🔄 SISTEMA DUAL DONATEUR/FOURNISSEUR
+  isDonateur?: boolean; // Es donateur (puede ser ambos simultáneamente)
+  isFournisseur?: boolean; // Es fournisseur (puede ser ambos simultáneamente)
 }
 
 // ===== FUNCIONES DE GESTIÓN DE STORAGE =====
@@ -577,6 +581,10 @@ export function sincronizarDonateursFournisseurs(): { sincronizados: number; err
           contactoExistente.tipo = donateur.isDonateur ? 'donador' : 'fournisseur';
           contactoExistente.participaPRS = donateur.participantPRS;
           
+          // 🔄 SISTEMA DUAL: Guardar ambos flags
+          contactoExistente.isDonateur = donateur.isDonateur;
+          contactoExistente.isFournisseur = donateur.isFournisseur;
+          
           // Si tiene personas de contacto, usar la primera como contacto principal
           if (donateur.personnesContact && donateur.personnesContact.length > 0) {
             const primeraPersona = donateur.personnesContact[0];
@@ -621,6 +629,9 @@ export function sincronizarDonateursFournisseurs(): { sincronizados: number; err
             direccion: donateur.adresse,
             participaPRS: donateur.participantPRS,
             telefonoPrincipal: donateur.personnesContact?.[0]?.telephone || donateur.telephone,
+            // 🔄 SISTEMA DUAL: Guardar ambos flags
+            isDonateur: donateur.isDonateur,
+            isFournisseur: donateur.isFournisseur,
           };
 
           contactosExistentes.push(nuevoContacto);

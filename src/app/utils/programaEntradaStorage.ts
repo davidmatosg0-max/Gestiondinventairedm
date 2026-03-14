@@ -86,6 +86,9 @@ export function guardarProgramaEntrada(programa: Omit<ProgramaEntrada, 'id'>): P
   programas.push(nuevoPrograma);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(programas));
   
+  // Disparar evento de actualización
+  window.dispatchEvent(new Event('programas-actualizados'));
+  
   return nuevoPrograma;
 }
 
@@ -101,6 +104,9 @@ export function actualizarProgramaEntrada(id: string, datos: Partial<ProgramaEnt
   programas[index] = { ...programas[index], ...datos };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(programas));
   
+  // Disparar evento de actualización
+  window.dispatchEvent(new Event('programas-actualizados'));
+  
   return programas[index];
 }
 
@@ -114,6 +120,10 @@ export function eliminarProgramaEntrada(id: string): boolean {
   if (filtered.length === programas.length) return false;
   
   localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+  
+  // Disparar evento de actualización
+  window.dispatchEvent(new Event('programas-actualizados'));
+  
   return true;
 }
 
