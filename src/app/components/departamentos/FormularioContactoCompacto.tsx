@@ -860,13 +860,16 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                           initialPostalCode={formulario.codigoPostal || ''}
                           initialApartment={formulario.apartamento || ''}
                           onChange={(value, details) => {
-                            setFormulario({
+                            console.log('📝 Formulario BASE - onChange recibido:', { value, details });
+                            const nuevoFormulario = {
                               ...formulario,
                               direccion: value,
-                              ciudad: details?.city || formulario.ciudad || '',
-                              codigoPostal: details?.postalCode || formulario.codigoPostal || '',
-                              apartamento: details?.apt || formulario.apartamento || ''
-                            });
+                              ciudad: details?.city !== undefined ? details.city : formulario.ciudad,
+                              codigoPostal: details?.postalCode !== undefined ? details.postalCode : formulario.codigoPostal,
+                              apartamento: details?.apt !== undefined ? details.apt : formulario.apartamento
+                            };
+                            console.log('💾 Formulario BASE - Guardando:', nuevoFormulario);
+                            setFormulario(nuevoFormulario);
                           }}
                           placeholder="123 Rue Principale, Montréal, QC H1A 1A1"
                           showAdditionalFields={true}
@@ -1396,13 +1399,16 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                           initialPostalCode={formulario.codigoPostal || ''}
                           initialApartment={formulario.apartamento || ''}
                           onChange={(value, details) => {
-                            setFormulario({
+                            console.log('📝 Formulario CONTACT - onChange recibido:', { value, details });
+                            const nuevoFormulario = {
                               ...formulario,
                               direccion: value,
-                              ciudad: details?.city || formulario.ciudad || '',
-                              codigoPostal: details?.postalCode || formulario.codigoPostal || '',
-                              apartamento: details?.apt || formulario.apartamento || ''
-                            });
+                              ciudad: details?.city !== undefined ? details.city : formulario.ciudad,
+                              codigoPostal: details?.postalCode !== undefined ? details.postalCode : formulario.codigoPostal,
+                              apartamento: details?.apt !== undefined ? details.apt : formulario.apartamento
+                            };
+                            console.log('💾 Formulario CONTACT - Guardando:', nuevoFormulario);
+                            setFormulario(nuevoFormulario);
                           }}
                           placeholder="123 Boulevard Saint-Laurent Est"
                           showAdditionalFields={true}

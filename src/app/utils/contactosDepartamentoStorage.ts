@@ -254,6 +254,31 @@ export function guardarContacto(contacto: ContactoDepartamento): ContactoDeparta
 export function guardarContacto(contacto: any): ContactoDepartamento {
   const contactos = obtenerContactosDepartamento();
   
+  // 🔒 VERIFICAR DUPLICADOS: Buscar si ya existe un contacto con el mismo email
+  const yaExiste = contactos.find(c => 
+    c.email.toLowerCase() === contacto.email.toLowerCase()
+  );
+  
+  if (yaExiste) {
+    console.warn('⚠️ Contacto duplicado detectado:', {
+      existente: yaExiste,
+      nuevo: contacto
+    });
+    
+    // Si el contacto ya existe, verificar si necesita actualizar departamentos
+    if (contacto.departamentoId && !yaExiste.departamentoIds?.includes(contacto.departamentoId)) {
+      // Agregar el nuevo departamento a la lista de departamentos existentes
+      const departamentosActualizados = [...(yaExiste.departamentoIds || [yaExiste.departamentoId]), contacto.departamentoId];
+      actualizarContacto(yaExiste.id, {
+        departamentoIds: departamentosActualizados
+      });
+      console.log('✅ Departamento agregado al contacto existente:', departamentosActualizados);
+    }
+    
+    // Retornar el contacto existente en lugar de crear uno nuevo
+    return yaExiste;
+  }
+  
   // Si el contacto ya tiene id y fechaIngreso, usarlos
   const nuevoContacto: ContactoDepartamento = contacto.id && contacto.fechaIngreso 
     ? contacto
@@ -932,5 +957,167 @@ export function limpiarTodosLosContactos(): boolean {
   } catch (error) {
     console.error('Error al limpiar contactos:', error);
     return false;
+  }
+}
+
+// 🧹 Eliminar contactos duplicados basándose en email
+export function eliminarContactosDuplicados(): { eliminados: number; conservados: number } {
+  try {
+    const contactos = obtenerContactosDepartamento();
+    const emailsVistos = new Map<string, ContactoDepartamento>();
+    let eliminados = 0;
+
+    // Primera pasada: identificar duplicados
+    contactos.forEach(contacto => {
+      const emailKey = contacto.email.toLowerCase();
+      
+      if (!emailsVistos.has(emailKey)) {
+        // Es el primero con este email, conservarlo
+        emailsVistos.set(emailKey, contacto);
+      } else {
+        // Ya existe un contacto con este email
+        eliminados++;
+        console.log(`🔴 Duplicado encontrado: ${contacto.nombre} ${contacto.apellido} (${contacto.email})`);
+      }
+    });
+
+    // Guardar solo los contactos únicos
+    const contactosUnicos = Array.from(emailsVistos.values());
+    guardarTodosContactos(contactosUnicos);
+
+    console.log(`✅ Limpieza completada: ${eliminados} duplicado(s) eliminado(s), ${contactosUnicos.length} contacto(s) conservado(s)`);
+    
+    // Disparar evento de actualización
+    window.dispatchEvent(new CustomEvent('contactos-actualizados'));
+    
+    return { 
+      eliminados, 
+      conservados: contactosUnicos.length 
+    };
+  } catch (error) {
+    console.error('❌ Error al eliminar duplicados:', error);
+    return { eliminados: 0, conservados: 0 };
+  }
+}
+
+// 🔄 Sincronizar cambios desde el módulo Bénévoles a Contactos de Departamento
+export function sincronizarDesdeBenevole(benevole: {
+  email: string;
+  nom?: string;
+  prenom?: string;
+  telephone?: string;
+  direccion?: string;
+  ciudad?: string;
+  codigoPostal?: string;
+  statut?: string;
+  disponibilites?: any[];
+  disponibilitesSemanal?: any[];
+  photo?: string | null;
+  poste?: string;
+  sexe?: string;
+  dateNaissance?: string;
+  langues?: string[];
+  urgenceNom?: string;
+  urgenceRelation?: string;
+  urgenceTelephone?: string;
+  urgenceEmail?: string;
+  notes?: string;
+}): { actualizados: number; departamentos: string[] } {
+  try {
+    const contactos = obtenerContactosDepartamento();
+    let actualizados = 0;
+    const departamentosActualizados = new Set<string>();
+
+    // Buscar todos los contactos con este email
+    const contactosActualizados = contactos.map(contacto => {
+      if (contacto.email.toLowerCase() === benevole.email.toLowerCase()) {
+        actualizados++;
+        departamentosActualizados.add(contacto.departamentoId);
+
+        console.log(`🔄 Sincronizando bénévole a contacto del departamento ${contacto.departamentoId}`);
+
+        // Actualizar con los nuevos datos del bénévole
+        return {
+          ...contacto,
+          // Actualizar nombre y apellido si están disponibles
+          ...(benevole.nom && { apellido: benevole.nom }),
+          ...(benevole.prenom && { nombre: benevole.prenom }),
+          // Actualizar información de contacto
+          ...(benevole.telephone && { telefono: benevole.telephone }),
+          // Actualizar dirección
+          ...(benevole.direccion && { direccion: benevole.direccion }),
+          ...(benevole.ciudad && { ciudad: benevole.ciudad }),
+          ...(benevole.codigoPostal && { codigoPostal: benevole.codigoPostal }),
+          // Actualizar estado activo basado en statut
+          ...(benevole.statut && { 
+            activo: benevole.statut === 'Actif' || benevole.statut === 'actif'
+          }),
+          // Actualizar disponibilidades (si están disponibles)
+          ...(benevole.disponibilidadesSemanal && {
+            disponibilidades: benevole.disponibilidadesSemanal.map((disp: any) => ({
+              jour: disp.jour || disp.dia,
+              am: disp.am || false,
+              pm: disp.pm || false
+            }))
+          }),
+          // Actualizar foto
+          ...(benevole.photo !== undefined && { foto: benevole.photo || '' }),
+          // Actualizar cargo/poste
+          ...(benevole.poste && { cargo: benevole.poste }),
+          // Actualizar información adicional
+          ...(benevole.sexe && { sexo: benevole.sexe }),
+          ...(benevole.dateNaissance && { fechaNacimiento: benevole.dateNaissance }),
+          // Actualizar idiomas
+          ...(benevole.langues && { idiomas: benevole.langues }),
+          // Actualizar contacto de emergencia
+          ...(benevole.urgenceNom && { 
+            contactoEmergencia: {
+              nombre: benevole.urgenceNom,
+              relacion: benevole.urgenceRelation || '',
+              telefono: benevole.urgenceTelephone || '',
+              email: benevole.urgenceEmail || ''
+            }
+          }),
+          // Actualizar notas
+          ...(benevole.notes && { notas: benevole.notes }),
+          // Agregar evento de actualización
+          evenements: [
+            ...(contacto.evenements || []),
+            {
+              id: `evt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              type: 'modification' as const,
+              titre: 'Profil mis à jour',
+              description: 'Synchronisation automatique depuis le module Bénévoles',
+              date: new Date().toISOString(),
+              utilisateur: 'Système',
+              couleur: '#2d9561'
+            }
+          ]
+        };
+      }
+      return contacto;
+    });
+
+    if (actualizados > 0) {
+      // Guardar los contactos actualizados
+      guardarTodosContactos(contactosActualizados);
+
+      // Disparar evento para cada departamento afectado
+      departamentosActualizados.forEach(deptId => {
+        window.dispatchEvent(new CustomEvent('contactos-actualizados', {
+          detail: { departamentoId: deptId }
+        }));
+      });
+
+      console.log(`✅ Sincronización completada: ${actualizados} contacto(s) actualizado(s) en ${departamentosActualizados.size} departamento(s)`);
+    }
+
+    return {
+      actualizados,
+      departamentos: Array.from(departamentosActualizados)
+    };
+  } catch (error) {
+    console.error('❌ Error al sincronizar desde bénévole:', error);
+    return { actualizados: 0, departamentos: [] };
   }
 }

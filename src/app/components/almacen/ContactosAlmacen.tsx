@@ -190,7 +190,7 @@ export function ContactosAlmacen() {
       {/* Componente de gestión de contactos */}
       {tiposInicializados && (
         <GestionContactosDepartamento 
-          departamentoId="almacen"
+          departamentoId="1"
           departamentoNombre="Entrepôt"
         />
       )}

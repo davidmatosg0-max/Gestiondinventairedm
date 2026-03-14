@@ -23,7 +23,7 @@ import { obtenirQuartiersLaval } from '../../data/quartiersLaval';
 import { SelecteurJoursDisponibles, type JourDisponible } from '../shared/SelecteurJoursDisponibles';
 import { obtenerDepartamentos } from '../../utils/departamentosStorage';
 import { obtenerUsuarioSesion, tienePermiso } from '../../utils/sesionStorage';
-import { guardarContacto, type ContactoDepartamento } from '../../utils/contactosDepartamentoStorage';
+import { guardarContacto, type ContactoDepartamento, sincronizarDesdeBenevole } from '../../utils/contactosDepartamentoStorage';
 import { sincronizarVoluntariosEntrepot } from '../../utils/sincronizarVoluntariosEntrepot';
 import { BoutonRetourHeader } from '../shared/BoutonRetour';
 import { 
@@ -1000,6 +1000,37 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       return f;
     }));
 
+    // 🔄 SINCRONIZAR AUTOMÁTICAMENTE CON CONTACTOS DE DEPARTAMENTO
+    try {
+      const resultado = sincronizarDesdeBenevole({
+        email: editForm.email,
+        nom: editForm.nom,
+        prenom: editForm.prenom,
+        telephone: editForm.telephone,
+        direccion: editForm.adresse,
+        ciudad: editForm.ville,
+        codigoPostal: editForm.codePostal,
+        statut: editForm.statut,
+        disponibilidadesSemanal: editForm.disponibilidadesSemanal,
+        photo: editForm.photo,
+        poste: editForm.poste,
+        sexe: editForm.sexe,
+        dateNaissance: editForm.dateNaissance,
+        langues: editForm.langues,
+        urgenceNom: editForm.contactoEmergenciaNombre,
+        urgenceRelation: editForm.contactoEmergenciaRelacion,
+        urgenceTelephone: editForm.contactoEmergenciaTelefono,
+        urgenceEmail: editForm.contactoEmergenciaEmail,
+        notes: editForm.notes || editForm.notasGenerales
+      });
+
+      if (resultado.actualizados > 0) {
+        console.log(`✅ Bénévole synchronisé avec ${resultado.actualizados} contact(s) dans ${resultado.departamentos.length} département(s)`);
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de la synchronisation:', error);
+    }
+
     toast.success('Bénévole modifié avec succès');
     setEditModalOpen(false);
     setEditingBenevole(null);
@@ -1088,6 +1119,37 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         }
         return f;
       }));
+
+      // 🔄 SINCRONIZAR AUTOMÁTICAMENTE CON CONTACTOS DE DEPARTAMENTO
+      try {
+        const resultado = sincronizarDesdeBenevole({
+          email: newForm.email,
+          nom: newForm.nom,
+          prenom: newForm.prenom,
+          telephone: newForm.telephone,
+          direccion: newForm.adresse,
+          ciudad: newForm.ville,
+          codigoPostal: newForm.codePostal,
+          statut: newForm.statut,
+          disponibilidadesSemanal: newForm.disponibilidadesSemanal,
+          photo: newForm.photo,
+          poste: newForm.poste,
+          sexe: newForm.sexe,
+          dateNaissance: newForm.dateNaissance,
+          langues: newForm.langues,
+          urgenceNom: newForm.contactoEmergenciaNombre,
+          urgenceRelation: newForm.contactoEmergenciaRelacion,
+          urgenceTelephone: newForm.contactoEmergenciaTelefono,
+          urgenceEmail: newForm.contactoEmergenciaEmail,
+          notes: newForm.notes || newForm.notasGenerales
+        });
+
+        if (resultado.actualizados > 0) {
+          console.log(`✅ Bénévole synchronisé avec ${resultado.actualizados} contact(s) dans ${resultado.departamentos.length} département(s)`);
+        }
+      } catch (error) {
+        console.error('❌ Erreur lors de la synchronisation:', error);
+      }
 
       toast.success('Bénévole modifié avec succès');
       setEditingBenevole(null);
@@ -2691,8 +2753,39 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
           const updatedList = benevoles.map(b => 
             b.id === updatedBenevole.id ? updatedBenevole : b
           );
-          // Aquí deberías actualizar el estado de benevoles
-          // Por ahora solo mostramos el toast
+          setBenevoles(updatedList);
+
+          // 🔄 SINCRONIZAR AUTOMÁTICAMENTE CON CONTACTOS DE DEPARTAMENTO
+          try {
+            const resultado = sincronizarDesdeBenevole({
+              email: updatedBenevole.email,
+              nom: updatedBenevole.nom,
+              prenom: updatedBenevole.prenom,
+              telephone: updatedBenevole.telephone,
+              direccion: updatedBenevole.adresse,
+              ciudad: updatedBenevole.ville,
+              codigoPostal: updatedBenevole.codePostal,
+              statut: updatedBenevole.statut,
+              disponibilidadesSemanal: updatedBenevole.disponibilidadesSemanal,
+              photo: updatedBenevole.photo,
+              poste: updatedBenevole.poste,
+              sexe: updatedBenevole.sexe,
+              dateNaissance: updatedBenevole.dateNaissance,
+              langues: updatedBenevole.langues,
+              urgenceNom: updatedBenevole.contactoEmergenciaNombre,
+              urgenceRelation: updatedBenevole.contactoEmergenciaRelacion,
+              urgenceTelephone: updatedBenevole.contactoEmergenciaTelefono,
+              urgenceEmail: updatedBenevole.contactoEmergenciaEmail,
+              notes: updatedBenevole.notes || updatedBenevole.notasGenerales
+            });
+
+            if (resultado.actualizados > 0) {
+              console.log(`✅ Bénévole synchronisé avec ${resultado.actualizados} contact(s) dans ${resultado.departamentos.length} département(s)`);
+            }
+          } catch (error) {
+            console.error('❌ Erreur lors de la synchronisation:', error);
+          }
+
           toast.success('Bénévole mis à jour avec succès');
         }}
       />

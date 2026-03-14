@@ -54,22 +54,28 @@ function AddressAutocompleteComponent({
 
   // Sincronizar con value controlado
   useEffect(() => {
-    if (controlledValue !== undefined) {
+    if (controlledValue !== undefined && controlledValue !== inputValue) {
       setInputValue(controlledValue);
     }
   }, [controlledValue]);
 
   // Sincronizar con valores iniciales de ciudad, código postal y apartamento
   useEffect(() => {
-    if (initialCity) setCity(initialCity);
+    if (initialCity && !isUserEditing.current) {
+      setCity(initialCity);
+    }
   }, [initialCity]);
 
   useEffect(() => {
-    if (initialPostalCode) setPostalCode(initialPostalCode);
+    if (initialPostalCode && !isUserEditing.current) {
+      setPostalCode(initialPostalCode);
+    }
   }, [initialPostalCode]);
 
   useEffect(() => {
-    if (initialApartment) setApartment(initialApartment);
+    if (initialApartment && !isUserEditing.current) {
+      setApartment(initialApartment);
+    }
   }, [initialApartment]);
 
   // Base de datos de rues de Québec
@@ -686,8 +692,16 @@ function AddressAutocompleteComponent({
 
   // Notificar cambios cuando se editen los campos adicionales
   useEffect(() => {
-    if (inputValue && (postalCode || city) && isUserEditing.current) {
+    // ✅ NOTIFICAR SIEMPRE los cambios, sin condiciones restrictivas
+    if (isUserEditing.current) {
       const timeoutId = setTimeout(() => {
+        console.log('🔔 AddressAutocomplete - Notificando cambios:', {
+          inputValue,
+          city,
+          postalCode,
+          apartment
+        });
+        
         onAddressSelect?.({
           street: inputValue,
           city: city,
@@ -701,7 +715,7 @@ function AddressAutocompleteComponent({
       
       return () => clearTimeout(timeoutId);
     }
-  }, [postalCode, city, apartment]);
+  }, [postalCode, city, apartment, inputValue]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!showSuggestions || suggestions.length === 0) return;

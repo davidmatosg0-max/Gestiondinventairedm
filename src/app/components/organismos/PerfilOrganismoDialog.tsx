@@ -400,9 +400,12 @@ export function PerfilOrganismoDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className="!max-w-none !w-screen !h-screen !top-0 !left-0 !translate-x-0 !translate-y-0 !rounded-none overflow-y-auto p-0 m-0"
-        aria-describedby={undefined}
+        aria-describedby="organism-profile-description"
       >
         <DialogHeader className="sticky top-0 z-10 bg-white border-b px-6 py-4 shadow-sm">
+          <DialogDescription id="organism-profile-description" className="sr-only">
+            Profil complet de l'organisme
+          </DialogDescription>
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 flex-1">
               {/* Logo del organismo */}

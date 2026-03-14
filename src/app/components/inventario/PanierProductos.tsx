@@ -369,7 +369,7 @@ export function PanierProductos({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className="max-w-7xl max-h-[90vh] overflow-hidden flex flex-col"
-        aria-describedby={undefined}
+        aria-describedby="panier-dialog-description"
       >
         <DialogHeader>
           <DialogTitle 
@@ -378,8 +378,8 @@ export function PanierProductos({
           >
             {t('inventory.addProducts')}
           </DialogTitle>
-          <DialogDescription id="panier-description">
-            {t('inventory.selectProductsForCart')}
+          <DialogDescription id="panier-dialog-description" className="sr-only">
+            {t('inventory.addProductsDescription')}
           </DialogDescription>
         </DialogHeader>
 

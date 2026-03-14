@@ -185,16 +185,9 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
 
   // NUEVO: Definir types de contacto disponibles selon le département
   const getTiposPermitidos = (): TipoContacto[] => {
-    // Obtener tipos de contacto creados para este departamento (incluye globales + específicos del departamento)
-    const tiposCreados = obtenerTiposContacto(departamentoId);
-    
-    // Si no hay tipos creados, devolver array vacío
-    if (tiposCreados.length === 0) {
-      return [];
-    }
-    
-    // Devolver los códigos de todos los tipos creados
-    return tiposCreados.map(tipo => tipo.code as TipoContacto);
+    // 🔒 SOLO BÉNÉVOLES - Los contactos de departamento son exclusivamente para bénévoles
+    // Los donadores y fournisseurs se gestionan desde el módulo de Entrepôt
+    return ['benevole'];
   };
 
   const tiposPermitidos = getTiposPermitidos();
@@ -202,7 +195,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
   const [formulario, setFormulario] = useState<Omit<ContactoDepartamento, 'id'>>({
     departamentoId,
     departamentoIds: [departamentoId], // Initialiser avec le département actuel sélectionné
-    tipo: tiposPermitidos[0] || 'employe', // Usar el primer tipo disponible o 'employe' por defecto
+    tipo: 'benevole', // SIEMPRE bénévole en contactos de departamento
     nombre: '',
     apellido: '',
     fechaNacimiento: '',
@@ -238,17 +231,45 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
     cargarBenevolesDisponibles();
   }, [departamentoId]);
 
+  // 🔥 Escuchar eventos de actualización de contactos (desde Recrutement u otros módulos)
+  useEffect(() => {
+    const handleContactosActualizados = (event: any) => {
+      console.log('🔔 Evento contactos-actualizados recibido:', event.detail);
+      
+      // Recargar contactos cuando se actualicen
+      cargarContactos();
+      
+      // Si el evento trae detalles del departamento y coincide con el actual, mostrar notificación
+      if (event.detail?.departamentoId === departamentoId) {
+        console.log(`✅ Contacto actualizado en este departamento (${departamentoId})`);
+      }
+    };
+
+    // Agregar listener
+    window.addEventListener('contactos-actualizados', handleContactosActualizados);
+
+    // Cleanup: remover listener cuando se desmonta el componente
+    return () => {
+      window.removeEventListener('contactos-actualizados', handleContactosActualizados);
+    };
+  }, [departamentoId]); // Dependencia: volver a suscribirse si cambia el departamento
+
   const cargarContactos = () => {
     const contactosData = obtenerContactosPorDepartamento(departamentoId);
-    console.log('🔍 DEBUG - Contactos cargados pour département', departamentoId, ':', contactosData);
-    console.log('🔍 DEBUG - Total contactos:', contactosData.length);
-    contactosData.forEach(c => {
+    
+    // 🔒 FILTRAR SOLO BÉNÉVOLES (excluir donadores y fournisseurs)
+    const soloBenevoles = contactosData.filter(c => c.tipo === 'benevole');
+    
+    console.log('🔍 DEBUG - Contactos cargados pour département', departamentoId, ':', soloBenevoles);
+    console.log('🔍 DEBUG - Total bénévoles:', soloBenevoles.length);
+    console.log(`🔍 DEBUG - Filtrados ${contactosData.length - soloBenevoles.length} contactos (donadores/fournisseurs)`);
+    soloBenevoles.forEach(c => {
       console.log(`  - ${c.nombre} ${c.apellido} (tipo: ${c.tipo}, activo: ${c.activo}, deptId: ${c.departamentoId})`);
     });
-    setContactos(contactosData);
+    setContactos(soloBenevoles);
     
     // 🚨 DIAGNÓSTICO ADICIONAL: Verificar localStorage directamente
-    const allContactosRaw = localStorage.getItem('contactos_departamento');
+    const allContactosRaw = localStorage.getItem('banqueAlimentaire_contactosDepartamento');
     if (allContactosRaw) {
       const allContactos = JSON.parse(allContactosRaw);
       console.log(`📦 DEBUG - Total contactos en localStorage: ${allContactos.length}`);
@@ -466,6 +487,12 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
     console.log('🚀 DEBUG - Iniciando guardado de contacto...');
     console.log('  - Modo edición:', modoEdicion);
     console.log('  - Formulario completo:', formulario);
+    console.log('  - Campos de dirección:', {
+      direccion: formulario.direccion,
+      apartamento: formulario.apartamento,
+      ciudad: formulario.ciudad,
+      codigoPostal: formulario.codigoPostal
+    });
     console.log('  - Departamento actual (forzado):', departamentoId);
 
     if (modoEdicion && contactoSeleccionado) {

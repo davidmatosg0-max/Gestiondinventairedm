@@ -8,6 +8,7 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { 
   UserPlus, 
   Users, 
@@ -25,9 +26,11 @@ import {
   Search,
   Sparkles,
   ArrowLeft,
-  Trash2
+  Trash2,
+  Link
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { guardarContacto, obtenerContactosPorDepartamento, eliminarContactosDuplicados } from '../../utils/contactosDepartamentoStorage';
 
 interface Candidate {
   id: number;
@@ -47,6 +50,21 @@ export function Recrutement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  
+  // 🎯 Estados para el diálogo de asignación a departamento
+  const [dialogAssignerOpen, setDialogAssignerOpen] = useState(false);
+  const [candidatoParaAssignar, setCandidatoParaAssignar] = useState<Candidate | null>(null);
+  const [departamentoSeleccionado, setDepartamentoSeleccionado] = useState('');
+
+  // ✅ LISTA CORRECTA DE DEPARTAMENTOS CON IDs NUMÉRICOS (coinciden con departamentosStorage.ts)
+  const departamentosDisponibles = [
+    { id: '1', nombre: 'Entrepôt', icono: '📦', color: '#1a4d7a', codigo: 'ENTREPOT' },
+    { id: '7', nombre: 'Transport', icono: '🚚', color: '#2d9561', codigo: 'TRANSPORT' },
+    { id: '2', nombre: 'Comptoir', icono: '🏪', color: '#FF9800', codigo: 'COMPTOIR' },
+    { id: '3', nombre: 'Cuisine', icono: '🍳', color: '#E91E63', codigo: 'CUISINE' },
+    { id: '4', nombre: 'Liaison', icono: '🤝', color: '#9C27B0', codigo: 'LIAISON' },
+    { id: '8', nombre: 'Bénévoles', icono: '👥', color: '#4CAF50', codigo: 'BENEVOLES' },
+  ];
 
   // Mock data - Candidatos
   const [candidates, setCandidates] = useState<Candidate[]>([
@@ -139,16 +157,252 @@ export function Recrutement() {
   });
 
   const handleStatusChange = (candidateId: number, newStatus: string) => {
+    // Buscar el candidat pour obtenir ses datos
+    const candidate = candidates.find(c => c.id === candidateId);
+    
+    // Actualizar el estado del candidat
     setCandidates(prev => 
       prev.map(c => c.id === candidateId ? { ...c, status: newStatus as Candidate['status'] } : c)
     );
-    toast.success('Statut mis à jour avec succès');
+    
+    // ✅ Si se acepta el candidat, crear automáticamente en el département correspondiente
+    if (newStatus === 'accepted' && candidate) {
+      try {
+        // 🎯 Detectar département selon la position du candidat - USANDO IDs NUMÉRICOS CORRECTOS
+        let departamentoId = '8'; // Par défaut: Bénévoles
+        let departamentoNombre = 'Bénévoles';
+        const positionLower = candidate.position.toLowerCase();
+        
+        if (positionLower.includes('entrepôt') || positionLower.includes('entrepo') || positionLower.includes('warehouse')) {
+          departamentoId = '1'; // Entrepôt
+          departamentoNombre = 'Entrepôt';
+        } else if (positionLower.includes('chauffeur') || positionLower.includes('driver') || positionLower.includes('transport')) {
+          departamentoId = '7'; // Transport
+          departamentoNombre = 'Transport';
+        } else if (positionLower.includes('comptoir') || positionLower.includes('counter')) {
+          departamentoId = '2'; // Comptoir
+          departamentoNombre = 'Comptoir';
+        } else if (positionLower.includes('cuisine') || positionLower.includes('kitchen')) {
+          departamentoId = '3'; // Cuisine
+          departamentoNombre = 'Cuisine';
+        } else if (positionLower.includes('liaison')) {
+          departamentoId = '4'; // Liaison
+          departamentoNombre = 'Liaison';
+        }
+        
+        console.log(`🎯 Detectado département: ${departamentoNombre} (ID: ${departamentoId}) pour position: ${candidate.position}`);
+        
+        // Séparer nom complet en prénom (nombre) et nom de famille (apellido)
+        // Format: "Prénom Nom" -> nombre="Prénom", apellido="Nom"
+        const nombreParts = candidate.name.trim().split(' ');
+        const nombre = nombreParts[0] || ''; // Premier mot = Prénom
+        const apellido = nombreParts.slice(1).join(' ') || ''; // Reste = Nom de famille
+        
+        // Parser disponibilité en jours de la semaine
+        const diasSemana = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+        const disponibilidades = diasSemana.map(jour => ({
+          jour,
+          am: candidate.availability.toLowerCase().includes(jour.toLowerCase()) || 
+              candidate.availability.toLowerCase().includes('temps plein') ||
+              candidate.availability.toLowerCase().includes('flexible'),
+          pm: candidate.availability.toLowerCase().includes(jour.toLowerCase()) ||
+              candidate.availability.toLowerCase().includes('temps plein') ||
+              candidate.availability.toLowerCase().includes('flexible')
+        }));
+        
+        // Créer événement de création
+        const eventoCreacion = {
+          id: `evt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          type: 'creation' as const,
+          titre: 'Bénévole ajouté depuis Recrutement',
+          description: `Candidat accepté et ajouté automatiquement au département ${departamentoNombre}`,
+          date: new Date().toISOString(),
+          utilisateur: 'Système',
+          couleur: '#4CAF50'
+        };
+        
+        // Créer contact dans le département correspondant
+        const nuevoContacto = {
+          departamentoId,
+          departamentoIds: [departamentoId],
+          tipo: 'benevole' as const,
+          nombre,
+          apellido,
+          email: candidate.email,
+          telefono: candidate.phone,
+          activo: true,
+          fechaIngreso: new Date().toISOString().split('T')[0],
+          disponibilidades,
+          notas: `${candidate.experience}\n\nCandidature du: ${new Date(candidate.applicationDate).toLocaleDateString('fr-FR')}`,
+          evenements: [eventoCreacion],
+          // Champs optionnels
+          direccion: '',
+          apartamento: '',
+          ciudad: '',
+          codigoPostal: '',
+          cargo: candidate.position,
+          idiomas: [],
+          documents: []
+        };
+        
+        console.log('✅ Créant contact depuis Recrutement:', {
+          département: `${departamentoNombre} (${departamentoId})`,
+          contact: nuevoContacto
+        });
+        
+        const contactoGuardado = guardarContacto(nuevoContacto);
+        
+        console.log('✅ Contacto sauvegardé avec succès:', contactoGuardado);
+        
+        // 🔥 Déclencher événement personnalisé pour synchroniser départements
+        window.dispatchEvent(new CustomEvent('contactos-actualizados', {
+          detail: { departamentoId, contactoId: contactoGuardado.id }
+        }));
+        
+        toast.success(
+          `${candidate.name} accepté et ajouté au département ${departamentoNombre}!`,
+          {
+            description: `Le contact est maintenant disponible dans la section ${departamentoNombre}. ID: ${contactoGuardado.id}`,
+            duration: 5000
+          }
+        );
+      } catch (error) {
+        console.error('❌ Erreur lors de la création du contact depuis Recrutement:', error);
+        toast.error('Le statut a été mis à jour mais il y a eu une erreur lors de l\'ajout au département.');
+      }
+    } else {
+      toast.success('Statut mis à jour avec succès');
+    }
   };
 
   const handleDeleteCandidate = (candidateId: number, candidateName: string) => {
     if (confirm(`Êtes-vous sûr de vouloir supprimer la candidature de ${candidateName}?\n\nCette action est irréversible.`)) {
       setCandidates(prev => prev.filter(c => c.id !== candidateId));
       toast.success('Candidature supprimée avec succès');
+    }
+  };
+
+  // 🔍 Fonction pour vérifier si un candidat est déjà assigné à un département
+  const verificarCandidatoAsignado = (candidate: Candidate, departamentoId: string): boolean => {
+    const contactosExistentes = obtenerContactosPorDepartamento(departamentoId);
+    return contactosExistentes.some(contacto => 
+      contacto.email.toLowerCase() === candidate.email.toLowerCase() ||
+      (contacto.nombre.toLowerCase() === candidate.name.split(' ')[0].toLowerCase() &&
+       contacto.apellido.toLowerCase() === candidate.name.split(' ').slice(1).join(' ').toLowerCase())
+    );
+  };
+
+  // 🎯 Fonction pour assigner candidat à un département spécifique
+  const handleAssignerCandidat = () => {
+    if (!candidatoParaAssignar || !departamentoSeleccionado) {
+      toast.error('Veuillez sélectionner un département');
+      return;
+    }
+
+    // 🔒 VERIFIER SI LE CANDIDAT EST DÉJÀ ASSIGNÉ À CE DÉPARTEMENT
+    const yaExiste = verificarCandidatoAsignado(candidatoParaAssignar, departamentoSeleccionado);
+
+    if (yaExiste) {
+      const departamento = departamentosDisponibles.find(d => d.id === departamentoSeleccionado);
+      toast.error(
+        `${candidatoParaAssignar.name} est déjà assigné au département ${departamento?.nombre}!`,
+        {
+          description: 'Veuillez sélectionner un autre département ou vérifier la liste des contacts.',
+          duration: 5000
+        }
+      );
+      return;
+    }
+
+    try {
+      const departamento = departamentosDisponibles.find(d => d.id === departamentoSeleccionado);
+      if (!departamento) {
+        toast.error('Département non trouvé');
+        return;
+      }
+
+      // Séparer nom complet en prénom (nombre) et nom de famille (apellido)
+      // Format: "Prénom Nom" -> nombre="Prénom", apellido="Nom"
+      const nombreParts = candidatoParaAssignar.name.trim().split(' ');
+      const nombre = nombreParts[0] || ''; // Premier mot = Prénom
+      const apellido = nombreParts.slice(1).join(' ') || ''; // Reste = Nom de famille
+      
+      // Parser disponibilité en jours de la semaine
+      const diasSemana = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+      const disponibilidades = diasSemana.map(jour => ({
+        jour,
+        am: candidatoParaAssignar.availability.toLowerCase().includes(jour.toLowerCase()) || 
+            candidatoParaAssignar.availability.toLowerCase().includes('temps plein') ||
+            candidatoParaAssignar.availability.toLowerCase().includes('flexible'),
+        pm: candidatoParaAssignar.availability.toLowerCase().includes(jour.toLowerCase()) ||
+            candidatoParaAssignar.availability.toLowerCase().includes('temps plein') ||
+            candidatoParaAssignar.availability.toLowerCase().includes('flexible')
+      }));
+      
+      // Créer événement de création
+      const eventoCreacion = {
+        id: `evt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: 'creation' as const,
+        titre: 'Bénévole assigné depuis Recrutement',
+        description: `Candidat assigné manuellement au département ${departamento.nombre}`,
+        date: new Date().toISOString(),
+        utilisateur: 'Système',
+        couleur: departamento.color
+      };
+      
+      // Créer contact dans le département sélectionné
+      const nuevoContacto = {
+        departamentoId: departamentoSeleccionado,
+        departamentoIds: [departamentoSeleccionado],
+        tipo: 'benevole' as const,
+        nombre,
+        apellido,
+        email: candidatoParaAssignar.email,
+        telefono: candidatoParaAssignar.phone,
+        activo: true,
+        fechaIngreso: new Date().toISOString().split('T')[0],
+        disponibilidades,
+        notas: `${candidatoParaAssignar.experience}\n\nCandidature du: ${new Date(candidatoParaAssignar.applicationDate).toLocaleDateString('fr-FR')}\n\nAssigné manuellement au département ${departamento.nombre}`,
+        evenements: [eventoCreacion],
+        // Champs optionnels
+        direccion: '',
+        apartamento: '',
+        ciudad: '',
+        codigoPostal: '',
+        cargo: candidatoParaAssignar.position,
+        idiomas: [],
+        documents: []
+      };
+      
+      console.log('✅ Assignant candidat au département:', {
+        département: `${departamento.nombre} (${departamentoSeleccionado})`,
+        contact: nuevoContacto
+      });
+      
+      const contactoGuardado = guardarContacto(nuevoContacto);
+      
+      console.log('✅ Contacto sauvegardé avec succès:', contactoGuardado);
+      
+      // 🔥 Déclencher événement personnalisé pour synchroniser départements
+      window.dispatchEvent(new CustomEvent('contactos-actualizados', {
+        detail: { departamentoId: departamentoSeleccionado, contactoId: contactoGuardado.id }
+      }));
+      
+      toast.success(
+        `${candidatoParaAssignar.name} assigné au département ${departamento.nombre}!`,
+        {
+          description: `Le contact est maintenant disponible dans la section ${departamento.nombre}`,
+          duration: 5000
+        }
+      );
+
+      // Fermer dialog et nettoyer états
+      setDialogAssignerOpen(false);
+      setCandidatoParaAssignar(null);
+      setDepartamentoSeleccionado('');
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'assignation du candidat:', error);
+      toast.error('Erreur lors de l\'assignation au département');
     }
   };
 
@@ -160,7 +414,7 @@ export function Recrutement() {
         background: `linear-gradient(135deg, ${branding.primaryColor}15 0%, ${branding.secondaryColor}10 100%)`,
       }}
     >
-      {/* Formas decorativas de fondo */}
+      {/* Formas decorativas de fond */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div 
           className="absolute -top-24 -left-24 w-96 h-96 rounded-full opacity-20 blur-3xl animate-pulse"
@@ -176,7 +430,7 @@ export function Recrutement() {
         />
       </div>
 
-      {/* Contenedor principal con glassmorphism */}
+      {/* Conteneur principal avec glassmorphism */}
       <div className="relative z-10 w-full max-w-7xl mx-auto">
         <div 
           className="backdrop-blur-xl bg-white/90 rounded-3xl shadow-2xl p-4 sm:p-6 md:p-8 border border-white/60"
@@ -184,7 +438,7 @@ export function Recrutement() {
             boxShadow: '0 8px 32px 0 rgba(26, 77, 122, 0.2), 0 0 80px rgba(45, 149, 97, 0.1)'
           }}
         >
-          {/* Header con logo y título */}
+          {/* Header avec logo et titre */}
           <div className="flex justify-center mb-4 sm:mb-6">
             <div className="relative inline-block">
               {/* Glow effect detrás del logo */}
@@ -221,7 +475,7 @@ export function Recrutement() {
             </div>
           </div>
 
-          {/* Título con icono y efecto Sparkles */}
+          {/* Título con icono y effet Sparkles */}
           <div className="flex items-center justify-center gap-2 sm:gap-3 mb-6 sm:mb-8">
             <UserPlus 
               className="w-6 h-6 sm:w-8 sm:h-8" 
@@ -391,7 +645,7 @@ export function Recrutement() {
             </CardContent>
           </Card>
 
-          {/* Lista de candidatos */}
+          {/* Lista de candidats */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {filteredCandidates.map((candidate, index) => {
               // Alternar colores
@@ -462,6 +716,25 @@ export function Recrutement() {
                     </div>
 
                     <div className="flex gap-2 pt-3 border-t border-gray-200">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="hover:scale-105 transition-all duration-300"
+                        style={{ 
+                          fontFamily: 'Montserrat, sans-serif',
+                          color: branding.secondaryColor,
+                          borderColor: `${branding.secondaryColor}40`,
+                          backgroundColor: `${branding.secondaryColor}10`
+                        }}
+                        onClick={() => {
+                          setCandidatoParaAssignar(candidate);
+                          setDialogAssignerOpen(true);
+                        }}
+                        title="Assigner au département"
+                      >
+                        <Link className="w-4 h-4 mr-1" />
+                        Assigner
+                      </Button>
                       <Select 
                         value={candidate.status}
                         onValueChange={(value) => handleStatusChange(candidate.id, value)}
@@ -483,15 +756,14 @@ export function Recrutement() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        className="hover:scale-105 transition-all duration-300 border-gray-300"
+                        className="hover:scale-105 transition-all duration-300"
                         style={{ 
                           fontFamily: 'Montserrat, sans-serif',
                           color: cardColor,
                           borderColor: `${cardColor}30`
                         }}
                       >
-                        <FileText className="w-4 h-4 mr-2" />
-                        Voir CV
+                        <FileText className="w-4 h-4" />
                       </Button>
                       <Button 
                         variant="outline" 
@@ -543,6 +815,141 @@ export function Recrutement() {
           )}
         </div>
       </div>
+
+      {/* Dialog: Assigner au Département */}
+      <Dialog open={dialogAssignerOpen} onOpenChange={setDialogAssignerOpen}>
+        <DialogContent className="max-w-2xl" aria-describedby="assigner-departement-description">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              <Link className="w-6 h-6" style={{ color: branding.primaryColor }} />
+              Assigner au Département
+            </DialogTitle>
+            <DialogDescription id="assigner-departement-description">
+              Sélectionnez le département où {candidatoParaAssignar?.name} sera assigné comme bénévole
+            </DialogDescription>
+          </DialogHeader>
+
+          {candidatoParaAssignar && (
+            <div className="space-y-6">
+              {/* Información del candidat */}
+              <div 
+                className="p-4 rounded-lg border-l-4"
+                style={{ 
+                  backgroundColor: `${branding.primaryColor}10`, 
+                  borderLeftColor: branding.primaryColor
+                }}
+              >
+                <h4 className="font-semibold mb-2" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
+                  Candidat Sélectionné
+                </h4>
+                <div className="space-y-1 text-sm">
+                  <p><strong>Nom:</strong> {candidatoParaAssignar.name}</p>
+                  <p><strong>Poste:</strong> {candidatoParaAssignar.position}</p>
+                  <p><strong>Email:</strong> {candidatoParaAssignar.email}</p>
+                  <p><strong>Téléphone:</strong> {candidatoParaAssignar.phone}</p>
+                  <p><strong>Disponibilité:</strong> {candidatoParaAssignar.availability}</p>
+                </div>
+              </div>
+
+              {/* Selector de département */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  Sélectionner le Département
+                </Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {departamentosDisponibles.map((dept) => {
+                    const yaAsignado = verificarCandidatoAsignado(candidatoParaAssignar, dept.id);
+                    const esSeleccionado = departamentoSeleccionado === dept.id;
+                    
+                    return (
+                      <button
+                        key={dept.id}
+                        onClick={() => !yaAsignado && setDepartamentoSeleccionado(dept.id)}
+                        disabled={yaAsignado}
+                        className={`p-4 rounded-xl border-2 transition-all duration-300 relative overflow-hidden ${
+                          yaAsignado 
+                            ? 'opacity-50 cursor-not-allowed' 
+                            : 'hover:scale-105'
+                        } ${
+                          esSeleccionado 
+                            ? 'shadow-lg' 
+                            : 'hover:shadow-md'
+                        }`}
+                        style={{
+                          borderColor: esSeleccionado 
+                            ? dept.color 
+                            : yaAsignado 
+                              ? '#DC3545' 
+                              : '#e5e7eb',
+                          backgroundColor: esSeleccionado 
+                            ? `${dept.color}10` 
+                            : yaAsignado 
+                              ? '#DC354510' 
+                              : 'white'
+                        }}
+                        title={yaAsignado ? `Déjà assigné au département ${dept.nombre}` : `Assigner au département ${dept.nombre}`}
+                      >
+                        {/* Indicador de ya asignado */}
+                        {yaAsignado && (
+                          <div className="absolute top-2 right-2">
+                            <CheckCircle className="w-5 h-5 text-[#DC3545]" />
+                          </div>
+                        )}
+                        
+                        <div className="text-3xl mb-2">{dept.icono}</div>
+                        <p 
+                          className="font-semibold text-sm"
+                          style={{ 
+                            fontFamily: 'Montserrat, sans-serif',
+                            color: esSeleccionado 
+                              ? dept.color 
+                              : yaAsignado 
+                                ? '#DC3545' 
+                                : '#666666'
+                          }}
+                        >
+                          {dept.nombre}
+                        </p>
+                        
+                        {/* Texto de estado */}
+                        {yaAsignado && (
+                          <p className="text-xs mt-1" style={{ color: '#DC3545' }}>
+                            Déjà assigné
+                          </p>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Botones de acción */}
+              <div className="flex gap-3 justify-end pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDialogAssignerOpen(false);
+                    setCandidatoParaAssignar(null);
+                    setDepartamentoSeleccionado('');
+                  }}
+                  style={{ fontFamily: 'Montserrat, sans-serif' }}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  className="text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                  style={{\n                    background: `linear-gradient(135deg, ${branding.secondaryColor} 0%, ${branding.secondaryColor}dd 100%)`,\n                    fontFamily: 'Montserrat, sans-serif'\n                  }}
+                  onClick={handleAssignerCandidat}
+                  disabled={!departamentoSeleccionado}
+                >
+                  <Link className="w-4 h-4 mr-2" />
+                  Assigner au Département
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
