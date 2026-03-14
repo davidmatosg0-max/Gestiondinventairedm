@@ -1587,7 +1587,7 @@ export function Configuracion() {
                               <SelectValue placeholder={t('configuration.selectUnit') || 'Selecciona una unidad'} />
                             </SelectTrigger>
                             <SelectContent>
-                              {unidades.map(unidad => (
+                              {unidadesDinamicas.map(unidad => (
                                 <SelectItem key={unidad.id} value={unidad.abreviatura}>
                                   {unidad.icono && `${unidad.icono} `}{unidad.nombre} ({unidad.abreviatura})
                                 </SelectItem>
@@ -2044,7 +2044,7 @@ export function Configuracion() {
                                         )}
                                         <div className="flex flex-wrap gap-2 items-center">
                                           {sub.unidad && (() => {
-                                            const unidadObj = unidades.find(u => u.abreviatura === sub.unidad);
+                                            const unidadObj = unidadesDinamicas.find(u => u.abreviatura === sub.unidad);
                                             return (
                                               <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-300">
                                                 {unidadObj?.icono || '📏'} {unidadObj?.nombre || sub.unidad}
@@ -2084,7 +2084,7 @@ export function Configuracion() {
                                             <div className="flex items-center gap-1">
                                               <span className="text-xs text-[#666666]">{t('configuration.allowedUnits')}:</span>
                                               {sub.unidadesPermitidas.slice(0, 3).map(unidadId => {
-                                                const unidad = unidades.find(u => u.id === unidadId);
+                                                const unidad = unidadesDinamicas.find(u => u.id === unidadId);
                                                 return unidad ? (
                                                   <Badge key={unidadId} variant="outline" className="text-xs">
                                                     {unidad.abreviatura}
@@ -2175,7 +2175,7 @@ export function Configuracion() {
                                                 )}
                                                 <div className="flex flex-wrap gap-2 items-center">
                                                   {variante.unidad && (() => {
-                                                    const unidadObj = unidades.find(u => u.abreviatura === variante.unidad);
+                                                    const unidadObj = unidadesDinamicas.find(u => u.abreviatura === variante.unidad);
                                                     return (
                                                       <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-300">
                                                         {unidadObj?.icono || '📏'} {unidadObj?.nombre || variante.unidad}
@@ -2899,7 +2899,7 @@ export function Configuracion() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {unidades.map((unidad) => (
+                      {unidadesDinamicas.map((unidad) => (
                         <SelectItem key={unidad.id} value={unidad.abreviatura}>
                           <div className="flex items-center gap-2">
                             <span>{unidad.icono}</span>
@@ -3340,7 +3340,7 @@ export function Configuracion() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {unidades.map(unidad => (
+                  {unidadesDinamicas.map(unidad => (
                     <SelectItem key={unidad.id} value={unidad.abreviatura}>
                       {unidad.icono && `${unidad.icono} `}{unidad.nombre} ({unidad.abreviatura})
                     </SelectItem>
