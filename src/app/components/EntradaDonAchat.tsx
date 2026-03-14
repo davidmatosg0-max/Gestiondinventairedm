@@ -373,7 +373,7 @@ export function EntradaDonAchat() {
     
     // 🎯 FILTRADO POR PROGRAMA:
     // DON = Solo donadores EXCLUSIVOS
-    // ACHAT = Solo proveedores EXCLUSIVOS  
+    // ACHAT = Solo proveedores EXCLUSIVOS (que NO sean donadores)
     // PRS = Solo participantes PRS
     // OCC = TODOS los proveedores (exclusivos + duales)
     
@@ -397,7 +397,7 @@ export function EntradaDonAchat() {
         );
         
       case 'occ':
-        // Mostrar TODOS los proveedores (incluyendo los que también son donadores)
+        // Mostrar TODOS los proveedores (exclusivos + duales)
         return contactosAlmacen.filter(c => 
           c.isFournisseur === true
         );
