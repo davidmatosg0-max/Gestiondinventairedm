@@ -273,6 +273,11 @@ export function guardarContacto(contacto: any): ContactoDepartamento {
         departamentoIds: departamentosActualizados
       });
       console.log('✅ Departamento agregado al contacto existente:', departamentosActualizados);
+      
+      // ✅ Retornar el contacto actualizado
+      const contactosActualizados = obtenerContactosDepartamento();
+      const contactoActualizado = contactosActualizados.find(c => c.id === yaExiste.id);
+      return contactoActualizado || yaExiste;
     }
     
     // Retornar el contacto existente en lugar de crear uno nuevo

@@ -36,7 +36,9 @@ import {
   RefreshCw,
   Shield,
   Database,
-  HardDrive
+  HardDrive,
+  Globe,
+  FileText
 } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
@@ -341,19 +343,39 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
   };
 
   const asignarBenevoleExistente = (benevole: any) => {
-    // Vérifier si le bénévole est déjà assigné à ce département
-    const yaAsignado = contactos.some(c => 
-      c.email === benevole.email && c.tipo === 'benevole'
+    console.log('🔍 DEBUG - Intentando asignar bénévole:', benevole);
+    
+    // 🔒 VERIFICAR DUPLICADOS: Buscar en localStorage directamente para mayor confiabilidad
+    const todosContactos = obtenerContactosDepartamento();
+    const yaExisteEnSistema = todosContactos.find(c => 
+      c.email.toLowerCase() === benevole.email.toLowerCase() && c.tipo === 'benevole'
     );
-
-    if (yaAsignado) {
-      toast.error('Ce bénévole est déjà assigné à ce département');
+    
+    if (yaExisteEnSistema) {
+      console.log('⚠️ Bénévole ya existe en el sistema:', yaExisteEnSistema);
+      
+      // Verificar si ya está en este departamento específico
+      if (yaExisteEnSistema.departamentoIds?.includes(departamentoId)) {
+        toast.error('Ce bénévole est déjà assigné à ce département');
+        return;
+      }
+      
+      // Si existe pero no en este departamento, agregarlo a este departamento
+      const departamentosActualizados = [...(yaExisteEnSistema.departamentoIds || [yaExisteEnSistema.departamentoId]), departamentoId];
+      actualizarContacto(yaExisteEnSistema.id, {
+        departamentoIds: departamentosActualizados
+      });
+      
+      toast.success(`Bénévole ${benevole.nom || benevole.nombre} ${benevole.prenom || benevole.apellido} assigné à ce département`);
+      cargarContactos(); // Recargar para mostrar el cambio
+      setDialogAsignarBenevole(false);
       return;
     }
 
     // Créer un contact basé sur le bénévole existant
     const nuevoContacto: Omit<ContactoDepartamento, 'id'> = {
       departamentoId,
+      departamentoIds: [departamentoId], // ✅ Inicializar con departamento actual
       tipo: 'benevole',
       nombre: benevole.nom || benevole.nombre || '',
       apellido: benevole.prenom || benevole.apellido || '',
@@ -388,10 +410,11 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
 
     try {
       const contactoGuardado = guardarContacto(nuevoContacto);
+      console.log('✅ Contacto guardado exitosamente:', contactoGuardado);
       toast.success(`Bénévole ${benevole.nom || benevole.nombre} ${benevole.prenom || benevole.apellido} assigné avec succès`);
       
-      // ✅ SOLUCIÓN DEFINITIVA: Agregar el contacto inmediatamente al estado
-      setContactos(prevContactos => [...prevContactos, contactoGuardado]);
+      // ✅ RECARGA COMPLETA: Recargar desde localStorage para asegurar persistencia
+      cargarContactos();
       
       setDialogAsignarBenevole(false);
     } catch (error) {
@@ -422,7 +445,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
     setFormulario({
       departamentoId,
       departamentoIds: [departamentoId],
-      tipo: tiposPermitidos[0] || 'employe', // Usar el primer tipo disponible o 'employe' por defecto
+      tipo: 'benevole', // SIEMPRE bénévole en contactos de departamento
       nombre: '',
       apellido: '',
       fechaNacimiento: '',
@@ -541,12 +564,8 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         const contactoGuardado = guardarContacto(contactoParaGuardar);
         console.log(`✅ DEBUG - Contacto guardado con ID: ${contactoGuardado.id}`);
         
-        // ✅ SOLUCIÓN DEFINITIVA: Agregar el contacto inmediatamente al estado
-        setContactos(prevContactos => {
-          const nuevosContactos = [...prevContactos, contactoGuardado];
-          console.log('✅ Estado actualizado con nuevo contacto. Total:', nuevosContactos.length);
-          return nuevosContactos;
-        });
+        // ✅ RECARGA COMPLETA: Recargar desde localStorage para asegurar persistencia
+        cargarContactos();
         
         toast.success('Contact créé avec succès');
       } catch (error) {
@@ -1011,7 +1030,18 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                     return (
                       <div 
                         key={contacto.id} 
-                        className="group relative overflow-hidden rounded-2xl bg-white hover:bg-gradient-to-br hover:from-white hover:to-blue-50/30 border border-slate-200/60 hover:border-blue-300/60 shadow-md hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]"
+                        className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200/60 shadow-md hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]"
+                        style={{
+                          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = `${config.color}60`;
+                          e.currentTarget.style.background = `linear-gradient(to bottom right, white, ${config.color}08)`;
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = 'rgb(226 232 240 / 0.6)';
+                          e.currentTarget.style.background = 'white';
+                        }}
                       >
                         {/* Decorative accent */}
                         <div className="absolute top-0 left-0 w-1 h-full transition-all duration-300 group-hover:w-2" 
@@ -1205,86 +1235,195 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
               </TabsList>
               
               <TabsContent value="information" className="space-y-4 mt-4">
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-full overflow-hidden border-4" style={{ borderColor: getTipoConfig(contactoSeleccionado.tipo).color }}>
-                  {contactoSeleccionado.foto ? (
-                    <ImageWithFallback src={contactoSeleccionado.foto} alt="Foto" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                      <User className="w-10 h-10 text-gray-400" />
+              {/* 🎨 Header del perfil con color del tipo de contacto */}
+              <div className="relative rounded-2xl overflow-hidden mb-6" style={{ 
+                background: `linear-gradient(135deg, ${getTipoConfig(contactoSeleccionado.tipo).color}15 0%, ${getTipoConfig(contactoSeleccionado.tipo).color}05 100%)`,
+                border: `2px solid ${getTipoConfig(contactoSeleccionado.tipo).color}30`
+              }}>
+                <div className="p-6 flex items-center gap-6">
+                  <div className="w-24 h-24 rounded-full overflow-hidden border-4 shadow-lg" style={{ borderColor: getTipoConfig(contactoSeleccionado.tipo).color }}>
+                    {contactoSeleccionado.foto ? (
+                      <ImageWithFallback src={contactoSeleccionado.foto} alt="Foto" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${getTipoConfig(contactoSeleccionado.tipo).color}20` }}>
+                        <User className="w-12 h-12" style={{ color: getTipoConfig(contactoSeleccionado.tipo).color }} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold mb-2" style={{ 
+                      fontFamily: 'Montserrat, sans-serif',
+                      color: getTipoConfig(contactoSeleccionado.tipo).color 
+                    }}>
+                      {contactoSeleccionado.nombre} {contactoSeleccionado.apellido}
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        className="text-sm font-medium shadow-sm"
+                        style={{ 
+                          backgroundColor: getTipoConfig(contactoSeleccionado.tipo).color,
+                          color: 'white',
+                          fontFamily: 'Roboto, sans-serif'
+                        }}
+                      >
+                        {getTipoConfig(contactoSeleccionado.tipo).label}
+                      </Badge>
+                      {contactoSeleccionado.activo && (
+                        <Badge variant="outline" className="text-xs" style={{ borderColor: '#10b981', color: '#10b981' }}>
+                          ✓ Actif
+                        </Badge>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold">{contactoSeleccionado.nombre} {contactoSeleccionado.apellido}</h3>
-                  <Badge style={{ backgroundColor: getTipoConfig(contactoSeleccionado.tipo).color }}>
-                    {getTipoConfig(contactoSeleccionado.tipo).label}
-                  </Badge>
+                  </div>
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4 text-sm">
                 {contactoSeleccionado.email && (
-                  <div>
-                    <span className="font-semibold">Email:</span>
-                    <p>{contactoSeleccionado.email}</p>
+                  <div className="p-3 rounded-lg border" style={{ 
+                    borderColor: `${getTipoConfig(contactoSeleccionado.tipo).color}30`,
+                    backgroundColor: `${getTipoConfig(contactoSeleccionado.tipo).color}05`
+                  }}>
+                    <span className="font-semibold flex items-center gap-2 mb-1" style={{ 
+                      color: getTipoConfig(contactoSeleccionado.tipo).color,
+                      fontFamily: 'Montserrat, sans-serif'
+                    }}>
+                      <Mail className="w-4 h-4" />
+                      Email:
+                    </span>
+                    <p style={{ fontFamily: 'Roboto, sans-serif' }}>{contactoSeleccionado.email}</p>
                   </div>
                 )}
                 {contactoSeleccionado.telefono && (
-                  <div>
-                    <span className="font-semibold">Téléphone:</span>
-                    <p>{contactoSeleccionado.telefono}</p>
+                  <div className="p-3 rounded-lg border" style={{ 
+                    borderColor: `${getTipoConfig(contactoSeleccionado.tipo).color}30`,
+                    backgroundColor: `${getTipoConfig(contactoSeleccionado.tipo).color}05`
+                  }}>
+                    <span className="font-semibold flex items-center gap-2 mb-1" style={{ 
+                      color: getTipoConfig(contactoSeleccionado.tipo).color,
+                      fontFamily: 'Montserrat, sans-serif'
+                    }}>
+                      <Phone className="w-4 h-4" />
+                      Téléphone:
+                    </span>
+                    <p style={{ fontFamily: 'Roboto, sans-serif' }}>{contactoSeleccionado.telefono}</p>
                   </div>
                 )}
                 {contactoSeleccionado.cargo && (
-                  <div>
-                    <span className="font-semibold">Poste:</span>
-                    <p>{contactoSeleccionado.cargo}</p>
+                  <div className="p-3 rounded-lg border" style={{ 
+                    borderColor: `${getTipoConfig(contactoSeleccionado.tipo).color}30`,
+                    backgroundColor: `${getTipoConfig(contactoSeleccionado.tipo).color}05`
+                  }}>
+                    <span className="font-semibold flex items-center gap-2 mb-1" style={{ 
+                      color: getTipoConfig(contactoSeleccionado.tipo).color,
+                      fontFamily: 'Montserrat, sans-serif'
+                    }}>
+                      <Briefcase className="w-4 h-4" />
+                      Poste:
+                    </span>
+                    <p style={{ fontFamily: 'Roboto, sans-serif' }}>{contactoSeleccionado.cargo}</p>
                   </div>
                 )}
                 {contactoSeleccionado.fechaNacimiento && (
-                  <div>
-                    <span className="font-semibold">Date de Naissance:</span>
-                    <p>{new Date(contactoSeleccionado.fechaNacimiento).toLocaleDateString('fr-CA')}</p>
+                  <div className="p-3 rounded-lg border" style={{ 
+                    borderColor: `${getTipoConfig(contactoSeleccionado.tipo).color}30`,
+                    backgroundColor: `${getTipoConfig(contactoSeleccionado.tipo).color}05`
+                  }}>
+                    <span className="font-semibold flex items-center gap-2 mb-1" style={{ 
+                      color: getTipoConfig(contactoSeleccionado.tipo).color,
+                      fontFamily: 'Montserrat, sans-serif'
+                    }}>
+                      <Calendar className="w-4 h-4" />
+                      Date de Naissance:
+                    </span>
+                    <p style={{ fontFamily: 'Roboto, sans-serif' }}>{new Date(contactoSeleccionado.fechaNacimiento).toLocaleDateString('fr-CA')}</p>
                   </div>
                 )}
                 {contactoSeleccionado.genero && (
-                  <div>
-                    <span className="font-semibold">Genre:</span>
-                    <p>{contactoSeleccionado.genero}</p>
+                  <div className="p-3 rounded-lg border" style={{ 
+                    borderColor: `${getTipoConfig(contactoSeleccionado.tipo).color}30`,
+                    backgroundColor: `${getTipoConfig(contactoSeleccionado.tipo).color}05`
+                  }}>
+                    <span className="font-semibold flex items-center gap-2 mb-1" style={{ 
+                      color: getTipoConfig(contactoSeleccionado.tipo).color,
+                      fontFamily: 'Montserrat, sans-serif'
+                    }}>
+                      <User className="w-4 h-4" />
+                      Genre:
+                    </span>
+                    <p style={{ fontFamily: 'Roboto, sans-serif' }}>{contactoSeleccionado.genero}</p>
                   </div>
                 )}
                 {contactoSeleccionado.direccion && (
-                  <div className="col-span-2">
-                    <span className="font-semibold">Adresse:</span>
-                    <p>{contactoSeleccionado.direccion}</p>
-                    {contactoSeleccionado.ciudad && <p>{contactoSeleccionado.ciudad}, {contactoSeleccionado.codigoPostal}</p>}
+                  <div className="col-span-2 p-3 rounded-lg border" style={{ 
+                    borderColor: `${getTipoConfig(contactoSeleccionado.tipo).color}30`,
+                    backgroundColor: `${getTipoConfig(contactoSeleccionado.tipo).color}05`
+                  }}>
+                    <span className="font-semibold flex items-center gap-2 mb-1" style={{ 
+                      color: getTipoConfig(contactoSeleccionado.tipo).color,
+                      fontFamily: 'Montserrat, sans-serif'
+                    }}>
+                      <MapPin className="w-4 h-4" />
+                      Adresse:
+                    </span>
+                    <p style={{ fontFamily: 'Roboto, sans-serif' }}>{contactoSeleccionado.direccion}</p>
+                    {contactoSeleccionado.ciudad && <p style={{ fontFamily: 'Roboto, sans-serif' }}>{contactoSeleccionado.ciudad}, {contactoSeleccionado.codigoPostal}</p>}
                   </div>
                 )}
               </div>
 
               {contactoSeleccionado.idiomas && contactoSeleccionado.idiomas.length > 0 && (
-                <div>
-                  <span className="font-semibold text-sm">Langues:</span>
-                  <div className="flex gap-2 mt-1">
+                <div className="p-4 rounded-lg border" style={{ 
+                  borderColor: `${getTipoConfig(contactoSeleccionado.tipo).color}30`,
+                  backgroundColor: `${getTipoConfig(contactoSeleccionado.tipo).color}05`
+                }}>
+                  <span className="font-semibold text-sm flex items-center gap-2 mb-2" style={{ 
+                    color: getTipoConfig(contactoSeleccionado.tipo).color,
+                    fontFamily: 'Montserrat, sans-serif'
+                  }}>
+                    <Globe className="w-4 h-4" />
+                    Langues:
+                  </span>
+                  <div className="flex gap-2 flex-wrap">
                     {contactoSeleccionado.idiomas.map((idioma, idx) => (
-                      <Badge key={`detalle-idioma-${idx}-${idioma}`} variant="outline">{idioma.toUpperCase()}</Badge>
+                      <Badge 
+                        key={`detalle-idioma-${idx}-${idioma}`} 
+                        style={{ 
+                          backgroundColor: getTipoConfig(contactoSeleccionado.tipo).color,
+                          color: 'white',
+                          fontFamily: 'Roboto, sans-serif'
+                        }}
+                      >
+                        {idioma.toUpperCase()}
+                      </Badge>
                     ))}
                   </div>
                 </div>
               )}
 
               {contactoSeleccionado.notas && (
-                <div>
-                  <span className="font-semibold text-sm">Notes:</span>
-                  <p className="text-sm mt-1 p-3 bg-[#F9FAFB] rounded">{contactoSeleccionado.notas}</p>
+                <div className="p-4 rounded-lg border" style={{ 
+                  borderColor: `${getTipoConfig(contactoSeleccionado.tipo).color}30`,
+                  backgroundColor: `${getTipoConfig(contactoSeleccionado.tipo).color}05`
+                }}>
+                  <span className="font-semibold text-sm flex items-center gap-2 mb-2" style={{ 
+                    color: getTipoConfig(contactoSeleccionado.tipo).color,
+                    fontFamily: 'Montserrat, sans-serif'
+                  }}>
+                    <FileText className="w-4 h-4" />
+                    Notes:
+                  </span>
+                  <p className="text-sm" style={{ fontFamily: 'Roboto, sans-serif' }}>{contactoSeleccionado.notas}</p>
                 </div>
               )}
 
               {/* Historial de modificaciones */}
-              <div className="mt-6 pt-6 border-t-2 border-gray-200">
-                <h4 className="font-bold text-[#333333] mb-4 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  <Clock className="w-5 h-5" style={{ color: branding.primaryColor }} />
+              <div className="mt-6 pt-6 border-t-2" style={{ borderColor: `${getTipoConfig(contactoSeleccionado.tipo).color}30` }}>
+                <h4 className="font-bold mb-4 flex items-center gap-2" style={{ 
+                  fontFamily: 'Montserrat, sans-serif',
+                  color: getTipoConfig(contactoSeleccionado.tipo).color
+                }}>
+                  <Clock className="w-5 h-5" />
                   Historique de modifications
                 </h4>
                 <HistoriqueActivite 
@@ -1296,8 +1435,11 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
 
               <TabsContent value="activite" className="mt-4">
                 <div className="space-y-4">
-                  <h3 className="font-bold text-lg flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    <Briefcase className="w-5 h-5" style={{ color: branding.primaryColor }} />
+                  <h3 className="font-bold text-lg flex items-center gap-2" style={{ 
+                    fontFamily: 'Montserrat, sans-serif',
+                    color: getTipoConfig(contactoSeleccionado.tipo).color
+                  }}>
+                    <Briefcase className="w-5 h-5" />
                     Registres de travail
                   </h3>
                   
@@ -1305,10 +1447,10 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                       <thead>
-                        <tr className="border-b-2" style={{ borderColor: branding.primaryColor }}>
-                          <th className="text-left py-3 px-4 font-semibold" style={{ color: branding.primaryColor }}>Date</th>
-                          <th className="text-left py-3 px-4 font-semibold" style={{ color: branding.primaryColor }}>Heures travaillées</th>
-                          <th className="text-left py-3 px-4 font-semibold" style={{ color: branding.primaryColor }}>Département</th>
+                        <tr className="border-b-2" style={{ borderColor: getTipoConfig(contactoSeleccionado.tipo).color }}>
+                          <th className="text-left py-3 px-4 font-semibold" style={{ color: getTipoConfig(contactoSeleccionado.tipo).color }}>Date</th>
+                          <th className="text-left py-3 px-4 font-semibold" style={{ color: getTipoConfig(contactoSeleccionado.tipo).color }}>Heures travaillées</th>
+                          <th className="text-left py-3 px-4 font-semibold" style={{ color: getTipoConfig(contactoSeleccionado.tipo).color }}>Département</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1496,7 +1638,11 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                     const yaAsignadoAqui = departamentosAsignados.includes(departamentoNombre);
                     
                     return (
-                    <Card key={benevole.id} className="p-4 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => asignarBenevoleExistente(benevole)}>
+                    <Card 
+                      key={benevole.id} 
+                      className={`p-4 transition-shadow ${yaAsignadoAqui ? 'opacity-60' : 'hover:shadow-lg cursor-pointer'}`}
+                      onClick={() => !yaAsignadoAqui && asignarBenevoleExistente(benevole)}
+                    >
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full overflow-hidden border-2 flex-shrink-0" style={{ borderColor: branding.primaryColor }}>
                           {(benevole.photo || benevole.foto) ? (
