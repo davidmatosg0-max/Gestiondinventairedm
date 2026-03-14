@@ -369,43 +369,76 @@ export function EntradaDonAchat() {
     
     const programa = formData.tipoEntrada.toLowerCase();
     
-    // 🎯 FILTRADO POR PROGRAMA:
-    // DON = Solo donadores EXCLUSIVOS
-    // ACHAT = Solo proveedores EXCLUSIVOS (que NO sean donadores)
-    // PRS = Solo participantes PRS
-    // OCC = TODOS los proveedores (exclusivos + duales)
+    // 🐛 DEBUG: Ver datos antes de filtrar
+    console.log('🔍 DEBUG contactosAlmacen:', contactosAlmacen.map(c => ({
+      nombre: c.nombreEmpresa || `${c.nombre} ${c.apellido}`,
+      isDonateur: c.isDonateur,
+      isFournisseur: c.isFournisseur
+    })));
+    
+    // 🎯 FILTRADO POR PROGRAMA (códigos en minúsculas):
+    // don = TODOS los donadores (isDonateur=true)
+    // ach = TODOS los proveedores (isFournisseur=true)
+    // occ = TODOS los partenaires (isDonateur=true OR isFournisseur=true)
+    // prs = Solo participantes PRS (participaPRS=true)
+    //
+    // LÓGICA: Si un partenaire es DUAL (donateur + fournisseur):
+    //   - Aparece en DON porque puede donar
+    //   - Aparece en ACHAT porque puedo comprarle
+    //   - Aparece en OCC porque es un contacto disponible (ocasional acepta a todos)
+    
+    let filtrados: ContactoDepartamento[] = [];
+    
+    console.log(`🎯 FILTRO: Programa="${programa}" (tipo: ${typeof programa})`);
     
     switch (programa) {
       case 'don':
-        // Mostrar solo donadores (que NO sean proveedores)
-        return contactosAlmacen.filter(c => 
-          c.isDonateur === true && c.isFournisseur !== true
+        // DON: Mostrar TODOS los donadores (exclusivos + duales)
+        filtrados = contactosAlmacen.filter(c => 
+          c.isDonateur === true
         );
+        console.log(`✅ DON: Filtrando TODOS los donadores (isDonateur=true, incluye duales)`);
+        break;
         
-      case 'achat':
-        // Mostrar solo proveedores EXCLUSIVOS (que NO sean donadores)
-        return contactosAlmacen.filter(c => 
-          c.isFournisseur === true && c.isDonateur !== true
-        );
-        
-      case 'prs':
-        // Mostrar solo participantes PRS
-        return contactosAlmacen.filter(c => 
-          c.participaPRS === true
-        );
-        
-      case 'occ':
-        // Mostrar TODOS los proveedores (exclusivos + duales)
-        return contactosAlmacen.filter(c => 
+      case 'ach':
+        // ACHAT: Mostrar TODOS los proveedores (exclusivos + duales)
+        filtrados = contactosAlmacen.filter(c => 
           c.isFournisseur === true
         );
+        console.log(`✅ ACHAT: Filtrando TODOS los proveedores (isFournisseur=true, incluye duales)`);
+        break;
+        
+      case 'prs':
+        // PRS: Mostrar solo participantes del Programa de Récupération en Supermarchés
+        filtrados = contactosAlmacen.filter(c => 
+          c.participaPRS === true
+        );
+        console.log(`✅ PRS: Filtrando solo participantes PRS`);
+        break;
+        
+      case 'occ':
+        // OCC: Mostrar TODOS los partenaires (donadores + proveedores + duales)
+        filtrados = contactosAlmacen.filter(c => 
+          c.isDonateur === true || c.isFournisseur === true
+        );
+        console.log(`✅ OCC: Filtrando TODOS los partenaires (isDonateur=true OR isFournisseur=true)`);
+        break;
         
       default:
         // Para cualquier otro programa, mostrar donadores
-        return contactosAlmacen.filter(c => 
+        filtrados = contactosAlmacen.filter(c => 
           c.isDonateur === true
         );
+        console.log(`⚠️ DEFAULT: Filtrando TODOS los donadores (isDonateur=true, incluye duales)`);
     }
+    
+    console.log(`🔍 DEBUG Programa: ${programa}, Filtrados: ${filtrados.length}`, filtrados.map(c => ({
+      nombre: c.nombreEmpresa || `${c.nombre} ${c.apellido}`,
+      isDonateur: c.isDonateur,
+      isFournisseur: c.isFournisseur
+    })));
+    
+    return filtrados;
   }, [contactosAlmacen, formData.tipoEntrada]);
 
   const contactosFiltrados = useMemo(() => {

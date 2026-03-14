@@ -52,6 +52,11 @@ import './utils/proteccionEmergencia'; // 🆘 Cargar funciones de emergencia en
 import './utils/proteccionRestauracion'; // 🔒 Cargar funciones de protección de restauración
 import { inicializarSincronizacionAutomatica } from './utils/sincronizarVoluntariosEntrepot'; // 🔄 Sincronización automática
 import './utils/debugSincronizacion'; // 🐛 Funciones de debug para sincronización
+import { migrarFlagsCostco, yaMigradoCostco, marcarMigracionCostco } from './utils/migrateCostcoFlags';
+import './utils/migrateCostcoFlags'; // 🆘 Cargar función de emergencia para migración manual
+import './utils/programaEntradaStorage'; // 🆘 Cargar función de debug de programas
+import { migrarProgramasEntrada, yaMigradoProgramas, marcarMigracionProgramas } from './utils/migrateProgramasEntrada';
+import './utils/migrateProgramasEntrada'; // 🆘 Cargar funciones de emergencia para programas
 
 // Suprimir warnings internos de Figma Make al inicio
 suppressFigmaWarningsConditional();
@@ -109,6 +114,20 @@ function AppContent() {
     // 🔄 INICIALIZAR SINCRONIZACIÓN AUTOMÁTICA DE VOLUNTARIOS ENTREPÔT
     inicializarSincronizacionAutomatica();
     logger.info('🔄 Sincronización automática de voluntarios Entrepôt inicializada');
+    
+    // Migrar flags de Costco si no se ha hecho antes
+    if (!yaMigradoCostco()) {
+      migrarFlagsCostco();
+      marcarMigracionCostco();
+      logger.info('🔄 Flags de Costco migrados');
+    }
+    
+    // Migrar programas de entrada si no se ha hecho antes
+    if (!yaMigradoProgramas()) {
+      migrarProgramasEntrada();
+      marcarMigracionProgramas();
+      logger.info('🔄 Programas de entrada migrados');
+    }
   }, []);
 
   // Inicializar dirección RTL si el idioma es árabe

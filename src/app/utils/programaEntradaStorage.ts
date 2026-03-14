@@ -186,3 +186,22 @@ export function limpiarProgramasEntrada(): void {
     console.error('Error al limpiar programas de entrada:', error);
   }
 }
+
+// 🆘 FUNCIÓN DE DEBUG: Ver programas en consola
+(window as any).verProgramasEntrada = () => {
+  const programas = obtenerProgramasEntrada();
+  console.log('📋 PROGRAMAS DE ENTRADA CONFIGURADOS:');
+  console.table(programas.map(p => ({
+    ID: p.id,
+    Nombre: p.nombre,
+    Código: p.codigo,
+    'Código Lower': p.codigo.toLowerCase(),
+    Descripción: p.descripcion,
+    Color: p.color,
+    Icono: p.icono,
+    Activo: p.activo
+  })));
+  return programas;
+};
+
+console.log('🆘 Función de debug cargada: verProgramasEntrada()');

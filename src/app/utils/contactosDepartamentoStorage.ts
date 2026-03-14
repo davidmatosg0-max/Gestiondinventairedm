@@ -165,6 +165,11 @@ function normalizarContactosBackup(contactos: any[]): ContactoDepartamento[] {
     const evenements = Array.isArray(contacto.evenements) ? contacto.evenements : [];
     const disponibilidades = Array.isArray(contacto.disponibilidades) ? contacto.disponibilidades : [];
 
+    // 🔄 Normalizar flags del sistema dual donateur/fournisseur
+    const isDonateur = contacto.isDonateur === true ? true : false;
+    const isFournisseur = contacto.isFournisseur === true ? true : false;
+    const participaPRS = contacto.participaPRS === true ? true : false;
+
     // Retornar contacto normalizado
     return {
       ...contacto,
@@ -185,6 +190,9 @@ function normalizarContactosBackup(contactos: any[]): ContactoDepartamento[] {
       documents,
       evenements,
       disponibilidades,
+      isDonateur,
+      isFournisseur,
+      participaPRS,
       activo: contacto.activo !== undefined ? contacto.activo : true,
       fechaIngreso: contacto.fechaIngreso || new Date().toISOString(),
       id: contacto.id || Date.now().toString() + Math.random().toString(36).substr(2, 9)
