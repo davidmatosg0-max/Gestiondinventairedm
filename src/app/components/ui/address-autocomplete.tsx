@@ -20,6 +20,10 @@ interface AddressAutocompleteProps {
   label?: string;
   required?: boolean;
   showAdditionalFields?: boolean;
+  // Nuevos props para sincronizar valores
+  initialCity?: string;
+  initialPostalCode?: string;
+  initialApartment?: string;
 }
 
 function AddressAutocompleteComponent({
@@ -31,16 +35,19 @@ function AddressAutocompleteComponent({
   placeholder = 'Ex: 123 Boulevard Saint-Martin Est',
   label = 'Adresse',
   required = false,
-  showAdditionalFields = true
+  showAdditionalFields = true,
+  initialCity = '',
+  initialPostalCode = '',
+  initialApartment = ''
 }: AddressAutocompleteProps) {
   const [inputValue, setInputValue] = useState(controlledValue || initialValue);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [postalCode, setPostalCode] = useState('');
-  const [city, setCity] = useState('');
-  const [apartment, setApartment] = useState('');
+  const [postalCode, setPostalCode] = useState(initialPostalCode);
+  const [city, setCity] = useState(initialCity);
+  const [apartment, setApartment] = useState(initialApartment);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const isUserEditing = useRef(false);
@@ -51,6 +58,19 @@ function AddressAutocompleteComponent({
       setInputValue(controlledValue);
     }
   }, [controlledValue]);
+
+  // Sincronizar con valores iniciales de ciudad, código postal y apartamento
+  useEffect(() => {
+    if (initialCity) setCity(initialCity);
+  }, [initialCity]);
+
+  useEffect(() => {
+    if (initialPostalCode) setPostalCode(initialPostalCode);
+  }, [initialPostalCode]);
+
+  useEffect(() => {
+    if (initialApartment) setApartment(initialApartment);
+  }, [initialApartment]);
 
   // Base de datos de rues de Québec
   const streets = [
@@ -787,8 +807,8 @@ function AddressAutocompleteComponent({
         </div>
       )}
 
-      {/* Campos adicionales editables */}
-      {showAdditionalFields && inputValue && (postalCode || city) && (
+      {/* Campos adicionales editables - SIEMPRE VISIBLES */}
+      {showAdditionalFields && (
         <div className="mt-3 space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* Apartamento */}

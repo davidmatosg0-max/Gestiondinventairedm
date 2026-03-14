@@ -53,6 +53,7 @@ export interface ContactoDepartamento {
   fechaIngreso: string;
   foto?: string;
   direccion?: string;
+  apartamento?: string; // Número de apartamento
   ciudad?: string;
   codigoPostal?: string;
   numeroEmpleado?: string;

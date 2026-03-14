@@ -849,12 +849,12 @@ export function EntradaDonAchat() {
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="entrada-don-achat-description">
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
             📦 Enregistrer Entrée Don/Achat
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="entrada-don-achat-description">
             Sélectionnez le type d'entrée et ajoutez les produits à enregistrer
           </DialogDescription>
         </DialogHeader>

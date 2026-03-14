@@ -856,8 +856,20 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                         </Label>
                         <AddressAutocomplete
                           value={formulario.direccion || ''}
-                          onChange={(value) => setFormulario({ ...formulario, direccion: value })}
+                          initialCity={formulario.ciudad || ''}
+                          initialPostalCode={formulario.codigoPostal || ''}
+                          initialApartment={formulario.apartamento || ''}
+                          onChange={(value, details) => {
+                            setFormulario({
+                              ...formulario,
+                              direccion: value,
+                              ciudad: details?.city || formulario.ciudad || '',
+                              codigoPostal: details?.postalCode || formulario.codigoPostal || '',
+                              apartamento: details?.apt || formulario.apartamento || ''
+                            });
+                          }}
                           placeholder="123 Rue Principale, Montréal, QC H1A 1A1"
+                          showAdditionalFields={true}
                         />
                         <p className="text-[10px] sm:text-xs text-blue-700 italic flex items-center gap-1 font-medium">
                           💡 Commencez à taper pour voir les suggestions d'adresses
@@ -1380,12 +1392,16 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                         <Label className="text-xs">Adresse complète</Label>
                         <AddressAutocomplete
                           value={formulario.direccion || ''}
+                          initialCity={formulario.ciudad || ''}
+                          initialPostalCode={formulario.codigoPostal || ''}
+                          initialApartment={formulario.apartamento || ''}
                           onChange={(value, details) => {
                             setFormulario({
                               ...formulario,
                               direccion: value,
                               ciudad: details?.city || formulario.ciudad || '',
-                              codigoPostal: details?.postalCode || formulario.codigoPostal || ''
+                              codigoPostal: details?.postalCode || formulario.codigoPostal || '',
+                              apartamento: details?.apt || formulario.apartamento || ''
                             });
                           }}
                           placeholder="123 Boulevard Saint-Laurent Est"

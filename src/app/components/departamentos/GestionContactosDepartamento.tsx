@@ -415,6 +415,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       activo: true,
       fechaIngreso: new Date().toISOString().split('T')[0],
       direccion: '',
+      apartamento: '', // ✅ Campo apartamento
       ciudad: '',
       codigoPostal: '',
       numeroEmpleado: '',
