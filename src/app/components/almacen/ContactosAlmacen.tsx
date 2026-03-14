@@ -1,19 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GestionContactosDepartamento } from '../departamentos/GestionContactosDepartamento';
-import { Button } from '../ui/button';
 import { Card } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { 
-  Users, 
-  Truck, 
-  Gift, 
-  ShoppingCart, 
-  Store,
-  Settings,
-  Info,
-  Package
-} from 'lucide-react';
 import { 
   obtenerTiposContacto, 
   guardarTipoPersonalizado, 
@@ -125,67 +113,7 @@ export function ContactosAlmacen() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header con información */}
-      <Card className="p-6 bg-gradient-to-r from-[#1a4d7a] to-[#2d9561] text-white">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-white/20 rounded-lg">
-              <Users className="w-8 h-8" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold mb-1">
-                Contacts de l'Entrepôt
-              </h1>
-              <p className="text-white/90">
-                Gestion des donateurs, fournisseurs et partenaires de l'entrepôt
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Badges informativos */}
-        <div className="mt-6 flex flex-wrap gap-2">
-          <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-            <Gift className="w-3 h-3 mr-1" />
-            Donateurs
-          </Badge>
-          <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-            <ShoppingCart className="w-3 h-3 mr-1" />
-            Fournisseurs
-          </Badge>
-          <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-            <Store className="w-3 h-3 mr-1" />
-            PRS
-          </Badge>
-          <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-            <Truck className="w-3 h-3 mr-1" />
-            Transporteurs
-          </Badge>
-          <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-            <Package className="w-3 h-3 mr-1" />
-            Fournisseurs d'Emballage
-          </Badge>
-        </div>
-      </Card>
-
-      {/* Información sobre tipos duales */}
-      <Card className="p-4 border-l-4 border-l-[#2d9561]">
-        <div className="flex items-start gap-3">
-          <Info className="w-5 h-5 text-[#2d9561] mt-0.5" />
-          <div>
-            <h3 className="font-semibold text-sm mb-1">
-              Système de Gestion de Contacts de l'Entrepôt
-            </h3>
-            <p className="text-sm text-gray-600">
-              Ce module permet de gérer tous les contacts liés à l'entrepôt : donateurs, fournisseurs, 
-              transporteurs, fournisseurs d'emballage et partenaires PRS. Chaque contact peut être 
-              assigné à un ou plusieurs types selon son rôle dans vos opérations.
-            </p>
-          </div>
-        </div>
-      </Card>
-
+    <div>
       {/* Componente de gestión de contactos */}
       {tiposInicializados && (
         <GestionContactosDepartamento 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useBranding } from '../../../hooks/useBranding';
-import { Plus, Search, Edit2, Trash2, Building2, Phone, MapPin, User, Mail, X, Save, ChevronRight, UserPlus, Upload, Image as ImageIcon, Check, Eye, History, Clock, Package, ShoppingCart, TrendingUp, LayoutGrid, List, Table as TableIcon } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Building2, Phone, MapPin, User, Mail, X, Save, ChevronRight, UserPlus, Upload, Image as ImageIcon, Check, Eye, History, Clock, Package, ShoppingCart, TrendingUp, LayoutGrid, List, Table as TableIcon, Users, Gift, Store, Truck } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -416,24 +416,45 @@ export function GestionDonateursFournisseurs() {
       />
 
       <Card className="border-none shadow-none flex-1 flex flex-col overflow-hidden rounded-none w-full relative z-10">
-        <CardHeader className="border-b backdrop-blur-xl bg-white/90 flex-shrink-0 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div 
-                className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg"
-                style={{ background: `linear-gradient(135deg, ${branding.primaryColor} 0%, ${branding.primaryColor}dd 100%)` }}
-              >
-                <Building2 className="h-6 w-6 text-white" />
+        <CardHeader className="border-none flex-shrink-0 p-6 bg-gradient-to-r from-[#1a4d7a] to-[#2d9561] text-white">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-white/20 rounded-lg">
+                <Users className="w-8 h-8" />
               </div>
               <div>
-                <CardTitle className="text-xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, color: branding.primaryColor }}>
-                  Donateurs & Fournisseurs
+                <CardTitle className="text-2xl font-bold mb-1 text-white" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  Contacts de l'Entrepôt
                 </CardTitle>
-                <CardDescription className="text-[#666666] text-sm mt-0.5">
-                  Gestion des partenaires de l'entrepôt
+                <CardDescription className="text-white/90">
+                  Gestion des donateurs, fournisseurs et partenaires de l'entrepôt
                 </CardDescription>
               </div>
             </div>
+          </div>
+
+          {/* Badges informativos */}
+          <div className="mt-6 flex flex-wrap gap-2">
+            <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+              <Gift className="w-3 h-3 mr-1" />
+              Donateurs
+            </Badge>
+            <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+              <ShoppingCart className="w-3 h-3 mr-1" />
+              Fournisseurs
+            </Badge>
+            <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+              <Store className="w-3 h-3 mr-1" />
+              PRS
+            </Badge>
+            <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+              <Truck className="w-3 h-3 mr-1" />
+              Transporteurs
+            </Badge>
+            <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+              <Package className="w-3 h-3 mr-1" />
+              Fournisseurs d'Emballage
+            </Badge>
           </div>
         </CardHeader>
 
@@ -503,6 +524,29 @@ export function GestionDonateursFournisseurs() {
                 >
                   <Check className="h-5 w-5 text-white" />
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Información sobre sistema dual de partenaires */}
+          <div className="card-glass rounded-2xl p-4 border-l-4 border-l-[#2d9561] flex-shrink-0">
+            <div className="flex items-start gap-3">
+              <div 
+                className="w-6 h-6 mt-0.5 flex items-center justify-center rounded-full flex-shrink-0"
+                style={{ backgroundColor: '#2d9561', color: 'white' }}
+              >
+                <span className="text-xs font-bold">i</span>
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm mb-1.5" style={{ fontFamily: 'Montserrat, sans-serif', color: '#1a4d7a' }}>
+                  Partenaires avec Types Multiples
+                </h3>
+                <p className="text-sm text-gray-600 leading-relaxed" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                  Un même partenaire peut avoir plusieurs types simultanément (ex: Donateur + Fournisseur). 
+                  Les flags <code className="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">isDonateur</code> et{' '}
+                  <code className="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">isFournisseur</code> permettent 
+                  d'identifier les partenaires duels qui apparaissent dans plusieurs programmes d'entrée.
+                </p>
               </div>
             </div>
           </div>
@@ -1844,7 +1888,7 @@ export function GestionDonateursFournisseurs() {
         </DialogContent>
       </Dialog>
 
-      <style jsx global>{`
+      <style>{`
         .card-glass {
           background: rgba(255, 255, 255, 0.9);
           backdrop-filter: blur(10px);
