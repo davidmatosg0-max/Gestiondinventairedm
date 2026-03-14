@@ -228,7 +228,8 @@ export function obtenerContactosDepartamento(departamentoId?: string): ContactoD
         contactos = rawData;
       }
     } else {
-      // Inicializar vacío en producción
+      // ✅ MODO PRODUCCIÓN: Primera carga - inicializar vacío sin sobrescribir
+      console.log('🔧 Primera carga: inicializando storage de contactos vacío');
       localStorage.setItem(STORAGE_KEY, JSON.stringify(contactosIniciales));
       contactos = contactosIniciales;
     }
@@ -1077,8 +1078,8 @@ export function sincronizarDesdeBenevole(benevole: {
             activo: benevole.statut === 'Actif' || benevole.statut === 'actif'
           }),
           // Actualizar disponibilidades (si están disponibles)
-          ...(benevole.disponibilidadesSemanal && {
-            disponibilidades: benevole.disponibilidadesSemanal.map((disp: any) => ({
+          ...(benevole.disponibilitesSemanal && {
+            disponibilidades: benevole.disponibilitesSemanal.map((disp: any) => ({
               jour: disp.jour || disp.dia,
               am: disp.am || false,
               pm: disp.pm || false
