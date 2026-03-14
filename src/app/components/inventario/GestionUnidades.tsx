@@ -12,64 +12,64 @@ import { cn } from '../ui/utils';
 
 const iconosDisponibles = [
   // Paletas y contenedores grandes
-  { icono: '📦', nombre: 'Paleta/Caja' },
-  { icono: '🗃️', nombre: 'Contenedor' },
-  { icono: '📐', nombre: 'Paleta Grande' },
-  { icono: '🧱', nombre: 'Paleta Industrial' },
-  { icono: '🎛️', nombre: 'Paleta Apilable' },
+  { icono: '📦', nombre: 'Palette/Boîte' },
+  { icono: '🗃️', nombre: 'Conteneur' },
+  { icono: '📐', nombre: 'Grande Palette' },
+  { icono: '🧱', nombre: 'Palette Industrielle' },
+  { icono: '🎛️', nombre: 'Palette Empilable' },
   
   // Sacos y bolsas
-  { icono: '💼', nombre: 'Saco' },
-  { icono: '🎒', nombre: 'Saco Grande' },
-  { icono: '📮', nombre: 'Bolsa' },
-  { icono: '🛍️', nombre: 'Bolsa Comercial' },
-  { icono: '🧳', nombre: 'Maleta/Saco Industrial' },
+  { icono: '💼', nombre: 'Sac' },
+  { icono: '🎒', nombre: 'Grand Sac' },
+  { icono: '📮', nombre: 'Sachet' },
+  { icono: '🛍️', nombre: 'Sac Commercial' },
+  { icono: '🧳', nombre: 'Valise/Sac Industriel' },
   
   // Cajas
-  { icono: '📦', nombre: 'Caja Estándar' },
-  { icono: '📫', nombre: 'Caja Pequeña' },
-  { icono: '📪', nombre: 'Caja Mediana' },
-  { icono: '📬', nombre: 'Caja Grande' },
-  { icono: '🎁', nombre: 'Caja Regalo' },
+  { icono: '📦', nombre: 'Boîte Standard' },
+  { icono: '📫', nombre: 'Petite Boîte' },
+  { icono: '📪', nombre: 'Boîte Moyenne' },
+  { icono: '📬', nombre: 'Grande Boîte' },
+  { icono: '🎁', nombre: 'Boîte Cadeau' },
   
   // Líquidos y galones
-  { icono: '🥤', nombre: 'Litro' },
-  { icono: '🧃', nombre: 'Botella' },
-  { icono: '🍾', nombre: 'Botella Grande' },
-  { icono: '🫙', nombre: 'Jarra/Galón' },
-  { icono: '⛽', nombre: 'Galón Industrial' },
-  { icono: '🪣', nombre: 'Cubeta/Garrafa' },
+  { icono: '🥤', nombre: 'Litre' },
+  { icono: '🧃', nombre: 'Bouteille' },
+  { icono: '🍾', nombre: 'Grande Bouteille' },
+  { icono: '🫙', nombre: 'Cruche/Gallon' },
+  { icono: '⛽', nombre: 'Gallon Industriel' },
+  { icono: '🪣', nombre: 'Seau/Bidon' },
   
   // Latas y conservas
-  { icono: '🥫', nombre: 'Lata' },
-  { icono: '🫘', nombre: 'Lata de Conserva' },
+  { icono: '🥫', nombre: 'Boîte de Conserve' },
+  { icono: '🫘', nombre: 'Boîte de Conserve' },
   
   // Unidades y piezas
-  { icono: '🏷️', nombre: 'Unidad' },
-  { icono: '🧊', nombre: 'Pieza' },
-  { icono: '🎯', nombre: 'Set/Conjunto' },
-  { icono: '📋', nombre: 'Lote' },
-  { icono: '🔢', nombre: 'Cantidad' },
+  { icono: '🏷️', nombre: 'Unité' },
+  { icono: '🧊', nombre: 'Pièce' },
+  { icono: '🎯', nombre: 'Set/Ensemble' },
+  { icono: '📋', nombre: 'Lot' },
+  { icono: '🔢', nombre: 'Quantité' },
   
   // Canastas y cestas
-  { icono: '🧺', nombre: 'Canasta' },
-  { icono: '🗑️', nombre: 'Bac/Contenedor' },
+  { icono: '🧺', nombre: 'Panier' },
+  { icono: '🗑️', nombre: 'Bac/Conteneur' },
   { icono: '⚫', nombre: 'Bac Noir' },
   
   // Medidas de peso
-  { icono: '⚖️', nombre: 'Kilogramo' },
-  { icono: '⚗️', nombre: 'Gramo' },
-  { icono: '🪨', nombre: 'Tonelada' },
+  { icono: '⚖️', nombre: 'Kilogramme' },
+  { icono: '⚗️', nombre: 'Gramme' },
+  { icono: '🪨', nombre: 'Tonne' },
   
   // Medidas de longitud
-  { icono: '📏', nombre: 'Metro' },
-  { icono: '📐', nombre: 'Metro Cuadrado' },
+  { icono: '📏', nombre: 'Mètre' },
+  { icono: '📐', nombre: 'Mètre Carré' },
   
   // Otros
-  { icono: '🛒', nombre: 'Carrito' },
-  { icono: '📦', nombre: 'Paquete' },
-  { icono: '🎪', nombre: 'Pallet Completo' },
-  { icono: '🏗️', nombre: 'Industrial' },
+  { icono: '🛒', nombre: 'Chariot' },
+  { icono: '📦', nombre: 'Paquet' },
+  { icono: '🎪', nombre: 'Palette Complète' },
+  { icono: '🏗️', nombre: 'Industriel' },
 ];
 
 export function GestionUnidades() {
@@ -117,12 +117,12 @@ export function GestionUnidades() {
 
   const handleGuardar = () => {
     if (!formData.nombre.trim()) {
-      toast.error('El nombre es requerido');
+      toast.error('Le nom est requis');
       return;
     }
 
     if (!formData.abreviatura.trim()) {
-      toast.error('La abreviatura es requerida');
+      toast.error('L\'abréviation est requise');
       return;
     }
 
@@ -136,23 +136,23 @@ export function GestionUnidades() {
     const guardado = guardarUnidad(unidad);
     
     if (guardado) {
-      toast.success(modoEdicion ? 'Unidad actualizada correctamente' : 'Unidad creada correctamente');
+      toast.success(modoEdicion ? 'Unité mise à jour avec succès' : 'Unité créée avec succès');
       setDialogOpen(false);
       cargarUnidades();
     } else {
-      toast.error('Error al guardar la unidad');
+      toast.error('Erreur lors de la sauvegarde de l\'unité');
     }
   };
 
   const handleEliminar = (unidad: Unidad) => {
-    if (confirm(`¿Está seguro de eliminar la unidad "${unidad.nombre}"?`)) {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer l'unité "${unidad.nombre}" ?`)) {
       const eliminado = eliminarUnidad(unidad.id);
       
       if (eliminado) {
-        toast.success('Unidad eliminada correctamente');
+        toast.success('Unité supprimée avec succès');
         cargarUnidades();
       } else {
-        toast.error('Error al eliminar la unidad');
+        toast.error('Erreur lors de la suppression de l\'unité');
       }
     }
   };
@@ -163,10 +163,10 @@ export function GestionUnidades() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg mb-1" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
-            Unidades
+            Unités
           </h3>
           <p className="text-sm text-[#666666]">
-            Gestiona las unidades de medida para el inventario
+            Gérer les unités de mesure pour l'inventaire
           </p>
         </div>
         <Button
@@ -175,7 +175,7 @@ export function GestionUnidades() {
           style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
         >
           <Plus className="w-4 h-4 mr-2" />
-          Nueva Unidad
+          Nouvelle Unité
         </Button>
       </div>
 
@@ -219,14 +219,14 @@ export function GestionUnidades() {
       {unidades.length === 0 && (
         <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
           <Package className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-          <p className="text-[#666666] mb-2">No hay unidades registradas</p>
+          <p className="text-[#666666] mb-2">Aucune unité enregistrée</p>
           <Button
             onClick={handleAbrirNuevo}
             variant="outline"
             className="mt-2"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Crear primera unidad
+            Créer la première unité
           </Button>
         </div>
       )}
@@ -236,41 +236,41 @@ export function GestionUnidades() {
         <DialogContent className="max-w-md" aria-describedby="gestion-unidad-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
-              {modoEdicion ? '✏️ Editar Unidad' : '✨ Nueva Unidad'}
+              {modoEdicion ? '✏️ Modifier Unité' : '✨ Nouvelle Unité'}
             </DialogTitle>
             <DialogDescription id="gestion-unidad-description">
-              {modoEdicion ? 'Modifica los datos de la unidad' : 'Define una nueva unidad de medida'}
+              {modoEdicion ? 'Modifier les données de l\'unité' : 'Définir une nouvelle unité de mesure'}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             {/* Nombre */}
             <div className="space-y-2">
-              <Label>Nombre *</Label>
+              <Label>Nom *</Label>
               <Input
                 value={formData.nombre}
                 onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                placeholder="Ej: Paleta, Caja, Saco..."
+                placeholder="Ex: Palette, Boîte, Sac..."
               />
             </div>
 
             {/* Abreviatura */}
             <div className="space-y-2">
-              <Label>Abreviatura *</Label>
+              <Label>Abréviation *</Label>
               <Input
                 value={formData.abreviatura}
                 onChange={(e) => setFormData({ ...formData, abreviatura: e.target.value.toUpperCase() })}
-                placeholder="Ej: PLT, CJA, SAC..."
+                placeholder="Ex: PLT, BTE, SAC..."
                 maxLength={5}
               />
               <p className="text-xs text-[#666666]">
-                Máximo 5 caracteres
+                Maximum 5 caractères
               </p>
             </div>
 
             {/* Selector de Icono */}
             <div className="space-y-2">
-              <Label>Icono</Label>
+              <Label>Icône</Label>
               <div className="max-h-[240px] overflow-y-auto border rounded-lg p-2">
                 <div className="grid grid-cols-6 gap-2">
                   {iconosDisponibles.map((item, index) => (
@@ -290,18 +290,18 @@ export function GestionUnidades() {
                 </div>
               </div>
               <p className="text-xs text-[#666666]">
-                {iconosDisponibles.length} iconos disponibles - Desplázate para ver más
+                {iconosDisponibles.length} icônes disponibles - Faites défiler pour voir plus
               </p>
             </div>
 
             {/* Vista Previa */}
             <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <p className="text-xs text-[#666666] mb-2">Vista Previa:</p>
+              <p className="text-xs text-[#666666] mb-2">Aperçu :</p>
               <div className="flex items-center gap-3">
                 <div className="text-3xl">{formData.icono}</div>
                 <div>
                   <p className="font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {formData.nombre || 'Nombre de la unidad'}
+                    {formData.nombre || 'Nom de l\'unité'}
                   </p>
                   <p className="text-sm text-[#666666]">
                     {formData.abreviatura || 'ABR'}
@@ -318,7 +318,7 @@ export function GestionUnidades() {
               onClick={() => setDialogOpen(false)}
             >
               <X className="w-4 h-4 mr-2" />
-              Cancelar
+              Annuler
             </Button>
             <Button
               onClick={handleGuardar}
@@ -326,7 +326,7 @@ export function GestionUnidades() {
               style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
             >
               <Save className="w-4 h-4 mr-2" />
-              {modoEdicion ? 'Guardar Cambios' : 'Crear Unidad'}
+              {modoEdicion ? 'Enregistrer' : 'Créer Unité'}
             </Button>
           </div>
         </DialogContent>
