@@ -31,13 +31,13 @@ export function PlantillasConversion({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="plantillas-conversion-description">
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }} className="text-xl flex items-center gap-2">
             <Bookmark className="w-5 h-5 text-[#1E73BE]" />
             Plantillas de Conversión
           </DialogTitle>
-          <DialogDescription id="plantillas-dialog-description" className="text-sm mt-1">
+          <DialogDescription id="plantillas-conversion-description" className="text-sm mt-1">
             Guarda configuraciones de conversión frecuentes para reutilizarlas rápidamente.
           </DialogDescription>
         </DialogHeader>

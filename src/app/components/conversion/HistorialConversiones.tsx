@@ -31,13 +31,13 @@ export function HistorialConversiones({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" aria-describedby="historial-conversiones-description">
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }} className="text-xl flex items-center gap-2">
             <History className="w-5 h-5 text-[#FFC107]" />
             Historial de Conversiones
           </DialogTitle>
-          <DialogDescription id="historial-dialog-description" className="text-sm mt-1">
+          <DialogDescription id="historial-conversiones-description" className="text-sm mt-1">
             Registro completo de todas las conversiones realizadas. Puedes revertir conversiones recientes si es necesario.
           </DialogDescription>
         </DialogHeader>

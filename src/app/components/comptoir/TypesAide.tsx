@@ -317,17 +317,14 @@ export function TypesAide({ onNavigate, aidTypes, setAidTypes, systemAidTypes }:
 
       {/* Create/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl" aria-describedby={undefined}>
+        <DialogContent className="max-w-2xl" aria-describedby="types-aide-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Package className="w-5 h-5" />
               {editingType ? t('comptoir.editAidType') : t('comptoir.newAidType')}
             </DialogTitle>
-            <DialogDescription id="aid-type-form-description">
-              {editingType 
-                ? 'Modifiez les informations du type d\'aide'
-                : 'Créez un nouveau type d\'aide personnalisé'
-              }
+            <DialogDescription id="types-aide-description">
+              {editingType ? 'Modifier les informations du type d\'aide' : 'Créer un nouveau type d\'aide'}
             </DialogDescription>
           </DialogHeader>
 

@@ -621,13 +621,13 @@ export function InventarioCocina() {
 
       {/* Modal Movimientos */}
       <Dialog open={modalMovimientosOpen} onOpenChange={setModalMovimientosOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="movimientos-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <span className="text-3xl">{productoSeleccionado?.icono}</span>
               Historique des Mouvements
             </DialogTitle>
-            <DialogDescription id="movimientos-historique-description">
+            <DialogDescription id="movimientos-description">
               {productoSeleccionado?.productoNombre} - Stock actuel: {productoSeleccionado?.stockActual} {productoSeleccionado?.unidad}
             </DialogDescription>
           </DialogHeader>

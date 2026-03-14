@@ -100,14 +100,14 @@ export function GestionPasswordDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
+      <DialogContent className="sm:max-w-md" aria-describedby="password-management-description">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Key className="w-5 h-5 text-blue-600" />
             Gérer le Mot de Passe
           </DialogTitle>
-          <DialogDescription>
-            Gestion du mot de passe pour <strong>{nombreUsuario}</strong> (@{username})
+          <DialogDescription id="password-management-description">
+            Modifier ou générer un nouveau mot de passe pour votre compte
           </DialogDescription>
         </DialogHeader>
 

@@ -356,7 +356,10 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       
       // Verificar si ya está en este departamento específico
       if (yaExisteEnSistema.departamentoIds?.includes(departamentoId)) {
-        toast.error('Ce bénévole est déjà assigné à ce département');
+        // En lugar de mostrar error, abrir el diálogo de detalle
+        console.log('ℹ️ Bénévole ya asignado, mostrando detalles...');
+        abrirDialogoDetalle(yaExisteEnSistema);
+        setDialogAsignarBenevole(false);
         return;
       }
       
@@ -1640,8 +1643,8 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                     return (
                     <Card 
                       key={benevole.id} 
-                      className={`p-4 transition-shadow ${yaAsignadoAqui ? 'opacity-60' : 'hover:shadow-lg cursor-pointer'}`}
-                      onClick={() => !yaAsignadoAqui && asignarBenevoleExistente(benevole)}
+                      className={`p-4 transition-shadow hover:shadow-lg cursor-pointer ${yaAsignadoAqui ? 'opacity-75 bg-gray-50' : ''}`}
+                      onClick={() => asignarBenevoleExistente(benevole)}
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full overflow-hidden border-2 flex-shrink-0" style={{ borderColor: branding.primaryColor }}>
@@ -1711,12 +1714,12 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                             e.stopPropagation();
                             asignarBenevoleExistente(benevole);
                           }}
-                          disabled={yaAsignadoAqui}
-                          style={{ backgroundColor: yaAsignadoAqui ? '#CCCCCC' : branding.primaryColor }}
-                          className="text-white"
+                          variant={yaAsignadoAqui ? "outline" : "default"}
+                          style={!yaAsignadoAqui ? { backgroundColor: branding.primaryColor } : { borderColor: branding.secondaryColor, color: branding.secondaryColor }}
+                          className={yaAsignadoAqui ? "" : "text-white"}
                         >
-                          <Link className="w-4 h-4 mr-1" />
-                          {yaAsignadoAqui ? 'Assigné' : 'Assigner'}
+                          {yaAsignadoAqui ? <Eye className="w-4 h-4 mr-1" /> : <Link className="w-4 h-4 mr-1" />}
+                          {yaAsignadoAqui ? 'Voir détails' : 'Assigner'}
                         </Button>
                       </div>
                     </Card>
