@@ -206,11 +206,15 @@ export function obtenerContactosDepartamento(): ContactoDepartamento[];
 export function obtenerContactosDepartamento(departamentoId?: string): ContactoDepartamento[];
 export function obtenerContactosDepartamento(departamentoId?: string): ContactoDepartamento[] {
   try {
+    console.log('🔍 [CONTACTOS] Intentando leer desde localStorage...');
     const stored = localStorage.getItem(STORAGE_KEY);
+    console.log('🔍 [CONTACTOS] Valor raw desde localStorage:', stored ? `${stored.length} caracteres` : 'null');
+    
     let contactos: ContactoDepartamento[] = [];
     
     if (stored !== null) {
       const rawData = JSON.parse(stored);
+      console.log('🔍 [CONTACTOS] Datos parseados desde localStorage:', rawData.length, 'contactos');
       
       // ✅ SOLO normalizar si es necesario (si detectamos datos antiguos sin normalizar)
       // Verificar si ya están normalizados comprobando si todos tienen departamentoIds
@@ -223,27 +227,33 @@ export function obtenerContactosDepartamento(departamentoId?: string): ContactoD
         contactos = normalizarContactosBackup(rawData);
         // Guardar datos normalizados SOLO si fue necesario normalizar
         localStorage.setItem(STORAGE_KEY, JSON.stringify(contactos));
+        console.log('💾 [CONTACTOS] Datos normalizados guardados:', contactos.length, 'contactos');
       } else {
         // Los datos ya están normalizados, usarlos directamente
         contactos = rawData;
+        console.log('✅ [CONTACTOS] Datos ya normalizados, usando directamente:', contactos.length, 'contactos');
       }
     } else {
       // ✅ MODO PRODUCCIÓN: Primera carga - inicializar vacío sin sobrescribir
-      console.log('🔧 Primera carga: inicializando storage de contactos vacío');
+      console.log('🔧 [CONTACTOS] Primera carga: inicializando storage de contactos vacío');
       localStorage.setItem(STORAGE_KEY, JSON.stringify(contactosIniciales));
       contactos = contactosIniciales;
+      console.log('💾 [CONTACTOS] Storage inicializado como vacío');
     }
 
     // Si se especifica un departamento, filtrar
     if (departamentoId) {
-      return contactos.filter(c => {
+      const contactosFiltrados = contactos.filter(c => {
         if (c.departamentoIds && c.departamentoIds.length > 0) {
           return c.departamentoIds.includes(departamentoId);
         }
         return c.departamentoId === departamentoId;
       });
+      console.log(`🔍 [CONTACTOS] Filtrados por departamento ${departamentoId}:`, contactosFiltrados.length, 'contactos');
+      return contactosFiltrados;
     }
 
+    console.log('📤 [CONTACTOS] Retornando todos los contactos:', contactos.length);
     return contactos;
   } catch (error) {
     console.error('Error al obtener contactos de departamento:', error);

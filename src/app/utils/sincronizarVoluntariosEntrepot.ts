@@ -240,10 +240,15 @@ export function sincronizarVoluntariosEntrepot(): {
   
   console.log(`📊 Total de bénévoles en sistema: ${benevoles.length}`);
   console.log(`📦 Bénévoles asignados a Entrepôt: ${benevolesEntrepot.length}`);
+  
+  // 🔒 VERIFICAR CONTACTOS EXISTENTES ANTES DE SINCRONIZAR
+  const contactosExistentesAntes = obtenerContactosDepartamento();
+  console.log(`📋 Contactos existentes en sistema: ${contactosExistentesAntes.length}`);
   console.log('');
   
   if (benevolesEntrepot.length === 0) {
     console.log('ℹ️ No hay bénévoles asignados a Entrepôt para sincronizar');
+    console.log('✅ Contactos existentes preservados:', contactosExistentesAntes.length);
     console.log('');
     console.log('🔄 ═══════════════════════════════════════════════════════════');
     console.log('');
@@ -273,11 +278,15 @@ export function sincronizarVoluntariosEntrepot(): {
     }
   });
   
+  // 🔒 VERIFICAR QUE NO SE PERDIERON CONTACTOS
+  const contactosExistentesDespues = obtenerContactosDepartamento();
   console.log('');
   console.log('📊 RESUMEN DE SINCRONIZACIÓN:');
   console.log(`   Total procesados: ${benevolesEntrepot.length}`);
   console.log(`   ✅ Sincronizados exitosamente: ${sincronizados}`);
   console.log(`   ❌ Errores: ${errores}`);
+  console.log(`   📋 Contactos antes: ${contactosExistentesAntes.length}`);
+  console.log(`   📋 Contactos después: ${contactosExistentesDespues.length}`);
   console.log('');
   console.log('🔄 ═══════════════════════════════════════════════════════════');
   console.log('');
@@ -302,11 +311,17 @@ export function inicializarSincronizacionAutomatica(): void {
     }
   });
   
-  // Ejecutar sincronización inicial
-  setTimeout(() => {
-    console.log('🚀 Ejecutando sincronización inicial de voluntarios Entrepôt...');
-    sincronizarVoluntariosEntrepot();
-  }, 2000); // Esperar 2 segundos después de cargar para evitar conflictos
+  // 🔒 SINCRONIZACIÓN AUTOMÁTICA DESHABILITADA TEMPORALMENTE
+  // La sincronización automática puede interferir con contactos agregados manualmente
+  // Para ejecutar manualmente, usar: window.sincronizarVoluntariosEntrepot() en consola
+  console.log('ℹ️ Sincronización automática de voluntarios Entrepôt: MANUAL');
+  console.log('💡 Para sincronizar manualmente, ejecuta: window.sincronizarVoluntariosEntrepot()');
+  
+  // Comentado para evitar sobrescribir contactos manuales
+  // setTimeout(() => {
+  //   console.log('🚀 Ejecutando sincronización inicial de voluntarios Entrepôt...');
+  //   sincronizarVoluntariosEntrepot();
+  // }, 2000); // Esperar 2 segundos después de cargar para evitar conflictos
 }
 
 // Exportar funciones al objeto window para uso en consola
