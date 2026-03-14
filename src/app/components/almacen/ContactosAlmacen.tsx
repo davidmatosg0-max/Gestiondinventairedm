@@ -175,13 +175,12 @@ export function ContactosAlmacen() {
           <Info className="w-5 h-5 text-[#2d9561] mt-0.5" />
           <div>
             <h3 className="font-semibold text-sm mb-1">
-              Partenaires avec Types Multiples
+              Système de Gestion de Contacts de l'Entrepôt
             </h3>
             <p className="text-sm text-gray-600">
-              Un même partenaire peut avoir plusieurs types (ex: Donateur + Fournisseur). 
-              Les flags <code className="px-1 py-0.5 bg-gray-100 rounded text-xs">isDonateur</code> et{' '}
-              <code className="px-1 py-0.5 bg-gray-100 rounded text-xs">isFournisseur</code> permettent 
-              d'identifier les partenaires duels qui apparaissent dans plusieurs programmes.
+              Ce module permet de gérer tous les contacts liés à l'entrepôt : donateurs, fournisseurs, 
+              transporteurs, fournisseurs d'emballage et partenaires PRS. Chaque contact peut être 
+              assigné à un ou plusieurs types selon son rôle dans vos opérations.
             </p>
           </div>
         </div>
