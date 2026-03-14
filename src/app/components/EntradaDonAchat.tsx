@@ -36,7 +36,6 @@ import {
   guardarCategorias 
 } from '../utils/categoriaStorage';
 import { obtenerUnidades, type Unidad } from '../utils/unidadStorage';
-import { GestionUnidades } from './inventario/GestionUnidades';
 import { type Variante } from '../data/configuracionData';
 import { 
   obtenerContactosDepartamento, 
@@ -187,7 +186,6 @@ export function EntradaDonAchat() {
   const [imprimirAutomaticamente, setImprimirAutomaticamente] = useState(true);
   
   // ========== Estados de diálogos ==========
-  const [gestionUnidadesOpen, setGestionUnidadesOpen] = useState(false);
   const [subcategoriaDialogOpen, setSubcategoriaDialogOpen] = useState(false);
   const [nuevaSubcategoriaDialogOpen, setNuevaSubcategoriaDialogOpen] = useState(false);
   const [nuevaVarianteDialogOpen, setNuevaVarianteDialogOpen] = useState(false);
@@ -1402,12 +1400,6 @@ export function EntradaDonAchat() {
           )}
         </div>
       </DialogContent>
-
-      {/* Dialog de gestión de unidades */}
-      <GestionUnidades 
-        open={gestionUnidadesOpen}
-        onOpenChange={setGestionUnidadesOpen}
-      />
     </Dialog>
   );
 }

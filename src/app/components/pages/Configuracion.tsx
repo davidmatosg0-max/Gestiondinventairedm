@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBranding } from '../../../hooks/useBranding';
-import { Settings, Plus, Edit, Trash2, DollarSign, Package, FolderTree, Save, Inbox, PackageSearch, Copy, Eye, ChevronDown, ChevronRight, EyeOff, Grid3x3, X, Download, Upload, RotateCcw, Database, Clock, TrendingDown, Percent, Calculator, BookmarkPlus, AlertTriangle, Mail, CheckCircle, AlertCircle, Send, Scale, MapPin, Map, LifeBuoy, HelpCircle, Info, Sparkles } from 'lucide-react';
+import { Settings, Plus, Edit, Trash2, DollarSign, Package, FolderTree, Save, Inbox, PackageSearch, Copy, Eye, ChevronDown, ChevronRight, EyeOff, Grid3x3, X, Download, Upload, RotateCcw, Database, Clock, TrendingDown, Percent, Calculator, BookmarkPlus, AlertTriangle, Mail, CheckCircle, AlertCircle, Send, Scale, MapPin, Map, LifeBuoy, HelpCircle, Info, Sparkles, Ruler } from 'lucide-react';
 import '../../../styles/configuracion-elegante.css';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -34,6 +34,7 @@ import {
   eliminarProgramaEntrada 
 } from '../../utils/programaEntradaStorage';
 import { GestionVariantes } from '../inventario/GestionVariantes';
+import { GestionUnidades } from '../inventario/GestionUnidades';
 import { obtenerUnidades, type Unidad as UnidadDinamica } from '../../utils/unidadStorage';
 import { ConfigurationBalance } from '../ConfigurationBalance';
 import { GestionAdressesQuartiers } from '../GestionAdressesQuartiers';
@@ -1426,6 +1427,14 @@ export function Configuracion() {
           >
             <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
             <span>Sauvegardes</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="unidades" 
+            className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-[#1a4d7a] data-[state=active]:to-[#2d9561] data-[state=active]:text-white data-[state=active]:shadow-xl rounded-xl px-4 sm:px-6 py-3 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
+          >
+            <Ruler className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+            <span>Unités</span>
           </TabsTrigger>
           <TabsTrigger 
             value="balance" 
@@ -3023,6 +3032,11 @@ export function Configuracion() {
         {/* Tab: Sauvegardes (Backups) */}
         <TabsContent value="sauvegardes" className="fade-in">
           <BackupManager />
+        </TabsContent>
+
+        {/* Tab: Unités */}
+        <TabsContent value="unidades" className="fade-in">
+          <GestionUnidades />
         </TabsContent>
 
         {/* Tab: Balance */}
