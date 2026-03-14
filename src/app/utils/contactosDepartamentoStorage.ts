@@ -211,11 +211,22 @@ export function obtenerContactosDepartamento(departamentoId?: string): ContactoD
     
     if (stored !== null) {
       const rawData = JSON.parse(stored);
-      // Normalizar datos del backup
-      contactos = normalizarContactosBackup(rawData);
       
-      // Guardar datos normalizados de vuelta al localStorage
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(contactos));
+      // ✅ SOLO normalizar si es necesario (si detectamos datos antiguos sin normalizar)
+      // Verificar si ya están normalizados comprobando si todos tienen departamentoIds
+      const necesitaNormalizacion = rawData.some((c: any) => 
+        !c.departamentoIds || (Array.isArray(c.departamentoIds) && c.departamentoIds.length === 0)
+      );
+      
+      if (necesitaNormalizacion) {
+        console.log('🔄 Normalizando contactos del backup...');
+        contactos = normalizarContactosBackup(rawData);
+        // Guardar datos normalizados SOLO si fue necesario normalizar
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(contactos));
+      } else {
+        // Los datos ya están normalizados, usarlos directamente
+        contactos = rawData;
+      }
     } else {
       // Inicializar vacío en producción
       localStorage.setItem(STORAGE_KEY, JSON.stringify(contactosIniciales));
@@ -286,15 +297,23 @@ export function guardarContacto(contacto: any): ContactoDepartamento {
   
   // Si el contacto ya tiene id y fechaIngreso, usarlos
   const nuevoContacto: ContactoDepartamento = contacto.id && contacto.fechaIngreso 
-    ? contacto
+    ? {
+        ...contacto,
+        // ✅ GARANTIZAR que departamentoIds siempre exista
+        departamentoIds: contacto.departamentoIds || [contacto.departamentoId]
+      }
     : {
         ...contacto,
         id: Date.now().toString(),
-        fechaIngreso: new Date().toISOString()
+        fechaIngreso: new Date().toISOString(),
+        // ✅ GARANTIZAR que departamentoIds siempre exista
+        departamentoIds: contacto.departamentoIds || [contacto.departamentoId]
       };
   
+  console.log('💾 Guardando contacto en localStorage:', nuevoContacto);
   contactos.push(nuevoContacto);
   guardarTodosContactos(contactos);
+  console.log('✅ Total de contactos después de guardar:', contactos.length);
   
   // 🔥 Disparar evento para sincronizar otros componentes
   window.dispatchEvent(new CustomEvent('contactos-actualizados', {

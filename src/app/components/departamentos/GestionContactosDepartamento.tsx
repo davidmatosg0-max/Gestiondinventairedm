@@ -394,7 +394,8 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         pm: j.pm || false
       })) || diasSemana.map(jour => ({ jour, am: false, pm: false })),
       notas: benevole.notasGenerales || benevole.notas || '',
-      activo: benevole.statut === 'actif',
+      // ✅ FIX: Asegurar que activo sea true por defecto para nuevos contactos
+      activo: benevole.statut ? (benevole.statut.toLowerCase() === 'actif' || benevole.statut.toLowerCase() === 'activo') : true,
       fechaIngreso: benevole.dateInscription || benevole.fechaIngreso || new Date().toISOString().split('T')[0],
       direccion: benevole.adresse || benevole.direccion || '',
       ciudad: benevole.ville || benevole.ciudad || '',
@@ -412,8 +413,25 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
     };
 
     try {
+      console.log('📝 DEBUG - Guardando nuevo contacto:', nuevoContacto);
       const contactoGuardado = guardarContacto(nuevoContacto);
       console.log('✅ Contacto guardado exitosamente:', contactoGuardado);
+      console.log('📊 DEBUG - departamentoId:', contactoGuardado.departamentoId);
+      console.log('📊 DEBUG - departamentoIds:', contactoGuardado.departamentoIds);
+      console.log('📊 DEBUG - activo:', contactoGuardado.activo);
+      
+      // ✅ VERIFICAR PERSISTENCIA: Leer desde localStorage directamente
+      const verificacion = localStorage.getItem('banqueAlimentaire_contactosDepartamento');
+      if (verificacion) {
+        const todosContactos = JSON.parse(verificacion);
+        const contactoVerificado = todosContactos.find((c: any) => c.id === contactoGuardado.id);
+        if (contactoVerificado) {
+          console.log('✅ VERIFICADO - Contacto guardado en localStorage:', contactoVerificado);
+        } else {
+          console.error('❌ ERROR - Contacto NO encontrado en localStorage después de guardar');
+        }
+      }
+      
       toast.success(`Bénévole ${benevole.nom || benevole.nombre} ${benevole.prenom || benevole.apellido} assigné avec succès`);
       
       // ✅ RECARGA COMPLETA: Recargar desde localStorage para asegurar persistencia

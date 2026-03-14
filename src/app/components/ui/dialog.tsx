@@ -53,9 +53,9 @@ const DialogContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => {
   const generatedId = React.useId();
   
-  // Use explicit aria-describedby if provided, otherwise use generated ID
-  const hasExplicitDescribedBy = !!props['aria-describedby'];
-  const finalAriaDescribedBy = props['aria-describedby'] || generatedId;
+  // Use explicit aria-describedby if provided AND not undefined, otherwise use generated ID
+  const hasExplicitDescribedBy = props['aria-describedby'] !== undefined && props['aria-describedby'] !== null && props['aria-describedby'] !== '';
+  const finalAriaDescribedBy = hasExplicitDescribedBy ? props['aria-describedby'] : generatedId;
   
   return (
     <DialogPortal>
