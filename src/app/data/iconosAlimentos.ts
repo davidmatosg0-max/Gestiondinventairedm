@@ -88,10 +88,78 @@ export const ICONOS_CATEGORIAS: IconoAlimento[] = [
   { emoji: '🥜', nombre: 'Nueces/Maní', categoria: 'Snacks' },
   { emoji: '🍿', nombre: 'Palomitas', categoria: 'Snacks' },
   
-  // Genéricos
-  { emoji: '📦', nombre: 'Paquete Genérico', categoria: 'Genérico' },
-  { emoji: '🛒', nombre: 'Despensa', categoria: 'Genérico' },
-  { emoji: '🍽️', nombre: 'Alimentos en General', categoria: 'Genérico' },
+  // Genéricos Alimentarios
+  { emoji: '📦', nombre: 'Paquete Genérico', categoria: 'Genérico Alimentario' },
+  { emoji: '🛒', nombre: 'Despensa', categoria: 'Genérico Alimentario' },
+  { emoji: '🍽️', nombre: 'Alimentos en General', categoria: 'Genérico Alimentario' },
+  { emoji: '🥘', nombre: 'Comida Caliente', categoria: 'Genérico Alimentario' },
+  { emoji: '🍴', nombre: 'Cubiertos/Comida', categoria: 'Genérico Alimentario' },
+  
+  // Higiene Personal
+  { emoji: '🧴', nombre: 'Botella/Loción', categoria: 'Higiene Personal' },
+  { emoji: '🧼', nombre: 'Jabón', categoria: 'Higiene Personal' },
+  { emoji: '🪒', nombre: 'Afeitadora', categoria: 'Higiene Personal' },
+  { emoji: '🪥', nombre: 'Cepillo de Dientes', categoria: 'Higiene Personal' },
+  { emoji: '🧻', nombre: 'Papel Higiénico', categoria: 'Higiene Personal' },
+  { emoji: '🧽', nombre: 'Esponja', categoria: 'Higiene Personal' },
+  { emoji: '🪮', nombre: 'Peine', categoria: 'Higiene Personal' },
+  { emoji: '💊', nombre: 'Medicamentos', categoria: 'Higiene Personal' },
+  { emoji: '🩹', nombre: 'Vendas', categoria: 'Higiene Personal' },
+  
+  // Limpieza del Hogar
+  { emoji: '🧹', nombre: 'Escoba', categoria: 'Limpieza del Hogar' },
+  { emoji: '🧺', nombre: 'Canasta/Lavandería', categoria: 'Limpieza del Hogar' },
+  { emoji: '🪣', nombre: 'Cubeta', categoria: 'Limpieza del Hogar' },
+  { emoji: '🧴', nombre: 'Detergente', categoria: 'Limpieza del Hogar' },
+  { emoji: '🧽', nombre: 'Limpieza General', categoria: 'Limpieza del Hogar' },
+  
+  // Bebé y Cuidado Infantil
+  { emoji: '🍼', nombre: 'Biberón', categoria: 'Bebé y Cuidado Infantil' },
+  { emoji: '👶', nombre: 'Bebé', categoria: 'Bebé y Cuidado Infantil' },
+  { emoji: '🧸', nombre: 'Juguete', categoria: 'Bebé y Cuidado Infantil' },
+  
+  // Ropa y Textiles
+  { emoji: '👕', nombre: 'Camiseta', categoria: 'Ropa y Textiles' },
+  { emoji: '👖', nombre: 'Pantalones', categoria: 'Ropa y Textiles' },
+  { emoji: '🧥', nombre: 'Abrigo', categoria: 'Ropa y Textiles' },
+  { emoji: '👗', nombre: 'Vestido', categoria: 'Ropa y Textiles' },
+  { emoji: '🧦', nombre: 'Calcetines', categoria: 'Ropa y Textiles' },
+  { emoji: '👟', nombre: 'Zapatos', categoria: 'Ropa y Textiles' },
+  { emoji: '🧤', nombre: 'Guantes', categoria: 'Ropa y Textiles' },
+  { emoji: '🧣', nombre: 'Bufanda', categoria: 'Ropa y Textiles' },
+  { emoji: '🎒', nombre: 'Mochila', categoria: 'Ropa y Textiles' },
+  
+  // Escolares y Educación
+  { emoji: '📚', nombre: 'Libros', categoria: 'Escolares y Educación' },
+  { emoji: '📓', nombre: 'Cuaderno', categoria: 'Escolares y Educación' },
+  { emoji: '✏️', nombre: 'Lápiz', categoria: 'Escolares y Educación' },
+  { emoji: '🖊️', nombre: 'Bolígrafo', categoria: 'Escolares y Educación' },
+  { emoji: '📏', nombre: 'Regla', categoria: 'Escolares y Educación' },
+  { emoji: '✂️', nombre: 'Tijeras', categoria: 'Escolares y Educación' },
+  { emoji: '🖍️', nombre: 'Crayones', categoria: 'Escolares y Educación' },
+  
+  // Hogar y Cocina
+  { emoji: '🍳', nombre: 'Sartén/Cocinar', categoria: 'Hogar y Cocina' },
+  { emoji: '🔪', nombre: 'Cuchillo/Utensilios', categoria: 'Hogar y Cocina' },
+  { emoji: '🥄', nombre: 'Cuchara', categoria: 'Hogar y Cocina' },
+  { emoji: '🍴', nombre: 'Cubiertos', categoria: 'Hogar y Cocina' },
+  { emoji: '🥢', nombre: 'Palillos', categoria: 'Hogar y Cocina' },
+  { emoji: '🫙', nombre: 'Frasco/Contenedor', categoria: 'Hogar y Cocina' },
+  
+  // Mascotas
+  { emoji: '🐕', nombre: 'Perro/Mascotas', categoria: 'Mascotas' },
+  { emoji: '🐈', nombre: 'Gato', categoria: 'Mascotas' },
+  { emoji: '🦴', nombre: 'Hueso/Comida Mascota', categoria: 'Mascotas' },
+  
+  // Varios/Otros
+  { emoji: '🎁', nombre: 'Regalo/Donación', categoria: 'Varios' },
+  { emoji: '💝', nombre: 'Donativo Especial', categoria: 'Varios' },
+  { emoji: '🔋', nombre: 'Baterías', categoria: 'Varios' },
+  { emoji: '💡', nombre: 'Bombillas', categoria: 'Varios' },
+  { emoji: '🕯️', nombre: 'Velas', categoria: 'Varios' },
+  { emoji: '🧰', nombre: 'Herramientas', categoria: 'Varios' },
+  { emoji: '🏥', nombre: 'Salud/Primeros Auxilios', categoria: 'Varios' },
+  { emoji: '🌡️', nombre: 'Termómetro', categoria: 'Varios' },
 ];
 
 // Exportar solo los emojis para uso rápido
@@ -116,9 +184,24 @@ export function buscarIconoPorNombre(nombre: string): string | undefined {
 
 // Iconos más comunes para categorías principales
 export const ICONOS_PRINCIPALES = [
+  // Alimentarios
   '🍚', '🍝', '🥫', '🥛', '🥬', '🫒', '🍞', '🥩', '🐟', '🧀', 
-  '🥚', '🍎', '🥕', '🥔', '🌽', '🥤', '☕', '🍯', '🧈', '🥗', 
-  '🌮', '📦', '🛒', '🍽️'
+  '🥚', '🍎', '🥕', '🥔', '玉米', '🥤', '☕', '🍯', '🧈', '🥗', 
+  '🌮', '📦', '🛒', '🍽️', '🍲', '🥘',
+  // No Alimentarios - Higiene
+  '🧴', '🧼', '🪥', '🧻', '🪒', '💊', '🩹',
+  // No Alimentarios - Limpieza
+  '🧹', '🧺', '🪣', '🧽',
+  // No Alimentarios - Bebé
+  '🍼', '👶', '🧸',
+  // No Alimentarios - Ropa
+  '👕', '👖', '🧥', '👟', '🧦', '🎒',
+  // No Alimentarios - Escolares
+  '📚', '📓', '✏️', '🖊️',
+  // No Alimentarios - Mascotas
+  '🐕', '🐈', '🦴',
+  // No Alimentarios - Varios
+  '🎁', '💝', '🔋', '💡', '🏥'
 ];
 
 // Iconos para subcategorías (más específicos)

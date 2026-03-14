@@ -1808,19 +1808,44 @@ export function Configuracion() {
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label>{t('configuration.icon')}</Label>
-                            <div className="grid grid-cols-6 gap-2 p-4 border rounded-lg max-h-40 overflow-y-auto">
-                              {ICONOS_PRINCIPALES.map(icono => (
-                                <button
-                                  key={icono}
-                                  onClick={() => setFormCategoria({ ...formCategoria, icono })}
-                                  className={`text-2xl p-2 rounded hover:bg-gray-100 ${
-                                    formCategoria.icono === icono ? 'bg-blue-100 ring-2 ring-blue-500' : ''
-                                  }`}
-                                  type="button"
-                                >
-                                  {icono}
-                                </button>
-                              ))}
+                            <div className="border rounded-lg max-h-64 overflow-y-auto p-3 bg-gray-50">
+                              {/* Sección: Alimentarios */}
+                              <div className="mb-3">
+                                <p className="text-xs font-semibold text-[#1a4d7a] mb-2">ALIMENTAIRES</p>
+                                <div className="grid grid-cols-6 gap-2">
+                                  {['🍚', '🍝', '🥫', '🥛', '🥬', '🫒', '🍞', '🥩', '🐟', '🧀', '🥚', '🍎', '🥕', '🥔', '🌽', '🥤', '☕', '🍯', '🧈', '🥗', '🌮', '🍲', '🥘', '🛒', '🍽️', '📦'].map(icono => (
+                                    <button
+                                      key={icono}
+                                      onClick={() => setFormCategoria({ ...formCategoria, icono })}
+                                      className={`text-2xl p-2 rounded hover:bg-blue-100 transition-colors ${
+                                        formCategoria.icono === icono ? 'bg-blue-100 ring-2 ring-blue-500' : ''
+                                      }`}
+                                      type="button"
+                                    >
+                                      {icono}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              {/* Sección: No Alimentarios */}
+                              <div>
+                                <p className="text-xs font-semibold text-[#2d9561] mb-2">NON-ALIMENTAIRES</p>
+                                <div className="grid grid-cols-6 gap-2">
+                                  {['🧴', '🧼', '🪥', '🧻', '🪒', '💊', '🩹', '🧹', '🧺', '🪣', '🧽', '🍼', '👶', '🧸', '👕', '👖', '🧥', '👟', '🧦', '🎒', '📚', '📓', '✏️', '🖊️', '🐕', '🐈', '🦴', '🎁', '💝', '🔋', '💡', '🏥'].map(icono => (
+                                    <button
+                                      key={icono}
+                                      onClick={() => setFormCategoria({ ...formCategoria, icono })}
+                                      className={`text-2xl p-2 rounded hover:bg-green-100 transition-colors ${
+                                        formCategoria.icono === icono ? 'bg-green-100 ring-2 ring-green-500' : ''
+                                      }`}
+                                      type="button"
+                                    >
+                                      {icono}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
                           </div>
 
