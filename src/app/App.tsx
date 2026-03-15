@@ -48,6 +48,8 @@ import { logger, showWelcomeBanner } from './utils/logger';
 import { runDataMigrations } from './utils/dataMigration';
 import { inicializarAutoBackup } from './utils/autoBackupStorage';
 import { inicializarFileSystem } from './utils/fileSystemAccess';
+import { useUpdateNotifications } from '../hooks/useUpdateNotifications';
+import { useVersionCheck } from '../hooks/useVersionCheck';
 import { sistemaConDatosReales } from './utils/inicializarDatosEjemplo';
 import { suppressFigmaWarningsConditional } from './utils/suppressFigmaWarnings';
 import './utils/proteccionEmergencia'; // 🆘 Cargar funciones de emergencia en consola
@@ -68,6 +70,12 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const { isAuthenticated, isLoading, logout: logoutAuth } = useAuth();
   const { i18n } = useTranslation();
+
+  // 🔔 Inicializar sistema de notificaciones de actualizaciones
+  useUpdateNotifications();
+
+  // 🔄 Verificar versión de la aplicación y mostrar notificación de actualización
+  useVersionCheck();
 
   // Crear ofertas de ejemplo e inicializar unidades al cargar la app
   useEffect(() => {

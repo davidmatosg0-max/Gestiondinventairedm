@@ -17,6 +17,7 @@ import { Textarea } from '../ui/textarea';
 import { copiarAlPortapapeles } from '../../utils/clipboard';
 import { mockProductos } from '../../data/mockData';
 import { ICONOS_PRINCIPALES, ICONOS_SUBCATEGORIAS } from '../../data/iconosAlimentos';
+import { VersionHistory } from '../VersionHistory';
 import { 
   obtenerProductos, 
   guardarProducto, 
@@ -1514,6 +1515,15 @@ export function Configuracion() {
           >
             <Scale className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
             <span>Balance</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="versions" 
+            className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-[#1a4d7a] data-[state=active]:to-[#2d9561] data-[state=active]:text-white data-[state=active]:shadow-xl rounded-xl px-4 sm:px-6 py-3 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
+          >
+            <Info className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+            <span className="hidden sm:inline">Versions</span>
+            <span className="sm:hidden">V</span>
           </TabsTrigger>
           {esDesarrollador && (
             <TabsTrigger 
@@ -3301,6 +3311,11 @@ export function Configuracion() {
               <ConfigurationBalance />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Tab: Versions */}
+        <TabsContent value="versions" className="fade-in">
+          <VersionHistory />
         </TabsContent>
 
         {/* Tab: Adresses et Quartiers */}
