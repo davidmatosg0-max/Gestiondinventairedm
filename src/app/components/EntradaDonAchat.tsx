@@ -82,7 +82,8 @@ interface FormDataDonAchat {
 }
 
 interface ProductoAgregado {
-  nombreProducto: string;
+  nombreProducto: string; // Nombre con sufijo para mostrar/etiquetas (ej: "Producto - Paleta 1/2")
+  nombreProductoBase?: string; // Nombre base sin sufijo para inventario (ej: "Producto")
   productoIcono: string;
   cantidad: number;
   unidad: string;
@@ -949,9 +950,10 @@ export function EntradaDonAchat() {
 
       // Calcular peso neto (restando tara si existe)
       let pesoNeto = producto.pesoTotal || 0;
-      if (producto.pesoUnidad && producto.pesoUnidad > 0) {
-        pesoNeto = Math.max(0, pesoNeto - producto.pesoUnidad);
-        console.log(`⚖️ Peso bruto: ${producto.pesoTotal}kg - Tara: ${producto.pesoUnidad}kg = Peso neto: ${pesoNeto}kg`);
+      if (producto.pesoUnidad && producto.pesoUnidad > 0 && producto.cantidad) {
+        const pesoTaraTotal = producto.pesoUnidad * producto.cantidad;
+        pesoNeto = Math.max(0, pesoNeto - pesoTaraTotal);
+        console.log(`⚖️ Peso bruto: ${producto.pesoTotal}kg - Tara (${producto.cantidad} × ${producto.pesoUnidad}kg): ${pesoTaraTotal}kg = Peso neto: ${pesoNeto}kg`);
       }
 
       const labelData: ProductLabelData = {
@@ -1092,7 +1094,8 @@ export function EntradaDonAchat() {
         
         for (let i = 1; i <= formData.cantidad; i++) {
           const productoIndividual: ProductoAgregado = {
-            nombreProducto: `${nombreFinal} - ${tipoUnidad} ${i}/${formData.cantidad}`,
+            nombreProducto: `${nombreFinal} - ${tipoUnidad} ${i}/${formData.cantidad}`, // Para etiquetas
+            nombreProductoBase: nombreFinal, // 🎯 Nombre base SIN sufijo para inventario
             productoIcono: iconoFinal,
             cantidad: 1,
             unidad: formData.unidad,
@@ -1210,155 +1213,130 @@ export function EntradaDonAchat() {
         return;
       }
 
-      // 🎯 NUEVA LÓGICA: Buscar productos existentes antes de crear duplicados
-      const productosExistentes = obtenerProductos();
-      let productosAdicionados = 0;
-      let productosNuevos = 0;
-
-      // Guardar cada producto en el inventario
-      for (const prod of productosAgregados) {
-        // Calcular peso unitario del producto entrante
-        const pesoUnitarioEntrante = prod.cantidad > 0 ? prod.pesoTotal / prod.cantidad : 0;
-        
-        // 🔍 BUSCAR PRODUCTO EXISTENTE por: NOMBRE + UNIDAD + PESO UNITARIO
-        const productoExistente = productosExistentes.find(p => {
-          // 🛡️ PROTECCIÓN: Validar que existan los valores necesarios
-          if (!p.nombre || !p.unidad || !prod.nombreProducto || !prod.unidad || !p.activo) {
-            return false;
+      // 🎯 PROTECCIÓN CONTRA VALORES UNDEFINED
+      // Construir nombre completo del donador
+      let nombreCompleto = 'Sans nom';
+      try {
+        if (contacto?.nombreEmpresa && String(contacto.nombreEmpresa).trim()) {
+          nombreCompleto = String(contacto.nombreEmpresa).trim();
+        } else if (contacto?.nombre && contacto?.apellido) {
+          const nombre = String(contacto.nombre || '').trim();
+          const apellido = String(contacto.apellido || '').trim();
+          if (nombre && apellido) {
+            nombreCompleto = `${nombre} ${apellido}`;
+          } else if (nombre) {
+            nombreCompleto = nombre;
+          } else if (apellido) {
+            nombreCompleto = apellido;
           }
-
-          // Normalizar nombres (case insensitive, trim) - con protección adicional
-          const nombreP = (p.nombre || '').toString().toLowerCase().trim();
-          const nombreProd = (prod.nombreProducto || '').toString().toLowerCase().trim();
-          const nombreMatch = nombreP === nombreProd;
-          
-          // Normalizar unidades (case insensitive, trim) - con protección adicional
-          const unidadP = (p.unidad || '').toString().toLowerCase().trim();
-          const unidadProd = (prod.unidad || '').toString().toLowerCase().trim();
-          const unidadMatch = unidadP === unidadProd;
-          
-          // Comparar peso unitario con tolerancia del 2% (para evitar problemas de redondeo)
-          const pesoExistente = p.pesoUnitario || 0;
-          const tolerancia = pesoExistente * 0.02; // 2% de tolerancia
-          const pesoMatch = Math.abs(pesoExistente - pesoUnitarioEntrante) <= tolerancia;
-          
-          return nombreMatch && unidadMatch && pesoMatch;
-        });
-
-        let productoIdFinal: string;
-
-        if (productoExistente) {
-          // ✅ PRODUCTO EXISTENTE: ADICIONAR STOCK
-          console.log(`✅ Producto existente encontrado: ${productoExistente.nombre} - Adicionando stock`);
-          
-          const nuevoStock = productoExistente.stockActual + prod.cantidad;
-          const nuevoPesoRegistrado = (productoExistente.pesoRegistrado || 0) + prod.pesoTotal;
-          
-          actualizarProducto(productoExistente.id, {
-            stockActual: nuevoStock,
-            pesoRegistrado: nuevoPesoRegistrado,
-            peso: nuevoPesoRegistrado, // Actualizar peso total también
-            // Mantener el pesoUnitario original (ya que coincide dentro de la tolerancia)
-          });
-
-          productoIdFinal = productoExistente.id;
-          productosAdicionados++;
-        } else {
-          // 🆕 PRODUCTO NUEVO: CREAR
-          console.log(`🆕 Producto nuevo: ${prod.nombreProducto} - Creando...`);
-          
-          const productoData: ProductoCreado = {
-            id: `PROD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            nombre: prod.nombreProducto,
-            codigo: `P${Date.now()}`,
-            icono: prod.productoIcono,
-            categoria: prod.categoria || '',
-            subcategoria: prod.subcategoria || '',
-            varianteId: prod.varianteId,
-            varianteNombre: prod.variante,
-            unidad: prod.unidad,
-            peso: prod.pesoTotal,
-            pesoUnitario: pesoUnitarioEntrante,
-            pesoRegistrado: prod.pesoTotal,
-            stockActual: prod.cantidad,
-            stockMinimo: 0,
-            ubicacion: '',
-            lote: prod.lote || '',
-            fechaVencimiento: prod.fechaCaducidad || '',
-            temperaturaAlmacenamiento: prod.temperatura as any,
-            activo: true,
-            esPRS: formData.tipoEntrada === 'prs',
-            fechaCreacion: new Date().toISOString(),
-          };
-
-          guardarProducto(productoData);
-          productoIdFinal = productoData.id;
-          productosNuevos++;
+        } else if (contacto?.nombre) {
+          nombreCompleto = String(contacto.nombre).trim();
+        } else if (contacto?.apellido) {
+          nombreCompleto = String(contacto.apellido).trim();
         }
+      } catch (error) {
+        console.error('Error construyendo nombre del contacto:', error);
+        nombreCompleto = 'Sans nom';
+      }
 
-        // 🎯 PROTECCIÓN CONTRA VALORES UNDEFINED
-        // Construir nombre completo del donador
-        // Prioridad: nombreEmpresa > nombre+apellido > nombre > apellido > 'Sans nom'
-        let nombreCompleto = '';
-        if (contacto.nombreEmpresa) {
-          nombreCompleto = contacto.nombreEmpresa;
-        } else if (contacto.nombre && contacto.apellido) {
-          nombreCompleto = `${contacto.nombre} ${contacto.apellido}`.trim();
-        } else if (contacto.nombre) {
-          nombreCompleto = contacto.nombre;
-        } else if (contacto.apellido) {
-          nombreCompleto = contacto.apellido;
-        } else {
-          nombreCompleto = 'Sans nom';
-        }
+      // Obtener información del programa
+      const programa = programaSeleccionado;
+      const programaNombre = programa?.nombre || 'Don';
+      const programaCodigo = programa?.codigo?.toUpperCase() || 'DON';
+      const programaColor = programa?.color || '#2d9561';
+      const programaIcono = programa?.icono || '🎁';
 
-        // Registrar entrada en historial (siempre, sea nuevo o existente)
+      console.log(`📝 Finalizando entrada de ${productosAgregados.length} producto(s)...`);
+
+      // Guardar cada producto agregado como una entrada separada
+      // CADA entrada en productosAgregados genera:
+      // 1. Una entrada en el historial (localStorage entradas_inventario)
+      // 2. Un producto nuevo o actualización de stock (localStorage productos)
+      // 3. Un movimiento de inventario (localStorage movimientos)
+      let entradasRegistradas = 0;
+      for (const prod of productosAgregados) {
+        // 🎯 CORRECCIÓN: Calcular peso unitario NETO (restando tara si existe)
+        // prod.pesoTotal = peso bruto total (ej: 200kg para 1 paleta)
+        // prod.pesoUnidad = tara por unidad (ej: 30kg por paleta)
+        // prod.cantidad = número de unidades (ej: 1 paleta)
+        
+        // Paso 1: Calcular peso NETO total (restar tara total)
+        const taraTotalProducto = (prod.pesoUnidad || 0) * prod.cantidad;
+        const pesoNetoTotal = prod.pesoTotal - taraTotalProducto;
+        
+        // Paso 2: Calcular peso unitario NETO
+        const pesoUnitarioEntrante = prod.cantidad > 0 ? pesoNetoTotal / prod.cantidad : 0;
+        
+        console.log(`📝 Registrando entrada ${entradasRegistradas + 1}/${productosAgregados.length}: ${prod.nombreProducto}`);
+        console.log(`   ⚖️ Peso bruto: ${prod.pesoTotal}kg - Tara (${prod.cantidad} × ${prod.pesoUnidad || 0}kg): ${taraTotalProducto}kg = Peso neto: ${pesoNetoTotal}kg`);
+        console.log(`   📊 Peso unitario neto: ${pesoUnitarioEntrante}kg`);
+        
+        // 🎯 USAR NOMBRE BASE para inventario (sin sufijo "Paleta 1/2")
+        // Esto permite que productos con mismo nombre, peso y unidad se SUMEN
+        const nombreParaInventario = prod.nombreProductoBase || prod.nombreProducto;
+        console.log(`   📝 Nombre para inventario: ${nombreParaInventario}`);
+        
+        // 📝 Registrar entrada en historial
+        // ⚠️ IMPORTANTE: guardarEntrada() se encarga de:
+        // - Crear/actualizar el producto en localStorage
+        // - Registrar el movimiento de inventario
+        // - Guardar la entrada en el historial
+        // NO es necesario hacer registro manual adicional
         guardarEntrada({
-          id: `ENTR-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           fecha: new Date().toISOString(),
-          tipo: formData.tipoEntrada === 'achat' ? 'achat' : 'donation',
+          tipoEntrada: formData.tipoEntrada,
+          programaNombre: programaNombre,
+          programaCodigo: programaCodigo,
+          programaColor: programaColor,
+          programaIcono: programaIcono,
           donadorId: formData.donadorId,
           donadorNombre: nombreCompleto,
-          productoId: productoIdFinal,
-          productoNombre: prod.nombreProducto,
+          donadorEsCustom: false,
+          productoId: `TEMP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Temporal, se actualizará automáticamente
+          nombreProducto: nombreParaInventario, // 🎯 Usar nombre base sin sufijo
+          productoIcono: prod.productoIcono,
           categoria: prod.categoria || '',
           subcategoria: prod.subcategoria || '',
           varianteId: prod.varianteId,
-          varianteNombre: prod.variante,
+          variante: prod.variante ? {
+            id: prod.varianteId || '',
+            nombre: prod.variante,
+          } : undefined,
           cantidad: prod.cantidad,
           unidad: prod.unidad,
+          pesoUnidad: pesoUnitarioEntrante,
           pesoTotal: prod.pesoTotal,
-          temperatura: prod.temperatura,
+          temperatura: (prod.temperatura as any) || 'ambiente',
           lote: prod.lote,
           fechaCaducidad: prod.fechaCaducidad,
           detallesEmpaque: prod.detallesEmpaque,
           observaciones: formData.observaciones,
         });
+        
+        entradasRegistradas++;
       }
 
-      // 📊 Mensaje de éxito detallado
-      if (productosNuevos > 0 && productosAdicionados > 0) {
-        toast.success(`✅ ${productosNuevos} nouveau(x) produit(s) créé(s) + ${productosAdicionados} stock(s) additionné(s)!`, {
-          duration: 5000
-        });
-      } else if (productosNuevos > 0) {
-        toast.success(`✅ ${productosNuevos} nouveau(x) produit(s) créé(s)!`, { duration: 4000 });
-      } else if (productosAdicionados > 0) {
-        toast.success(`✅ ${productosAdicionados} stock(s) additionné(s) aux produits existants!`, { duration: 4000 });
-      }
+      console.log(`✅ ${entradasRegistradas} entrada(s) registrada(s) exitosamente`);
+
+      // 📊 Mensaje de éxito
+      toast.success(`✅ ${entradasRegistradas} entrée(s) enregistrée(s)!`, {
+        duration: 4000
+      });
       
       // Disparar evento de actualización
       window.dispatchEvent(new Event('productos-actualizados'));
 
-      // Resetear formulario
+      // Resetear formulario y cerrar ventana
       setFormData(FORM_DATA_INICIAL);
       setProductosAgregados([]);
+      
+      // ✅ Cerrar la ventana inmediatamente después de finalizar
       setOpen(false);
     } catch (error) {
       console.error('Error finalizando entrada:', error);
       toast.error("Erreur lors de la finalisation de l'entrée");
     }
-  }, [productosAgregados, formData, contactosDisponibles]);
+  }, [productosAgregados, formData, contactosDisponibles, programaSeleccionado]);
 
   const eliminarProductoAgregado = useCallback((index: number) => {
     setProductosAgregados(prev => prev.filter((_, i) => i !== index));
@@ -1990,7 +1968,9 @@ export function EntradaDonAchat() {
                     ) : undefined;
                     const pesoTara = unidadSeleccionada?.pesoUnidad || 0;
                     const pesoBruto = formData.peso || 0;
-                    const pesoNeto = pesoTara > 0 ? Math.max(0, pesoBruto - pesoTara) : pesoBruto;
+                    const cantidad = formData.cantidad || 1;
+                    const pesoTaraTotal = pesoTara * cantidad;
+                    const pesoNeto = pesoTara > 0 ? Math.max(0, pesoBruto - pesoTaraTotal) : pesoBruto;
 
                     if (pesoTara > 0 && pesoBruto > 0) {
                       return (
@@ -2008,7 +1988,7 @@ export function EntradaDonAchat() {
                             </div>
                             <div className="flex justify-between items-center py-1 border-t border-blue-200">
                               <span className="text-gray-700">⚖️ Poids de l'unité (tare):</span>
-                              <span className="font-semibold text-red-600">- {pesoTara.toFixed(3)} kg</span>
+                              <span className="font-semibold text-red-600">- {pesoTaraTotal.toFixed(3)} kg{cantidad > 1 ? ` (${pesoTara.toFixed(2)} × ${cantidad})` : ''}</span>
                             </div>
                             <div className="flex justify-between items-center py-1.5 border-t-2 border-blue-300 bg-green-50 -mx-3 px-3 rounded">
                               <span className="text-green-800 font-semibold">✓ Poids net (imprimé):</span>
@@ -2213,8 +2193,11 @@ export function EntradaDonAchat() {
 
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
                     {productosAgregados.map((producto, index) => {
-                      const pesoNeto = producto.pesoUnidad && producto.pesoUnidad > 0
-                        ? Math.max(0, producto.pesoTotal - producto.pesoUnidad)
+                      const pesoTaraTotal = (producto.pesoUnidad && producto.pesoUnidad > 0) 
+                        ? producto.pesoUnidad * producto.cantidad 
+                        : 0;
+                      const pesoNeto = pesoTaraTotal > 0
+                        ? Math.max(0, producto.pesoTotal - pesoTaraTotal)
                         : producto.pesoTotal;
                       const tieneTara = producto.pesoUnidad && producto.pesoUnidad > 0;
 
@@ -2227,7 +2210,7 @@ export function EntradaDonAchat() {
                               <span>{producto.cantidad} {producto.unidad}</span>
                               <span>•</span>
                               {tieneTara ? (
-                                <span className="flex items-center gap-1" title={`Brut: ${producto.pesoTotal.toFixed(2)}kg - Tare: ${producto.pesoUnidad.toFixed(2)}kg = Net: ${pesoNeto.toFixed(2)}kg`}>
+                                <span className="flex items-center gap-1" title={`Brut: ${producto.pesoTotal.toFixed(2)}kg - Tare: ${pesoTaraTotal.toFixed(2)}kg (${producto.pesoUnidad.toFixed(2)}kg × ${producto.cantidad}) = Net: ${pesoNeto.toFixed(2)}kg`}>
                                   <span className="font-semibold text-green-700">{pesoNeto.toFixed(2)} kg</span>
                                   <span className="text-xs text-gray-400">(net)</span>
                                 </span>

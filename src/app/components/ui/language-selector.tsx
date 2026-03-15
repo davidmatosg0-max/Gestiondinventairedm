@@ -289,7 +289,7 @@ export function LanguageSelector({
           setNuevoIdioma({ code: '', label: '', flag: '', color: branding.primaryColor });
         }
       }}>
-        <DialogContent className="max-w-md" aria-describedby={undefined}>
+        <DialogContent className="max-w-md" aria-describedby="new-language-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
               {idiomaEditando ? (
@@ -307,8 +307,7 @@ export function LanguageSelector({
             <DialogDescription id="new-language-description">
               {idiomaEditando 
                 ? 'Modifiez les informations de la langue personnalisée'
-                : 'Créez un nouveau sélecteur de langue personnalisé avec code, nom, drapeau et couleur'
-              }
+                : 'Créez un nouveau sélecteur de langue personnalisé avec code, nom, drapeau et couleur'}
             </DialogDescription>
           </DialogHeader>
           

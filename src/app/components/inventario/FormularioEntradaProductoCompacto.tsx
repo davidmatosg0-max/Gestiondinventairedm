@@ -483,7 +483,8 @@ export function FormularioEntradaProductoCompacto({
                       
                       if (tieneTara) {
                         const pesoTara = unidadSeleccionada!.pesoUnidad!;
-                        const pesoNeto = Math.max(0, formulario.peso - pesoTara);
+                        const pesoTaraTotal = pesoTara * formulario.cantidad; // Multiplicar tara por cantidad
+                        const pesoNeto = Math.max(0, formulario.peso - pesoTaraTotal);
                         
                         return (
                           <div className="p-4 bg-amber-50 border-2 border-amber-200 rounded-lg">
@@ -500,7 +501,12 @@ export function FormularioEntradaProductoCompacto({
                                   </div>
                                   <div className="bg-white p-2 rounded border border-amber-300">
                                     <p className="text-amber-700 font-medium mb-1">Tare ({unidadSeleccionada!.abreviatura}):</p>
-                                    <p className="text-lg font-bold text-red-600">- {pesoTara.toFixed(2)} kg</p>
+                                    <p className="text-lg font-bold text-red-600">- {pesoTaraTotal.toFixed(2)} kg</p>
+                                    {formulario.cantidad > 1 && (
+                                      <p className="text-[10px] text-amber-600 mt-1">
+                                        ({pesoTara.toFixed(2)} kg × {formulario.cantidad})
+                                      </p>
+                                    )}
                                   </div>
                                   <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-2 rounded border-2 border-green-400">
                                     <p className="text-green-700 font-medium mb-1">Poids net:</p>
@@ -508,7 +514,7 @@ export function FormularioEntradaProductoCompacto({
                                   </div>
                                 </div>
                                 <p className="text-xs text-amber-700 mt-2">
-                                  💡 Le poids de l'unité ({pesoTara.toFixed(2)} kg) sera automatiquement déduit lors de l'enregistrement
+                                  💡 Le poids de {formulario.cantidad > 1 ? `${formulario.cantidad} unités` : "l'unité"} ({pesoTaraTotal.toFixed(2)} kg) sera automatiquement déduit lors de l'enregistrement
                                 </p>
                               </div>
                             </div>
@@ -533,7 +539,8 @@ export function FormularioEntradaProductoCompacto({
                               const unidadSeleccionada = unidades.find(u => u.id === formulario.unidadId);
                               const tieneTara = unidadSeleccionada?.pesoUnidad && unidadSeleccionada.pesoUnidad > 0;
                               if (tieneTara) {
-                                const pesoNeto = Math.max(0, formulario.peso - unidadSeleccionada!.pesoUnidad!);
+                                const pesoTaraTotal = unidadSeleccionada!.pesoUnidad! * formulario.cantidad;
+                                const pesoNeto = Math.max(0, formulario.peso - pesoTaraTotal);
                                 return pesoNeto.toFixed(2);
                               }
                               return formulario.peso.toFixed(2);

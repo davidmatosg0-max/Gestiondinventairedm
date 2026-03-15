@@ -147,6 +147,8 @@ function registrarEnInventario(entrada: EntradaInventario) {
   const categoriaFinal = entrada.categoria || entrada.productoCategoria || 'Sin categoría';
   const subcategoriaFinal = entrada.subcategoria || entrada.productoSubcategoria || '';
   
+  console.log(`📦 Registrando en inventario: ${entrada.nombreProducto} (${entrada.cantidad} ${entrada.unidad})`);
+  
   // 🔄 PASO 1: Verificar si el producto ya existe en localStorage (persistente)
   // ⚠️ REGLA IMPORTANTE: Productos con diferente peso unitario o variante son productos DIFERENTES
   const productosLocalStorage = obtenerProductosActivos();
@@ -159,19 +161,23 @@ function registrarEnInventario(entrada: EntradaInventario) {
     const categoriaCoincide = p.categoria === categoriaFinal;
     const subcategoriaCoincide = p.subcategoria === subcategoriaFinal;
     
-    // Verificar si el peso es el mismo (con tolerancia)
-    const pesoCoincide = Math.abs(p.peso - entrada.pesoUnidad) < TOLERANCIA_PESO;
+    // Verificar si el peso unitario es el mismo (con tolerancia)
+    const pesoUnitarioProducto = p.pesoUnitario || 0;
+    const pesoCoincide = Math.abs(pesoUnitarioProducto - entrada.pesoUnidad) < TOLERANCIA_PESO;
     
-    // Si todo coincide (nombre, categoría, subcategoría y peso), es el MISMO producto
+    // Si todo coincide (nombre, categoría, subcategoría y peso unitario), es el MISMO producto
     return nombreCoincide && categoriaCoincide && subcategoriaCoincide && pesoCoincide;
   });
+  
+  console.log(`🔍 Producto existente encontrado: ${productoExistenteLS ? productoExistenteLS.nombre : 'NO'} (Total productos en localStorage: ${productosLocalStorage.length})`);
 
   // 🔄 PASO 2: Verificar si el producto existe en mockProductos (memoria)
   const productoExistenteMock = mockProductos.find((p: any) => {
     const nombreCoincide = p.nombre.toLowerCase() === entrada.nombreProducto.toLowerCase();
     const categoriaCoincide = p.categoria === categoriaFinal;
     const subcategoriaCoincide = p.subcategoria === subcategoriaFinal;
-    const pesoCoincide = Math.abs(p.peso - entrada.pesoUnidad) < TOLERANCIA_PESO;
+    const pesoUnitarioProducto = p.pesoUnitario || 0;
+    const pesoCoincide = Math.abs(pesoUnitarioProducto - entrada.pesoUnidad) < TOLERANCIA_PESO;
     
     return nombreCoincide && categoriaCoincide && subcategoriaCoincide && pesoCoincide;
   });
