@@ -61,6 +61,7 @@ import './utils/migrateCostcoFlags'; // 🆘 Cargar función de emergencia para 
 import './utils/programaEntradaStorage'; // 🆘 Cargar función de debug de programas
 import { migrarProgramasEntrada, yaMigradoProgramas, marcarMigracionProgramas } from './utils/migrateProgramasEntrada';
 import './utils/migrateProgramasEntrada'; // 🆘 Cargar funciones de emergencia para programas
+import { migrarPesoUnitarioProductos } from './utils/productStorage';
 
 // Suprimir warnings internos de Figma Make al inicio
 suppressFigmaWarningsConditional();
@@ -137,6 +138,12 @@ function AppContent() {
       migrarProgramasEntrada();
       marcarMigracionProgramas();
       logger.info('🔄 Programas de entrada migrados');
+    }
+    
+    // 🔧 Migrar peso unitario de productos (ejecuta solo si hay productos sin pesoUnitario)
+    const productosCorregidos = migrarPesoUnitarioProductos();
+    if (productosCorregidos > 0) {
+      logger.info(`🔄 Peso unitario de productos migrado: ${productosCorregidos} producto(s) corregido(s)`);
     }
   }, []);
 

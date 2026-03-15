@@ -1678,13 +1678,16 @@ export function Inventario() {
                             </TableCell>
                             <TableCell className="py-1 px-2">
                               {(() => {
-                                // Calcular el valor monetario basado en el peso total y el valorPorKg de la categoría
-                                const pesoTotal = producto.peso || 0;
+                                // 🎯 CORRECCIÓN: Calcular el valor monetario basado en el PESO TOTAL del stock
+                                // peso total = stockActual × pesoUnitario
+                                const pesoUnitario = producto.pesoUnitario || producto.peso || 0;
+                                const pesoTotal = producto.stockActual * pesoUnitario;
+                                
                                 const valorCalculado = calcularValorMonetario(
                                   pesoTotal,
                                   producto.categoria,
                                   producto.subcategoria,
-                                  producto.esVariante ? producto.productoBaseId : undefined
+                                  producto.varianteId // 🔧 CORRECCIÓN: Usar varianteId en lugar de productoBaseId
                                 );
                                 
                                 if (valorCalculado !== undefined && valorCalculado > 0) {
@@ -1696,6 +1699,12 @@ export function Inventario() {
                                     </div>
                                   );
                                 }
+                                
+                                // Mostrar mensaje de ayuda si no hay valor
+                                if (pesoUnitario === 0) {
+                                  return <span className="text-[10px] text-amber-600 italic">Sin peso</span>;
+                                }
+                                
                                 return <span className="text-[10px] text-[#999999] italic">-</span>;
                               })()}
                             </TableCell>

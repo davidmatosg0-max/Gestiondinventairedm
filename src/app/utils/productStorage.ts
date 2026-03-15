@@ -149,6 +149,64 @@ export function buscarProductos(query: string): ProductoCreado[] {
 }
 
 /**
+ * 🔧 Migración: Corregir pesoUnitario en productos existentes
+ * 
+ * Esta función revisa todos los productos y asegura que tienen
+ * el campo pesoUnitario correctamente establecido para el cálculo
+ * del valor monetario: stockActual × pesoUnitario × valorPorKg
+ */
+export function migrarPesoUnitarioProductos(): number {
+  try {
+    const productos = obtenerProductos();
+    let productosCorregidos = 0;
+    
+    productos.forEach(producto => {
+      let necesitaActualizacion = false;
+      const cambios: Partial<ProductoCreado> = {};
+      
+      // CASO 1: Si no tiene pesoUnitario pero tiene peso, copiar el valor
+      if (!producto.pesoUnitario && producto.peso > 0) {
+        cambios.pesoUnitario = producto.peso;
+        necesitaActualizacion = true;
+        console.log(`✅ Producto "${producto.nombre}": pesoUnitario establecido a ${producto.peso} kg`);
+      }
+      
+      // CASO 2: Si tiene pesoUnitario 0 pero tiene peso > 0, copiar el valor
+      if (producto.pesoUnitario === 0 && producto.peso > 0) {
+        cambios.pesoUnitario = producto.peso;
+        necesitaActualizacion = true;
+        console.log(`✅ Producto "${producto.nombre}": pesoUnitario corregido de 0 a ${producto.peso} kg`);
+      }
+      
+      // CASO 3: Si ambos son 0 o undefined, establecer un valor predeterminado de 1kg
+      if ((!producto.pesoUnitario || producto.pesoUnitario === 0) && 
+          (!producto.peso || producto.peso === 0)) {
+        cambios.pesoUnitario = 1; // 1 kg por defecto
+        cambios.peso = 1;
+        necesitaActualizacion = true;
+        console.log(`⚠️ Producto "${producto.nombre}": sin peso definido, establecido a 1 kg por defecto`);
+      }
+      
+      if (necesitaActualizacion) {
+        actualizarProducto(producto.id, cambios);
+        productosCorregidos++;
+      }
+    });
+    
+    if (productosCorregidos > 0) {
+      console.log(`✅ Migración completada: ${productosCorregidos} producto(s) corregido(s)`);
+    } else {
+      console.log('✅ Todos los productos ya tienen pesoUnitario correcto');
+    }
+    
+    return productosCorregidos;
+  } catch (error) {
+    console.error('❌ Error en migración de pesoUnitario:', error);
+    return 0;
+  }
+}
+
+/**
  * Limpiar todos los productos (útil para testing)
  */
 export function limpiarProductos(): void {
@@ -157,4 +215,42 @@ export function limpiarProductos(): void {
   } catch (error) {
     console.error('Error al limpiar productos:', error);
   }
+}
+
+// 🆘 Exponer función de migración en la consola para uso manual
+if (typeof window !== 'undefined') {
+  (window as any).migrarPesoUnitarioProductos = migrarPesoUnitarioProductos;
+  console.log('🔧 Función de emergencia disponible: migrarPesoUnitarioProductos()');
+  
+  // 🔍 Función de debug para verificar productos sin pesoUnitario
+  (window as any).verificarProductosSinPeso = () => {
+    const productos = obtenerProductos();
+    const productosSinPeso = productos.filter(p => 
+      !p.pesoUnitario || p.pesoUnitario === 0 || !p.peso || p.peso === 0
+    );
+    
+    console.log(`📊 Total de productos: ${productos.length}`);
+    console.log(`⚠️ Productos sin peso: ${productosSinPeso.length}`);
+    
+    if (productosSinPeso.length > 0) {
+      console.table(productosSinPeso.map(p => ({
+        ID: p.id,
+        Nombre: p.nombre,
+        Categoría: p.categoria,
+        Subcategoría: p.subcategoria,
+        Peso: p.peso,
+        PesoUnitario: p.pesoUnitario,
+        Stock: p.stockActual,
+        Unidad: p.unidad
+      })));
+      
+      console.log('💡 Ejecuta migrarPesoUnitarioProductos() para corregir estos productos');
+    } else {
+      console.log('✅ Todos los productos tienen peso correctamente configurado');
+    }
+    
+    return productosSinPeso;
+  };
+  
+  console.log('🔍 Función de debug disponible: verificarProductosSinPeso()');
 }

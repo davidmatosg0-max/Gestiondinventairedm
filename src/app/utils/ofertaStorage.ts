@@ -4,7 +4,7 @@
  */
 
 import { obtenerProductos } from './productStorage';
-import { calcularValorMonetario } from './categoriaStorage';
+import { calcularValorMonetario, obtenerValorPorKg } from './categoriaStorage';
 
 export type EstadoOferta = 'pendiente' | 'aceptada' | 'rechazada' | 'parcial' | 'expirada';
 
