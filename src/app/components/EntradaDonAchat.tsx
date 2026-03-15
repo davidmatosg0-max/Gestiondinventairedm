@@ -22,7 +22,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { toast } from 'sonner';
 import { cn } from './ui/utils';
 import { IconSelector } from './ui/IconSelector';
-import { obtenerProductosActivos, guardarProducto, type ProductoCreado } from '../utils/productStorage';
+import { obtenerProductosActivos, obtenerProductos, guardarProducto, actualizarProducto, type ProductoCreado } from '../utils/productStorage';
 import { guardarEntrada } from '../utils/entradaInventarioStorage';
 import { type Categoria } from '../data/configuracionData';
 import { obtenerProgramasActivos, type ProgramaEntrada } from '../utils/programaEntradaStorage';
@@ -1087,13 +1087,16 @@ export function EntradaDonAchat() {
           prefijoLote = 'B';
         }
         
+        // 🎯 CORRECCIÓN: Calcular peso unitario (peso por cada paleta/benne)
+        const pesoUnitarioIndividual = formData.peso / formData.cantidad;
+        
         for (let i = 1; i <= formData.cantidad; i++) {
           const productoIndividual: ProductoAgregado = {
             nombreProducto: `${nombreFinal} - ${tipoUnidad} ${i}/${formData.cantidad}`,
             productoIcono: iconoFinal,
             cantidad: 1,
             unidad: formData.unidad,
-            pesoTotal: formData.peso, // Cada unidad tiene el mismo peso
+            pesoTotal: pesoUnitarioIndividual, // ✅ Peso de UNA unidad (peso total ÷ cantidad)
             pesoUnidad: pesoTara, // Guardar tara
             temperatura: formData.temperatura,
             categoriaId: formData.categoriaId,
@@ -1207,42 +1210,116 @@ export function EntradaDonAchat() {
         return;
       }
 
+      // 🎯 NUEVA LÓGICA: Buscar productos existentes antes de crear duplicados
+      const productosExistentes = obtenerProductos();
+      let productosAdicionados = 0;
+      let productosNuevos = 0;
+
       // Guardar cada producto en el inventario
       for (const prod of productosAgregados) {
-        const productoData: ProductoCreado = {
-          id: `PROD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          nombre: prod.nombreProducto,
-          codigo: `P${Date.now()}`,
-          icono: prod.productoIcono,
-          categoria: prod.categoria || '',
-          subcategoria: prod.subcategoria || '',
-          varianteId: prod.varianteId,
-          varianteNombre: prod.variante,
-          unidad: prod.unidad,
-          peso: prod.pesoTotal,
-          pesoUnitario: prod.cantidad > 0 ? prod.pesoTotal / prod.cantidad : 0,
-          pesoRegistrado: prod.pesoTotal,
-          stockActual: prod.cantidad,
-          stockMinimo: 0,
-          ubicacion: '',
-          lote: prod.lote || '',
-          fechaVencimiento: prod.fechaCaducidad || '',
-          temperaturaAlmacenamiento: prod.temperatura as any,
-          activo: true,
-          esPRS: formData.tipoEntrada === 'prs',
-          fechaCreacion: new Date().toISOString(),
-        };
+        // Calcular peso unitario del producto entrante
+        const pesoUnitarioEntrante = prod.cantidad > 0 ? prod.pesoTotal / prod.cantidad : 0;
+        
+        // 🔍 BUSCAR PRODUCTO EXISTENTE por: NOMBRE + UNIDAD + PESO UNITARIO
+        const productoExistente = productosExistentes.find(p => {
+          // 🛡️ PROTECCIÓN: Validar que existan los valores necesarios
+          if (!p.nombre || !p.unidad || !prod.nombreProducto || !prod.unidad || !p.activo) {
+            return false;
+          }
 
-        guardarProducto(productoData);
+          // Normalizar nombres (case insensitive, trim) - con protección adicional
+          const nombreP = (p.nombre || '').toString().toLowerCase().trim();
+          const nombreProd = (prod.nombreProducto || '').toString().toLowerCase().trim();
+          const nombreMatch = nombreP === nombreProd;
+          
+          // Normalizar unidades (case insensitive, trim) - con protección adicional
+          const unidadP = (p.unidad || '').toString().toLowerCase().trim();
+          const unidadProd = (prod.unidad || '').toString().toLowerCase().trim();
+          const unidadMatch = unidadP === unidadProd;
+          
+          // Comparar peso unitario con tolerancia del 2% (para evitar problemas de redondeo)
+          const pesoExistente = p.pesoUnitario || 0;
+          const tolerancia = pesoExistente * 0.02; // 2% de tolerancia
+          const pesoMatch = Math.abs(pesoExistente - pesoUnitarioEntrante) <= tolerancia;
+          
+          return nombreMatch && unidadMatch && pesoMatch;
+        });
 
-        // Registrar entrada en historial
+        let productoIdFinal: string;
+
+        if (productoExistente) {
+          // ✅ PRODUCTO EXISTENTE: ADICIONAR STOCK
+          console.log(`✅ Producto existente encontrado: ${productoExistente.nombre} - Adicionando stock`);
+          
+          const nuevoStock = productoExistente.stockActual + prod.cantidad;
+          const nuevoPesoRegistrado = (productoExistente.pesoRegistrado || 0) + prod.pesoTotal;
+          
+          actualizarProducto(productoExistente.id, {
+            stockActual: nuevoStock,
+            pesoRegistrado: nuevoPesoRegistrado,
+            peso: nuevoPesoRegistrado, // Actualizar peso total también
+            // Mantener el pesoUnitario original (ya que coincide dentro de la tolerancia)
+          });
+
+          productoIdFinal = productoExistente.id;
+          productosAdicionados++;
+        } else {
+          // 🆕 PRODUCTO NUEVO: CREAR
+          console.log(`🆕 Producto nuevo: ${prod.nombreProducto} - Creando...`);
+          
+          const productoData: ProductoCreado = {
+            id: `PROD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            nombre: prod.nombreProducto,
+            codigo: `P${Date.now()}`,
+            icono: prod.productoIcono,
+            categoria: prod.categoria || '',
+            subcategoria: prod.subcategoria || '',
+            varianteId: prod.varianteId,
+            varianteNombre: prod.variante,
+            unidad: prod.unidad,
+            peso: prod.pesoTotal,
+            pesoUnitario: pesoUnitarioEntrante,
+            pesoRegistrado: prod.pesoTotal,
+            stockActual: prod.cantidad,
+            stockMinimo: 0,
+            ubicacion: '',
+            lote: prod.lote || '',
+            fechaVencimiento: prod.fechaCaducidad || '',
+            temperaturaAlmacenamiento: prod.temperatura as any,
+            activo: true,
+            esPRS: formData.tipoEntrada === 'prs',
+            fechaCreacion: new Date().toISOString(),
+          };
+
+          guardarProducto(productoData);
+          productoIdFinal = productoData.id;
+          productosNuevos++;
+        }
+
+        // 🎯 PROTECCIÓN CONTRA VALORES UNDEFINED
+        // Construir nombre completo del donador
+        // Prioridad: nombreEmpresa > nombre+apellido > nombre > apellido > 'Sans nom'
+        let nombreCompleto = '';
+        if (contacto.nombreEmpresa) {
+          nombreCompleto = contacto.nombreEmpresa;
+        } else if (contacto.nombre && contacto.apellido) {
+          nombreCompleto = `${contacto.nombre} ${contacto.apellido}`.trim();
+        } else if (contacto.nombre) {
+          nombreCompleto = contacto.nombre;
+        } else if (contacto.apellido) {
+          nombreCompleto = contacto.apellido;
+        } else {
+          nombreCompleto = 'Sans nom';
+        }
+
+        // Registrar entrada en historial (siempre, sea nuevo o existente)
         guardarEntrada({
           id: `ENTR-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           fecha: new Date().toISOString(),
           tipo: formData.tipoEntrada === 'achat' ? 'achat' : 'donation',
           donadorId: formData.donadorId,
-          donadorNombre: `${contacto.nombre} ${contacto.apellido}`,
-          productoId: productoData.id,
+          donadorNombre: nombreCompleto,
+          productoId: productoIdFinal,
           productoNombre: prod.nombreProducto,
           categoria: prod.categoria || '',
           subcategoria: prod.subcategoria || '',
@@ -1259,7 +1336,16 @@ export function EntradaDonAchat() {
         });
       }
 
-      toast.success(`✅ ${productosAgregados.length} produit(s) enregistré(s) avec succès!`);
+      // 📊 Mensaje de éxito detallado
+      if (productosNuevos > 0 && productosAdicionados > 0) {
+        toast.success(`✅ ${productosNuevos} nouveau(x) produit(s) créé(s) + ${productosAdicionados} stock(s) additionné(s)!`, {
+          duration: 5000
+        });
+      } else if (productosNuevos > 0) {
+        toast.success(`✅ ${productosNuevos} nouveau(x) produit(s) créé(s)!`, { duration: 4000 });
+      } else if (productosAdicionados > 0) {
+        toast.success(`✅ ${productosAdicionados} stock(s) additionné(s) aux produits existants!`, { duration: 4000 });
+      }
       
       // Disparar evento de actualización
       window.dispatchEvent(new Event('productos-actualizados'));

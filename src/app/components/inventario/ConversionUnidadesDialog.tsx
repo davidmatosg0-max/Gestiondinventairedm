@@ -169,9 +169,10 @@ export function ConversionUnidadesDialog({
 
   // Calcular peso unitario de la unidad destino
   useEffect(() => {
-    if (!producto || cantidadDestino === 0) {
-      setPesoUnitarioDestino(null);
+    // 🎯 PASO 1: CALCULAR PESO UNITARIO ORIGEN (siempre que haya producto)
+    if (!producto) {
       setPesoUnitarioOrigen(null);
+      setPesoUnitarioDestino(null);
       return;
     }
 
@@ -185,15 +186,17 @@ export function ConversionUnidadesDialog({
       pesoPorUnidadOrigen = producto.pesoUnitario;
     } else if (producto.peso && producto.peso > 0) {
       pesoPorUnidadOrigen = producto.peso;
-    } else {
-      setPesoUnitarioDestino(null);
-      setPesoUnitarioOrigen(null);
-      return;
+    } else if (producto.pesoRegistrado && producto.pesoRegistrado > 0 && producto.stockActual > 0) {
+      // Calcular peso unitario desde peso registrado total
+      pesoPorUnidadOrigen = producto.pesoRegistrado / producto.stockActual;
     }
     
+    // Guardar peso unitario origen SIEMPRE (incluso si es null)
+    setPesoUnitarioOrigen(pesoPorUnidadOrigen);
+
+    // 🎯 PASO 2: CALCULAR PESO UNITARIO DESTINO (solo si hay conversión válida)
     if (!pesoPorUnidadOrigen || pesoPorUnidadOrigen <= 0) {
       setPesoUnitarioDestino(null);
-      setPesoUnitarioOrigen(null);
       return;
     }
 
@@ -208,9 +211,6 @@ export function ConversionUnidadesDialog({
     } else {
       setPesoUnitarioDestino(null);
     }
-
-    // 🎯 Guardar peso unitario origen
-    setPesoUnitarioOrigen(pesoPorUnidadOrigen);
   }, [producto, cantidadOrigen, factorConversion, cantidadDestino, unidadOrigen, unidadDestino]);
 
   const handleConvertir = () => {
@@ -269,13 +269,13 @@ export function ConversionUnidadesDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl" aria-describedby="conversion-unidades-description">
         <DialogHeader>
           <DialogTitle className="text-xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
             Conversión de Unidades
           </DialogTitle>
           <DialogDescription id="conversion-unidades-description">
-            Convierte cantidades entre diferentes unidades de medida
+            Convierte la cantidad y unidad del producto seleccionado
           </DialogDescription>
         </DialogHeader>
 
@@ -322,13 +322,21 @@ export function ConversionUnidadesDialog({
                 disabled
                 className="bg-gray-100"
               />
-              {/* 🎯 MOSTRAR PESO UNITARIO DE LA UNIDAD ORIGEN */}
+              {/* 🎯 PESO UNITARIO DE LA UNIDAD ORIGEN - DESTACADO */}
               {pesoUnitarioOrigen !== null && (
-                <div className="bg-blue-50 px-3 py-2 rounded border border-blue-200">
-                  <p className="text-xs text-blue-600 font-medium">⚖️ Peso unitario:</p>
-                  <p className="text-sm text-blue-800 font-bold mt-0.5">
-                    {pesoUnitarioOrigen.toFixed(1)} kg/{unidadOrigen}
-                  </p>
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-4 py-3 rounded-lg border-2 border-blue-300 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">⚖️</span>
+                    <div>
+                      <p className="text-xs text-blue-600 font-semibold">Peso Unitario Actual:</p>
+                      <p className="text-base text-blue-900 font-bold mt-0.5">
+                        {pesoUnitarioOrigen.toFixed(2)} kg
+                      </p>
+                      <p className="text-xs text-blue-700 mt-0.5">
+                        por cada {unidadOrigen}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

@@ -12,6 +12,7 @@ import {
   obtenerProductosActivos,
   type ProductoCreado 
 } from './productStorage';
+import { registrarEntrada as registrarMovimientoEntrada } from './movimientoStorage';
 
 export type EntradaInventario = {
   id: string;
@@ -298,17 +299,17 @@ function registrarEnInventario(entrada: EntradaInventario) {
   }
 
   // 📝 PASO 3: Registrar movimiento de entrada
-  const nuevoMovimiento = {
-    id: `MOV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    tipo: 'entrada' as const,
-    productoId: productoId,
-    cantidad: entrada.cantidad,
-    motivo: `Entrada ${entrada.programaCodigo} - ${entrada.donadorNombre}`,
-    usuario: entrada.creadoPor || 'Usuario Actual',
-    fecha: new Date().toISOString().split('T')[0],
-    documentoReferencia: entrada.id
-  };
-  mockMovimientos.unshift(nuevoMovimiento);
+  registrarMovimientoEntrada(
+    productoId,
+    entrada.cantidad,
+    `Entrada ${entrada.programaCodigo} - ${entrada.donadorNombre}`,
+    entrada.creadoPor || 'Usuario Actual',
+    entrada.id, // documentoReferencia
+    undefined, // cantidadAnterior
+    undefined, // cantidadActual
+    entrada.pesoUnidad, // pesoUnitario
+    entrada.fecha // fechaEntrada - usar la fecha de la entrada, no la fecha de caducidad
+  );
   
   console.log(`✅ Movimiento registrado: ${entrada.programaCodigo} - ${entrada.nombreProducto}`);
   console.log(`📊 Resumen: Producto ID ${productoId} ahora tiene stock actualizado en localStorage`);

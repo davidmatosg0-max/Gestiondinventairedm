@@ -30,6 +30,7 @@ import { mockMovimientos, mockProductos } from '../../data/mockData';
 import { BarcodeDisplay } from '../ui/barcode-display';
 import { generarCodigoBarrasEAN13, generarCodigoLote, generarCodigoUbicacion } from '../../utils/barcode';
 import { obtenerMovimientosProducto, obtenerEstadisticasProducto, type MovimientoExtendido } from '../../utils/movimientoStorage';
+import { obtenerProductos } from '../../utils/productStorage';
 
 interface HistorialProductoDialogProps {
   open: boolean;
@@ -47,7 +48,13 @@ export function HistorialProductoDialog({
   const { t } = useTranslation();
   const [tabActiva, setTabActiva] = useState('historial');
   
-  const producto = mockProductos.find(p => p.id === productoId);
+  // Buscar el producto primero en localStorage, luego en mockProductos
+  const productosLocalStorage = obtenerProductos();
+  let producto = productosLocalStorage.find(p => p.id === productoId);
+  
+  if (!producto) {
+    producto = mockProductos.find(p => p.id === productoId);
+  }
   
   if (!producto) return null;
 
@@ -407,6 +414,8 @@ export function HistorialProductoDialog({
                               <TableHead>Fecha</TableHead>
                               <TableHead>Tipo</TableHead>
                               <TableHead>Cantidad</TableHead>
+                              <TableHead>Peso Unitario</TableHead>
+                              <TableHead>Fecha Entrada</TableHead>
                               <TableHead>Motivo/Destino</TableHead>
                               <TableHead>Usuario</TableHead>
                               <TableHead>Documento</TableHead>
@@ -451,6 +460,36 @@ export function HistorialProductoDialog({
                                         </span>
                                       )}
                                     </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    {mov.pesoUnitario ? (
+                                      <div className="flex flex-col">
+                                        <span className="font-medium text-[#1E73BE]">
+                                          {mov.pesoUnitario.toFixed(3)} kg
+                                        </span>
+                                        <span className="text-xs text-[#999999]">
+                                          por unidad
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <span className="text-sm text-[#999999]">-</span>
+                                    )}
+                                  </TableCell>
+                                  <TableCell>
+                                    {mov.fechaEntrada ? (
+                                      <div className="flex items-center gap-2">
+                                        <Calendar className="w-4 h-4 text-[#1E73BE]" />
+                                        <span className="text-sm">
+                                          {new Date(mov.fechaEntrada).toLocaleDateString('es-ES', {
+                                            year: 'numeric',
+                                            month: '2-digit',
+                                            day: '2-digit'
+                                          })}
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <span className="text-sm text-[#999999]">-</span>
+                                    )}
                                   </TableCell>
                                   <TableCell>
                                     <div className="flex flex-col gap-1">

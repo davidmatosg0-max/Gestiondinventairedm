@@ -87,20 +87,20 @@ export function VerificacionesRecientes() {
   const getTemperaturaText = (temperatura: string) => {
     switch (temperatura) {
       case 'ambiente':
-        return t('common.ambient');
+        return 'Ambiant';
       case 'refrigerado':
-        return t('common.refrigerated');
+        return 'Réfrigéré';
       case 'congelado':
-        return t('common.frozen');
+        return 'Congelé';
       default:
         return temperatura;
     }
   };
 
-  const tiposUnicos = Array.from(new Set(entradas.map(e => e.tipoEntrada)));
+  const tiposUnicos = Array.from(new Set(entradas.map(e => e.tipoEntrada).filter(Boolean)));
 
-  const totalPeso = filteredEntradas.reduce((sum, e) => sum + e.pesoTotal, 0);
-  const totalCantidad = filteredEntradas.reduce((sum, e) => sum + e.cantidad, 0);
+  const totalPeso = filteredEntradas.reduce((sum, e) => sum + (e.pesoTotal || 0), 0);
+  const totalCantidad = filteredEntradas.reduce((sum, e) => sum + (e.cantidad || 0), 0);
 
   const handleReimprimirEtiqueta = async (entrada: EntradaInventario) => {
     const labelData: ProductLabelData = {
@@ -141,7 +141,7 @@ export function VerificacionesRecientes() {
     try {
       await printStandardLabel(labelData);
     } catch (err) {
-      console.error('Error al reimprimir etiqueta:', err);
+      console.error('Error al reimprimer etiqueta:', err);
     }
   };
 
@@ -155,7 +155,7 @@ export function VerificacionesRecientes() {
             style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
           >
             <FileText className="w-4 h-4 mr-2" />
-            {t('inventory.recentVerifications')}
+            Vérifications Récentes
           </Button>
         </DialogTrigger>
         
@@ -191,11 +191,11 @@ export function VerificacionesRecientes() {
                     className="flex items-center gap-2"
                     style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, fontSize: '1.5rem', color: 'white' }}
                   >
-                    {t('common.recentEntriesVerifications')}
+                    Vérifications des Entrées Récentes
                     <Sparkles className="w-5 h-5 text-white/80 animate-pulse" />
                   </DialogTitle>
                   <DialogDescription id="recent-verifications-description" className="sr-only">
-                    {t('inventory.verificationHistory')}
+                    Historique des vérifications
                   </DialogDescription>
                 </div>
               </div>
@@ -233,14 +233,14 @@ export function VerificacionesRecientes() {
                 <div className="col-span-3">
                   <Label className="text-[#555555] text-xs mb-2 block font-semibold flex items-center gap-1.5">
                     <Filter className="w-4 h-4 text-[#1E73BE]" />
-                    {t('common.entryType')}
+                    Type d'Entrée
                   </Label>
                   <Select value={tipoFiltro} onValueChange={setTipoFiltro}>
                     <SelectTrigger className="h-10 border-2 rounded-lg">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="todos">{t('common.all')}</SelectItem>
+                      <SelectItem value="todos">Tous</SelectItem>
                       {tiposUnicos.map(tipo => (
                         <SelectItem key={tipo} value={tipo}>
                           {tipo.toUpperCase()}
@@ -257,7 +257,7 @@ export function VerificacionesRecientes() {
                     style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
                   >
                     <Printer className="w-4 h-4 mr-2" />
-                    {t('common.print')}
+                    Imprimer
                   </Button>
                   <Button
                     onClick={() => {
@@ -276,25 +276,25 @@ export function VerificacionesRecientes() {
               {/* Resumen */}
               <div className="grid grid-cols-4 gap-4 mt-4">
                 <div className="bg-white rounded-lg p-3 border-2 border-[#E3F2FD] shadow-sm">
-                  <p className="text-xs text-[#666666] font-medium mb-1">{t('common.totalEntries')}</p>
+                  <p className="text-xs text-[#666666] font-medium mb-1">Total d'Entrées</p>
                   <p className="text-2xl font-bold text-[#1E73BE]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     {filteredEntradas.length}
                   </p>
                 </div>
                 <div className="bg-white rounded-lg p-3 border-2 border-[#E8F5E9] shadow-sm">
-                  <p className="text-xs text-[#666666] font-medium mb-1">{t('common.totalQuantity')}</p>
+                  <p className="text-xs text-[#666666] font-medium mb-1">Quantité Totale</p>
                   <p className="text-2xl font-bold text-[#4CAF50]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     {totalCantidad}
                   </p>
                 </div>
                 <div className="bg-white rounded-lg p-3 border-2 border-[#FFF8E1] shadow-sm">
-                  <p className="text-xs text-[#666666] font-medium mb-1">{t('common.totalWeight')}</p>
+                  <p className="text-xs text-[#666666] font-medium mb-1">Poids Total</p>
                   <p className="text-2xl font-bold text-[#FFC107]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     {totalPeso.toFixed(2)} kg
                   </p>
                 </div>
                 <div className="bg-white rounded-lg p-3 border-2 border-[#FCE4EC] shadow-sm">
-                  <p className="text-xs text-[#666666] font-medium mb-1">{t('common.averagePerEntry')}</p>
+                  <p className="text-xs text-[#666666] font-medium mb-1">Moyenne par Entrée</p>
                   <p className="text-2xl font-bold text-[#E91E63]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     {filteredEntradas.length > 0 ? (totalPeso / filteredEntradas.length).toFixed(2) : '0.00'} kg
                   </p>
@@ -309,13 +309,13 @@ export function VerificacionesRecientes() {
             <div className="hidden print:block mb-6">
               <div className="text-center border-b-2 border-[#1E73BE] pb-4 mb-4">
                 <h1 className="text-2xl font-bold text-[#1E73BE] mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  {t('common.foodBank')}
+                  BANQUE ALIMENTAIRE
                 </h1>
                 <h2 className="text-xl font-semibold text-[#333333]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  {t('common.inventoryEntriesVerifications')}
+                  Vérifications des Entrées d'Inventaire
                 </h2>
                 <p className="text-sm text-[#666666] mt-2">
-                  {t('common.printDate')} {new Date().toLocaleDateString('es-ES', { 
+                  Date d'Impression: {new Date().toLocaleDateString('fr-FR', { 
                     day: '2-digit', 
                     month: 'long', 
                     year: 'numeric',
@@ -325,7 +325,7 @@ export function VerificacionesRecientes() {
                 </p>
                 {(fechaInicio || fechaFin) && (
                   <p className="text-sm text-[#666666]">
-                    {t('common.period')} {fechaInicio ? new Date(fechaInicio).toLocaleDateString('es-ES') : t('common.start')} - {fechaFin ? new Date(fechaFin).toLocaleDateString('es-ES') : t('common.today')}
+                    Période: {fechaInicio ? new Date(fechaInicio).toLocaleDateString('fr-FR') : 'Début'} - {fechaFin ? new Date(fechaFin).toLocaleDateString('fr-FR') : "Aujourd'hui"}
                   </p>
                 )}
               </div>
@@ -333,19 +333,19 @@ export function VerificacionesRecientes() {
               {/* Resumen para impresión */}
               <div className="grid grid-cols-4 gap-3 mb-4 text-center">
                 <div className="border border-[#1E73BE] rounded p-2">
-                  <p className="text-xs text-[#666666] font-medium">{t('common.totalEntries')}</p>
+                  <p className="text-xs text-[#666666] font-medium">Total d'Entrées</p>
                   <p className="text-lg font-bold text-[#1E73BE]">{filteredEntradas.length}</p>
                 </div>
                 <div className="border border-[#4CAF50] rounded p-2">
-                  <p className="text-xs text-[#666666] font-medium">{t('common.totalQuantity')}</p>
+                  <p className="text-xs text-[#666666] font-medium">Quantité Totale</p>
                   <p className="text-lg font-bold text-[#4CAF50]">{totalCantidad}</p>
                 </div>
                 <div className="border border-[#FFC107] rounded p-2">
-                  <p className="text-xs text-[#666666] font-medium">{t('common.totalWeight')}</p>
+                  <p className="text-xs text-[#666666] font-medium">Poids Total</p>
                   <p className="text-lg font-bold text-[#FFC107]">{totalPeso.toFixed(2)} kg</p>
                 </div>
                 <div className="border border-[#E91E63] rounded p-2">
-                  <p className="text-xs text-[#666666] font-medium">{t('common.averagePerEntry')}</p>
+                  <p className="text-xs text-[#666666] font-medium">Moyenne par Entrée</p>
                   <p className="text-lg font-bold text-[#E91E63]">
                     {filteredEntradas.length > 0 ? (totalPeso / filteredEntradas.length).toFixed(2) : '0.00'} kg
                   </p>
@@ -404,12 +404,12 @@ export function VerificacionesRecientes() {
                       {/* Columna 2: Donador/Proveedor */}
                       <div className="col-span-3 print:col-span-3">
                         <Label className="text-[10px] text-[#999999] font-semibold mb-1 block print:text-[8px]">
-                          {t('common.donorSupplier')}
+                          DONATEUR/FOURNISSEUR
                         </Label>
                         <div className="flex items-center gap-2">
                           <Building2 className="w-4 h-4 text-[#4CAF50] print:w-3 print:h-3" />
                           <p className="text-sm font-semibold text-[#333333] print:text-xs">
-                            {entrada.donadorNombre}
+                            {entrada.donadorNombre || 'Sans nom'}
                           </p>
                         </div>
                       </div>
@@ -417,7 +417,7 @@ export function VerificacionesRecientes() {
                       {/* Columna 3: Producto */}
                       <div className="col-span-4 print:col-span-4">
                         <Label className="text-[10px] text-[#999999] font-semibold mb-1 block print:text-[8px]">
-                          {t('common.product').toUpperCase()}
+                          PRODUIT
                         </Label>
                         <div className="flex items-start gap-2">
                           <span className="text-2xl print:text-lg">{entrada.productoIcono || '📦'}</span>
@@ -435,25 +435,25 @@ export function VerificacionesRecientes() {
                       {/* Columna 4: Cantidades */}
                       <div className="col-span-3 print:col-span-3">
                         <Label className="text-[10px] text-[#999999] font-semibold mb-1 block print:text-[8px]">
-                          {t('common.quantities')}
+                          QUANTITÉS
                         </Label>
                         <div className="space-y-1">
                           <div className="flex items-center justify-between bg-[#E3F2FD] px-3 py-1.5 rounded-lg print:bg-gray-100">
-                            <span className="text-xs text-[#666666] print:text-[9px]">{t('common.quantity')}</span>
+                            <span className="text-xs text-[#666666] print:text-[9px]">Quantité</span>
                             <span className="text-sm font-bold text-[#1E73BE] print:text-xs">
                               {entrada.cantidad} {entrada.unidad}
                             </span>
                           </div>
                           <div className="flex items-center justify-between bg-[#E8F5E9] px-3 py-1.5 rounded-lg print:bg-gray-100">
-                            <span className="text-xs text-[#666666] print:text-[9px]">{t('common.unitWeight')}</span>
+                            <span className="text-xs text-[#666666] print:text-[9px]">Poids Unit.</span>
                             <span className="text-sm font-bold text-[#4CAF50] print:text-xs">
-                              {entrada.pesoUnidad.toFixed(2)} kg
+                              {(entrada.pesoUnidad || 0).toFixed(2)} kg
                             </span>
                           </div>
                           <div className="flex items-center justify-between bg-gradient-to-r from-[#FFF8E1] to-[#FFECB3] px-3 py-1.5 rounded-lg print:bg-gray-100">
-                            <span className="text-xs text-[#666666] font-bold print:text-[9px]">{t('common.totalWeight')}</span>
+                            <span className="text-xs text-[#666666] font-bold print:text-[9px]">Poids Total</span>
                             <span className="text-sm font-bold text-[#F57C00] print:text-xs">
-                              {entrada.pesoTotal.toFixed(2)} kg
+                              {(entrada.pesoTotal || 0).toFixed(2)} kg
                             </span>
                           </div>
                         </div>
@@ -473,28 +473,28 @@ export function VerificacionesRecientes() {
                       <div className="mt-3 pt-3 border-t border-[#E0E0E0] grid grid-cols-3 gap-3 print:mt-2 print:pt-2 print:gap-2">
                         {entrada.lote && (
                           <div>
-                            <Label className="text-[9px] text-[#999999] print:text-[8px]">{t('common.lot')}</Label>
+                            <Label className="text-[9px] text-[#999999] print:text-[8px]">Lot</Label>
                             <p className="text-xs text-[#333333] font-medium print:text-[9px]">{entrada.lote}</p>
                           </div>
                         )}
                         {entrada.fechaCaducidad && (
                           <div>
-                            <Label className="text-[9px] text-[#999999] print:text-[8px]">{t('common.expiry')}</Label>
+                            <Label className="text-[9px] text-[#999999] print:text-[8px]">Expiration</Label>
                             <p className="text-xs text-[#333333] font-medium print:text-[9px]">
-                              {new Date(entrada.fechaCaducidad).toLocaleDateString('es-ES')}
+                              {new Date(entrada.fechaCaducidad).toLocaleDateString('fr-FR')}
                             </p>
                           </div>
                         )}
                         {entrada.observaciones && (
                           <div className="col-span-2">
-                            <Label className="text-[9px] text-[#999999] print:text-[8px]">{t('common.observations')}</Label>
+                            <Label className="text-[9px] text-[#999999] print:text-[8px]">Observations</Label>
                             <p className="text-xs text-[#333333] print:text-[9px]">{entrada.observaciones}</p>
                           </div>
                         )}
                       </div>
                     )}
 
-                    {/* Botón de reimprimir etiqueta - Solo visible en pantalla */}
+                    {/* Botón de reimprimer etiqueta - Solo visible en pantalla */}
                     <div className="mt-3 pt-3 border-t border-[#E0E0E0] flex justify-end print:hidden">
                       <Button
                         onClick={() => handleReimprimirEtiqueta(entrada)}
@@ -503,7 +503,7 @@ export function VerificacionesRecientes() {
                         style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
                       >
                         <Tag className="w-4 h-4 mr-2" />
-                        {t('common.reprintLabel')}
+                        Réimprimer l'étiquette
                       </Button>
                     </div>
                   </div>
@@ -520,7 +520,7 @@ export function VerificacionesRecientes() {
               className="h-11 px-8 border-2 border-[#999999] text-[#666666] hover:bg-[#F5F5F5] text-sm rounded-lg"
               style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
             >
-              {t('common.close')}
+              Fermer
             </Button>
           </div>
         </DialogContent>

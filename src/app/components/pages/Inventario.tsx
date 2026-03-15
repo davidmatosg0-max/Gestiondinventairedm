@@ -142,8 +142,8 @@ export function Inventario() {
   const [vistaPreviewLista, setVistaPreviewLista] = useState(false);
   
   // Estados para historial y transformación
-  const [historialDialogOpen, setHistorialDialogOpen] = useState(false);
   const [transformarDialogOpen, setTransformarDialogOpen] = useState(false);
+  const [historialProductoDialogOpen, setHistorialProductoDialogOpen] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState<ProductoCreado | null>(null);
   
   // Estado para conversión de unidades
@@ -695,7 +695,7 @@ export function Inventario() {
 
   const abrirHistorialProducto = (producto: ProductoCreado) => {
     setProductoSeleccionado(producto);
-    setHistorialDialogOpen(true);
+    setHistorialProductoDialogOpen(true);
   };
 
   const abrirTransformarProducto = (producto: ProductoCreado) => {
@@ -1910,9 +1910,21 @@ export function Inventario() {
                               variant="outline"
                               onClick={() => abrirConversionUnidades(producto)}
                               title="Convertir unidades"
-                              className="flex-1"
+                              className="flex-1 hover:bg-blue-50 hover:border-[#1a4d7a]"
                             >
-                              <ArrowLeftRight className="h-4 w-4" />
+                              <ArrowLeftRight className="h-4 w-4 text-[#1a4d7a]" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setProductoSeleccionado(producto);
+                                setHistorialProductoDialogOpen(true);
+                              }}
+                              title="Ver historial"
+                              className="flex-1 hover:bg-purple-50 hover:border-[#9C27B0]"
+                            >
+                              <History className="h-4 w-4 text-[#9C27B0]" />
                             </Button>
                             <Button
                               size="sm"
@@ -2516,9 +2528,10 @@ export function Inventario() {
       {/* Historial Producto Dialog */}
       {productoSeleccionado && (
         <HistorialProductoDialog
-          open={historialDialogOpen}
-          onOpenChange={setHistorialDialogOpen}
-          producto={productoSeleccionado}
+          open={historialProductoDialogOpen}
+          onOpenChange={setHistorialProductoDialogOpen}
+          productoId={productoSeleccionado.id}
+          categoriasInfo={categoriasInfo}
         />
       )}
 

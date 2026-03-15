@@ -22,6 +22,8 @@ export interface MovimientoExtendido extends MovimientoInventario {
   observaciones?: string;
   cantidadAnterior?: number; // Stock antes del movimiento
   cantidadActual?: number; // Stock después del movimiento
+  pesoUnitario?: number; // Peso unitario de entrada (en kg)
+  fechaEntrada?: string; // Fecha de entrada del producto
 }
 
 /**
@@ -82,7 +84,9 @@ export function registrarEntrada(
   usuario: string,
   documentoReferencia?: string,
   cantidadAnterior?: number,
-  cantidadActual?: number
+  cantidadActual?: number,
+  pesoUnitario?: number,
+  fechaEntrada?: string
 ): MovimientoExtendido {
   return registrarMovimiento({
     tipo: 'entrada',
@@ -92,7 +96,9 @@ export function registrarEntrada(
     usuario,
     documentoReferencia,
     cantidadAnterior,
-    cantidadActual
+    cantidadActual,
+    pesoUnitario,
+    fechaEntrada
   });
 }
 
