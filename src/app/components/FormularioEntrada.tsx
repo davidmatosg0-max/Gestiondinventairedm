@@ -339,6 +339,8 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
       cantidad: 0,
       unidad: '',
       peso: 0,
+      valorUnitario: 0,
+      valorTotal: 0,
       temperatura: '',
       fechaCaducidad: '',
       lote: '',
@@ -700,6 +702,16 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
       });
     }
   }, [formData.tipoEntrada, tipoContactoPermitido, contactos, contactosFiltrados, esTipoEntradaPRS, productosPRS]);
+
+  // 🔍 DEBUG: Monitorear cambios en valores monetarios
+  useEffect(() => {
+    console.log('💰 Estado Valores Monetarios:', {
+      valorUnitario: formData.valorUnitario,
+      cantidad: formData.cantidad,
+      valorTotal: formData.valorTotal,
+      calculoEsperado: (formData.valorUnitario || 0) * (formData.cantidad || 0)
+    });
+  }, [formData.valorUnitario, formData.cantidad, formData.valorTotal]);
 
   return (
     <>
@@ -1268,12 +1280,22 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                       step="1"
                       value={formData.cantidad || ''}
                       onChange={(e) => {
-                        const cantidad = parseFloat(e.target.value) || 0;
+                        const inputValue = e.target.value;
+                        const cantidad = inputValue === '' ? 0 : parseFloat(inputValue);
                         const valorUnitario = formData.valorUnitario || 0;
+                        const valorTotal = cantidad * valorUnitario;
+                        
+                        console.log('📦 Cambio de Cantidad - Recálculo Valor:', {
+                          cantidad,
+                          valorUnitario,
+                          valorTotal,
+                          formula: `${cantidad} × ${valorUnitario} = ${valorTotal}`
+                        });
+                        
                         setFormData(prev => ({ 
                           ...prev, 
                           cantidad,
-                          valorTotal: cantidad * valorUnitario
+                          valorTotal
                         }));
                       }}
                       placeholder="0"
@@ -1435,6 +1457,9 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                 <div className="space-y-2">
                   <Label htmlFor="valorUnitario" className="text-sm font-medium flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     💰 Valeur unitaire (CAD$)
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-blue-50 text-blue-700 border-blue-200">
+                      Par {formData.unidad || 'unité'}
+                    </Badge>
                   </Label>
                   <div className="relative">
                     <Input
@@ -1444,12 +1469,22 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                       step="0.01"
                       value={formData.valorUnitario || ''}
                       onChange={(e) => {
-                        const valorUnitario = parseFloat(e.target.value) || 0;
+                        const inputValue = e.target.value;
+                        const valorUnitario = inputValue === '' ? 0 : parseFloat(inputValue);
                         const cantidad = formData.cantidad || 0;
+                        const valorTotal = cantidad * valorUnitario;
+                        
+                        console.log('💰 Cálculo Valor Monetario:', {
+                          valorUnitario,
+                          cantidad,
+                          valorTotal,
+                          formula: `${cantidad} × ${valorUnitario} = ${valorTotal}`
+                        });
+                        
                         setFormData(prev => ({ 
                           ...prev, 
                           valorUnitario,
-                          valorTotal: cantidad * valorUnitario
+                          valorTotal
                         }));
                       }}
                       placeholder="0.00"
@@ -1459,27 +1494,47 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                       CAD$
                     </div>
                   </div>
+                  {/* Indicador de valor ingresado */}
+                  {formData.valorUnitario && formData.valorUnitario > 0 && (
+                    <div className="flex items-center gap-1 text-xs text-blue-600">
+                      <span>✓</span>
+                      <span>Valeur unitaire: CAD$ {(formData.valorUnitario || 0).toFixed(2)} / {formData.unidad || 'unité'}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Valor Total (calculado automáticamente) */}
                 <div className="space-y-2">
                   <Label htmlFor="valorTotal" className="text-sm font-medium flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     💵 Valeur totale (CAD$)
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-green-50 text-green-700 border-green-200">
+                      Calculé automatiquement
+                    </Badge>
                   </Label>
                   <div className="relative">
                     <Input
                       id="valorTotal"
-                      type="number"
-                      value={(formData.valorTotal || 0).toFixed(2)}
+                      type="text"
+                      value={`${(formData.valorTotal || 0).toFixed(2)}`}
                       readOnly
-                      disabled
-                      className="h-11 text-sm pr-16 bg-gray-50 text-gray-700 font-bold border-gray-300"
+                      className={`h-11 text-sm pr-16 font-bold border-2 cursor-not-allowed transition-all ${
+                        formData.valorTotal && formData.valorTotal > 0 
+                          ? 'bg-green-50 text-green-800 border-green-300' 
+                          : 'bg-gray-50 text-gray-700 border-gray-300'
+                      }`}
                       placeholder="0.00"
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#999999] text-xs font-medium pointer-events-none">
                       CAD$
                     </div>
                   </div>
+                  {/* Indicador visual del cálculo en tiempo real */}
+                  {formData.valorTotal > 0 && (
+                    <div className="flex items-center gap-1 text-xs text-green-600">
+                      <span>✓</span>
+                      <span>Valeur calculée: {formData.cantidad} × CAD$ {(formData.valorUnitario || 0).toFixed(2)} = CAD$ {(formData.valorTotal || 0).toFixed(2)}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

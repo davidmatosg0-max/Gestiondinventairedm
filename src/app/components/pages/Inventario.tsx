@@ -78,6 +78,11 @@ import { PlantillasConversion } from '../conversion/PlantillasConversion';
 import { GuiaConversiones } from '../conversion/GuiaConversiones';
 import { EscanerQRInventario } from '../inventario/EscanerQRInventario';
 import { useBranding } from '../../../hooks/useBranding';
+import { 
+  migrarValoresMonetariosDesdeEntradas,
+  recalcularValoresTotales,
+  obtenerEstadisticasValoresMonetarios
+} from '../../utils/migrarValoresMonetarios';
 
 type CarritoItem = {
   productoId: string;
