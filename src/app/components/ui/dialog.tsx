@@ -53,10 +53,8 @@ const DialogContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => {
   const generatedId = React.useId();
   
-  // Check if aria-describedby was explicitly provided with a truthy non-empty value
-  const ariaDescribedBy = props['aria-describedby'];
-  const hasExplicitDescribedBy = ariaDescribedBy !== undefined && ariaDescribedBy !== null && ariaDescribedBy !== '';
-  const finalAriaDescribedBy = hasExplicitDescribedBy ? ariaDescribedBy : generatedId;
+  // Always use generated ID for consistency
+  const finalAriaDescribedBy = generatedId;
   
   return (
     <DialogPortal>
@@ -64,7 +62,7 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         data-slot="dialog-content"
-        aria-describedby={finalAriaDescribedBy}
+        aria-describedby={props['aria-describedby'] || finalAriaDescribedBy}
         {...props}
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200",
@@ -72,12 +70,10 @@ const DialogContent = React.forwardRef<
           className,
         )}
       >
-        {/* Only render fallback description if no explicit aria-describedby is provided */}
-        {!hasExplicitDescribedBy && (
-          <DialogPrimitive.Description id={finalAriaDescribedBy} className="sr-only">
-            Dialog content
-          </DialogPrimitive.Description>
-        )}
+        {/* Render fallback description to ensure accessibility */}
+        <DialogPrimitive.Description id={finalAriaDescribedBy} className="sr-only">
+          Dialog content
+        </DialogPrimitive.Description>
         {children}
         <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
           <XIcon />

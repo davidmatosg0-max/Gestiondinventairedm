@@ -283,6 +283,76 @@ export function agregarSubcategoria(
 }
 
 /**
+ * Agregar una nueva variante a una subcategoría
+ */
+export function agregarVariante(
+  categoriaId: string,
+  subcategoriaId: string,
+  datosVariante: {
+    nombre: string;
+    codigo?: string;
+    icono?: string;
+    unidad?: string;
+    valorPorKg?: number;
+    pesoUnitario?: number;
+    descripcion?: string;
+  }
+): { id: string; nombre: string } | null {
+  try {
+    const categorias = obtenerCategorias();
+    let varianteCreada: { id: string; nombre: string } | null = null;
+
+    const categoriasActualizadas = categorias.map(cat => {
+      if (cat.id === categoriaId) {
+        const subcategoriasActualizadas = cat.subcategorias?.map(sub => {
+          if (sub.id === subcategoriaId) {
+            const nuevaVariante = {
+              id: `var-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              nombre: datosVariante.nombre.trim(),
+              codigo: datosVariante.codigo?.trim() || '',
+              icono: datosVariante.icono || '🏷️',
+              activa: true,
+              unidad: datosVariante.unidad || sub.unidad || '',
+              valorPorKg: datosVariante.valorPorKg || undefined,
+              pesoUnitario: datosVariante.pesoUnitario || undefined,
+              descripcion: datosVariante.descripcion?.trim() || '',
+            };
+
+            varianteCreada = { id: nuevaVariante.id, nombre: nuevaVariante.nombre };
+            console.log('🔧 Variante creada con datos:', JSON.stringify(nuevaVariante, null, 2));
+
+            return {
+              ...sub,
+              variantes: [...(sub.variantes || []), nuevaVariante]
+            };
+          }
+          return sub;
+        });
+
+        return {
+          ...cat,
+          subcategorias: subcategoriasActualizadas
+        };
+      }
+      return cat;
+    });
+
+    if (varianteCreada) {
+      guardarCategorias(categoriasActualizadas);
+      console.log(`✅ Variante creada: ${varianteCreada.nombre}`);
+      
+      // Disparar evento de actualización
+      window.dispatchEvent(new Event('categorias-actualizadas'));
+    }
+
+    return varianteCreada;
+  } catch (error) {
+    console.error('Error al agregar variante:', error);
+    return null;
+  }
+}
+
+/**
  * Actualizar el peso unitario de una variante específica
  * ⚠️ EXCEPCIÓN: NO memoriza si la unidad es PLT (paleta)
  */

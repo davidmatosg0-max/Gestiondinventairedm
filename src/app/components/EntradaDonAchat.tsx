@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
 import { toast } from 'sonner';
 import { cn } from './ui/utils';
+import { IconSelector } from './ui/IconSelector';
 import { obtenerProductosActivos, guardarProducto, type ProductoCreado } from '../utils/productStorage';
 import { guardarEntrada } from '../utils/entradaInventarioStorage';
 import { type Categoria } from '../data/configuracionData';
@@ -32,7 +33,8 @@ import {
   obtenerCategorias, 
   obtenerPesoUnitario, 
   obtenerPesoPorUnidad, 
-  agregarSubcategoria, 
+  agregarSubcategoria,
+  agregarVariante,
   guardarCategorias 
 } from '../utils/categoriaStorage';
 import { obtenerUnidades, type Unidad } from '../utils/unidadStorage';
@@ -55,13 +57,23 @@ interface FormDataDonAchat {
   tipoEntrada: string;
   donadorId: string;
   participantePRSId?: string;
+  
+  // Sistema en cascada: Categoría → Subcategoría → Variante
+  categoriaId: string;
+  categoriaNombre: string;
+  subcategoriaId: string;
+  subcategoriaNombre: string;
+  varianteId: string;
+  varianteNombre: string;
+  
+  // Campos legacy (mantener por compatibilidad)
   productoId: string;
   nombreProducto: string;
   productoCustom: string;
   categoria: string;
   subcategoria: string;
-  varianteId?: string;
   productoIcono?: string;
+  
   cantidad: number;
   unidad: string;
   peso: number;
@@ -81,6 +93,10 @@ interface ProductoAgregado {
   temperatura: string;
   categoria?: string;
   subcategoria?: string;
+  variante?: string;
+  categoriaId?: string;
+  subcategoriaId?: string;
+  varianteId?: string;
   lote?: string;
   fechaCaducidad?: string;
   detallesEmpaque?: string;
@@ -117,12 +133,23 @@ const FORM_DATA_INICIAL: FormDataDonAchat = {
   tipoEntrada: '',
   donadorId: '',
   participantePRSId: '',
+  
+  // Sistema en cascada
+  categoriaId: '',
+  categoriaNombre: '',
+  subcategoriaId: '',
+  subcategoriaNombre: '',
+  varianteId: '',
+  varianteNombre: '',
+  
+  // Legacy
   productoId: '',
   nombreProducto: '',
   productoCustom: '',
   categoria: '',
   subcategoria: '',
   productoIcono: '',
+  
   cantidad: 0,
   unidad: '',
   peso: 0,
@@ -177,6 +204,12 @@ export function EntradaDonAchat() {
   const [contactosAlmacen, setContactosAlmacen] = useState<ContactoDepartamento[]>([]);
   
   // ========== Estados de UI ==========
+  const [comboboxCategoriaOpen, setComboboxCategoriaOpen] = useState(false);
+  const [comboboxSubcategoriaOpen, setComboboxSubcategoriaOpen] = useState(false);
+  const [comboboxVarianteOpen, setComboboxVarianteOpen] = useState(false);
+  const [searchCategoriaQuery, setSearchCategoriaQuery] = useState('');
+  const [searchSubcategoriaQuery, setSearchSubcategoriaQuery] = useState('');
+  const [searchVarianteQuery, setSearchVarianteQuery] = useState('');
   const [comboboxProductoOpen, setComboboxProductoOpen] = useState(false);
   const [searchProductoQuery, setSearchProductoQuery] = useState('');
   const [selectContactoOpen, setSelectContactoOpen] = useState(false);
@@ -272,6 +305,12 @@ export function EntradaDonAchat() {
       setProductosDB(productosActivos);
     };
 
+    const handleCategoriasActualizadas = () => {
+      console.log('🔄 Categorías actualizadas');
+      const categoriasActualizadas = obtenerCategorias();
+      setCategoriasDB(categoriasActualizadas);
+    };
+
     const handleUnidadesActualizadas = () => {
       console.log('🔄 Unidades actualizadas');
       const unidadesCargadas = obtenerUnidades();
@@ -291,6 +330,9 @@ export function EntradaDonAchat() {
       if (e.key === 'banco_alimentos_productos' || e.key === null) {
         handleProductosActualizados();
       }
+      if (e.key === 'bancoAlimentos_categorias' || e.key === null) {
+        handleCategoriasActualizadas();
+      }
       if (e.key === 'bancoAlimentos_programasEntrada' || e.key === null) {
         handleProgramasActualizados();
       }
@@ -298,6 +340,7 @@ export function EntradaDonAchat() {
 
     window.addEventListener('contactos-actualizados', handleContactosActualizados);
     window.addEventListener('productos-actualizados', handleProductosActualizados);
+    window.addEventListener('categorias-actualizadas', handleCategoriasActualizadas);
     window.addEventListener('unidadesActualizadas', handleUnidadesActualizadas);
     window.addEventListener('programas-actualizados', handleProgramasActualizados);
     window.addEventListener('storage', handleStorageChange);
@@ -305,6 +348,7 @@ export function EntradaDonAchat() {
     return () => {
       window.removeEventListener('contactos-actualizados', handleContactosActualizados);
       window.removeEventListener('productos-actualizados', handleProductosActualizados);
+      window.removeEventListener('categorias-actualizadas', handleCategoriasActualizadas);
       window.removeEventListener('unidadesActualizadas', handleUnidadesActualizadas);
       window.removeEventListener('programas-actualizados', handleProgramasActualizados);
       window.removeEventListener('storage', handleStorageChange);
@@ -456,11 +500,44 @@ export function EntradaDonAchat() {
     ]);
   }, [searchContactoQuery, contactosDisponibles]);
 
+  // ========== FILTROS EN CASCADA: CATEGORÍA → SUBCATEGORÍA → VARIANTE ==========
+  
+  // 1. Filtrar categorías según si es PRS o no
+  const categoriasFiltradas = useMemo(() => {
+    const esProgramaPRS = formData.tipoEntrada === 'prs';
+    return categoriasDB.filter(cat => cat.activa);
+  }, [categoriasDB, formData.tipoEntrada]);
+
+  // 2. Obtener subcategorías de la categoría seleccionada
+  const subcategoriasDisponibles = useMemo(() => {
+    if (!formData.categoriaId) return [];
+    const categoria = categoriasDB.find(c => c.id === formData.categoriaId);
+    return categoria?.subcategorias?.filter(sub => sub.activa) || [];
+  }, [categoriasDB, formData.categoriaId]);
+
+  // 3. Obtener variantes de la subcategoría seleccionada
+  const variantesDisponibles = useMemo(() => {
+    if (!formData.subcategoriaId) return [];
+    const categoria = categoriasDB.find(c => c.id === formData.categoriaId);
+    const subcategoria = categoria?.subcategorias?.find(s => s.id === formData.subcategoriaId);
+    return subcategoria?.variantes || [];
+  }, [categoriasDB, formData.categoriaId, formData.subcategoriaId]);
+
   const productosFiltrados = useMemo(() => {
     const esProgramaPRS = formData.tipoEntrada === 'prs';
     let productos = productosDB.filter(p => {
       const esProductoPRS = p.esPRS === true;
       return esProgramaPRS ? esProductoPRS : !esProductoPRS;
+    });
+
+    // 🐛 DEBUG: Ver productos filtrados
+    console.log(`🔍 DEBUG Productos:`, {
+      total: productosDB.length,
+      esProgramaPRS,
+      productosPRS: productosDB.filter(p => p.esPRS === true).length,
+      productosNoPRS: productosDB.filter(p => !p.esPRS).length,
+      productosFiltrados: productos.length,
+      tipoEntrada: formData.tipoEntrada
     });
 
     if (searchProductoQuery && searchProductoQuery.length >= 3) {
@@ -470,14 +547,38 @@ export function EntradaDonAchat() {
     return productos;
   }, [productosDB, formData.tipoEntrada, searchProductoQuery]);
 
+  // Agrupar productos por categoría para mostrar organizados
+  const productosAgrupadosPorCategoria = useMemo(() => {
+    const grupos = new Map<string, ProductoCreado[]>();
+    
+    // Validar que productosFiltrados sea un array
+    if (!Array.isArray(productosFiltrados)) {
+      return [];
+    }
+    
+    productosFiltrados.forEach(producto => {
+      const categoriaKey = producto.categoria || 'Sin categoría';
+      if (!grupos.has(categoriaKey)) {
+        grupos.set(categoriaKey, []);
+      }
+      grupos.get(categoriaKey)!.push(producto);
+    });
+    
+    return Array.from(grupos.entries()).map(([categoria, productos]) => ({
+      categoria,
+      productos: productos.sort((a, b) => a.nombre.localeCompare(b.nombre)),
+      icono: productos[0]?.icono || '📦'
+    }));
+  }, [productosFiltrados]);
+
   const categoriaSeleccionada = useMemo(() => 
-    categoriasDB.find(c => c.codigo === formData.categoria),
-    [categoriasDB, formData.categoria]
+    categoriasDB.find(c => c.id === formData.categoriaId),
+    [categoriasDB, formData.categoriaId]
   );
 
   const subcategoriaSeleccionada = useMemo(() => 
-    categoriaSeleccionada?.subcategorias?.find(s => s.codigo === formData.subcategoria),
-    [categoriaSeleccionada, formData.subcategoria]
+    categoriaSeleccionada?.subcategorias?.find(s => s.id === formData.subcategoriaId),
+    [categoriaSeleccionada, formData.subcategoriaId]
   );
 
   const varianteSeleccionada = useMemo(() => 
@@ -531,6 +632,73 @@ export function EntradaDonAchat() {
   const handleFieldChange = useCallback((field: keyof FormDataDonAchat, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
+
+  // ========== HANDLERS EN CASCADA ==========
+  
+  const handleCategoriaSelect = useCallback((categoriaId: string) => {
+    const categoria = categoriasDB.find(c => c.id === categoriaId);
+    if (!categoria) return;
+
+    setFormData(prev => ({
+      ...prev,
+      categoriaId: categoria.id,
+      categoriaNombre: categoria.nombre,
+      categoria: categoria.nombre, // Legacy
+      subcategoriaId: '',
+      subcategoriaNombre: '',
+      subcategoria: '', // Legacy
+      varianteId: '',
+      varianteNombre: '',
+      nombreProducto: '',
+      productoIcono: categoria.icono || '📦',
+    }));
+
+    setComboboxCategoriaOpen(false);
+    setSearchCategoriaQuery('');
+    toast.success(`Catégorie sélectionnée: ${categoria.nombre}`);
+  }, [categoriasDB]);
+
+  const handleSubcategoriaSelect = useCallback((subcategoriaId: string) => {
+    const categoria = categoriasDB.find(c => c.id === formData.categoriaId);
+    const subcategoria = categoria?.subcategorias?.find(s => s.id === subcategoriaId);
+    if (!subcategoria) return;
+
+    setFormData(prev => ({
+      ...prev,
+      subcategoriaId: subcategoria.id,
+      subcategoriaNombre: subcategoria.nombre,
+      subcategoria: subcategoria.nombre, // Legacy
+      varianteId: '',
+      varianteNombre: '',
+      nombreProducto: `${formData.categoriaNombre} - ${subcategoria.nombre}`,
+      productoIcono: subcategoria.icono || prev.productoIcono,
+      unidad: subcategoria.unidad || '',
+    }));
+
+    setComboboxSubcategoriaOpen(false);
+    setSearchSubcategoriaQuery('');
+    toast.success(`Sous-catégorie sélectionnée: ${subcategoria.nombre}`);
+  }, [categoriasDB, formData.categoriaId, formData.categoriaNombre]);
+
+  const handleVarianteSelect = useCallback((varianteId: string) => {
+    const categoria = categoriasDB.find(c => c.id === formData.categoriaId);
+    const subcategoria = categoria?.subcategorias?.find(s => s.id === formData.subcategoriaId);
+    const variante = subcategoria?.variantes?.find(v => v.id === varianteId);
+    if (!variante) return;
+
+    setFormData(prev => ({
+      ...prev,
+      varianteId: variante.id,
+      varianteNombre: variante.nombre,
+      nombreProducto: `${formData.categoriaNombre} - ${formData.subcategoriaNombre} - ${variante.nombre}`,
+      productoIcono: variante.icono || prev.productoIcono,
+      unidad: variante.unidad || prev.unidad,
+    }));
+
+    setComboboxVarianteOpen(false);
+    setSearchVarianteQuery('');
+    toast.success(`Variante sélectionnée: ${variante.nombre}`);
+  }, [categoriasDB, formData.categoriaId, formData.subcategoriaId, formData.categoriaNombre, formData.subcategoriaNombre]);
 
   const handleProductoSelect = useCallback((productoId: string) => {
     const producto = productosDB.find(p => p.id === productoId);
@@ -606,6 +774,129 @@ export function EntradaDonAchat() {
     }
   }, [formData.cantidad, calcularPesoAuto, calcularPesoTotal]);
 
+  const handleGuardarNuevaVariante = useCallback(() => {
+    // Validaciones
+    if (!formData.categoriaId) {
+      toast.error('Sélectionnez d\'abord une catégorie');
+      return;
+    }
+
+    if (!formData.subcategoriaId) {
+      toast.error('Sélectionnez d\'abord une sous-catégorie');
+      return;
+    }
+
+    if (!formVariante.nombre.trim()) {
+      toast.error('Le nom de la variante est requis');
+      return;
+    }
+
+    try {
+      const varianteCreada = agregarVariante(
+        formData.categoriaId,
+        formData.subcategoriaId,
+        {
+          nombre: formVariante.nombre,
+          codigo: formVariante.codigo,
+          icono: formVariante.icono || '🏷️',
+          unidad: formVariante.unidad,
+          valorPorKg: formVariante.valorPorKg ? parseFloat(formVariante.valorPorKg) : undefined,
+          pesoUnitario: formVariante.pesoUnitario ? parseFloat(formVariante.pesoUnitario) : undefined,
+          descripcion: formVariante.descripcion,
+        }
+      );
+
+      if (varianteCreada) {
+        toast.success(`✅ Variante créée: ${varianteCreada.nombre}`);
+        
+        // Recargar categorías
+        const categoriasActualizadas = obtenerCategorias();
+        setCategoriasDB(categoriasActualizadas);
+        
+        // Seleccionar automáticamente la variante recién creada
+        setFormData(prev => ({
+          ...prev,
+          varianteId: varianteCreada.id,
+          varianteNombre: varianteCreada.nombre,
+          nombreProducto: `${formData.categoriaNombre} - ${formData.subcategoriaNombre} - ${varianteCreada.nombre}`,
+        }));
+        
+        // Limpiar formulario y cerrar diálogo
+        setFormVariante(FORM_VARIANTE_INICIAL);
+        setNuevaVarianteDialogOpen(false);
+      } else {
+        toast.error('Erreur lors de la création de la variante');
+      }
+    } catch (error) {
+      console.error('Error creando variante:', error);
+      toast.error('Erreur lors de la création de la variante');
+    }
+  }, [formData.categoriaId, formData.subcategoriaId, formData.categoriaNombre, formData.subcategoriaNombre, formVariante]);
+
+  // ========== Función: Guardar Nueva Subcategoría ==========
+  const handleGuardarNuevaSubcategoria = useCallback(() => {
+    // Validaciones
+    if (!formData.categoriaId) {
+      toast.error('Sélectionnez d\'abord une catégorie');
+      return;
+    }
+
+    if (!formSubcategoria.nombre.trim()) {
+      toast.error('Le nom de la sous-catégorie est requis');
+      return;
+    }
+
+    try {
+      const subcategoriaCreada = agregarSubcategoria(
+        formData.categoriaId,
+        {
+          nombre: formSubcategoria.nombre,
+          icono: formSubcategoria.icono || '📦',
+          activa: true,
+          unidad: formSubcategoria.unidad,
+          pesoUnitario: formSubcategoria.pesoUnitario > 0 ? formSubcategoria.pesoUnitario : undefined,
+          pesosUnidad: {
+            PLT: formSubcategoria.pesoPLT > 0 ? formSubcategoria.pesoPLT : undefined,
+            CJA: formSubcategoria.pesoCJA > 0 ? formSubcategoria.pesoCJA : undefined,
+            UND: formSubcategoria.pesoUND > 0 ? formSubcategoria.pesoUND : undefined,
+            SAC: formSubcategoria.pesoSAC > 0 ? formSubcategoria.pesoSAC : undefined,
+            BN: formSubcategoria.pesoBN > 0 ? formSubcategoria.pesoBN : undefined,
+            kg: formSubcategoria.pesoKg > 0 ? formSubcategoria.pesoKg : undefined,
+          },
+          descripcion: formSubcategoria.descripcion,
+          stockMinimo: formSubcategoria.stockMinimo > 0 ? formSubcategoria.stockMinimo : undefined,
+        }
+      );
+
+      if (subcategoriaCreada) {
+        toast.success(`✅ Sous-catégorie créée: ${subcategoriaCreada.nombre}`);
+        
+        // Recargar categorías
+        const categoriasActualizadas = obtenerCategorias();
+        setCategoriasDB(categoriasActualizadas);
+        
+        // Seleccionar automáticamente la subcategoría recién creada
+        setFormData(prev => ({
+          ...prev,
+          subcategoriaId: subcategoriaCreada.id,
+          subcategoriaNombre: subcategoriaCreada.nombre,
+          varianteId: '',
+          varianteNombre: '',
+          nombreProducto: `${formData.categoriaNombre} - ${subcategoriaCreada.nombre}`,
+        }));
+        
+        // Limpiar formulario y cerrar diálogo
+        setFormSubcategoria(FORM_SUBCATEGORIA_INICIAL);
+        setNuevaSubcategoriaDialogOpen(false);
+      } else {
+        toast.error('Erreur lors de la création de la sous-catégorie');
+      }
+    } catch (error) {
+      console.error('Error creando subcategoría:', error);
+      toast.error('Erreur lors de la création de la sous-catégorie');
+    }
+  }, [formData.categoriaId, formData.categoriaNombre, formSubcategoria]);
+
   const agregarProductoALista = useCallback(async () => {
     // Validaciones
     if (!formData.tipoEntrada) {
@@ -618,8 +909,14 @@ export function EntradaDonAchat() {
       return;
     }
 
-    if (!formData.nombreProducto && !formData.productoCustom) {
-      toast.error("Le nom du produit est requis");
+    // Validar que al menos tenga categoría y subcategoría
+    if (!formData.categoriaId || !formData.categoriaNombre) {
+      toast.error("Sélectionnez une catégorie");
+      return;
+    }
+
+    if (!formData.subcategoriaId || !formData.subcategoriaNombre) {
+      toast.error("Sélectionnez une sous-catégorie");
       return;
     }
 
@@ -650,8 +947,14 @@ export function EntradaDonAchat() {
         unidad: formData.unidad,
         pesoTotal: formData.peso,
         temperatura: formData.temperatura,
-        categoria: formData.categoria,
-        subcategoria: formData.subcategoria,
+        // Datos en cascada
+        categoriaId: formData.categoriaId,
+        subcategoriaId: formData.subcategoriaId,
+        varianteId: formData.varianteId,
+        // Legacy
+        categoria: formData.categoriaNombre || formData.categoria,
+        subcategoria: formData.subcategoriaNombre || formData.subcategoria,
+        variante: formData.varianteNombre,
         lote: formData.lote,
         fechaCaducidad: formData.fechaCaducidad,
         detallesEmpaque: formData.detallesEmpaque,
@@ -667,13 +970,20 @@ export function EntradaDonAchat() {
       // Limpiar campos del producto
       setFormData(prev => ({
         ...prev,
+        // Resetear sistema en cascada
+        categoriaId: '',
+        categoriaNombre: '',
+        subcategoriaId: '',
+        subcategoriaNombre: '',
+        varianteId: '',
+        varianteNombre: '',
+        // Resetear legacy
         productoId: '',
         nombreProducto: '',
         productoCustom: '',
         productoIcono: '',
         categoria: '',
         subcategoria: '',
-        varianteId: undefined,
         cantidad: 0,
         unidad: '',
         peso: 0,
@@ -697,17 +1007,20 @@ export function EntradaDonAchat() {
       if (!contacto) return;
 
       const labelData: ProductLabelData = {
-        productName: producto.nombreProducto,
-        productIcon: producto.productoIcono,
-        quantity: producto.cantidad,
-        unit: producto.unidad,
-        weight: producto.pesoTotal,
-        temperature: producto.temperatura as 'ambient' | 'refrigerated' | 'frozen',
-        donor: `${contacto.nombre} ${contacto.apellido}`,
-        entryDate: new Date().toISOString(),
-        lotNumber: producto.lote,
-        expiryDate: producto.fechaCaducidad,
-        packagingDetails: producto.detallesEmpaque,
+        id: `PROD-${Date.now()}`,
+        nombreProducto: producto.nombreProducto,
+        productoIcono: producto.productoIcono,
+        categoria: producto.categoria,
+        subcategoria: producto.subcategoria,
+        cantidad: producto.cantidad,
+        unidad: producto.unidad,
+        pesoTotal: producto.pesoTotal || 0,
+        temperatura: producto.temperatura as 'ambiente' | 'refrigerado' | 'congelado',
+        donadorNombre: `${contacto.nombre || ''} ${contacto.apellido || ''}`.trim(),
+        fechaEntrada: new Date().toISOString(),
+        lote: producto.lote,
+        fechaCaducidad: producto.fechaCaducidad,
+        detallesEmpaque: producto.detallesEmpaque,
       };
 
       await printStandardLabel(labelData);
@@ -740,18 +1053,18 @@ export function EntradaDonAchat() {
           icono: prod.productoIcono,
           categoria: prod.categoria || '',
           subcategoria: prod.subcategoria || '',
-          cantidad: prod.cantidad,
+          varianteId: prod.varianteId,
+          varianteNombre: prod.variante,
           unidad: prod.unidad,
           peso: prod.pesoTotal,
           pesoUnitario: prod.cantidad > 0 ? prod.pesoTotal / prod.cantidad : 0,
-          temperatura: prod.temperatura as any,
+          pesoRegistrado: prod.pesoTotal,
+          stockActual: prod.cantidad,
           stockMinimo: 0,
-          stockMaximo: 1000,
-          valorMonetario: 0,
           ubicacion: '',
-          lote: prod.lote,
-          fechaCaducidad: prod.fechaCaducidad,
-          observaciones: formData.observaciones,
+          lote: prod.lote || '',
+          fechaVencimiento: prod.fechaCaducidad || '',
+          temperaturaAlmacenamiento: prod.temperatura as any,
           activo: true,
           esPRS: formData.tipoEntrada === 'prs',
           fechaCreacion: new Date().toISOString(),
@@ -770,6 +1083,8 @@ export function EntradaDonAchat() {
           productoNombre: prod.nombreProducto,
           categoria: prod.categoria || '',
           subcategoria: prod.subcategoria || '',
+          varianteId: prod.varianteId,
+          varianteNombre: prod.variante,
           cantidad: prod.cantidad,
           unidad: prod.unidad,
           pesoTotal: prod.pesoTotal,
@@ -849,12 +1164,12 @@ export function EntradaDonAchat() {
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="entrada-don-achat-description">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
             📦 Enregistrer Entrée Don/Achat
           </DialogTitle>
-          <DialogDescription id="entrada-don-achat-description">
+          <DialogDescription>
             Sélectionnez le type d'entrée et ajoutez les produits à enregistrer
           </DialogDescription>
         </DialogHeader>
@@ -1089,69 +1404,263 @@ export function EntradaDonAchat() {
                 )}
               </div>
 
-              {/* SECTION 3: Producto */}
+              {/* SECTION 3: Sélection Produit en Cascada */}
               <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
                 <Label className="text-base font-semibold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  📦 Produit *
+                  📦 Sélection du produit *
                 </Label>
 
-                <Popover open={comboboxProductoOpen} onOpenChange={setComboboxProductoOpen}>
-                  <PopoverTrigger asChild>
+                {/* PASO 1: Catégorie */}
+                <div>
+                  <Label>1️⃣ Catégorie *</Label>
+                  <Popover open={comboboxCategoriaOpen} onOpenChange={setComboboxCategoriaOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={comboboxCategoriaOpen}
+                        className="w-full justify-between"
+                      >
+                        {formData.categoriaNombre ? (
+                          <span className="flex items-center gap-2">
+                            <span>{formData.productoIcono}</span>
+                            <span>{formData.categoriaNombre}</span>
+                          </span>
+                        ) : (
+                          <span className="text-gray-500">Sélectionner une catégorie...</span>
+                        )}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Rechercher une catégorie..."
+                          value={searchCategoriaQuery}
+                          onValueChange={setSearchCategoriaQuery}
+                        />
+                        <CommandEmpty>Aucune catégorie trouvée</CommandEmpty>
+                        <CommandList className="max-h-[300px]">
+                          <CommandGroup>
+                            {categoriasFiltradas.map((categoria) => (
+                              <CommandItem
+                                key={categoria.id}
+                                value={categoria.id}
+                                onSelect={() => handleCategoriaSelect(categoria.id)}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    formData.categoriaId === categoria.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <span className="mr-2">{categoria.icono}</span>
+                                <div className="flex-1">
+                                  <p className="font-medium">{categoria.nombre}</p>
+                                  <p className="text-xs text-gray-500">
+                                    {categoria.subcategorias?.length || 0} sous-catégories
+                                  </p>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* PASO 2: Sous-catégorie */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label>2️⃣ Sous-catégorie *</Label>
                     <Button
+                      type="button"
                       variant="outline"
-                      role="combobox"
-                      aria-expanded={comboboxProductoOpen}
-                      className="w-full justify-between"
+                      size="sm"
+                      onClick={() => setNuevaSubcategoriaDialogOpen(true)}
+                      disabled={!formData.categoriaId}
+                      className="h-7 text-xs"
                     >
-                      {formData.nombreProducto ? (
-                        <span className="flex items-center gap-2">
-                          <span>{formData.productoIcono}</span>
-                          <span>{formData.nombreProducto}</span>
-                        </span>
-                      ) : (
-                        <span className="text-gray-500">Sélectionner un produit...</span>
-                      )}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      <Plus className="w-3 h-3 mr-1" />
+                      Créer sous-catégorie
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[500px] p-0">
-                    <Command>
-                      <CommandInput
-                        placeholder="Rechercher un produit..."
-                        value={searchProductoQuery}
-                        onValueChange={setSearchProductoQuery}
-                      />
-                      <CommandEmpty>
-                        {searchProductoQuery.length < 3
-                          ? 'Tapez au moins 3 lettres...'
-                          : 'Aucun produit trouvé'}
-                      </CommandEmpty>
-                      <CommandList>
-                        <CommandGroup>
-                          {productosFiltrados.map((producto) => (
-                            <CommandItem
-                              key={producto.id}
-                              value={producto.id}
-                              onSelect={() => handleProductoSelect(producto.id)}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  formData.productoId === producto.id ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              <span className="mr-2">{producto.icono}</span>
-                              <div className="flex-1">
-                                <p className="font-medium">{producto.nombre}</p>
-                                <p className="text-xs text-gray-500">{producto.codigo}</p>
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                  </div>
+                  <Popover 
+                    open={comboboxSubcategoriaOpen} 
+                    onOpenChange={setComboboxSubcategoriaOpen}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={comboboxSubcategoriaOpen}
+                        className="w-full justify-between"
+                        disabled={!formData.categoriaId}
+                      >
+                        {formData.subcategoriaNombre ? (
+                          <span className="flex items-center gap-2">
+                            <span>📦</span>
+                            <span>{formData.subcategoriaNombre}</span>
+                          </span>
+                        ) : (
+                          <span className="text-gray-500">
+                            {formData.categoriaId 
+                              ? 'Sélectionner une sous-catégorie...' 
+                              : 'Sélectionner d\'abord une catégorie'}
+                          </span>
+                        )}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Rechercher une sous-catégorie..."
+                          value={searchSubcategoriaQuery}
+                          onValueChange={setSearchSubcategoriaQuery}
+                        />
+                        <CommandEmpty>Aucune sous-catégorie trouvée</CommandEmpty>
+                        <CommandList className="max-h-[300px]">
+                          <CommandGroup>
+                            {subcategoriasDisponibles.map((subcategoria) => (
+                              <CommandItem
+                                key={subcategoria.id}
+                                value={subcategoria.id}
+                                onSelect={() => handleSubcategoriaSelect(subcategoria.id)}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    formData.subcategoriaId === subcategoria.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <span className="mr-2">{subcategoria.icono || '📦'}</span>
+                                <div className="flex-1">
+                                  <p className="font-medium">{subcategoria.nombre}</p>
+                                  {subcategoria.variantes && subcategoria.variantes.length > 0 && (
+                                    <p className="text-xs text-gray-500">
+                                      {subcategoria.variantes.length} variantes
+                                    </p>
+                                  )}
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* PASO 3: Variante (opcional) */}
+                {formData.subcategoriaId && (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>3️⃣ Variante (optionnel)</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNuevaVarianteDialogOpen(true)}
+                        disabled={!formData.subcategoriaId}
+                        className="h-7 text-xs"
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Créer variante
+                      </Button>
+                    </div>
+                    {variantesDisponibles.length > 0 ? (
+                      <Popover 
+                        open={comboboxVarianteOpen} 
+                        onOpenChange={setComboboxVarianteOpen}
+                      >
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={comboboxVarianteOpen}
+                            className="w-full justify-between"
+                          >
+                            {formData.varianteNombre ? (
+                              <span className="flex items-center gap-2">
+                                <span>🏷️</span>
+                                <span>{formData.varianteNombre}</span>
+                              </span>
+                            ) : (
+                              <span className="text-gray-500">
+                                Sélectionner une variante...
+                              </span>
+                            )}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                      <PopoverContent className="w-[400px] p-0">
+                        <Command>
+                          <CommandInput
+                            placeholder="Rechercher une variante..."
+                            value={searchVarianteQuery}
+                            onValueChange={setSearchVarianteQuery}
+                          />
+                          <CommandEmpty>Aucune variante trouvée</CommandEmpty>
+                          <CommandList className="max-h-[300px]">
+                            <CommandGroup>
+                              {variantesDisponibles.map((variante) => (
+                                <CommandItem
+                                  key={variante.id}
+                                  value={variante.id}
+                                  onSelect={() => handleVarianteSelect(variante.id)}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      formData.varianteId === variante.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <span className="mr-2">{variante.icono || '🏷️'}</span>
+                                  <div className="flex-1">
+                                    <p className="font-medium">{variante.nombre}</p>
+                                    {variante.descripcion && (
+                                      <p className="text-xs text-gray-500">{variante.descripcion}</p>
+                                    )}
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    ) : (
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+                        <p className="flex items-center gap-2">
+                          <Info className="w-4 h-4" />
+                          Aucune variante pour cette sous-catégorie. Cliquez sur "Créer variante" pour en ajouter une.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Resumen del producto seleccionado */}
+                {formData.nombreProducto && (
+                  <div className="p-3 bg-white border border-green-200 rounded-lg">
+                    <p className="text-sm font-medium text-green-700 flex items-center gap-2">
+                      ✅ Produit sélectionné: 
+                      <span className="font-semibold">{formData.nombreProducto}</span>
+                    </p>
+                  </div>
+                )}
+
+                {/* Mensaje si no hay categorías disponibles */}
+                {categoriasDB.length === 0 && (
+                  <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+                    <AlertTriangle className="w-4 h-4" />
+                    <p>
+                      Aucune catégorie trouvée dans le système. Veuillez d'abord créer des catégories dans Configuration → Catégories.
+                    </p>
+                  </div>
+                )}
 
                 {/* Campos de cantidad y unidad */}
                 <div className="grid grid-cols-2 gap-3">
@@ -1433,6 +1942,371 @@ export function EntradaDonAchat() {
           )}
         </div>
       </DialogContent>
+
+      {/* DIÁLOGO: Crear Nueva Variante */}
+      <Dialog open={nuevaVarianteDialogOpen} onOpenChange={setNuevaVarianteDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              🏷️ Créer une Nouvelle Variante
+            </DialogTitle>
+            <DialogDescription>
+              Créer une nouvelle variante pour la sous-catégorie "{formData.subcategoriaNombre}"
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Información de contexto */}
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Catégorie:</strong> {formData.categoriaNombre}
+                {' → '}
+                <strong>Sous-catégorie:</strong> {formData.subcategoriaNombre}
+              </p>
+            </div>
+
+            {/* Nombre */}
+            <div>
+              <Label>Nom de la variante *</Label>
+              <Input
+                value={formVariante.nombre}
+                onChange={(e) => setFormVariante(prev => ({ ...prev, nombre: e.target.value }))}
+                placeholder="Ex: Grande, 500ml, Marca A, Orgánico..."
+              />
+            </div>
+
+            {/* Código e Icono */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Code (optionnel)</Label>
+                <Input
+                  value={formVariante.codigo}
+                  onChange={(e) => setFormVariante(prev => ({ ...prev, codigo: e.target.value }))}
+                  placeholder="VAR-001"
+                />
+              </div>
+              <div>
+                <Label>Icône</Label>
+                <Input
+                  value={formVariante.icono}
+                  onChange={(e) => setFormVariante(prev => ({ ...prev, icono: e.target.value }))}
+                  placeholder="🏷️"
+                />
+              </div>
+            </div>
+
+            {/* Unidad y Peso Unitario */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Unité (optionnel)</Label>
+                <Select 
+                  value={formVariante.unidad} 
+                  onValueChange={(value) => setFormVariante(prev => ({ ...prev, unidad: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Hérite de la sous-catégorie" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {unidades.map((unidad) => (
+                      <SelectItem key={unidad.id} value={unidad.abreviatura}>
+                        {unidad.nombre} ({unidad.abreviatura})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {!formVariante.unidad && subcategoriaSeleccionada?.unidad && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Par défaut: {subcategoriaSeleccionada.unidad}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Label>Poids Unitaire (kg) (optionnel)</Label>
+                <Input
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  value={formVariante.pesoUnitario}
+                  onChange={(e) => setFormVariante(prev => ({ ...prev, pesoUnitario: e.target.value }))}
+                  placeholder="0.000"
+                />
+              </div>
+            </div>
+
+            {/* Valor por Kg */}
+            <div>
+              <Label>Valeur par Kg (CAD$) (optionnel)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formVariante.valorPorKg}
+                onChange={(e) => setFormVariante(prev => ({ ...prev, valorPorKg: e.target.value }))}
+                placeholder="0.00"
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <Label>Description (optionnel)</Label>
+              <Textarea
+                value={formVariante.descripcion}
+                onChange={(e) => setFormVariante(prev => ({ ...prev, descripcion: e.target.value }))}
+                placeholder="Description de la variante..."
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setFormVariante(FORM_VARIANTE_INICIAL);
+                setNuevaVarianteDialogOpen(false);
+              }}
+            >
+              <X className="w-4 h-4 mr-2" />
+              Annuler
+            </Button>
+            <Button
+              type="button"
+              onClick={handleGuardarNuevaVariante}
+              className="bg-[#2d9561] hover:bg-[#267d50]"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Créer Variante
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* DIÁLOGO: Crear Nueva Subcategoría */}
+      <Dialog open={nuevaSubcategoriaDialogOpen} onOpenChange={setNuevaSubcategoriaDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              📦 Créer une Nouvelle Sous-catégorie
+            </DialogTitle>
+            <DialogDescription>
+              Créer une nouvelle sous-catégorie pour la catégorie "{formData.categoriaNombre}"
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Información de contexto */}
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Catégorie:</strong> {formData.categoriaNombre}
+              </p>
+            </div>
+
+            {/* Nombre */}
+            <div>
+              <Label>Nom de la sous-catégorie *</Label>
+              <Input
+                value={formSubcategoria.nombre}
+                onChange={(e) => setFormSubcategoria(prev => ({ ...prev, nombre: e.target.value }))}
+                placeholder="Ex: Pain Blanc, Lait 2%, Pommes..."
+              />
+            </div>
+
+            {/* Código */}
+            <div>
+              <Label>Code (optionnel)</Label>
+              <Input
+                value={formSubcategoria.codigo}
+                onChange={(e) => setFormSubcategoria(prev => ({ ...prev, codigo: e.target.value }))}
+                placeholder="SUBCAT-001"
+              />
+            </div>
+
+            {/* Selector de Icono */}
+            <div>
+              <IconSelector
+                value={formSubcategoria.icono}
+                onChange={(icono) => setFormSubcategoria(prev => ({ ...prev, icono }))}
+                label="Icône de la sous-catégorie"
+                gridCols={10}
+                maxHeight="max-h-60"
+              />
+            </div>
+
+            {/* Unidad */}
+            <div>
+              <Label>Unité par défaut (optionnel)</Label>
+              <Select 
+                value={formSubcategoria.unidad} 
+                onValueChange={(value) => setFormSubcategoria(prev => ({ ...prev, unidad: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une unité..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {unidades.map((unidad) => (
+                    <SelectItem key={unidad.id} value={unidad.abreviatura}>
+                      {unidad.nombre} ({unidad.abreviatura})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Peso Unitario - ACTUALIZADO 15/03/2026 */}
+            <div>
+              <Label htmlFor="peso-unitario-input" className="font-semibold">⚖️ Poids unitaire (kg) - Optionnel</Label>
+              <Input
+                id="peso-unitario-input"
+                type="number"
+                step="0.001"
+                min="0"
+                value={formSubcategoria.pesoUnitario || ''}
+                onChange={(e) => setFormSubcategoria(prev => ({ ...prev, pesoUnitario: parseFloat(e.target.value) || 0 }))}
+                placeholder="0.000"
+                className="border-2 border-blue-300 focus:border-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                💡 Poids moyen d'une unité de ce produit (exemple: 0.500 kg pour une boîte de 500g)
+              </p>
+            </div>
+
+            {/* Pesos por unidad */}
+            <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
+              <Label className="text-sm font-semibold">Poids par unité (kg) - Optionnel</Label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Paleta (PLT)</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    value={formSubcategoria.pesoPLT || ''}
+                    onChange={(e) => setFormSubcategoria(prev => ({ ...prev, pesoPLT: parseFloat(e.target.value) || 0 }))}
+                    placeholder="0.000"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Caja (CJA)</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    value={formSubcategoria.pesoCJA || ''}
+                    onChange={(e) => setFormSubcategoria(prev => ({ ...prev, pesoCJA: parseFloat(e.target.value) || 0 }))}
+                    placeholder="0.000"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Unidad (UND)</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    value={formSubcategoria.pesoUND || ''}
+                    onChange={(e) => setFormSubcategoria(prev => ({ ...prev, pesoUND: parseFloat(e.target.value) || 0 }))}
+                    placeholder="0.000"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Saco (SAC)</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    value={formSubcategoria.pesoSAC || ''}
+                    onChange={(e) => setFormSubcategoria(prev => ({ ...prev, pesoSAC: parseFloat(e.target.value) || 0 }))}
+                    placeholder="0.000"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Bac Noir (BN)</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    value={formSubcategoria.pesoBN || ''}
+                    onChange={(e) => setFormSubcategoria(prev => ({ ...prev, pesoBN: parseFloat(e.target.value) || 0 }))}
+                    placeholder="0.000"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Kilogramo (kg)</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    value={formSubcategoria.pesoKg || ''}
+                    onChange={(e) => setFormSubcategoria(prev => ({ ...prev, pesoKg: parseFloat(e.target.value) || 0 }))}
+                    placeholder="1.000"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Peso Unitario (legacy) */}
+            <div>
+              <Label>Poids Unitaire Legacy (kg) (optionnel)</Label>
+              <Input
+                type="number"
+                step="0.001"
+                min="0"
+                value={formSubcategoria.pesoUnitario || ''}
+                onChange={(e) => setFormSubcategoria(prev => ({ ...prev, pesoUnitario: parseFloat(e.target.value) || 0 }))}
+                placeholder="0.000"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Maintenu pour compatibilité. Utilisez les poids par unité ci-dessus.
+              </p>
+            </div>
+
+            {/* Stock Mínimo */}
+            <div>
+              <Label>Stock Minimum (optionnel)</Label>
+              <Input
+                type="number"
+                min="0"
+                value={formSubcategoria.stockMinimo || ''}
+                onChange={(e) => setFormSubcategoria(prev => ({ ...prev, stockMinimo: parseInt(e.target.value) || 0 }))}
+                placeholder="0"
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <Label>Description (optionnel)</Label>
+              <Textarea
+                value={formSubcategoria.descripcion}
+                onChange={(e) => setFormSubcategoria(prev => ({ ...prev, descripcion: e.target.value }))}
+                placeholder="Description de la sous-catégorie..."
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setFormSubcategoria(FORM_SUBCATEGORIA_INICIAL);
+                setNuevaSubcategoriaDialogOpen(false);
+              }}
+            >
+              <X className="w-4 h-4 mr-2" />
+              Annuler
+            </Button>
+            <Button
+              type="button"
+              onClick={handleGuardarNuevaSubcategoria}
+              className="bg-[#2d9561] hover:bg-[#267d50]"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Créer Sous-catégorie
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

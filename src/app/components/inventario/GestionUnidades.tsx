@@ -134,7 +134,7 @@ export function GestionUnidades() {
       nombre: formData.nombre.trim(),
       abreviatura: formData.abreviatura.trim().toUpperCase(),
       icono: formData.icono,
-      pesoUnidad: formData.pesoUnidad
+      pesoUnidad: formData.pesoUnidad > 0 ? formData.pesoUnidad : undefined
     };
 
     const guardado = guardarUnidad(unidad);

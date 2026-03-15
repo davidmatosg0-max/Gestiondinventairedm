@@ -97,7 +97,8 @@ export async function generateStandardProductLabel(
   };
 
   // Generar QR Code (reducido para optimizar espacio)
-  const qrData = `BANCO-ALIMENTOS-${data.id}-${data.nombreProducto}-${data.pesoTotal.toFixed(2)}kg`;
+  const pesoTotal = data.pesoTotal || 0;
+  const qrData = `BANCO-ALIMENTOS-${data.id}-${data.nombreProducto}-${pesoTotal.toFixed(2)}kg`;
   let qrImageBase64 = '';
   try {
     qrImageBase64 = await QRCode.toDataURL(qrData, {
@@ -573,7 +574,7 @@ export async function generateStandardProductLabel(
     
     <!-- PESO SECTION -->
     <div class="peso-section">
-      <h3>${t.weight}: ${data.pesoTotal.toFixed(2)} kg</h3>
+      <h3>${t.weight}: ${pesoTotal.toFixed(2)} kg</h3>
     </div>
     
     <!-- DONADOR SECTION (si existe) -->

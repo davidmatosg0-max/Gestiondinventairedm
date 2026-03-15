@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Plus, RefreshCw, Package, Edit } from 'lucide-react';
+import { Calendar, Plus, RefreshCw, Package, Edit, XCircle } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { 
   obtenerEntradasActivas,
+  eliminarEntrada,
   type EntradaInventario 
 } from '../../utils/entradaInventarioStorage';
 import { EditarEntradaDialog } from './EditarEntradaDialog';
+import { toast } from 'sonner';
 
 interface HistorialEntradasCompactoProps {
   onAgregarAlCarrito: (entrada: EntradaInventario) => void;
@@ -27,6 +29,20 @@ export function HistorialEntradasCompacto({ onAgregarAlCarrito }: HistorialEntra
   const abrirEditarEntrada = (entrada: EntradaInventario) => {
     setEntradaParaEditar(entrada);
     setDialogoEditarAbierto(true);
+  };
+
+  const handleAnularEntrada = (entrada: EntradaInventario) => {
+    if (window.confirm(`¿Está seguro que desea anular la entrada de "${entrada.nombreProducto}"?\n\nEsta acción desactivará la entrada del sistema.`)) {
+      const resultado = eliminarEntrada(entrada.id);
+      if (resultado) {
+        toast.success('Entrada anulada correctamente');
+        cargarDatos();
+        // Disparar evento para que otros componentes se actualicen
+        window.dispatchEvent(new Event('entradaGuardada'));
+      } else {
+        toast.error('Error al anular la entrada');
+      }
+    }
   };
 
   const handleActualizarEntrada = () => {
@@ -157,16 +173,29 @@ export function HistorialEntradasCompacto({ onAgregarAlCarrito }: HistorialEntra
               </Badge>
             </div>
 
-            {/* Botón de Editar */}
-            <Button
-              onClick={() => abrirEditarEntrada(entrada)}
-              variant="outline"
-              size="sm"
-              className="gap-1 border-[#1E73BE] text-[#1E73BE] hover:bg-[#1E73BE] hover:text-white flex-shrink-0"
-            >
-              <Edit className="w-4 h-4" />
-              <span className="hidden sm:inline">Editar</span>
-            </Button>
+            {/* Botones de Acción */}
+            <div className="flex flex-col gap-2 flex-shrink-0">
+              <Button
+                onClick={() => abrirEditarEntrada(entrada)}
+                variant="outline"
+                size="sm"
+                className="gap-1 border-[#1E73BE] text-[#1E73BE] hover:bg-[#1E73BE] hover:text-white transition-all"
+              >
+                <Edit className="w-4 h-4" />
+                <span className="hidden sm:inline">Editar</span>
+              </Button>
+              {/* Botón Anular - ACTUALIZADO 15/03/2026 */}
+              <Button
+                onClick={() => handleAnularEntrada(entrada)}
+                variant="outline"
+                size="sm"
+                className="gap-1 border-2 border-[#DC3545] text-[#DC3545] hover:bg-[#DC3545] hover:text-white transition-all shadow-sm"
+                title="Anular entrada (soft delete)"
+              >
+                <XCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Anular</span>
+              </Button>
+            </div>
           </div>
         </div>
       ))}

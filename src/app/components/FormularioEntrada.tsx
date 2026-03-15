@@ -119,12 +119,20 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
       console.log('🔄 Contactos actualizados automáticamente:', contactosActualizados.length);
     };
 
+    const handleCategoriasActualizadas = () => {
+      const categoriasActualizadas = obtenerCategorias();
+      setCategorias(categoriasActualizadas.filter(c => c.activa));
+      console.log('🔄 Categorías actualizadas automáticamente:', categoriasActualizadas.length);
+    };
+
     window.addEventListener('contactos-actualizados', handleContactosActualizados);
     window.addEventListener('contactos-restaurados', handleContactosActualizados);
+    window.addEventListener('categorias-actualizadas', handleCategoriasActualizadas);
 
     return () => {
       window.removeEventListener('contactos-actualizados', handleContactosActualizados);
       window.removeEventListener('contactos-restaurados', handleContactosActualizados);
+      window.removeEventListener('categorias-actualizadas', handleCategoriasActualizadas);
     };
   }, []);
 
@@ -789,18 +797,27 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                     value={formData.categoria} 
                     onValueChange={(value) => setFormData(prev => ({ ...prev, categoria: value }))}
                   >
-                    <SelectTrigger className="h-11 text-sm border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE]">
-                      <SelectValue placeholder="Seleccionar categoría..." />
+                    <SelectTrigger 
+                      id="categoria"
+                      className="h-11 text-sm border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE]"
+                    >
+                      <SelectValue placeholder="Cliquer pour voir toutes les catégories..." />
                     </SelectTrigger>
-                    <SelectContent>
-                      {categorias.map(categoria => (
-                        <SelectItem key={categoria.id} value={categoria.nombre}>
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg">{categoria.icono}</span>
-                            <span>{categoria.nombre}</span>
-                          </div>
+                    <SelectContent className="max-h-[300px]">
+                      {categorias.length === 0 ? (
+                        <SelectItem value="__none__" disabled>
+                          Aucune catégorie disponible
                         </SelectItem>
-                      ))}
+                      ) : (
+                        categorias.map(categoria => (
+                          <SelectItem key={categoria.id} value={categoria.nombre}>
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg">{categoria.icono}</span>
+                              <span>{categoria.nombre}</span>
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                   {categoriaSeleccionada && (

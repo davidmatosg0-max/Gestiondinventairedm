@@ -271,14 +271,12 @@ function guardarTodosContactos(contactos: ContactoDepartamento[]): void {
 }
 
 // Guardar un nuevo contacto
-export function guardarContacto(contacto: Omit<ContactoDepartamento, 'id' | 'fechaIngreso'>): ContactoDepartamento;
-export function guardarContacto(contacto: ContactoDepartamento): ContactoDepartamento;
 export function guardarContacto(contacto: any): ContactoDepartamento {
   const contactos = obtenerContactosDepartamento();
   
   // 🔒 VERIFICAR DUPLICADOS: Buscar si ya existe un contacto con el mismo email
   const yaExiste = contactos.find(c => 
-    c.email.toLowerCase() === contacto.email.toLowerCase()
+    c.email && contacto.email && c.email.toLowerCase() === contacto.email.toLowerCase()
   );
   
   if (yaExiste) {
@@ -417,9 +415,9 @@ export function buscarContactos(termino: string): ContactoDepartamento[] {
   const contactos = obtenerContactosDepartamento();
   const terminoLower = termino.toLowerCase();
   return contactos.filter(c => 
-    c.nombre.toLowerCase().includes(terminoLower) ||
-    c.apellido.toLowerCase().includes(terminoLower) ||
-    c.email.toLowerCase().includes(terminoLower) ||
+    (c.nombre && c.nombre.toLowerCase().includes(terminoLower)) ||
+    (c.apellido && c.apellido.toLowerCase().includes(terminoLower)) ||
+    (c.email && c.email.toLowerCase().includes(terminoLower)) ||
     (c.cargo && c.cargo.toLowerCase().includes(terminoLower))
   );
 }

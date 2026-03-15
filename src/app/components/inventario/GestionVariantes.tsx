@@ -132,6 +132,10 @@ export function GestionVariantes({ subcategoria, categoriaId, onActualizar }: Ge
         if (subIndex >= 0) {
           categoria.subcategorias[subIndex].variantes = variantesActualizadas;
           guardarCategorias(categorias);
+          
+          // Disparar evento de actualización
+          window.dispatchEvent(new Event('categorias-actualizadas'));
+          
           setVariantes(variantesActualizadas);
           setDialogOpen(false);
           toast.success(modoEdicion ? 'Variante actualizada correctamente' : 'Variante creada correctamente');
@@ -159,6 +163,10 @@ export function GestionVariantes({ subcategoria, categoriaId, onActualizar }: Ge
           if (subIndex >= 0) {
             categoria.subcategorias[subIndex].variantes = variantesActualizadas;
             guardarCategorias(categorias);
+            
+            // Disparar evento de actualización
+            window.dispatchEvent(new Event('categorias-actualizadas'));
+            
             setVariantes(variantesActualizadas);
             toast.success('Variante eliminada correctamente');
             
@@ -187,6 +195,10 @@ export function GestionVariantes({ subcategoria, categoriaId, onActualizar }: Ge
         if (subIndex >= 0) {
           categoria.subcategorias[subIndex].variantes = variantesActualizadas;
           guardarCategorias(categorias);
+          
+          // Disparar evento de actualización
+          window.dispatchEvent(new Event('categorias-actualizadas'));
+          
           setVariantes(variantesActualizadas);
           toast.success(variante.activa ? 'Variante desactivada' : 'Variante activada');
           

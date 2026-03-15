@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBranding } from '../../../hooks/useBranding';
 import { 
@@ -165,6 +165,20 @@ export function Etiquetas() {
     
     return [...productosLS, ...mockProductosFiltrados];
   }, [productosCreados, refreshKey]);
+
+  // 🔄 Escuchar evento de actualización de categorías
+  useEffect(() => {
+    const handleCategoriasActualizadas = () => {
+      console.log('🔄 Categorías actualizadas - Recargando etiquetas...');
+      setRefreshKey(prev => prev + 1);
+    };
+
+    window.addEventListener('categorias-actualizadas', handleCategoriasActualizadas);
+
+    return () => {
+      window.removeEventListener('categorias-actualizadas', handleCategoriasActualizadas);
+    };
+  }, []);
 
   const handleCrearEtiquetaUbicacion = () => {
     if (!zonaSeleccionada || !numeroUbicacion) {
@@ -746,12 +760,12 @@ export function Etiquetas() {
                     {t('labels.massGeneration')}
                   </Button>
                 </DialogTrigger>
-                <DialogContent aria-describedby="mass-generation-description">
+                <DialogContent>
                   <DialogHeader>
                     <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                       {t('labels.generateMassLocations')}
                     </DialogTitle>
-                    <DialogDescription id="mass-generation-description">
+                    <DialogDescription>
                       {t('labels.massGenerationDescription')}
                     </DialogDescription>
                   </DialogHeader>
@@ -818,12 +832,12 @@ export function Etiquetas() {
                     {t('labels.newLabel')}
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="nueva-etiqueta-description">
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
                   <DialogHeader>
                     <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                       {t('labels.createNewLabel')}
                     </DialogTitle>
-                    <DialogDescription id="nueva-etiqueta-description">
+                    <DialogDescription>
                       {t('labels.selectLabelType')}
                     </DialogDescription>
                   </DialogHeader>
@@ -863,12 +877,12 @@ export function Etiquetas() {
                                     Nouvelle zone
                                   </Button>
                                 </DialogTrigger>
-                                <DialogContent aria-describedby="nueva-zona-description">
+                                <DialogContent>
                                   <DialogHeader>
                                     <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                                       {zonaEditando ? 'Modifier la zone' : 'Créer une nouvelle zone'}
                                     </DialogTitle>
-                                    <DialogDescription id="nueva-zona-description">
+                                    <DialogDescription>
                                       {zonaEditando ? 'Modifier les détails de la zone' : 'Ajouter une nouvelle zone d\'entreposage'}
                                     </DialogDescription>
                                   </DialogHeader>
@@ -965,12 +979,12 @@ export function Etiquetas() {
                                     Gérer
                                   </Button>
                                 </DialogTrigger>
-                                <DialogContent className="max-w-2xl" aria-describedby="gestionar-zonas-description">
+                                <DialogContent className="max-w-2xl">
                                   <DialogHeader>
                                     <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                                       Gérer les zones d'entreposage
                                     </DialogTitle>
-                                    <DialogDescription id="gestionar-zonas-description">
+                                    <DialogDescription>
                                       {ubicacionesPredefinidas.length} zone{ubicacionesPredefinidas.length !== 1 ? 's' : ''} disponible{ubicacionesPredefinidas.length !== 1 ? 's' : ''}
                                     </DialogDescription>
                                   </DialogHeader>

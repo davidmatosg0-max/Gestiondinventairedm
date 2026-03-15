@@ -3,8 +3,8 @@
  * Busca en cualquier parte del texto, maneja valores null/undefined
  */
 export const filterBySearch = (text: string | null | undefined, query: string | null | undefined): boolean => {
-  // Si no hay query, retornar true (mostrar todo)
-  if (!query || query.trim() === '') return true;
+  // Si no hay query o no es string, retornar true (mostrar todo)
+  if (!query || typeof query !== 'string' || query.trim() === '') return true;
   
   // Si no hay texto para buscar, retornar false
   if (!text) return false;
@@ -21,8 +21,8 @@ export const filterBySearch = (text: string | null | undefined, query: string | 
  * Retorna true si alguno de los campos coincide
  */
 export const filterBySearchMultiple = (fields: (string | null | undefined)[], query: string | null | undefined): boolean => {
-  // Si no hay query, mostrar todo
-  if (!query || query.trim() === '') return true;
+  // Si no hay query o no es string, mostrar todo
+  if (!query || typeof query !== 'string' || query.trim() === '') return true;
   
   // Buscar en cualquiera de los campos
   return fields.some(field => filterBySearch(field, query));

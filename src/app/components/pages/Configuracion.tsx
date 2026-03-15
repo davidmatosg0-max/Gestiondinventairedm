@@ -475,6 +475,9 @@ export function Configuracion() {
           ? { ...c, ...formCategoria, icono: iconoFinal, valorMonetario: valorMonetarioNumerico }
           : c
       ));
+      
+      // Disparar evento de actualización
+      window.dispatchEvent(new Event('categorias-actualizadas'));
       toast.success(t('configuration.categoryUpdated'));
     } else {
       const nueva: Categoria = {
@@ -485,6 +488,9 @@ export function Configuracion() {
         subcategorias: []
       };
       setCategorias([...categorias, nueva]);
+      
+      // Disparar evento de actualización
+      window.dispatchEvent(new Event('categorias-actualizadas'));
       toast.success(t('configuration.categoryCreated'));
     }
 
@@ -513,6 +519,9 @@ export function Configuracion() {
     setCategorias(categorias.map(c => 
       c.id === categoriaId ? { ...c, activa: !c.activa } : c
     ));
+    
+    // Disparar evento de actualización
+    window.dispatchEvent(new Event('categorias-actualizadas'));
     toast.success(t('configuration.categoryStatusUpdated'));
   };
 
@@ -527,6 +536,9 @@ export function Configuracion() {
           }
         : c
     ));
+    
+    // Disparar evento de actualización
+    window.dispatchEvent(new Event('categorias-actualizadas'));
     toast.success(t('configuration.subcategoryStatusUpdated'));
   };
 
@@ -540,6 +552,9 @@ export function Configuracion() {
   const handleEliminarCategoria = () => {
     if (!editandoCategoria) return;
     setCategorias(categorias.filter(c => c.id !== editandoCategoria.id));
+    
+    // Disparar evento de actualización
+    window.dispatchEvent(new Event('categorias-actualizadas'));
     toast.success(t('configuration.categoryDeleted'));
     setDialogEliminarCategoria(false);
     setEditandoCategoria(null);
@@ -593,6 +608,9 @@ export function Configuracion() {
         }
         return c;
       }));
+      
+      // Disparar evento de actualización
+      window.dispatchEvent(new Event('categorias-actualizadas'));
       toast.success(t('configuration.subcategoryUpdated'));
     } else {
       // Crear nueva subcategoría
@@ -610,6 +628,9 @@ export function Configuracion() {
         }
         return c;
       }));
+      
+      // Disparar evento de actualización
+      window.dispatchEvent(new Event('categorias-actualizadas'));
       toast.success(t('configuration.subcategoryCreated'));
     }
 
@@ -649,6 +670,9 @@ export function Configuracion() {
       }
       return c;
     }));
+    
+    // Disparar evento de actualización
+    window.dispatchEvent(new Event('categorias-actualizadas'));
     toast.success(t('configuration.subcategoryDeleted'));
     setDialogEliminarSubcategoria(false);
     setSubcategoriaParaEliminar(null);
@@ -791,6 +815,9 @@ export function Configuracion() {
       actualizarProducto(editandoProductoPRS.id, productoActualizado);
       // Recargar productos desde localStorage
       setProductos(obtenerProductos());
+      
+      // Disparar evento de actualización
+      window.dispatchEvent(new Event('productos-actualizados'));
       toast.success(`✅ Produit PRS "${formProductoPRS.nombre}" mis à jour avec succès`, {
         duration: 3000
       });
@@ -820,6 +847,9 @@ export function Configuracion() {
       const productoGuardado = guardarProducto(nuevoProducto);
       // Recargar productos desde localStorage
       setProductos(obtenerProductos());
+      
+      // Disparar evento de actualización
+      window.dispatchEvent(new Event('productos-actualizados'));
       toast.success(`✨ Produit PRS "${formProductoPRS.nombre}" créé avec succès`, {
         duration: 3000
       });
@@ -853,6 +883,9 @@ export function Configuracion() {
       eliminarProducto(id);
       toast.success(`🗑️ Produit PRS "${nombre}" supprimé`, { duration: 3000 });
       setProductos(obtenerProductos());
+      
+      // Disparar evento de actualización
+      window.dispatchEvent(new Event('productos-actualizados'));
     }
   };
 
@@ -973,6 +1006,9 @@ export function Configuracion() {
         p.id === editandoProducto.id ? productoActualizado : p
       ));
       
+      // Disparar evento de actualización
+      window.dispatchEvent(new Event('productos-actualizados'));
+      
       toast.success(t('configuration.productUpdated') || 'Producto actualizado correctamente');
     } else {
       // Crear nuevo producto
@@ -1001,6 +1037,9 @@ export function Configuracion() {
       
       // Actualizar en estado local
       setProductos([...productos, nuevoProducto]);
+      
+      // Disparar evento de actualización
+      window.dispatchEvent(new Event('productos-actualizados'));
       
       toast.success(t('configuration.productCreated') || 'Producto creado correctamente');
     }
@@ -1054,6 +1093,9 @@ export function Configuracion() {
     
     // Actualizar en estado local
     setProductos([...productos, varianteProducto]);
+    
+    // Disparar evento de actualización
+    window.dispatchEvent(new Event('productos-actualizados'));
 
     toast.success(t('configuration.variantCreated') || `Variante creada basada en: ${productoBase?.nombre}`);
     resetFormProducto();
@@ -1110,6 +1152,9 @@ export function Configuracion() {
 
       guardarCategorias(categoriasActualizadas);
       setCategorias(categoriasActualizadas);
+      
+      // Disparar evento de actualización
+      window.dispatchEvent(new Event('categorias-actualizadas'));
       toast.success(t('configuration.variantUpdatedSuccess'));
       setEditandoVariante(null);
     } else {
@@ -1143,6 +1188,9 @@ export function Configuracion() {
 
       guardarCategorias(categoriasActualizadas);
       setCategorias(categoriasActualizadas);
+      
+      // Disparar evento de actualización
+      window.dispatchEvent(new Event('categorias-actualizadas'));
       toast.success(t('configuration.variantCreatedSuccess'));
     }
     setFormVarianteSubcategoria({
@@ -1276,6 +1324,9 @@ export function Configuracion() {
     
     guardarProducto(nuevoProducto);
     setProductos([...productos, nuevoProducto]);
+    
+    // Disparar evento de actualización
+    window.dispatchEvent(new Event('productos-actualizados'));
     
     toast.success(`✅ ${t('configuration.productGeneratedAuto')}: \"${nombre}\"`, {
       description: `📦 ${t('common.code')}: ${codigo} | 📂 ${t('configuration.category')}: ${categoria.nombre}`,
@@ -1502,12 +1553,12 @@ export function Configuracion() {
                         {t('configuration.newSubcategory')}
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-h-[90vh] overflow-y-auto scrollbar-thin">
+                    <DialogContent className="max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="subcategoria-form-description">
                       <DialogHeader>
                         <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                           {editandoSubcategoria ? t('configuration.editSubcategory') : t('configuration.newSubcategoryForm')}
                         </DialogTitle>
-                        <DialogDescription>
+                        <DialogDescription id="subcategoria-form-description">
                           {editandoSubcategoria ? 'Modifique los datos de la subcategoría' : 'Complete la información de la nueva subcategoría'}
                         </DialogDescription>
                       </DialogHeader>
@@ -1707,6 +1758,9 @@ export function Configuracion() {
                               onActualizar={() => {
                                 // Recargar categorías para reflejar cambios
                                 setCategorias(obtenerCategorias());
+                                
+                                // Disparar evento de actualización
+                                window.dispatchEvent(new Event('categorias-actualizadas'));
                               }}
                             />
                           </div>
@@ -1738,12 +1792,12 @@ export function Configuracion() {
                         {t('configuration.newCategory')}
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent aria-describedby="categoria-form-description">
                       <DialogHeader>
                         <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                           {editandoCategoria ? t('configuration.editCategory') : t('configuration.newCategory')}
                         </DialogTitle>
-                        <DialogDescription>
+                        <DialogDescription id="categoria-form-description">
                           {editandoCategoria ? 'Modifique los datos de la categoría' : 'Complete la información de la nueva categoría'}
                         </DialogDescription>
                       </DialogHeader>
@@ -2346,6 +2400,9 @@ export function Configuracion() {
                                                     });
                                                     guardarCategorias(categoriasActualizadas);
                                                     setCategorias(categoriasActualizadas);
+                                                    
+                                                    // Disparar evento de actualización
+                                                    window.dispatchEvent(new Event('categorias-actualizadas'));
                                                     toast.success(t('configuration.variantDeletedSuccess'));
                                                   }
                                                 }}
@@ -2417,12 +2474,12 @@ export function Configuracion() {
                     {t('configuration.newProgram')}
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent aria-describedby="programa-form-description">
                   <DialogHeader>
                     <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                       {editandoPrograma ? t('configuration.editProgram') : t('configuration.newProgramForm')}
                     </DialogTitle>
-                    <DialogDescription>
+                    <DialogDescription id="programa-form-description">
                       {editandoPrograma ? t('configuration.modifyProgramData') : t('configuration.completeProgramInfo')}
                     </DialogDescription>
                   </DialogHeader>
@@ -2828,7 +2885,7 @@ export function Configuracion() {
           setProductoPRSDialogOpen(open);
           if (!open) resetFormProductoPRS();
         }}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="producto-prs-description">
             <DialogHeader>
               <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                 <div className="flex items-center gap-2">
@@ -2836,7 +2893,7 @@ export function Configuracion() {
                   {editandoProductoPRS ? 'Modifier le Produit PRS' : 'Nouveau Produit PRS'}
                 </div>
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription id="producto-prs-description">
                 {editandoProductoPRS 
                   ? 'Modifiez les informations du produit PRS' 
                   : 'Créez un nouveau produit pour le Programme de Récupération Spéciale'}
@@ -3174,7 +3231,7 @@ export function Configuracion() {
 
       {/* Dialog Eliminar Categoría */}
       <Dialog open={dialogEliminarCategoria} onOpenChange={setDialogEliminarCategoria}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="eliminar-categoria-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', color: '#DC3545' }}>
               <div className="flex items-center gap-2">
@@ -3182,7 +3239,7 @@ export function Configuracion() {
                 {t('configuration.deleteCategory')}
               </div>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="eliminar-categoria-description">
               Esta acción no se puede deshacer. Se eliminarán todas las subcategorías asociadas.
             </DialogDescription>
           </DialogHeader>
@@ -3244,7 +3301,7 @@ export function Configuracion() {
 
       {/* Dialog Eliminar Subcategoría */}
       <Dialog open={dialogEliminarSubcategoria} onOpenChange={setDialogEliminarSubcategoria}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="eliminar-subcategoria-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', color: '#DC3545' }}>
               <div className="flex items-center gap-2">
@@ -3252,7 +3309,7 @@ export function Configuracion() {
                 {t('configuration.deleteSubcategory')}
               </div>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="eliminar-subcategoria-description">
               Esta acción no se puede deshacer.
             </DialogDescription>
           </DialogHeader>
@@ -3317,7 +3374,7 @@ export function Configuracion() {
 
       {/* Dialog Crear Variante */}
       <Dialog open={varianteDialogOpen} onOpenChange={setVarianteDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="variante-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', color: '#1E73BE' }}>
               <div className="flex items-center gap-2">
@@ -3325,7 +3382,7 @@ export function Configuracion() {
                 {t('configuration.createVariant') || 'Crear Variante de Producto'}
               </div>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="variante-dialog-description">
               {t('configuration.variantDescription') || 'Crea una variante basada en un producto existente'}
             </DialogDescription>
           </DialogHeader>
@@ -3570,7 +3627,7 @@ export function Configuracion() {
           setSubcategoriaBase(null);
         }
       }}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="subcategoria-variante-description">
           <DialogHeader className="pb-4 border-b">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#9C27B0] to-[#7B1FA2] flex items-center justify-center text-white text-2xl">
@@ -3580,7 +3637,7 @@ export function Configuracion() {
                 <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }} className="text-xl">
                   {editandoVariante ? 'Editar Variante' : 'Nueva Variante de Subcategoría'}
                 </DialogTitle>
-                <DialogDescription className="text-sm mt-1">
+                <DialogDescription id="subcategoria-variante-description" className="text-sm mt-1">
                   {editandoVariante ? 'Editando' : 'Creando'} variante para: <span className="font-medium text-[#9C27B0]">{subcategoriaBase?.subcategoria.nombre}</span>
                 </DialogDescription>
               </div>

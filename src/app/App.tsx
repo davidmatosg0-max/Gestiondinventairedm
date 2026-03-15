@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../i18n/config'; // Inicializar i18n
+// Última actualización: 15/03/2026 - Forzar recompilación
 import { useTranslation } from 'react-i18next';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/pages/Dashboard';

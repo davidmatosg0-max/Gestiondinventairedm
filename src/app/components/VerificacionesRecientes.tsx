@@ -194,7 +194,7 @@ export function VerificacionesRecientes() {
                     {t('common.recentEntriesVerifications')}
                     <Sparkles className="w-5 h-5 text-white/80 animate-pulse" />
                   </DialogTitle>
-                  <DialogDescription className="sr-only">
+                  <DialogDescription id="recent-verifications-description" className="sr-only">
                     {t('inventory.verificationHistory')}
                   </DialogDescription>
                 </div>
