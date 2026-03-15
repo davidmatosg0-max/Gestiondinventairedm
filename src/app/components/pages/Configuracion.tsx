@@ -241,7 +241,29 @@ export function Configuracion() {
   // Cargar productos desde localStorage al montar el componente
   useEffect(() => {
     const productosGuardados = obtenerProductos();
-    setProductos(productosGuardados);
+    
+    // 🔧 MIGRACIÓN: Asegurar que los productos PRS tengan esPRS=true
+    let productosActualizados = false;
+    const productosMigrados = productosGuardados.map(producto => {
+      // Si el producto tiene 'PRS' en el nombre y no tiene esPRS definido o es false
+      if ((producto.nombre.includes('PRS') || producto.categoria.includes('PRS') || producto.codigo === 'FL' || producto.codigo === 'PC' || producto.codigo === 'PL' || producto.codigo === 'PV' || producto.codigo === 'VS') && producto.esPRS !== true) {
+        console.log(`🔧 Migrando producto PRS: ${producto.nombre} (${producto.codigo})`);
+        productosActualizados = true;
+        return { ...producto, esPRS: true };
+      }
+      return producto;
+    });
+    
+    // Si hubo cambios, guardar en localStorage
+    if (productosActualizados) {
+      console.log('✅ Productos PRS migrados correctamente');
+      localStorage.setItem('productosCreados', JSON.stringify(productosMigrados));
+      setProductos(productosMigrados);
+      window.dispatchEvent(new Event('productos-actualizados'));
+      toast.success('Produits PRS mis à jour automatiquement', { duration: 2000 });
+    } else {
+      setProductos(productosGuardados);
+    }
   }, []);
 
   // Cargar categorías desde localStorage al montar el componente

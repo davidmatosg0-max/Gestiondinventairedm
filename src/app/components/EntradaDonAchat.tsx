@@ -218,6 +218,10 @@ export function EntradaDonAchat() {
   const [detallesOpcionalesAbiertos, setDetallesOpcionalesAbiertos] = useState(false);
   const [imprimirAutomaticamente, setImprimirAutomaticamente] = useState(true);
   
+  // 🎯 Estados específicos para productos PRS
+  const [comboboxProductoPRSOpen, setComboboxProductoPRSOpen] = useState(false);
+  const [searchProductoPRSQuery, setSearchProductoPRSQuery] = useState('');
+  
   // ========== Estados de diálogos ==========
   const [subcategoriaDialogOpen, setSubcategoriaDialogOpen] = useState(false);
   const [nuevaSubcategoriaDialogOpen, setNuevaSubcategoriaDialogOpen] = useState(false);
@@ -911,6 +915,46 @@ export function EntradaDonAchat() {
       toast.error('Erreur lors de la création de la sous-catégorie');
     }
   }, [formData.categoriaId, formData.categoriaNombre, formSubcategoria]);
+
+  // 🎯 Función: Seleccionar Producto PRS
+  const handleSeleccionarProductoPRS = useCallback((producto: ProductoCreado) => {
+    console.log('🎯 Producto PRS seleccionado:', producto);
+    
+    // Buscar la categoría y subcategoría en categoriasDB
+    const categoria = categoriasDB.find(c => c.nombre === producto.categoria);
+    const subcategoria = categoria?.subcategorias?.find(s => s.nombre === producto.subcategoria);
+    
+    // Auto-rellenar TODOS los campos desde el producto PRS
+    setFormData(prev => ({
+      ...prev,
+      // IDs y nombres
+      categoriaId: categoria?.id || '',
+      categoriaNombre: producto.categoria,
+      subcategoriaId: subcategoria?.id || '',
+      subcategoriaNombre: producto.subcategoria,
+      
+      // Campos legacy
+      categoria: producto.categoria,
+      subcategoria: producto.subcategoria,
+      productoId: producto.id,
+      nombreProducto: producto.nombre,
+      productoIcono: producto.icono,
+      
+      // Unidad y peso
+      unidad: producto.unidad,
+      pesoUnitario: producto.pesoUnitario || 0,
+    }));
+    
+    // Cerrar el popover y limpiar búsqueda
+    setComboboxProductoPRSOpen(false);
+    setSearchProductoPRSQuery('');
+    
+    // Mostrar notificación de éxito
+    toast.success('💡 Produit PRS sélectionné - Champs auto-remplis', {
+      description: `${producto.categoria} → ${producto.subcategoria} (${producto.unidad})`,
+      duration: 3000
+    });
+  }, [categoriasDB]);
 
   // Función para imprimir etiqueta de un producto
   const imprimirEtiquetaProducto = useCallback(async (producto: ProductoAgregado) => {
@@ -1621,28 +1665,122 @@ export function EntradaDonAchat() {
                   📦 Sélection du produit *
                 </Label>
 
-                {/* PASO 1: Catégorie */}
-                <div>
-                  <Label>1️⃣ Catégorie *</Label>
-                  <Popover open={comboboxCategoriaOpen} onOpenChange={setComboboxCategoriaOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={comboboxCategoriaOpen}
-                        className="w-full justify-between"
-                      >
-                        {formData.categoriaNombre ? (
-                          <span className="flex items-center gap-2">
-                            <span>{formData.productoIcono}</span>
-                            <span>{formData.categoriaNombre}</span>
-                          </span>
-                        ) : (
-                          <span className="text-gray-500">Sélectionner une catégorie...</span>
-                        )}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
+                {/* 🎯 SI ES TIPO PRS: Mostrar selector de productos PRS */}
+                {formData.tipoEntrada === 'prs' ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Label>⚡ Produit PRS *</Label>
+                      <Badge variant="destructive" className="text-xs animate-pulse">
+                        OBLIGATOIRE
+                      </Badge>
+                    </div>
+                    
+                    <Popover open={comboboxProductoPRSOpen} onOpenChange={setComboboxProductoPRSOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={comboboxProductoPRSOpen}
+                          className={cn(
+                            "w-full justify-between",
+                            formData.categoriaNombre 
+                              ? "border-purple-500 bg-purple-50 hover:bg-purple-100" 
+                              : "border-purple-400 border-2"
+                          )}
+                        >
+                          {formData.categoriaNombre ? (
+                            <span className="flex items-center gap-2">
+                              <span>{formData.productoIcono}</span>
+                              <span className="font-medium">{formData.nombreProducto}</span>
+                            </span>
+                          ) : (
+                            <span className="text-purple-600 font-medium">🔍 Sélectionner un produit PRS...</span>
+                          )}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[500px] p-0">
+                        <Command>
+                          <CommandInput
+                            placeholder="🔍 Rechercher un produit PRS..."
+                            value={searchProductoPRSQuery}
+                            onValueChange={setSearchProductoPRSQuery}
+                          />
+                          <CommandEmpty>Aucun produit PRS trouvé</CommandEmpty>
+                          <CommandList className="max-h-[400px]">
+                            <CommandGroup heading={`${productosFiltrados.length} produits PRS disponibles`}>
+                              {productosFiltrados.map((producto) => (
+                                <CommandItem
+                                  key={producto.id}
+                                  value={producto.id}
+                                  onSelect={() => handleSeleccionarProductoPRS(producto)}
+                                  className="cursor-pointer"
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      formData.productoId === producto.id ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <span className="mr-2 text-lg">{producto.icono}</span>
+                                  <div className="flex-1">
+                                    <p className="font-medium">{producto.nombre}</p>
+                                    <p className="text-xs text-gray-500">
+                                      {producto.categoria} → {producto.subcategoria}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                      {producto.unidad}
+                                    </Badge>
+                                    {producto.pesoUnitario && (
+                                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                        {producto.pesoUnitario.toFixed(1)} kg
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    
+                    {productosFiltrados.length === 0 && (
+                      <div className="flex items-center gap-2 p-3 bg-red-50 border-2 border-red-300 rounded-lg text-sm text-red-800">
+                        <AlertTriangle className="w-4 h-4" />
+                        <p>
+                          Aucun produit PRS disponible. Créez-en un dans <strong>Inventaire → Productos PRS</strong>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* MODO NORMAL: Cascada Categoría → Subcategoría → Variante */
+                  <>
+                    {/* PASO 1: Catégorie */}
+                    <div>
+                      <Label>1️⃣ Catégorie *</Label>
+                      <Popover open={comboboxCategoriaOpen} onOpenChange={setComboboxCategoriaOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={comboboxCategoriaOpen}
+                            className="w-full justify-between"
+                          >
+                            {formData.categoriaNombre ? (
+                              <span className="flex items-center gap-2">
+                                <span>{formData.productoIcono}</span>
+                                <span>{formData.categoriaNombre}</span>
+                              </span>
+                            ) : (
+                              <span className="text-gray-500">Sélectionner une catégorie...</span>
+                            )}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
                     <PopoverContent className="w-[400px] p-0">
                       <Command>
                         <CommandInput
@@ -1870,6 +2008,8 @@ export function EntradaDonAchat() {
                       </div>
                     )}
                   </div>
+                )}
+                  </>
                 )}
 
                 {/* Resumen del producto seleccionado */}

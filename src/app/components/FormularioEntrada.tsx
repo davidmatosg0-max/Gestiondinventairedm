@@ -13,6 +13,7 @@ import { guardarEntrada } from '../utils/entradaInventarioStorage';
 import { obtenerCategorias, agregarSubcategoria, obtenerPesoUnitario, actualizarPesoUnitarioSubcategoria, obtenerDatosSubcategoria } from '../utils/categoriaStorage';
 import { obtenerProgramasActivos, type ProgramaEntrada } from '../utils/programaEntradaStorage';
 import { obtenerContactosPorDepartamentoYTipo, type ContactoDepartamento } from '../utils/contactosDepartamentoStorage';
+import { obtenerProductos, type ProductoCreado } from '../utils/productStorage';
 import type { Categoria, Subcategoria } from '../data/configuracionData';
 import { generarIconoAutomatico } from '../utils/iconoUtils';
 import { useBalanceContext } from '../../contexts/BalanceContext';
@@ -63,6 +64,8 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
   const [programas, setProgramas] = useState<ProgramaEntrada[]>([]);
   const [contactos, setContactos] = useState<ContactoDepartamento[]>([]);
   const [subcategorias, setSubcategorias] = useState<Subcategoria[]>([]);
+  const [productosPRS, setProductosPRS] = useState<ProductoCreado[]>([]);
+  const [busquedaPRS, setBusquedaPRS] = useState('');
   const [dialogSubcategoria, setDialogSubcategoria] = useState(false);
   const [nuevaSubcategoria, setNuevaSubcategoria] = useState({
     nombre: '',
@@ -103,15 +106,56 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
       // 🎯 OBTENER CONTACTOS REALES: donadores y fournisseurs del departamento Entrepôt (ID='2')
       const contactosEntrepot = obtenerContactosPorDepartamentoYTipo('2', ['donador', 'fournisseur']);
       
+      // 🎯 OBTENER PRODUCTOS PRS (productos con esPRS: true)
+      let todosProductos = obtenerProductos();
+      
+      // 🔧 MIGRACIÓN: Asegurar que los productos PRS tengan esPRS=true
+      let productosActualizados = false;
+      const productosMigrados = todosProductos.map(producto => {
+        // Si el producto tiene 'PRS' en el nombre o códigos conocidos de PRS
+        if ((producto.nombre.includes('PRS') || producto.categoria.includes('PRS') || 
+             producto.codigo === 'FL' || producto.codigo === 'PC' || producto.codigo === 'PL' || 
+             producto.codigo === 'PV' || producto.codigo === 'VS') && producto.esPRS !== true) {
+          console.log(`🔧 Migrando producto PRS: ${producto.nombre} (${producto.codigo})`);
+          productosActualizados = true;
+          return { ...producto, esPRS: true };
+        }
+        return producto;
+      });
+      
+      // Si hubo cambios, guardar en localStorage
+      if (productosActualizados) {
+        console.log('✅ Productos PRS migrados correctamente');
+        localStorage.setItem('productosCreados', JSON.stringify(productosMigrados));
+        todosProductos = productosMigrados;
+        window.dispatchEvent(new Event('productos-actualizados'));
+      }
+      
+      console.log('🔍 DEBUG - Todos los productos:', todosProductos.length, todosProductos);
+      console.log('🔍 DEBUG - Productos con esPRS:', todosProductos.map(p => ({ 
+        nombre: p.nombre, 
+        esPRS: p.esPRS,
+        tipo: typeof p.esPRS
+      })));
+      
+      const productosPRSFiltrados = todosProductos.filter(p => {
+        const esPRS = p.esPRS === true;
+        console.log(`🔍 Producto "${p.nombre}": esPRS=${p.esPRS} (tipo: ${typeof p.esPRS}), incluir: ${esPRS}`);
+        return esPRS;
+      });
+      
       setCategorias(cats.filter(c => c.activa));
       setProgramas(progs);
       setContactos(contactosEntrepot);
+      setProductosPRS(productosPRSFiltrados);
       
       console.log('📋 Contactos cargados:', contactosEntrepot.length, contactosEntrepot);
+      console.log('📦 Productos PRS cargados:', productosPRSFiltrados.length, productosPRSFiltrados);
+      console.log('⚠️ Si no hay productos PRS, necesitas crear productos con esPRS=true en el módulo Inventario');
     }
   }, [open]);
 
-  // 🔄 Escuchar cambios en contactos (cuando se agregan/editan desde Gestión de Contactos)
+  // 🔄 Escuchar cambios en contactos y productos (cuando se agregan/editan desde otros módulos)
   useEffect(() => {
     const handleContactosActualizados = () => {
       const contactosActualizados = obtenerContactosPorDepartamentoYTipo('2', ['donador', 'fournisseur']);
@@ -125,14 +169,25 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
       console.log('🔄 Categorías actualizadas automáticamente:', categoriasActualizadas.length);
     };
 
+    const handleProductosActualizados = () => {
+      const todosProductos = obtenerProductos();
+      const productosPRSFiltrados = todosProductos.filter(p => p.esPRS === true);
+      setProductosPRS(productosPRSFiltrados);
+      console.log('🔄 Productos PRS actualizados automáticamente:', productosPRSFiltrados.length, productosPRSFiltrados);
+    };
+
     window.addEventListener('contactos-actualizados', handleContactosActualizados);
     window.addEventListener('contactos-restaurados', handleContactosActualizados);
     window.addEventListener('categorias-actualizadas', handleCategoriasActualizadas);
+    window.addEventListener('productos-actualizados', handleProductosActualizados);
+    window.addEventListener('producto-creado', handleProductosActualizados);
 
     return () => {
       window.removeEventListener('contactos-actualizados', handleContactosActualizados);
       window.removeEventListener('contactos-restaurados', handleContactosActualizados);
       window.removeEventListener('categorias-actualizadas', handleCategoriasActualizadas);
+      window.removeEventListener('productos-actualizados', handleProductosActualizados);
+      window.removeEventListener('producto-creado', handleProductosActualizados);
     };
   }, []);
 
@@ -180,7 +235,8 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
     }
   }, [formData.categoria, categorias]);
 
-  // Actualizar automáticamente unidad y peso cuando se selecciona una subcategoría
+  // Actualizar datosHeredados cuando se selecciona una subcategoría
+  // El auto-rellenado se hace ahora en el onValueChange del Select
   useEffect(() => {
     if (formData.categoria && formData.subcategoria) {
       const categoriaSeleccionada = categorias.find(c => c.nombre === formData.categoria);
@@ -189,36 +245,14 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
       );
       
       if (subcategoriaSeleccionada) {
-        // Guardar TODOS los datos heredados para mostrar en badges
-        const nuevosHeredados = {
-          unidad: subcategoriaSeleccionada.unidad,
-          pesoUnitario: subcategoriaSeleccionada.pesoUnitario,
+        // Solo guardar datos heredados para mostrar badges e información
+        const datosGuardados = obtenerDatosSubcategoria(formData.categoria, formData.subcategoria);
+        
+        setDatosHeredados({
+          unidad: subcategoriaSeleccionada.unidad || datosGuardados?.unidad,
+          pesoUnitario: subcategoriaSeleccionada.pesoUnitario || datosGuardados?.pesoUnitario,
           icono: subcategoriaSeleccionada.icono,
           descripcion: subcategoriaSeleccionada.descripcion
-        };
-        
-        setDatosHeredados(nuevosHeredados);
-        
-        // FORZAR actualización inmediata del formData
-        setFormData(prev => {
-          const actualizado = { ...prev };
-          
-          // Si la subcategoría tiene una unidad definida, auto-llenar el campo unidad
-          if (subcategoriaSeleccionada.unidad && subcategoriaSeleccionada.unidad.trim() !== '') {
-            actualizado.unidad = subcategoriaSeleccionada.unidad;
-          }
-          
-          // ⚠️ EXCEPCIÓN PALETA: NO auto-calcular peso para PLT
-          // El peso de paleta siempre se ingresa manualmente o desde balanza
-          if (subcategoriaSeleccionada.unidad === 'PLT') {
-            actualizado.peso = 0; // Resetear peso para entrada manual
-          } else if (subcategoriaSeleccionada.pesoUnitario && subcategoriaSeleccionada.pesoUnitario > 0 && prev.cantidad > 0) {
-            // Si tiene peso unitario Y ya hay cantidad, auto-calcular peso (solo para NO paletas)
-            const pesoCalculado = prev.cantidad * subcategoriaSeleccionada.pesoUnitario;
-            actualizado.peso = parseFloat(pesoCalculado.toFixed(1));
-          }
-          
-          return actualizado;
         });
       } else {
         setDatosHeredados(null);
@@ -381,6 +415,47 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
     }
   }, [nuevaSubcategoria, categorias, formData.categoria]);
 
+  // Función para seleccionar un producto PRS y auto-rellenar todos los campos
+  const seleccionarProductoPRS = useCallback((producto: ProductoCreado) => {
+    console.log('🎯 Producto PRS seleccionado:', producto);
+    
+    // Obtener peso unitario del producto
+    const pesoUnitarioPRS = producto.pesoUnitario || 0;
+    
+    // Auto-rellenar TODOS los campos desde el producto PRS
+    setFormData(prev => ({
+      ...prev,
+      categoria: producto.categoria,
+      subcategoria: producto.subcategoria,
+      unidad: producto.unidad,
+      peso: pesoUnitarioPRS // Establecer peso unitario como peso inicial
+    }));
+    
+    // Actualizar datos heredados para mostrar badges
+    setDatosHeredados({
+      unidad: producto.unidad,
+      pesoUnitario: pesoUnitarioPRS,
+      icono: producto.icono,
+      descripcion: producto.descripcion
+    });
+    
+    // Limpiar búsqueda
+    setBusquedaPRS('');
+    
+    // Mostrar notificación de éxito con más detalle
+    const camposAutoRellenados = [
+      `Catégorie: ${producto.categoria}`,
+      `Sous-catégorie: ${producto.subcategoria}`,
+      `Unité: ${producto.unidad}`,
+      `Poids unitaire: ${pesoUnitarioPRS.toFixed(1)} kg`
+    ];
+    
+    toast.success('💡 Produit PRS sélectionné - Champs auto-remplis', {
+      description: camposAutoRellenados.join(' • '),
+      duration: 4000
+    });
+  }, []);
+
   const generarCodigoProducto = useCallback((): string => {
     const timestamp = Date.now().toString().slice(-6);
     const categoriaInicial = formData.categoria.substring(0, 3).toUpperCase();
@@ -397,6 +472,24 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
     if (!formData.donadorId) {
       toast.error('El donador/proveedor es requerido');
       return;
+    }
+    
+    // 🎯 VALIDACIÓN ESPECIAL PARA TIPO PRS
+    if (formData.tipoEntrada.toLowerCase() === 'prs') {
+      if (!formData.categoria || !formData.subcategoria) {
+        toast.error('⚠️ Pour le type PRS, vous devez sélectionner un produit PRS existant');
+        return;
+      }
+      
+      // Verificar que el producto seleccionado sea realmente un producto PRS
+      const productoSeleccionado = productosPRS.find(
+        p => p.categoria === formData.categoria && p.subcategoria === formData.subcategoria
+      );
+      
+      if (!productoSeleccionado) {
+        toast.error('⚠️ Le produit sélectionné n\'est pas un produit PRS valide');
+        return;
+      }
     }
     
     if (!formData.categoria) {
@@ -532,10 +625,15 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
       
       toast.info('📝 Listo para registrar otra entrada al mismo donador');
     }
-  }, [formData, categorias, subcategorias, programas, generarCodigoProducto, limpiarFormulario, onOpenChange]);
+  }, [formData, categorias, subcategorias, programas, productosPRS, generarCodigoProducto, limpiarFormulario, onOpenChange, contactos]);
 
   const categoriaSeleccionada = categorias.find(c => c.nombre === formData.categoria);
   const programaSeleccionado = programas.find(p => p.codigo.toLowerCase() === formData.tipoEntrada);
+
+  // 🎯 Detectar si el tipo de entrada es PRS
+  const esTipoEntradaPRS = useMemo(() => {
+    return formData.tipoEntrada.toLowerCase() === 'prs';
+  }, [formData.tipoEntrada]);
 
   // Determinar qué tipos de contactos mostrar según el programa de entrada
   const tipoContactoPermitido = useMemo(() => {
@@ -582,8 +680,16 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
           tipo: c.tipo
         }))
       });
+      
+      console.log('🎯 DEBUG Tipo PRS:', {
+        tipoEntrada: formData.tipoEntrada,
+        tipoEntradaLower: formData.tipoEntrada.toLowerCase(),
+        esTipoEntradaPRS,
+        productosPRSLength: productosPRS.length,
+        mostrarSelectorPRS: esTipoEntradaPRS || productosPRS.length > 0
+      });
     }
-  }, [formData.tipoEntrada, tipoContactoPermitido, contactos, contactosFiltrados]);
+  }, [formData.tipoEntrada, tipoContactoPermitido, contactos, contactosFiltrados, esTipoEntradaPRS, productosPRS]);
 
   return (
     <>
@@ -591,22 +697,22 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
         <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col p-0 bg-gradient-to-br from-white to-gray-50" aria-describedby="formulario-entrada-description">
           {/* Header Moderno */}
           <DialogHeader className="px-8 pt-6 pb-4 border-b bg-white/80 backdrop-blur-sm shrink-0">
+            <DialogTitle className="text-2xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#1E73BE] to-[#1557a0] flex items-center justify-center shadow-lg">
+                  <PackagePlus className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <span>{t('inventory.newEntry') || 'Nueva Entrada de Inventario'}</span>
+                  <p className="text-sm text-[#666666] mt-1" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                    Registra productos recibidos en el almacén
+                  </p>
+                </div>
+              </div>
+            </DialogTitle>
             <DialogDescription id="formulario-entrada-description" className="sr-only">
               Formulario para registrar nuevas entradas de inventario en el almacén
             </DialogDescription>
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#1E73BE] to-[#1557a0] flex items-center justify-center shadow-lg">
-                <PackagePlus className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <DialogTitle className="text-2xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
-                  {t('inventory.newEntry') || 'Nueva Entrada de Inventario'}
-                </DialogTitle>
-                <p className="text-sm text-[#666666] mt-1" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                  Registra productos recibidos en el almacén
-                </p>
-              </div>
-            </div>
           </DialogHeader>
 
           {/* Contenido del formulario con scroll */}
@@ -785,10 +891,161 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                   </p>
                 </div>
               </div>
+
+              {/* 🎯 SELECTOR RÁPIDO DE PRODUCTOS PRS */}
+              {/* MOSTRAR SIEMPRE cuando es tipo PRS, o cuando hay productos PRS disponibles */}
+              {(esTipoEntradaPRS || productosPRS.length > 0) && (
+                <div className={`mb-5 p-4 rounded-lg ${
+                  esTipoEntradaPRS 
+                    ? 'bg-gradient-to-r from-purple-100 to-pink-100 border-4 border-purple-400' 
+                    : 'bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200'
+                }`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-lg">⚡</span>
+                    <h4 className="text-sm font-semibold text-purple-800" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      {esTipoEntradaPRS ? '🔒 Sélection OBLIGATOIRE - Produits PRS' : 'Sélection Rapide - Produits PRS'}
+                    </h4>
+                    <Badge className="text-[9px] px-1.5 py-0 bg-purple-600">
+                      {productosPRS.length} produits
+                    </Badge>
+                    {esTipoEntradaPRS && (
+                      <Badge variant="destructive" className="text-[9px] px-1.5 py-0 animate-pulse">
+                        OBLIGATOIRE
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  {/* Campo de búsqueda */}
+                  <Input
+                    type="text"
+                    placeholder="🔍 Rechercher un produit PRS par nom, code ou catégorie..."
+                    value={busquedaPRS}
+                    onChange={(e) => setBusquedaPRS(e.target.value)}
+                    className={`mb-3 h-10 text-sm ${
+                      esTipoEntradaPRS
+                        ? 'border-purple-500 focus:border-purple-700 focus:ring-purple-700'
+                        : 'border-purple-300 focus:border-purple-500 focus:ring-purple-500'
+                    }`}
+                  />
+                  
+                  {/* Lista de productos filtrados - SIEMPRE MOSTRAR cuando es tipo PRS */}
+                  {(busquedaPRS || esTipoEntradaPRS) && (
+                    <div className="max-h-[200px] overflow-y-auto space-y-1 scrollbar-thin">
+                      {productosPRS
+                        .filter(p => 
+                          !busquedaPRS || // Si es tipo PRS, mostrar todos cuando no hay búsqueda
+                          p.nombre.toLowerCase().includes(busquedaPRS.toLowerCase()) ||
+                          p.codigo.toLowerCase().includes(busquedaPRS.toLowerCase()) ||
+                          p.categoria.toLowerCase().includes(busquedaPRS.toLowerCase()) ||
+                          p.subcategoria.toLowerCase().includes(busquedaPRS.toLowerCase())
+                        )
+                        .slice(0, esTipoEntradaPRS ? 50 : 10) // Mostrar más productos si es tipo PRS
+                        .map(producto => (
+                          <button
+                            key={producto.id}
+                            type="button"
+                            onClick={() => seleccionarProductoPRS(producto)}
+                            className={`w-full p-3 text-left rounded-lg border transition-all group ${
+                              formData.categoria === producto.categoria && formData.subcategoria === producto.subcategoria
+                                ? 'border-purple-500 bg-purple-100 ring-2 ring-purple-400'
+                                : 'border-purple-200 bg-white hover:bg-purple-50 hover:border-purple-400'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <span className="text-lg flex-shrink-0">{producto.icono || '📦'}</span>
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium text-sm text-gray-800 truncate">
+                                    {producto.nombre}
+                                  </div>
+                                  <div className="text-xs text-gray-500 truncate">
+                                    {producto.categoria} → {producto.subcategoria}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                                <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-blue-50 text-blue-700 border-blue-200">
+                                  {producto.unidad}
+                                </Badge>
+                                <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-green-50 text-green-700 border-green-200">
+                                  {(producto.pesoUnitario || 0).toFixed(1)} kg
+                                </Badge>
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      
+                      {productosPRS.filter(p => 
+                        !busquedaPRS ||
+                        p.nombre.toLowerCase().includes(busquedaPRS.toLowerCase()) ||
+                        p.codigo.toLowerCase().includes(busquedaPRS.toLowerCase()) ||
+                        p.categoria.toLowerCase().includes(busquedaPRS.toLowerCase()) ||
+                        p.subcategoria.toLowerCase().includes(busquedaPRS.toLowerCase())
+                      ).length === 0 && (
+                        <div className={`p-6 text-center rounded-lg ${
+                          esTipoEntradaPRS 
+                            ? 'bg-red-50 border-2 border-red-300' 
+                            : 'bg-gray-50 border border-gray-200'
+                        }`}>
+                          <div className="text-4xl mb-2">📦</div>
+                          <div className={`text-sm font-medium mb-2 ${
+                            esTipoEntradaPRS ? 'text-red-800' : 'text-gray-600'
+                          }`}>
+                            {esTipoEntradaPRS 
+                              ? '⚠️ Aucun produit PRS disponible' 
+                              : 'Aucun produit PRS trouvé'}
+                          </div>
+                          {esTipoEntradaPRS && (
+                            <div className="text-xs text-red-600">
+                              Vous devez créer au moins un produit PRS dans le module Inventaire avant d'utiliser ce type d'entrée.
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  <p className={`text-xs mt-2 ${esTipoEntradaPRS ? 'text-purple-800 font-semibold' : 'text-purple-600'}`}>
+                    {esTipoEntradaPRS 
+                      ? '⚠️ Pour le type d\'entrée PRS, vous devez sélectionner un produit PRS existant'
+                      : '💡 Tapez pour rechercher et sélectionner un produit PRS pour auto-remplir tous les champs'
+                    }
+                  </p>
+                </div>
+              )}
                 
-              <div className="grid grid-cols-2 gap-5">
-                {/* Categoría */}
-                <div className="space-y-2">
+              {/* OCULTAR SELECTOR MANUAL SI ES TIPO PRS - Solo mostrar si es tipo PRS y hay producto seleccionado */}
+              {esTipoEntradaPRS && formData.categoria && formData.subcategoria ? (
+                <div className="p-4 bg-blue-50 border-2 border-blue-300 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">✅</span>
+                    <h4 className="text-sm font-semibold text-blue-800" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                      Produit PRS sélectionné
+                    </h4>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{datosHeredados?.icono || '📦'}</span>
+                      <div>
+                        <div className="text-sm font-medium text-gray-800">
+                          {formData.categoria} → {formData.subcategoria}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-blue-50 text-blue-700 border-blue-200">
+                            {formData.unidad}
+                          </Badge>
+                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-green-50 text-green-700 border-green-200">
+                            {formData.peso.toFixed(1)} kg
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : !esTipoEntradaPRS ? (
+                <div className="grid grid-cols-2 gap-5">
+                  {/* Categoría */}
+                  <div className="space-y-2">
                   <Label htmlFor="categoria" className="text-sm font-medium flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     {t('common.category') || 'Categoría'}
                     <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Requerido</Badge>
@@ -837,7 +1094,61 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                   <div className="flex gap-2">
                     <Select 
                       value={formData.subcategoria} 
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, subcategoria: value }))}
+                      onValueChange={(value) => {
+                        // 🎯 AUTO-RELLENAR campos al seleccionar subcategoría PRS
+                        const subcategoriaSeleccionada = subcategorias.find(s => s.nombre === value);
+                        const datosGuardados = obtenerDatosSubcategoria(formData.categoria, value);
+                        
+                        // Determinar unidad y peso unitario a usar
+                        const unidadPRS = subcategoriaSeleccionada?.unidad || datosGuardados?.unidad || '';
+                        const pesoUnitarioPRS = subcategoriaSeleccionada?.pesoUnitario || datosGuardados?.pesoUnitario || 0;
+                        
+                        // Rastrear qué campos se auto-rellenan
+                        const camposAutoRellenados: string[] = [];
+                        
+                        // Actualizar formData con auto-rellenado
+                        setFormData(prev => {
+                          const actualizado = {
+                            ...prev,
+                            subcategoria: value
+                          };
+                          
+                          // Solo auto-rellenar si los campos están vacíos
+                          if (prev.unidad === '' && unidadPRS) {
+                            actualizado.unidad = unidadPRS;
+                            camposAutoRellenados.push(`Unité: ${unidadPRS}`);
+                          } else {
+                            actualizado.unidad = prev.unidad;
+                          }
+                          
+                          if (prev.peso === 0 && pesoUnitarioPRS > 0) {
+                            actualizado.peso = pesoUnitarioPRS;
+                            camposAutoRellenados.push(`Poids unitaire: ${pesoUnitarioPRS.toFixed(1)} kg`);
+                          } else {
+                            actualizado.peso = prev.peso;
+                          }
+                          
+                          return actualizado;
+                        });
+                        
+                        // Guardar datos heredados para mostrar información
+                        if (unidadPRS || pesoUnitarioPRS > 0) {
+                          setDatosHeredados({
+                            unidad: unidadPRS,
+                            pesoUnitario: pesoUnitarioPRS,
+                            icono: subcategoriaSeleccionada?.icono,
+                            descripcion: subcategoriaSeleccionada?.descripcion
+                          });
+                          
+                          // Solo mostrar toast si realmente se auto-rellenó algo
+                          if (camposAutoRellenados.length > 0) {
+                            toast.success('💡 Champs auto-remplis depuis le PRS', {
+                              description: camposAutoRellenados.join(' • '),
+                              duration: 3000
+                            });
+                          }
+                        }
+                      }}
                       disabled={!formData.categoria}
                     >
                       <SelectTrigger className="h-11 text-sm border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE] flex-1">
@@ -913,35 +1224,8 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                   )}
                 </div>
               </div>
-                
-              {/* Botón Grande para Nueva Subcategoría */}
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                {formData.categoria ? (
-                  <button
-                    type="button"
-                    onClick={abrirDialogSubcategoria}
-                    className="w-full h-12 flex items-center justify-center gap-3 rounded-lg border-2 border-dashed border-[#4CAF50] bg-green-50 hover:bg-green-100 text-[#4CAF50] hover:text-[#388E3C] transition-all group"
-                    style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
-                  >
-                    <div className="h-8 w-8 rounded-full bg-[#4CAF50] group-hover:bg-[#388E3C] flex items-center justify-center transition-colors">
-                      <Plus className="h-5 w-5 text-white" />
-                    </div>
-                    <span className="text-sm">
-                      {t('common.cantFindSubcategory')} "{categoriaSeleccionada?.nombre}"
-                    </span>
-                  </button>
-                ) : (
-                  <div className="w-full h-12 flex items-center justify-center gap-3 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 text-gray-400">
-                    <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                      <Plus className="h-5 w-5 text-white" />
-                    </div>
-                    <span className="text-sm" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}>
-                      {t('common.selectCategoryFirst')}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
+            ) : null}
+          </div>
 
             {/* Sección 3: Cantidades */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
@@ -1012,6 +1296,11 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                     <div className="flex items-center gap-1 text-xs text-green-600">
                       <span>✓</span>
                       <span>Unidad seleccionada: {formData.unidad}</span>
+                      {datosHeredados?.unidad === formData.unidad && (
+                        <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-blue-50 text-blue-700 border-blue-200 ml-1">
+                          PRS
+                        </Badge>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1049,6 +1338,14 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                       kg
                     </div>
                   </div>
+                  
+                  {/* Indicador de peso auto-rellenado desde PRS */}
+                  {formData.peso > 0 && datosHeredados?.pesoUnitario === formData.peso && formData.unidad !== 'PLT' && (
+                    <div className="flex items-center gap-1 text-xs text-blue-600">
+                      <span>💡</span>
+                      <span>Poids unitaire depuis PRS: {formData.peso.toFixed(1)} kg</span>
+                    </div>
+                  )}
                   
                   {/* Indicador de estado de balanza */}
                   {formData.unidad === 'PLT' && (
@@ -1257,13 +1554,11 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
       <Dialog open={dialogSubcategoria} onOpenChange={setDialogSubcategoria}>
         <DialogContent className="max-w-2xl bg-gradient-to-br from-white to-gray-50" aria-describedby="nueva-subcategoria-description">
           <DialogHeader className="pb-4">
-            <DialogTitle className="text-xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#4CAF50] to-[#388E3C] flex items-center justify-center shadow-lg">
-                  <Plus className="h-6 w-6 text-white" />
-                </div>
-                <span>{t('common.createSubcategory')}</span>
+            <DialogTitle className="text-xl flex items-center gap-4" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
+              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#4CAF50] to-[#388E3C] flex items-center justify-center shadow-lg">
+                <Plus className="h-6 w-6 text-white" />
               </div>
+              <span>{t('common.createSubcategory')}</span>
             </DialogTitle>
             <DialogDescription id="nueva-subcategoria-description" className="text-sm text-[#666666] pl-16">
               {t('common.newSubcategoryIn')}: <span className="font-medium text-[#1E73BE]">{categoriaSeleccionada?.nombre}</span>

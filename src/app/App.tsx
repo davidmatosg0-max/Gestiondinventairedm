@@ -48,6 +48,8 @@ import { logger, showWelcomeBanner } from './utils/logger';
 import { runDataMigrations } from './utils/dataMigration';
 import { inicializarAutoBackup } from './utils/autoBackupStorage';
 import { inicializarFileSystem } from './utils/fileSystemAccess';
+// 🔍 Herramientas de verificación PRS
+import './utils/verificarPRS';
 import { useUpdateNotifications } from '../hooks/useUpdateNotifications';
 import { useVersionCheck } from '../hooks/useVersionCheck';
 import { sistemaConDatosReales } from './utils/inicializarDatosEjemplo';

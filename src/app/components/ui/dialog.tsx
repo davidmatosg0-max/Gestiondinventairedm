@@ -51,14 +51,17 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentProps<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
+  // Filtrar aria-describedby si es undefined para evitar warnings
+  const { 'aria-describedby': ariaDescribedBy, ...restProps } = props;
+  const contentProps = ariaDescribedBy ? { 'aria-describedby': ariaDescribedBy, ...restProps } : restProps;
+  
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
         ref={ref}
         data-slot="dialog-content"
-        aria-describedby={undefined}
-        {...props}
+        {...contentProps}
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200",
           !className?.includes("max-w-") && "max-w-[calc(100%-2rem)] sm:max-w-lg",
