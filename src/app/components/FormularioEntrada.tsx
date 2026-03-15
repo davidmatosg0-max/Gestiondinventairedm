@@ -881,14 +881,14 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                       onClick={abrirDialogSubcategoria}
                       disabled={!formData.categoria}
                       className="h-11 w-11 flex items-center justify-center rounded-md bg-[#4CAF50] hover:bg-[#388E3C] text-white shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-                      title="Crear nueva subcategoría"
+                      title={t('common.createSubcategory')}
                       style={{ minWidth: '44px' }}
                     >
                       <Plus className="h-5 w-5" />
                     </button>
                   </div>
                   {!formData.categoria && (
-                    <p className="text-xs text-[#999999]">Primero selecciona una categoría</p>
+                    <p className="text-xs text-[#999999]">{t('common.selectCategoryFirstShort')}</p>
                   )}
                   {/* Mostrar badge si hay datos heredados */}
                   {datosHeredados && (formData.subcategoria) && (
@@ -897,7 +897,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                       <div className="flex-1 text-xs">
                         {datosHeredados.unidad && (
                           <span className="text-blue-700 font-medium">
-                            Unidad guardada: <strong>{datosHeredados.unidad}</strong>
+                            {t('common.savedUnit')}: <strong>{datosHeredados.unidad}</strong>
                           </span>
                         )}
                         {datosHeredados.unidad && datosHeredados.pesoUnitario && datosHeredados.pesoUnitario > 0 && (
@@ -905,7 +905,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                         )}
                         {datosHeredados.pesoUnitario && datosHeredados.pesoUnitario > 0 && (
                           <span className="text-blue-700 font-medium">
-                            Peso: <strong>{datosHeredados.pesoUnitario.toFixed(1)} kg</strong>
+                            {t('common.weight')}: <strong>{datosHeredados.pesoUnitario.toFixed(1)} kg</strong>
                           </span>
                         )}
                       </div>
@@ -927,7 +927,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                       <Plus className="h-5 w-5 text-white" />
                     </div>
                     <span className="text-sm">
-                      ¿No encuentras la subcategoría? Crear nueva en "{categoriaSeleccionada?.nombre}"
+                      {t('common.cantFindSubcategory')} "{categoriaSeleccionada?.nombre}"
                     </span>
                   </button>
                 ) : (
@@ -936,7 +936,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                       <Plus className="h-5 w-5 text-white" />
                     </div>
                     <span className="text-sm" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}>
-                      Selecciona una categoría para crear subcategorías
+                      {t('common.selectCategoryFirst')}
                     </span>
                   </div>
                 )}
@@ -1262,11 +1262,11 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                 <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#4CAF50] to-[#388E3C] flex items-center justify-center shadow-lg">
                   <Plus className="h-6 w-6 text-white" />
                 </div>
-                <span>Crear Nueva Subcategoría</span>
+                <span>{t('common.createSubcategory')}</span>
               </div>
             </DialogTitle>
             <DialogDescription id="nueva-subcategoria-description" className="text-sm text-[#666666] pl-16">
-              Añadir una nueva subcategoría a: <span className="font-medium text-[#1E73BE]">{categoriaSeleccionada?.nombre}</span>
+              {t('common.newSubcategoryIn')}: <span className="font-medium text-[#1E73BE]">{categoriaSeleccionada?.nombre}</span>
             </DialogDescription>
           </DialogHeader>
 
@@ -1279,7 +1279,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                   <div>
                     <p className="font-semibold text-[#333333] text-base">{categoriaSeleccionada.nombre}</p>
                     <p className="text-xs text-[#666666] mt-1">
-                      {categoriaSeleccionada.subcategorias?.length || 0} subcategorías existentes
+                      {categoriaSeleccionada.subcategorias?.length || 0} {t('configuration.subcategories').toLowerCase()}
                     </p>
                   </div>
                 </div>
@@ -1291,14 +1291,14 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
               {/* Nombre */}
               <div className="space-y-2 col-span-2">
                 <Label htmlFor="nombreSubcategoria" className="text-sm font-medium flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  Nombre
-                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Requerido</Badge>
+                  {t('configuration.subcategoryName')}
+                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0">{t('common.required')}</Badge>
                 </Label>
                 <Input
                   id="nombreSubcategoria"
                   value={nuevaSubcategoria.nombre}
                   onChange={(e) => setNuevaSubcategoria(prev => ({ ...prev, nombre: e.target.value }))}
-                  placeholder="Ej: Manzanas Golden"
+                  placeholder={t('configuration.subcategoryNamePlaceholder')}
                   className="h-11 border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE]"
                   autoFocus
                 />
@@ -1307,9 +1307,9 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
               {/* Ícono */}
               <div className="space-y-2">
                 <Label htmlFor="iconoSubcategoria" className="text-sm font-medium flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  Ícono (Emoji)
+                  {t('configuration.icon')}
                   <Badge variant="outline" className="text-[10px] bg-purple-50 text-purple-700 border-purple-200">
-                    🤖 Auto-generado
+                    🤖 {t('common.autoGenerated')}
                   </Badge>
                 </Label>
                 <div className="relative">
@@ -1332,8 +1332,8 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-[#666666]">
                     {nuevaSubcategoria.nombre && nuevaSubcategoria.nombre.length > 2 
-                      ? '✨ Icono detectado automáticamente' 
-                      : `Por defecto: ${categoriaSeleccionada?.icono}`}
+                      ? `✨ ${t('common.iconAutoDetected')}` 
+                      : `${t('common.default')}: ${categoriaSeleccionada?.icono}`}
                   </span>
                 </div>
               </div>
@@ -1341,14 +1341,14 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
               {/* Unidad */}
               <div className="space-y-2">
                 <Label htmlFor="unidadSubcategoria" className="text-sm font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  Unidad de Medida
+                  {t('common.unit')}
                 </Label>
                 <Select 
                   value={nuevaSubcategoria.unidad} 
                   onValueChange={(value) => setNuevaSubcategoria(prev => ({ ...prev, unidad: value }))}
                 >
                   <SelectTrigger className="h-11 text-sm border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE]">
-                    <SelectValue placeholder="Seleccionar..." />
+                    <SelectValue placeholder={t('common.selectUnit')} />
                   </SelectTrigger>
                   <SelectContent>
                     {unidades.map(unidad => (
@@ -1363,7 +1363,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
               {/* Peso Unitario */}
               <div className="space-y-2 col-span-2">
                 <Label htmlFor="pesoUnitario" className="text-sm font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  Peso Unitario
+                  {t('common.unitWeight')}
                 </Label>
                 <div className="relative">
                   <Input
@@ -1381,20 +1381,20 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                   </div>
                 </div>
                 <p className="text-xs text-[#666666]">
-                  Se calculará automáticamente si se deja en 0.
+                  {t('common.autoCalculatedIfZero')}
                 </p>
               </div>
 
               {/* Descripción */}
               <div className="space-y-2 col-span-2">
                 <Label htmlFor="descripcionSubcategoria" className="text-sm font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  Descripción
+                  {t('configuration.subcategoryDescription')}
                 </Label>
                 <Textarea
                   id="descripcionSubcategoria"
                   value={nuevaSubcategoria.descripcion}
                   onChange={(e) => setNuevaSubcategoria(prev => ({ ...prev, descripcion: e.target.value }))}
-                  placeholder="Descripción opcional de la subcategoría..."
+                  placeholder={t('common.optionalDescription')}
                   rows={3}
                   className="resize-none border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE]"
                 />
@@ -1418,7 +1418,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
               className="h-11 px-6 border-gray-300 hover:bg-gray-50"
               style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
             >
-              Cancelar
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={guardarNuevaSubcategoria}
@@ -1427,7 +1427,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
               style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Crear Subcategoría
+              {t('common.createSubcategory')}
             </Button>
           </div>
         </DialogContent>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search } from 'lucide-react';
 import { Input } from './input';
 import { Label } from './label';
@@ -15,12 +16,38 @@ interface IconSelectorProps {
 export function IconSelector({ 
   value, 
   onChange, 
-  label = 'Icono',
+  label,
   gridCols = 8,
   maxHeight = 'max-h-40'
 }: IconSelectorProps) {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos');
+
+  // Mapeo de categorías a claves de traducción
+  const categoryMapping: Record<string, string> = {
+    'Todos': 'all',
+    'Granos y Cereales': 'grainsAndCereals',
+    'Legumbres': 'legumes',
+    'Conservas': 'canned',
+    'Lácteos': 'dairy',
+    'Frutas': 'fruits',
+    'Verduras': 'vegetables',
+    'Aceites': 'oils',
+    'Carnes': 'meat',
+    'Pescados y Mariscos': 'fish',
+    'Snacks': 'snacks',
+    'Dulces': 'sweets',
+    'Bebidas': 'drinks',
+    'Condimentos y Salsas': 'condiments',
+    'Panadería': 'bakery',
+    'Platos Preparados': 'prepared',
+    'Alimentos para Bebés': 'babyFood',
+    'Higiene Personal': 'hygiene',
+    'Limpieza': 'cleaning',
+    'General': 'general',
+    'Varios': 'various'
+  };
 
   const categorias = ['Todos', ...Object.keys(ICONOS_POR_CATEGORIA)];
 
@@ -36,14 +63,14 @@ export function IconSelector({
 
   return (
     <div className="space-y-2">
-      <Label>{label}</Label>
+      <Label>{label || t('common.iconSelector.label')}</Label>
       
       {/* Búsqueda */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#666666]" />
         <Input
           type="text"
-          placeholder="Buscar icono..."
+          placeholder={t('common.iconSelector.searchPlaceholder')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10"
@@ -63,7 +90,7 @@ export function IconSelector({
                 : 'bg-gray-100 text-[#666666] hover:bg-gray-200'
             }`}
           >
-            {cat}
+            {t(`common.iconCategories.${categoryMapping[cat] || 'all'}`)}
           </button>
         ))}
       </div>
@@ -87,7 +114,7 @@ export function IconSelector({
 
       {/* Contador */}
       <p className="text-xs text-[#666666] text-center">
-        {iconosFiltrados.length} iconos disponibles
+        {iconosFiltrados.length} {t('common.iconSelector.iconsAvailable')}
       </p>
     </div>
   );

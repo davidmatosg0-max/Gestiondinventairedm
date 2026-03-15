@@ -1542,7 +1542,18 @@ export function Configuracion() {
                 <div className="flex gap-3">
                   <Dialog open={subcategoriaDialogOpen} onOpenChange={(open) => {
                     setSubcategoriaDialogOpen(open);
-                    if (!open) resetFormSubcategoria();
+                    if (!open) {
+                      resetFormSubcategoria();
+                    } else if (!editandoSubcategoria) {
+                      // Al abrir para crear nueva subcategoría, copiar el ícono de la categoría seleccionada
+                      const categoriaObj = categorias.find(c => c.id === categoriaSeleccionada);
+                      if (categoriaObj?.icono) {
+                        setFormSubcategoria(prev => ({
+                          ...prev,
+                          icono: categoriaObj.icono
+                        }));
+                      }
+                    }
                   }}>
                     <DialogTrigger asChild>
                       <Button 
@@ -1705,19 +1716,90 @@ export function Configuracion() {
                               </div>
                             </div>
                           )}
-                          <div className="grid grid-cols-8 gap-2 p-4 border rounded-lg max-h-40 overflow-y-auto">
-                            {ICONOS_SUBCATEGORIAS.map(icono => (
-                              <button
-                                key={icono}
-                                onClick={() => setFormSubcategoria({ ...formSubcategoria, icono })}
-                                className={`text-xl p-2 rounded hover:bg-gray-100 ${
-                                  formSubcategoria.icono === icono ? 'bg-blue-100 ring-2 ring-blue-500' : ''
-                                }`}
-                                type="button"
-                              >
-                                {icono}
-                              </button>
-                            ))}
+                          <div className="border rounded-lg max-h-80 overflow-y-auto p-3 bg-gray-50">
+                            {/* Sección: Alimentarios */}
+                            <div className="mb-4">
+                              <p className="text-xs font-semibold text-[#1a4d7a] mb-2">🍽️ ALIMENTAIRES</p>
+                              
+                              {/* Cereales y Granos */}
+                              <div className="mb-2">
+                                <p className="text-[10px] text-gray-500 mb-1">Céréales & Grains</p>
+                                <div className="grid grid-cols-8 gap-1">
+                                  {['🍚', '🍝', '🍞', '🥖', '🥣', '🥐', '🥯', '🥨', '🧇', '🥞', '🌾'].map(icono => (
+                                    <button key={icono} onClick={() => setFormSubcategoria({ ...formSubcategoria, icono })} className={`text-lg p-1 rounded hover:bg-blue-100 ${formSubcategoria.icono === icono ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`} type="button">{icono}</button>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              {/* Frutas y Verduras */}
+                              <div className="mb-2">
+                                <p className="text-[10px] text-gray-500 mb-1">Fruits & Légumes</p>
+                                <div className="grid grid-cols-8 gap-1">
+                                  {['🍎', '🍊', '🍌', '🍇', '🍓', '🍋', '🍉', '🍍', '🥝', '🥭', '🍏', '🍐', '🥥', '🥬', '🥕', '🥔', '🌽', '🥦', '🍅', '🫑', '🥒', '🧅', '🧄', '🍆', '🥑', '🌶️', '🫛', '🍄'].map(icono => (
+                                    <button key={icono} onClick={() => setFormSubcategoria({ ...formSubcategoria, icono })} className={`text-lg p-1 rounded hover:bg-blue-100 ${formSubcategoria.icono === icono ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`} type="button">{icono}</button>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              {/* Proteínas y Lácteos */}
+                              <div className="mb-2">
+                                <p className="text-[10px] text-gray-500 mb-1">Protéines & Produits Laitiers</p>
+                                <div className="grid grid-cols-8 gap-1">
+                                  {['🥩', '🍗', '🐟', '🍤', '🥚', '🍖', '🥓', '🌭', '🍔', '🥛', '🧀', '🧈', '🍦', '🧁'].map(icono => (
+                                    <button key={icono} onClick={() => setFormSubcategoria({ ...formSubcategoria, icono })} className={`text-lg p-1 rounded hover:bg-blue-100 ${formSubcategoria.icono === icono ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`} type="button">{icono}</button>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              {/* Bebidas */}
+                              <div className="mb-2">
+                                <p className="text-[10px] text-gray-500 mb-1">Boissons</p>
+                                <div className="grid grid-cols-8 gap-1">
+                                  {['☕', '🧃', '🥤', '🍵', '🧋', '🍶', '🍾', '🍷', '🍺', '🍻', '🥂', '🍹', '🍸', '🧊'].map(icono => (
+                                    <button key={icono} onClick={() => setFormSubcategoria({ ...formSubcategoria, icono })} className={`text-lg p-1 rounded hover:bg-blue-100 ${formSubcategoria.icono === icono ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`} type="button">{icono}</button>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              {/* Condimentos y Dulces */}
+                              <div className="mb-2">
+                                <p className="text-[10px] text-gray-500 mb-1">Condiments & Sucreries</p>
+                                <div className="grid grid-cols-8 gap-1">
+                                  {['🍯', '🧂', '🫙', '🥫', '🫒', '🌻', '🧴', '🍫', '🍬', '🍪', '🍩', '🍰', '🎂', '🥧', '🍮', '🍭', '🍡'].map(icono => (
+                                    <button key={icono} onClick={() => setFormSubcategoria({ ...formSubcategoria, icono })} className={`text-lg p-1 rounded hover:bg-blue-100 ${formSubcategoria.icono === icono ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`} type="button">{icono}</button>
+                                  ))}
+                                </div>
+                              </div>
+                              
+                              {/* Comidas y Genéricos */}
+                              <div className="mb-2">
+                                <p className="text-[10px] text-gray-500 mb-1">Plats & Génériques</p>
+                                <div className="grid grid-cols-8 gap-1">
+                                  {['🥗', '🍲', '🌮', '🍕', '🍱', '🥜', '🍿', '📦', '🛒', '🍽️', '🥘', '🍴', '🫘'].map(icono => (
+                                    <button key={icono} onClick={() => setFormSubcategoria({ ...formSubcategoria, icono })} className={`text-lg p-1 rounded hover:bg-blue-100 ${formSubcategoria.icono === icono ? 'bg-blue-100 ring-2 ring-blue-500' : ''}`} type="button">{icono}</button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Sección: No Alimentarios */}
+                            <div>
+                              <p className="text-xs font-semibold text-[#2d9561] mb-2">🧴 NON-ALIMENTAIRES</p>
+                              <div className="grid grid-cols-8 gap-1">
+                                {['🧴', '🧼', '🪥', '🧻', '🪒', '💊', '🩹', '🧹', '🧺', '🪣', '🧽', '🍼', '👶', '🧸', '👕', '👖', '🧥', '👟', '🧦', '🎒', '📚', '📓', '✏️', '🖊️', '📏', '✂️', '🖍️', '🐕', '🐈', '🦴', '🎁', '💝', '🔋', '💡', '🏥', '🕯️', '🧰', '🌡️'].map(icono => (
+                                  <button
+                                    key={icono}
+                                    onClick={() => setFormSubcategoria({ ...formSubcategoria, icono })}
+                                    className={`text-lg p-1 rounded hover:bg-green-100 ${
+                                      formSubcategoria.icono === icono ? 'bg-green-100 ring-2 ring-green-500' : ''
+                                    }`}
+                                    type="button"
+                                  >
+                                    {icono}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                           </div>
                         </div>
                         
@@ -3703,26 +3785,94 @@ export function Configuracion() {
               </div>
 
               {/* Selector de Icono Expandible */}
-              <div id="iconPickerVarianteConfig" className="hidden p-4 bg-[#F4F4F4] rounded-lg border border-gray-200">
+              <div id="iconPickerVarianteConfig" className="hidden p-4 bg-[#F4F4F4] rounded-lg border border-gray-200 max-h-96 overflow-y-auto">
                 <p className="text-xs text-[#666666] mb-3">Selecciona un icono para identificar esta variante:</p>
-                <div className="grid grid-cols-10 md:grid-cols-12 gap-2">
-                  {['📦', '🏷️', '⭐', '💎', '🎯', '🔵', '🟢', '🟡', '🟠', '🔴', '🟣', '🟤', '⚫', '⚪', '🔸', '🔹', '💠', '🎨', '✨', '🌟', '🍎', '🥕', '🥖', '🥛'].map((icono) => (
-                    <button
-                      key={icono}
-                      type="button"
-                      onClick={() => {
-                        setFormVarianteSubcategoria({ ...formVarianteSubcategoria, icono });
-                        document.getElementById('iconPickerVarianteConfig')?.classList.add('hidden');
-                      }}
-                      className={`p-2.5 text-xl border rounded-lg hover:scale-110 transition-transform ${
-                        formVarianteSubcategoria.icono === icono 
-                          ? 'border-[#9C27B0] bg-white shadow-md ring-2 ring-[#9C27B0] ring-opacity-30' 
-                          : 'border-gray-300 bg-white hover:border-[#9C27B0]'
-                      }`}
-                    >
-                      {icono}
-                    </button>
-                  ))}
+                
+                {/* Sección: Alimentarios */}
+                <div className="mb-4">
+                  <p className="text-xs font-semibold text-[#1a4d7a] mb-2">🍽️ ALIMENTAIRES</p>
+                  
+                  {/* Cereales y Granos */}
+                  <div className="mb-2">
+                    <p className="text-[10px] text-gray-500 mb-1">Céréales & Grains</p>
+                    <div className="grid grid-cols-8 gap-1">
+                      {['🍚', '🍝', '🍞', '🥖', '🥣', '🥐', '🥯', '🥨', '🧇', '🥞', '🌾'].map(icono => (
+                        <button key={icono} type="button" onClick={() => { setFormVarianteSubcategoria({ ...formVarianteSubcategoria, icono }); document.getElementById('iconPickerVarianteConfig')?.classList.add('hidden'); }} className={`text-lg p-1 rounded hover:bg-purple-100 ${formVarianteSubcategoria.icono === icono ? 'bg-purple-100 ring-2 ring-purple-500' : 'bg-white'}`}>{icono}</button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Frutas y Verduras */}
+                  <div className="mb-2">
+                    <p className="text-[10px] text-gray-500 mb-1">Fruits & Légumes</p>
+                    <div className="grid grid-cols-8 gap-1">
+                      {['🍎', '🍊', '🍌', '🍇', '🍓', '🍋', '🍉', '🍍', '🥝', '🥭', '🍏', '🍐', '🥥', '🥬', '🥕', '🥔', '🌽', '🥦', '🍅', '🫑', '🥒', '🧅', '🧄', '🍆', '🥑', '🌶️', '🫛', '🍄'].map(icono => (
+                        <button key={icono} type="button" onClick={() => { setFormVarianteSubcategoria({ ...formVarianteSubcategoria, icono }); document.getElementById('iconPickerVarianteConfig')?.classList.add('hidden'); }} className={`text-lg p-1 rounded hover:bg-purple-100 ${formVarianteSubcategoria.icono === icono ? 'bg-purple-100 ring-2 ring-purple-500' : 'bg-white'}`}>{icono}</button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Proteínas y Lácteos */}
+                  <div className="mb-2">
+                    <p className="text-[10px] text-gray-500 mb-1">Protéines & Produits Laitiers</p>
+                    <div className="grid grid-cols-8 gap-1">
+                      {['🥩', '🍗', '🐟', '🍤', '🥚', '🍖', '🥓', '🌭', '🍔', '🥛', '🧀', '🧈', '🍦', '🧁'].map(icono => (
+                        <button key={icono} type="button" onClick={() => { setFormVarianteSubcategoria({ ...formVarianteSubcategoria, icono }); document.getElementById('iconPickerVarianteConfig')?.classList.add('hidden'); }} className={`text-lg p-1 rounded hover:bg-purple-100 ${formVarianteSubcategoria.icono === icono ? 'bg-purple-100 ring-2 ring-purple-500' : 'bg-white'}`}>{icono}</button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Bebidas */}
+                  <div className="mb-2">
+                    <p className="text-[10px] text-gray-500 mb-1">Boissons</p>
+                    <div className="grid grid-cols-8 gap-1">
+                      {['☕', '🧃', '🥤', '🍵', '🧋', '🍶', '🍾', '🍷', '🍺', '🍻', '🥂', '🍹', '🍸', '🧊'].map(icono => (
+                        <button key={icono} type="button" onClick={() => { setFormVarianteSubcategoria({ ...formVarianteSubcategoria, icono }); document.getElementById('iconPickerVarianteConfig')?.classList.add('hidden'); }} className={`text-lg p-1 rounded hover:bg-purple-100 ${formVarianteSubcategoria.icono === icono ? 'bg-purple-100 ring-2 ring-purple-500' : 'bg-white'}`}>{icono}</button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Condimentos y Dulces */}
+                  <div className="mb-2">
+                    <p className="text-[10px] text-gray-500 mb-1">Condiments & Sucreries</p>
+                    <div className="grid grid-cols-8 gap-1">
+                      {['🍯', '🧂', '🫙', '🥫', '🫒', '🌻', '🧴', '🍫', '🍬', '🍪', '🍩', '🍰', '🎂', '🥧', '🍮', '🍭', '🍡'].map(icono => (
+                        <button key={icono} type="button" onClick={() => { setFormVarianteSubcategoria({ ...formVarianteSubcategoria, icono }); document.getElementById('iconPickerVarianteConfig')?.classList.add('hidden'); }} className={`text-lg p-1 rounded hover:bg-purple-100 ${formVarianteSubcategoria.icono === icono ? 'bg-purple-100 ring-2 ring-purple-500' : 'bg-white'}`}>{icono}</button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Comidas y Genéricos */}
+                  <div className="mb-2">
+                    <p className="text-[10px] text-gray-500 mb-1">Plats & Génériques</p>
+                    <div className="grid grid-cols-8 gap-1">
+                      {['🥗', '🍲', '🌮', '🍕', '🍱', '🥜', '🍿', '📦', '🛒', '🍽️', '🥘', '🍴', '🫘'].map(icono => (
+                        <button key={icono} type="button" onClick={() => { setFormVarianteSubcategoria({ ...formVarianteSubcategoria, icono }); document.getElementById('iconPickerVarianteConfig')?.classList.add('hidden'); }} className={`text-lg p-1 rounded hover:bg-purple-100 ${formVarianteSubcategoria.icono === icono ? 'bg-purple-100 ring-2 ring-purple-500' : 'bg-white'}`}>{icono}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Sección: No Alimentarios */}
+                <div>
+                  <p className="text-xs font-semibold text-[#2d9561] mb-2">🧴 NON-ALIMENTAIRES</p>
+                  <div className="grid grid-cols-8 gap-1">
+                    {['🧴', '🧼', '🪥', '🧻', '🪒', '💊', '🩹', '🧹', '🧺', '🪣', '🧽', '🍼', '👶', '🧸', '👕', '👖', '🧥', '👟', '🧦', '🎒', '📚', '📓', '✏️', '🖊️', '📏', '✂️', '🖍️', '🐕', '🐈', '🦴', '🎁', '💝', '🔋', '💡', '🏥', '🕯️', '🧰', '🌡️'].map(icono => (
+                      <button
+                        key={icono}
+                        type="button"
+                        onClick={() => {
+                          setFormVarianteSubcategoria({ ...formVarianteSubcategoria, icono });
+                          document.getElementById('iconPickerVarianteConfig')?.classList.add('hidden');
+                        }}
+                        className={`text-lg p-1 rounded hover:bg-green-100 ${
+                          formVarianteSubcategoria.icono === icono ? 'bg-green-100 ring-2 ring-green-500' : 'bg-white'
+                        }`}
+                      >
+                        {icono}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

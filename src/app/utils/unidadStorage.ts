@@ -18,6 +18,8 @@ const unidadesIniciales: Unidad[] = [
   { id: '4', nombre: 'Saco', abreviatura: 'SAC', icono: '💼' },
   { id: '5', nombre: 'Bac Noir', abreviatura: 'BN', icono: '⚫' },
   { id: '6', nombre: 'Kilogramo', abreviatura: 'kg', icono: '⚖️' },
+  { id: '7', nombre: 'Benne de plastique', abreviatura: 'BNN-P', icono: '🗑️' },
+  { id: '8', nombre: 'Benne de bois', abreviatura: 'BNN-B', icono: '🪵' },
 ];
 
 // Inicializar unidades si no existen
@@ -27,6 +29,31 @@ export function inicializarUnidades(): void {
   const unidadesExistentes = localStorage.getItem(STORAGE_KEY);
   if (!unidadesExistentes) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(unidadesIniciales));
+  } else {
+    // Migración: Agregar nuevas unidades benne si no existen
+    try {
+      const unidades = JSON.parse(unidadesExistentes) as Unidad[];
+      let actualizado = false;
+      
+      // Verificar y agregar Benne de plastique
+      if (!unidades.find(u => u.id === '7' || u.abreviatura === 'BNN-P')) {
+        unidades.push({ id: '7', nombre: 'Benne de plastique', abreviatura: 'BNN-P', icono: '🗑️' });
+        actualizado = true;
+      }
+      
+      // Verificar y agregar Benne de bois
+      if (!unidades.find(u => u.id === '8' || u.abreviatura === 'BNN-B')) {
+        unidades.push({ id: '8', nombre: 'Benne de bois', abreviatura: 'BNN-B', icono: '🪵' });
+        actualizado = true;
+      }
+      
+      if (actualizado) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(unidades));
+        console.log('✅ Unidades benne agregadas exitosamente');
+      }
+    } catch (error) {
+      console.error('Error en migración de unidades:', error);
+    }
   }
 }
 

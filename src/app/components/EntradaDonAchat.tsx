@@ -2,6 +2,7 @@
 // Completamente reescrito para máxima funcionalidad y claridad
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useBranding } from '../../hooks/useBranding';
 import { 
   Gift, Package, Building2, Plus, Check, ChevronsUpDown, Save, X, 
   Thermometer, Snowflake, Wind, ChevronDown, ChevronUp, Settings, 
@@ -44,11 +45,6 @@ import {
   type ContactoDepartamento, 
   sincronizarDonateursFournisseurs 
 } from '../utils/contactosDepartamentoStorage';
-import { 
-  debeRegistrarPaletasIndividuales, 
-  registrarPaletasIndividuales, 
-  type DatosEntradaPaleta 
-} from '../utils/paletaStorage';
 
 // ==================== TIPOS ====================
 type TipoTemperatura = 'ambiente' | 'refrigerado' | 'congelado' | '';
@@ -76,6 +72,7 @@ interface FormDataDonAchat {
   
   cantidad: number;
   unidad: string;
+  pesoUnitario: number;
   peso: number;
   temperatura: TipoTemperatura;
   fechaCaducidad: string;
@@ -90,6 +87,7 @@ interface ProductoAgregado {
   cantidad: number;
   unidad: string;
   pesoTotal: number;
+  pesoUnidad?: number; // Peso de la unidad/contenedor (tara) en kg
   temperatura: string;
   categoria?: string;
   subcategoria?: string;
@@ -152,6 +150,7 @@ const FORM_DATA_INICIAL: FormDataDonAchat = {
   
   cantidad: 0,
   unidad: '',
+  pesoUnitario: 0,
   peso: 0,
   temperatura: '',
   fechaCaducidad: '',
@@ -189,6 +188,7 @@ const FORM_VARIANTE_INICIAL: FormVariante = {
 // ==================== COMPONENTE PRINCIPAL ====================
 export function EntradaDonAchat() {
   const { t } = useTranslation();
+  const branding = useBranding();
   const printRef = useRef<HTMLDivElement>(null);
   
   // ========== Estados principales ==========
@@ -214,7 +214,6 @@ export function EntradaDonAchat() {
   const [searchProductoQuery, setSearchProductoQuery] = useState('');
   const [selectContactoOpen, setSelectContactoOpen] = useState(false);
   const [searchContactoQuery, setSearchContactoQuery] = useState('');
-  const [calcularPesoAuto, setCalcularPesoAuto] = useState(false);
   const [detallesOpcionalesAbiertos, setDetallesOpcionalesAbiertos] = useState(false);
   const [imprimirAutomaticamente, setImprimirAutomaticamente] = useState(true);
   
@@ -391,13 +390,6 @@ export function EntradaDonAchat() {
       }
     }
   }, [formData.tipoEntrada, formData.productoId, productosDB]);
-
-  // Calcular peso automáticamente
-  useEffect(() => {
-    if (calcularPesoAuto && formData.cantidad > 0 && formData.unidad) {
-      calcularPesoTotal();
-    }
-  }, [formData.cantidad, formData.unidad, calcularPesoAuto]);
 
   // ==================== DATOS COMPUTADOS ====================
   
@@ -596,18 +588,30 @@ export function EntradaDonAchat() {
 
     let pesoCalculado = 0;
 
-    // Si hay variante seleccionada, usar su peso
-    if (varianteSeleccionada?.pesoUnitario) {
+    // Prioridad 1: Si el usuario ingresó peso unitario manualmente
+    if (formData.pesoUnitario > 0) {
+      pesoCalculado = formData.cantidad * formData.pesoUnitario;
+    }
+    // Prioridad 2: Si hay variante seleccionada, usar su peso
+    else if (varianteSeleccionada?.pesoUnitario) {
       pesoCalculado = formData.cantidad * varianteSeleccionada.pesoUnitario;
     }
-    // Si no hay variante pero hay subcategoría, usar su peso
+    // Prioridad 3: Si no hay variante pero hay subcategoría, usar su peso
     else if (subcategoriaSeleccionada) {
       const pesoUnitario = obtenerPesoPorUnidad(subcategoriaSeleccionada, formData.unidad);
       pesoCalculado = formData.cantidad * (pesoUnitario || 0);
     }
 
     setFormData(prev => ({ ...prev, peso: parseFloat(pesoCalculado.toFixed(3)) }));
-  }, [formData.cantidad, formData.unidad, varianteSeleccionada, subcategoriaSeleccionada]);
+  }, [formData.cantidad, formData.unidad, formData.pesoUnitario, varianteSeleccionada, subcategoriaSeleccionada]);
+
+  // Calcular peso automáticamente - SIEMPRE ACTIVO
+  useEffect(() => {
+    if (formData.cantidad > 0 && formData.unidad) {
+      calcularPesoTotal();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.cantidad, formData.unidad, formData.pesoUnitario]);
 
   // ==================== FUNCIONES HELPER ====================
   
@@ -663,6 +667,9 @@ export function EntradaDonAchat() {
     const subcategoria = categoria?.subcategorias?.find(s => s.id === subcategoriaId);
     if (!subcategoria) return;
 
+    // Obtener peso unitario de la subcategoría
+    const pesoUnitarioSubcat = subcategoria.pesoUnitario || 0;
+
     setFormData(prev => ({
       ...prev,
       subcategoriaId: subcategoria.id,
@@ -673,6 +680,7 @@ export function EntradaDonAchat() {
       nombreProducto: `${formData.categoriaNombre} - ${subcategoria.nombre}`,
       productoIcono: subcategoria.icono || prev.productoIcono,
       unidad: subcategoria.unidad || '',
+      pesoUnitario: pesoUnitarioSubcat,
     }));
 
     setComboboxSubcategoriaOpen(false);
@@ -686,6 +694,9 @@ export function EntradaDonAchat() {
     const variante = subcategoria?.variantes?.find(v => v.id === varianteId);
     if (!variante) return;
 
+    // Obtener peso unitario de la variante
+    const pesoUnitarioVariante = variante.pesoUnitario || 0;
+
     setFormData(prev => ({
       ...prev,
       varianteId: variante.id,
@@ -693,6 +704,7 @@ export function EntradaDonAchat() {
       nombreProducto: `${formData.categoriaNombre} - ${formData.subcategoriaNombre} - ${variante.nombre}`,
       productoIcono: variante.icono || prev.productoIcono,
       unidad: variante.unidad || prev.unidad,
+      pesoUnitario: pesoUnitarioVariante,
     }));
 
     setComboboxVarianteOpen(false);
@@ -761,18 +773,20 @@ export function EntradaDonAchat() {
       unidad: subcategoria?.unidad || prev.unidad,
     }));
 
-    if (calcularPesoAuto && formData.cantidad > 0) {
+    if (formData.cantidad > 0) {
       setTimeout(calcularPesoTotal, 100);
     }
-  }, [categoriasDB, formData.categoria, formData.cantidad, calcularPesoAuto, calcularPesoTotal]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoriasDB, formData.categoria, formData.cantidad]);
 
   const handleVarianteChange = useCallback((varianteId: string) => {
     setFormData(prev => ({ ...prev, varianteId }));
 
-    if (calcularPesoAuto && formData.cantidad > 0) {
+    if (formData.cantidad > 0) {
       setTimeout(calcularPesoTotal, 100);
     }
-  }, [formData.cantidad, calcularPesoAuto, calcularPesoTotal]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.cantidad]);
 
   const handleGuardarNuevaVariante = useCallback(() => {
     // Validaciones
@@ -897,6 +911,80 @@ export function EntradaDonAchat() {
     }
   }, [formData.categoriaId, formData.categoriaNombre, formSubcategoria]);
 
+  // Función para imprimir etiqueta de un producto
+  const imprimirEtiquetaProducto = useCallback(async (producto: ProductoAgregado) => {
+    try {
+      const contacto = contactosDisponibles.find(c => c.id === formData.donadorId);
+      if (!contacto) {
+        console.error('❌ Contacto no encontrado para impresión de etiqueta');
+        toast.error("Impossible de trouver le contact pour l'impression");
+        return;
+      }
+
+      // Construir nombre completo del donador
+      // Prioridad: nombreEmpresa > nombre+apellido > nombre > apellido > email
+      let nombreCompleto = '';
+      if (contacto.nombreEmpresa) {
+        nombreCompleto = contacto.nombreEmpresa;
+      } else if (contacto.nombre && contacto.apellido) {
+        nombreCompleto = `${contacto.nombre} ${contacto.apellido}`.trim();
+      } else if (contacto.nombre) {
+        nombreCompleto = contacto.nombre;
+      } else if (contacto.apellido) {
+        nombreCompleto = contacto.apellido;
+      } else {
+        nombreCompleto = contacto.email || 'Donateur inconnu';
+      }
+
+      console.log('📋 Datos del contacto para etiqueta:', {
+        id: contacto.id,
+        nombreEmpresa: contacto.nombreEmpresa,
+        nombre: contacto.nombre,
+        apellido: contacto.apellido,
+        nombreCompleto,
+        tipo: contacto.tipo,
+        isDonateur: contacto.isDonateur,
+        isFournisseur: contacto.isFournisseur
+      });
+
+      // Calcular peso neto (restando tara si existe)
+      let pesoNeto = producto.pesoTotal || 0;
+      if (producto.pesoUnidad && producto.pesoUnidad > 0) {
+        pesoNeto = Math.max(0, pesoNeto - producto.pesoUnidad);
+        console.log(`⚖️ Peso bruto: ${producto.pesoTotal}kg - Tara: ${producto.pesoUnidad}kg = Peso neto: ${pesoNeto}kg`);
+      }
+
+      const labelData: ProductLabelData = {
+        id: `PROD-${Date.now()}`,
+        nombreProducto: producto.nombreProducto,
+        productoIcono: producto.productoIcono,
+        categoria: producto.categoria,
+        subcategoria: producto.subcategoria,
+        cantidad: producto.cantidad,
+        unidad: producto.unidad,
+        pesoTotal: pesoNeto, // Usar peso neto (sin tara)
+        pesoUnidad: producto.pesoUnidad, // Guardar tara para referencia
+        temperatura: producto.temperatura as 'ambiente' | 'refrigerado' | 'congelado',
+        donadorNombre: nombreCompleto,
+        fechaEntrada: new Date().toISOString(),
+        lote: producto.lote,
+        fechaCaducidad: producto.fechaCaducidad,
+        detallesEmpaque: producto.detallesEmpaque,
+        systemName: branding.systemName,
+        systemLogo: branding.logo,
+      };
+
+      console.log('🖨️ Imprimiendo etiqueta con datos:', labelData);
+
+      // Imprimir en modo silencioso (sin diálogo de vista previa)
+      await printStandardLabel(labelData, true);
+      console.log('✅ Étiquette imprimée');
+    } catch (error) {
+      console.error('Erreur impression:', error);
+      toast.error("Erreur lors de l'impression de l'étiquette");
+    }
+  }, [formData.donadorId, contactosDisponibles, branding]);
+
   const agregarProductoALista = useCallback(async () => {
     // Validaciones
     if (!formData.tipoEntrada) {
@@ -939,32 +1027,137 @@ export function EntradaDonAchat() {
       const nombreFinal = formData.nombreProducto || formData.productoCustom;
       const iconoFinal = formData.productoIcono || generarIconoAutomatico(formData.categoria);
 
-      // Agregar a la lista de productos
-      const nuevoProducto: ProductoAgregado = {
-        nombreProducto: nombreFinal,
-        productoIcono: iconoFinal,
-        cantidad: formData.cantidad,
-        unidad: formData.unidad,
-        pesoTotal: formData.peso,
-        temperatura: formData.temperatura,
-        // Datos en cascada
-        categoriaId: formData.categoriaId,
-        subcategoriaId: formData.subcategoriaId,
-        varianteId: formData.varianteId,
-        // Legacy
-        categoria: formData.categoriaNombre || formData.categoria,
-        subcategoria: formData.subcategoriaNombre || formData.subcategoria,
-        variante: formData.varianteNombre,
-        lote: formData.lote,
-        fechaCaducidad: formData.fechaCaducidad,
-        detallesEmpaque: formData.detallesEmpaque,
-      };
+      // Obtener peso de la unidad (tara) si está registrado
+      const unidades = obtenerUnidades();
+      const unidadSeleccionada = formData.unidad ? unidades.find(u => 
+        u.abreviatura.toUpperCase() === formData.unidad.toUpperCase() ||
+        u.nombre.toLowerCase().includes(formData.unidad.toLowerCase())
+      ) : undefined;
+      const pesoTara = unidadSeleccionada?.pesoUnidad || 0;
+      
+      if (pesoTara > 0) {
+        console.log(`📦 Unidad: ${formData.unidad} - Tara: ${pesoTara}kg`);
+      }
 
-      setProductosAgregados(prev => [...prev, nuevoProducto]);
+      // Verificar si es paleta, benne o bac noir con cantidad > 1
+      console.log(`🔍 DEBUG REGISTRO INDIVIDUAL:`);
+      console.log(`   - Unidad: "${formData.unidad}"`);
+      console.log(`   - Cantidad: ${formData.cantidad}`);
+      console.log(`   - Unidad lowercase: "${formData.unidad.toLowerCase()}"`);
+      
+      const unidadLower = (formData.unidad || '').toLowerCase();
+      const unidadUpper = (formData.unidad || '').toUpperCase();
+      
+      const esPaletaMultiple = (
+        unidadUpper === 'PLT' || 
+        unidadLower.includes('paleta') ||
+        unidadLower.includes('palette')
+      ) && formData.cantidad >= 2;
+      
+      const esBenneMultiple = (
+        unidadUpper === 'BN' || 
+        unidadUpper === 'BNN-P' ||
+        unidadUpper === 'BNN-B' ||
+        unidadUpper === 'BP' ||  // Benne Plastique (legacy)
+        unidadUpper === 'BB' ||  // Benne Bois (legacy)
+        unidadLower.includes('benne') ||
+        unidadLower.includes('bac noir') ||
+        unidadLower.includes('plastique') ||
+        unidadLower.includes('bois')
+      ) && formData.cantidad >= 2;
+      
+      console.log(`   - Es paleta múltiple: ${esPaletaMultiple}`);
+      console.log(`   - Es benne múltiple: ${esBenneMultiple}`);
+      
+      const esUnidadMultipleIndividual = esPaletaMultiple || esBenneMultiple;
+      console.log(`   - Registro individual: ${esUnidadMultipleIndividual}`);
+      
+      if (esUnidadMultipleIndividual) {
+        // MODO INDIVIDUAL: Crear una entrada separada para cada unidad (paleta o benne)
+        const productosNuevos: ProductoAgregado[] = [];
+        
+        // Determinar el tipo y nombre de la unidad
+        let tipoUnidad = 'Unidad';
+        let prefijoLote = 'U';
+        if (esPaletaMultiple) {
+          tipoUnidad = 'Paleta';
+          prefijoLote = 'P';
+        } else if (esBenneMultiple) {
+          tipoUnidad = 'Benne';
+          prefijoLote = 'B';
+        }
+        
+        for (let i = 1; i <= formData.cantidad; i++) {
+          const productoIndividual: ProductoAgregado = {
+            nombreProducto: `${nombreFinal} - ${tipoUnidad} ${i}/${formData.cantidad}`,
+            productoIcono: iconoFinal,
+            cantidad: 1,
+            unidad: formData.unidad,
+            pesoTotal: formData.peso, // Cada unidad tiene el mismo peso
+            pesoUnidad: pesoTara, // Guardar tara
+            temperatura: formData.temperatura,
+            categoriaId: formData.categoriaId,
+            subcategoriaId: formData.subcategoriaId,
+            varianteId: formData.varianteId,
+            categoria: formData.categoriaNombre || formData.categoria,
+            subcategoria: formData.subcategoriaNombre || formData.subcategoria,
+            variante: formData.varianteNombre,
+            lote: formData.lote ? `${formData.lote}-${prefijoLote}${i}` : `${prefijoLote}${i}`,
+            fechaCaducidad: formData.fechaCaducidad,
+            detallesEmpaque: formData.detallesEmpaque,
+          };
+          
+          productosNuevos.push(productoIndividual);
+        }
+        
+        setProductosAgregados(prev => [...prev, ...productosNuevos]);
+        
+        // Si está activa la impresión automática, imprimir todas las etiquetas
+        if (imprimirAutomaticamente) {
+          console.log(`🖨️ Imprimiendo ${productosNuevos.length} etiquetas de ${tipoUnidad.toLowerCase()}s...`);
+          for (let i = 0; i < productosNuevos.length; i++) {
+            console.log(`🖨️ Imprimiendo etiqueta ${i + 1}/${productosNuevos.length}`);
+            try {
+              await imprimirEtiquetaProducto(productosNuevos[i]);
+              // Pequeño delay entre impresiones para evitar problemas
+              if (i < productosNuevos.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+              }
+            } catch (error) {
+              console.error(`❌ Error imprimiendo etiqueta ${i + 1}:`, error);
+            }
+          }
+          console.log(`✅ ${productosNuevos.length} etiquetas enviadas a impresión`);
+        }
+        
+        toast.success(`✅ ${formData.cantidad} ${tipoUnidad.toLowerCase()}s ajoutées (enregistrement individuel)`);
+      } else {
+        // MODO NORMAL: Un solo producto
+        const nuevoProducto: ProductoAgregado = {
+          nombreProducto: nombreFinal,
+          productoIcono: iconoFinal,
+          cantidad: formData.cantidad,
+          unidad: formData.unidad,
+          pesoTotal: formData.peso,
+          pesoUnidad: pesoTara, // Guardar tara
+          temperatura: formData.temperatura,
+          categoriaId: formData.categoriaId,
+          subcategoriaId: formData.subcategoriaId,
+          varianteId: formData.varianteId,
+          categoria: formData.categoriaNombre || formData.categoria,
+          subcategoria: formData.subcategoriaNombre || formData.subcategoria,
+          variante: formData.varianteNombre,
+          lote: formData.lote,
+          fechaCaducidad: formData.fechaCaducidad,
+          detallesEmpaque: formData.detallesEmpaque,
+        };
 
-      // Si está activa la impresión automática, imprimir etiqueta
-      if (imprimirAutomaticamente) {
-        await imprimirEtiquetaProducto(nuevoProducto);
+        setProductosAgregados(prev => [...prev, nuevoProducto]);
+
+        // Si está activa la impresión automática, imprimir etiqueta
+        if (imprimirAutomaticamente) {
+          await imprimirEtiquetaProducto(nuevoProducto);
+        }
       }
 
       // Limpiar campos del producto
@@ -999,37 +1192,7 @@ export function EntradaDonAchat() {
       console.error('Error agregando producto:', error);
       toast.error("Erreur lors de l'ajout du produit");
     }
-  }, [formData, imprimirAutomaticamente]);
-
-  const imprimirEtiquetaProducto = async (producto: ProductoAgregado) => {
-    try {
-      const contacto = contactosDisponibles.find(c => c.id === formData.donadorId);
-      if (!contacto) return;
-
-      const labelData: ProductLabelData = {
-        id: `PROD-${Date.now()}`,
-        nombreProducto: producto.nombreProducto,
-        productoIcono: producto.productoIcono,
-        categoria: producto.categoria,
-        subcategoria: producto.subcategoria,
-        cantidad: producto.cantidad,
-        unidad: producto.unidad,
-        pesoTotal: producto.pesoTotal || 0,
-        temperatura: producto.temperatura as 'ambiente' | 'refrigerado' | 'congelado',
-        donadorNombre: `${contacto.nombre || ''} ${contacto.apellido || ''}`.trim(),
-        fechaEntrada: new Date().toISOString(),
-        lote: producto.lote,
-        fechaCaducidad: producto.fechaCaducidad,
-        detallesEmpaque: producto.detallesEmpaque,
-      };
-
-      await printStandardLabel(labelData);
-      console.log('✅ Étiquette imprimée');
-    } catch (error) {
-      console.error('Erreur impression:', error);
-      toast.error("Erreur lors de l'impression de l'étiquette");
-    }
-  };
+  }, [formData, imprimirAutomaticamente, imprimirEtiquetaProducto]);
 
   const finalizarEntrada = useCallback(async () => {
     if (productosAgregados.length === 0) {
@@ -1096,22 +1259,6 @@ export function EntradaDonAchat() {
         });
       }
 
-      // Manejar paletas si aplica
-      if (debeRegistrarPaletasIndividuales(productosAgregados)) {
-        const datosPaletas: DatosEntradaPaleta = {
-          donadorId: formData.donadorId,
-          donadorNombre: `${contacto.nombre} ${contacto.apellido}`,
-          tipoEntrada: formData.tipoEntrada === 'achat' ? 'achat' : 'donation',
-          productos: productosAgregados.map(p => ({
-            nombreProducto: p.nombreProducto,
-            cantidad: p.cantidad,
-            unidad: p.unidad,
-            pesoTotal: p.pesoTotal,
-          })),
-        };
-        registrarPaletasIndividuales(datosPaletas);
-      }
-
       toast.success(`✅ ${productosAgregados.length} produit(s) enregistré(s) avec succès!`);
       
       // Disparar evento de actualización
@@ -1164,12 +1311,12 @@ export function EntradaDonAchat() {
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="entry-form-description">
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
             📦 Enregistrer Entrée Don/Achat
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="entry-form-description">
             Sélectionnez le type d'entrée et ajoutez les produits à enregistrer
           </DialogDescription>
         </DialogHeader>
@@ -1478,7 +1625,19 @@ export function EntradaDonAchat() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setNuevaSubcategoriaDialogOpen(true)}
+                      onClick={() => {
+                        // Obtener el ícono de la categoría seleccionada
+                        const categoriaSeleccionada = categoriasDB.find(c => c.id === formData.categoriaId);
+                        const iconoCategoria = categoriaSeleccionada?.icono || '📦';
+                        
+                        // Inicializar formulario con el ícono de la categoría
+                        setFormSubcategoria({
+                          ...FORM_SUBCATEGORIA_INICIAL,
+                          icono: iconoCategoria
+                        });
+                        
+                        setNuevaSubcategoriaDialogOpen(true);
+                      }}
                       disabled={!formData.categoriaId}
                       className="h-7 text-xs"
                     >
@@ -1562,7 +1721,14 @@ export function EntradaDonAchat() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setNuevaVarianteDialogOpen(true)}
+                        onClick={() => {
+                          // Copiar nombre de subcategoría por defecto
+                          setFormVariante({
+                            ...FORM_VARIANTE_INICIAL,
+                            nombre: formData.subcategoriaNombre || ''
+                          });
+                          setNuevaVarianteDialogOpen(true);
+                        }}
                         disabled={!formData.subcategoriaId}
                         className="h-7 text-xs"
                       >
@@ -1692,20 +1858,31 @@ export function EntradaDonAchat() {
                   </div>
                 </div>
 
+                {/* Peso Unitario */}
+                <div>
+                  <Label>Poids Unitaire (kg/unité)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.001"
+                    value={formData.pesoUnitario || ''}
+                    onChange={(e) => handleFieldChange('pesoUnitario', parseFloat(e.target.value) || 0)}
+                    placeholder="0.000"
+                  />
+                  {formData.pesoUnitario > 0 && formData.cantidad > 0 && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Poids estimé: {(formData.pesoUnitario * formData.cantidad).toFixed(3)} kg
+                    </p>
+                  )}
+                </div>
+
                 {/* Peso */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <Label>Poids Total (kg)</Label>
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="calcularPesoAuto"
-                        checked={calcularPesoAuto}
-                        onCheckedChange={(checked) => setCalcularPesoAuto(checked as boolean)}
-                      />
-                      <label htmlFor="calcularPesoAuto" className="text-sm cursor-pointer">
-                        Calculer automatiquement
-                      </label>
-                    </div>
+                    <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-300">
+                      ✓ Calcul automatique
+                    </Badge>
                   </div>
                   <Input
                     type="number"
@@ -1714,8 +1891,57 @@ export function EntradaDonAchat() {
                     value={formData.peso || ''}
                     onChange={(e) => handleFieldChange('peso', parseFloat(e.target.value) || 0)}
                     placeholder="0.000"
-                    disabled={calcularPesoAuto}
+                    className="bg-gray-50"
+                    readOnly
                   />
+                  
+                  {/* Desglose de peso con tara */}
+                  {(() => {
+                    const unidades = obtenerUnidades();
+                    const unidadSeleccionada = formData.unidad ? unidades.find(u => 
+                      u.abreviatura.toUpperCase() === formData.unidad.toUpperCase() ||
+                      u.nombre.toLowerCase().includes(formData.unidad.toLowerCase())
+                    ) : undefined;
+                    const pesoTara = unidadSeleccionada?.pesoUnidad || 0;
+                    const pesoBruto = formData.peso || 0;
+                    const pesoNeto = pesoTara > 0 ? Math.max(0, pesoBruto - pesoTara) : pesoBruto;
+
+                    if (pesoTara > 0 && pesoBruto > 0) {
+                      return (
+                        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="flex items-start gap-2 mb-2">
+                            <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <div className="text-xs text-blue-800">
+                              <p className="font-semibold mb-1">📊 Décomposition du poids:</p>
+                            </div>
+                          </div>
+                          <div className="space-y-1 text-xs">
+                            <div className="flex justify-between items-center py-1">
+                              <span className="text-gray-700">📦 Poids brut (avec {formData.unidad}):</span>
+                              <span className="font-semibold text-gray-900">{pesoBruto.toFixed(3)} kg</span>
+                            </div>
+                            <div className="flex justify-between items-center py-1 border-t border-blue-200">
+                              <span className="text-gray-700">⚖️ Poids de l'unité (tare):</span>
+                              <span className="font-semibold text-red-600">- {pesoTara.toFixed(3)} kg</span>
+                            </div>
+                            <div className="flex justify-between items-center py-1.5 border-t-2 border-blue-300 bg-green-50 -mx-3 px-3 rounded">
+                              <span className="text-green-800 font-semibold">✓ Poids net (imprimé):</span>
+                              <span className="font-bold text-green-700 text-sm">{pesoNeto.toFixed(3)} kg</span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-blue-700 mt-2 italic">
+                            💡 L'étiquette imprimée affichera le poids net ({pesoNeto.toFixed(3)} kg)
+                          </p>
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <p className="text-xs text-gray-500 mt-1">
+                        💡 Se calcule automatiquement: Quantité × Poids unitaire
+                      </p>
+                    );
+                  })()}
                 </div>
 
                 {/* Temperatura */}
@@ -1890,43 +2116,83 @@ export function EntradaDonAchat() {
                       Produits Ajoutés ({productosAgregados.length})
                     </h3>
                     <Badge variant="secondary">
-                      {productosAgregados.reduce((sum, p) => sum + p.pesoTotal, 0).toFixed(2)} kg total
+                      {productosAgregados.reduce((sum, p) => {
+                        const pesoNeto = p.pesoUnidad && p.pesoUnidad > 0 
+                          ? Math.max(0, p.pesoTotal - p.pesoUnidad)
+                          : p.pesoTotal;
+                        return sum + pesoNeto;
+                      }, 0).toFixed(2)} kg net total
                     </Badge>
                   </div>
 
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                    {productosAgregados.map((producto, index) => (
-                      <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border">
-                        <span className="text-2xl">{producto.productoIcono}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{producto.nombreProducto}</p>
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <span>{producto.cantidad} {producto.unidad}</span>
-                            <span>•</span>
-                            <span>{producto.pesoTotal.toFixed(2)} kg</span>
-                            <span>•</span>
-                            <Badge className={cn("text-xs", getTemperatureColor(producto.temperatura))}>
-                              {getTemperatureIcon(producto.temperatura)}
-                              <span className="ml-1">
-                                {producto.temperatura === 'ambiente' ? 'AMB' :
-                                 producto.temperatura === 'refrigerado' ? 'RÉF' : 'CONG'}
-                              </span>
-                            </Badge>
+                    {productosAgregados.map((producto, index) => {
+                      const pesoNeto = producto.pesoUnidad && producto.pesoUnidad > 0
+                        ? Math.max(0, producto.pesoTotal - producto.pesoUnidad)
+                        : producto.pesoTotal;
+                      const tieneTara = producto.pesoUnidad && producto.pesoUnidad > 0;
+
+                      return (
+                        <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border">
+                          <span className="text-2xl">{producto.productoIcono}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{producto.nombreProducto}</p>
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
+                              <span>{producto.cantidad} {producto.unidad}</span>
+                              <span>•</span>
+                              {tieneTara ? (
+                                <span className="flex items-center gap-1" title={`Brut: ${producto.pesoTotal.toFixed(2)}kg - Tare: ${producto.pesoUnidad.toFixed(2)}kg = Net: ${pesoNeto.toFixed(2)}kg`}>
+                                  <span className="font-semibold text-green-700">{pesoNeto.toFixed(2)} kg</span>
+                                  <span className="text-xs text-gray-400">(net)</span>
+                                </span>
+                              ) : (
+                                <span>{producto.pesoTotal.toFixed(2)} kg</span>
+                              )}
+                              <span>•</span>
+                              <Badge className={cn("text-xs", getTemperatureColor(producto.temperatura))}>
+                                {getTemperatureIcon(producto.temperatura)}
+                                <span className="ml-1">
+                                  {producto.temperatura === 'ambiente' ? 'AMB' :
+                                   producto.temperatura === 'refrigerado' ? 'RÉF' : 'CONG'}
+                                </span>
+                              </Badge>
+                            </div>
                           </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => imprimirEtiquetaProducto(producto)}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            title="Réimprimer l'étiquette"
+                          >
+                            <Printer className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => eliminarProductoAgregado(index)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => eliminarProductoAgregado(index)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <div className="mt-4 flex gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setFormData(FORM_DATA_INICIAL);
+                        setProductosAgregados([]);
+                        setOpen(false);
+                      }}
+                      size="lg"
+                    >
+                      <X className="w-5 h-5 mr-2" />
+                      Annuler
+                    </Button>
                     <Button
                       onClick={finalizarEntrada}
                       className="flex-1 bg-[#1a4d7a] hover:bg-[#153d62]"
@@ -1941,16 +2207,34 @@ export function EntradaDonAchat() {
             </>
           )}
         </div>
+
+        {/* Botón de Cancelar - Siempre visible cuando no hay productos */}
+        {productosAgregados.length === 0 && (
+          <div className="border-t px-6 py-4 bg-gray-50 flex justify-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setFormData(FORM_DATA_INICIAL);
+                setProductosAgregados([]);
+                setOpen(false);
+              }}
+              className="px-6"
+            >
+              <X className="w-4 h-4 mr-2" />
+              Annuler
+            </Button>
+          </div>
+        )}
       </DialogContent>
 
       {/* DIÁLOGO: Crear Nueva Variante */}
       <Dialog open={nuevaVarianteDialogOpen} onOpenChange={setNuevaVarianteDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl" aria-describedby="new-variant-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
               🏷️ Créer une Nouvelle Variante
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="new-variant-description">
               Créer une nouvelle variante pour la sous-catégorie "{formData.subcategoriaNombre}"
             </DialogDescription>
           </DialogHeader>
@@ -1976,23 +2260,24 @@ export function EntradaDonAchat() {
             </div>
 
             {/* Código e Icono */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Code (optionnel)</Label>
-                <Input
-                  value={formVariante.codigo}
-                  onChange={(e) => setFormVariante(prev => ({ ...prev, codigo: e.target.value }))}
-                  placeholder="VAR-001"
-                />
-              </div>
-              <div>
-                <Label>Icône</Label>
-                <Input
-                  value={formVariante.icono}
-                  onChange={(e) => setFormVariante(prev => ({ ...prev, icono: e.target.value }))}
-                  placeholder="🏷️"
-                />
-              </div>
+            <div>
+              <Label>Code (optionnel)</Label>
+              <Input
+                value={formVariante.codigo}
+                onChange={(e) => setFormVariante(prev => ({ ...prev, codigo: e.target.value }))}
+                placeholder="VAR-001"
+              />
+            </div>
+
+            {/* Sélecteur d'icône */}
+            <div>
+              <IconSelector
+                value={formVariante.icono}
+                onChange={(icono) => setFormVariante(prev => ({ ...prev, icono }))}
+                label="Icône de la variante"
+                gridCols={10}
+                maxHeight="max-h-60"
+              />
             </div>
 
             {/* Unidad y Peso Unitario */}
@@ -2084,25 +2369,25 @@ export function EntradaDonAchat() {
 
       {/* DIÁLOGO: Crear Nueva Subcategoría */}
       <Dialog open={nuevaSubcategoriaDialogOpen} onOpenChange={setNuevaSubcategoriaDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="new-subcategory-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
               📦 Créer une Nouvelle Sous-catégorie
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="new-subcategory-description">
               Créer une nouvelle sous-catégorie pour la catégorie "{formData.categoriaNombre}"
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {/* Información de contexto */}
+            {/* Informations de contexte */}
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800">
                 <strong>Catégorie:</strong> {formData.categoriaNombre}
               </p>
             </div>
 
-            {/* Nombre */}
+            {/* Nom */}
             <div>
               <Label>Nom de la sous-catégorie *</Label>
               <Input
@@ -2112,7 +2397,7 @@ export function EntradaDonAchat() {
               />
             </div>
 
-            {/* Código */}
+            {/* Code */}
             <div>
               <Label>Code (optionnel)</Label>
               <Input
@@ -2122,7 +2407,7 @@ export function EntradaDonAchat() {
               />
             </div>
 
-            {/* Selector de Icono */}
+            {/* Sélecteur d'icône */}
             <div>
               <IconSelector
                 value={formSubcategoria.icono}
@@ -2133,7 +2418,7 @@ export function EntradaDonAchat() {
               />
             </div>
 
-            {/* Unidad */}
+            {/* Unité */}
             <div>
               <Label>Unité par défaut (optionnel)</Label>
               <Select 
@@ -2153,7 +2438,7 @@ export function EntradaDonAchat() {
               </Select>
             </div>
 
-            {/* Peso Unitario - ACTUALIZADO 15/03/2026 */}
+            {/* Poids Unitaire - MIS À JOUR 15/03/2026 */}
             <div>
               <Label htmlFor="peso-unitario-input" className="font-semibold">⚖️ Poids unitaire (kg) - Optionnel</Label>
               <Input
@@ -2171,12 +2456,12 @@ export function EntradaDonAchat() {
               </p>
             </div>
 
-            {/* Pesos por unidad */}
+            {/* Poids par unité */}
             <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
               <Label className="text-sm font-semibold">Poids par unité (kg) - Optionnel</Label>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-xs">Paleta (PLT)</Label>
+                  <Label className="text-xs">Palette (PLT)</Label>
                   <Input
                     type="number"
                     step="0.001"
@@ -2187,7 +2472,7 @@ export function EntradaDonAchat() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Caja (CJA)</Label>
+                  <Label className="text-xs">Boîte (CJA)</Label>
                   <Input
                     type="number"
                     step="0.001"
@@ -2198,7 +2483,7 @@ export function EntradaDonAchat() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Unidad (UND)</Label>
+                  <Label className="text-xs">Unité (UND)</Label>
                   <Input
                     type="number"
                     step="0.001"
@@ -2209,7 +2494,7 @@ export function EntradaDonAchat() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Saco (SAC)</Label>
+                  <Label className="text-xs">Sac (SAC)</Label>
                   <Input
                     type="number"
                     step="0.001"
@@ -2231,7 +2516,7 @@ export function EntradaDonAchat() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Kilogramo (kg)</Label>
+                  <Label className="text-xs">Kilogramme (kg)</Label>
                   <Input
                     type="number"
                     step="0.001"
@@ -2244,9 +2529,9 @@ export function EntradaDonAchat() {
               </div>
             </div>
 
-            {/* Peso Unitario (legacy) */}
+            {/* Poids Unitaire (héritage) */}
             <div>
-              <Label>Poids Unitaire Legacy (kg) (optionnel)</Label>
+              <Label>Poids Unitaire Héritage (kg) (optionnel)</Label>
               <Input
                 type="number"
                 step="0.001"
@@ -2260,7 +2545,7 @@ export function EntradaDonAchat() {
               </p>
             </div>
 
-            {/* Stock Mínimo */}
+            {/* Stock Minimum */}
             <div>
               <Label>Stock Minimum (optionnel)</Label>
               <Input
