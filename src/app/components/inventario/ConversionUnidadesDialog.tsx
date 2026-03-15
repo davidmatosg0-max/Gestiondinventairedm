@@ -269,7 +269,7 @@ export function ConversionUnidadesDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl" aria-describedby="conversion-unidades-description">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
             Conversión de Unidades
@@ -322,6 +322,15 @@ export function ConversionUnidadesDialog({
                 disabled
                 className="bg-gray-100"
               />
+              {/* 🎯 MOSTRAR PESO UNITARIO DE LA UNIDAD ORIGEN */}
+              {pesoUnitarioOrigen !== null && (
+                <div className="bg-blue-50 px-3 py-2 rounded border border-blue-200">
+                  <p className="text-xs text-blue-600 font-medium">⚖️ Peso unitario:</p>
+                  <p className="text-sm text-blue-800 font-bold mt-0.5">
+                    {pesoUnitarioOrigen.toFixed(1)} kg/{unidadOrigen}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

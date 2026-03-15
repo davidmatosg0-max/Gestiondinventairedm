@@ -142,9 +142,16 @@ export function ConversionDialog({
               </SelectContent>
             </Select>
             {productoOrigen && (
-              <p className="text-xs text-[#666666]">
-                Stock disponible: {productoOrigen.stockActual} {productoOrigen.unidad}
-              </p>
+              <div className="space-y-1">
+                <p className="text-xs text-[#666666]">
+                  Stock disponible: {productoOrigen.stockActual} {productoOrigen.unidad}
+                </p>
+                {productoOrigen.peso && (
+                  <p className="text-xs text-[#4CAF50] font-medium">
+                    Peso por unidad: {productoOrigen.peso} {productoOrigen.unidad}
+                  </p>
+                )}
+              </div>
             )}
           </div>
 

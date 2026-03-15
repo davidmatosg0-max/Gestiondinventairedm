@@ -53,8 +53,11 @@ const DialogContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => {
   const generatedId = React.useId();
   
-  // Always use generated ID for consistency
+  // Always use generated ID for consistency - ignore any passed aria-describedby
   const finalAriaDescribedBy = generatedId;
+  
+  // Remove aria-describedby from props if it exists
+  const { 'aria-describedby': _, ...restProps } = props as any;
   
   return (
     <DialogPortal>
@@ -62,8 +65,8 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         data-slot="dialog-content"
-        aria-describedby={props['aria-describedby'] || finalAriaDescribedBy}
-        {...props}
+        aria-describedby={finalAriaDescribedBy}
+        {...restProps}
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200",
           !className?.includes("max-w-") && "max-w-[calc(100%-2rem)] sm:max-w-lg",

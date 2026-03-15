@@ -12,10 +12,32 @@ export function BackupManager() {
 
   const handleDownloadBackup = () => {
     try {
+      // Mostrar información en consola antes de descargar
+      console.log('');
+      console.log('╔═══════════════════════════════════════╗');
+      console.log('║   TÉLÉCHARGEMENT DU BACKUP COMPLET    ║');
+      console.log('╚═══════════════════════════════════════╝');
+      console.log('');
+      console.log('📦 Création du backup de TOUTES les données...');
+      console.log('');
+      
       downloadBackup();
-      toast.success('Backup téléchargé avec succès', {
-        description: 'Conservez ce fichier en lieu sûr'
+      
+      toast.success('✅ Backup complet téléchargé avec succès!', {
+        description: '📋 Consultez la console pour voir les statistiques détaillées. Conservez ce fichier en lieu sûr.',
+        duration: 6000
       });
+      
+      // Mostrar recordatorio después de la descarga
+      setTimeout(() => {
+        console.log('');
+        console.log('💡 RAPPEL IMPORTANT:');
+        console.log('   • Le backup contient TOUTES vos données');
+        console.log('   • Conservez ce fichier en lieu sûr');
+        console.log('   • Vous pouvez le restaurer à tout moment');
+        console.log('   • Vérifiez les statistiques ci-dessus');
+        console.log('');
+      }, 500);
     } catch (error) {
       toast.error('Erreur lors du téléchargement du backup');
       console.error(error);
@@ -49,9 +71,25 @@ export function BackupManager() {
           setDatosProtegidos(true);
           
           toast.success('✅ Données restaurées avec succès!', {
-            description: '🔒 Système protégé - Rechargez manuellement (F5) si nécessaire',
-            duration: 5000
+            description: '🔄 Migration automatique des clés de stockage effectuée. Rechargez la page (F5) pour voir les changements.',
+            duration: 8000
           });
+          
+          // Mostrar instrucciones en consola
+          console.log('');
+          console.log('═══════════════════════════════════════');
+          console.log('✅ BACKUP RESTAURÉ AVEC SUCCÈS');
+          console.log('═══════════════════════════════════════');
+          console.log('🔄 Migrations appliquées:');
+          console.log('   • productos_banco_alimentos → banco_alimentos_productos');
+          console.log('   • categorias_banco_alimentos → banco_alimentos_categorias');
+          console.log('');
+          console.log('📋 PROCHAINES ÉTAPES:');
+          console.log('   1. Rechargez la page (appuyez sur F5)');
+          console.log('   2. Vérifiez que vos produits et catégories sont visibles');
+          console.log('   3. Vos données sont maintenant protégées 🔒');
+          console.log('═══════════════════════════════════════');
+          console.log('');
           
           // 🔒 NO RECARGAR AUTOMÁTICAMENTE - Dejar que el usuario lo haga manualmente
           // setTimeout(() => window.location.reload(), 1500);
@@ -73,11 +111,87 @@ export function BackupManager() {
     const backup = backupLocalStorage();
     setBackupInfo(backup);
     inspectLocalStorage(); // También muestra en consola
-    toast.info('Inspection complète affichée dans la console');
+    toast.info('📋 Inspection complète affichée dans la console', {
+      description: 'Vérifiez toutes les données stockées et leurs tailles',
+      duration: 4000
+    });
+  };
+
+  const handleVerifierBackup = () => {
+    console.log('');
+    console.log('╔═══════════════════════════════════════╗');
+    console.log('║   VÉRIFICATION DU BACKUP COMPLET      ║');
+    console.log('╚═══════════════════════════════════════╝');
+    console.log('');
+    
+    // Crear backup temporal para verificar
+    const backupTemp = backupLocalStorage();
+    const backupObj = JSON.parse(backupTemp);
+    const keysCount = Object.keys(backupObj).length;
+    const localStorageCount = localStorage.length;
+    
+    console.log('🔍 VÉRIFICATION:');
+    console.log(`   • Clés dans localStorage: ${localStorageCount}`);
+    console.log(`   • Clés dans le backup: ${keysCount}`);
+    
+    if (keysCount === localStorageCount) {
+      console.log('   ✅ TOUTES les clés sont incluses dans le backup!');
+      toast.success('✅ Vérification réussie!', {
+        description: `Le backup contient TOUTES les ${keysCount} clés du système`,
+        duration: 5000
+      });
+    } else {
+      console.warn('   ⚠️ ATTENTION: Il manque des clés dans le backup!');
+      console.warn(`   Différence: ${localStorageCount - keysCount} clés manquantes`);
+      toast.warning('⚠️ Vérification incomplète', {
+        description: `${localStorageCount - keysCount} clés manquantes dans le backup`,
+        duration: 5000
+      });
+    }
+    
+    console.log('');
+    console.log('📊 MODULES DÉTECTÉS:');
+    
+    // Verificar módulos específicos
+    const modulesCheck = {
+      'Productos': ['producto', 'banco_alimentos_productos'],
+      'Categorías': ['categoria', 'banco_alimentos_categorias'],
+      'Comandas': ['comanda'],
+      'Organismos': ['organismo'],
+      'Usuarios': ['usuario'],
+      'Inventario': ['inventario', 'entrada'],
+      'Departamentos': ['departamento'],
+      'Contactos': ['contacto'],
+      'Bénévoles': ['benevole'],
+      'Unidades': ['unidad'],
+      'Ofertas': ['oferta'],
+      'Donateurs/Fournisseurs': ['donateur', 'fournisseur'],
+      'Recetas': ['receta'],
+      'Auditoría': ['audit', 'log'],
+    };
+    
+    Object.entries(modulesCheck).forEach(([module, keywords]) => {
+      const keysFound = Object.keys(backupObj).filter(key => 
+        keywords.some(keyword => key.toLowerCase().includes(keyword))
+      );
+      
+      if (keysFound.length > 0) {
+        console.log(`   ✅ ${module}: ${keysFound.length} clé(s) trouvée(s)`);
+        keysFound.forEach(key => console.log(`      • ${key}`));
+      } else {
+        console.log(`   ⚪ ${module}: Aucune clé trouvée`);
+      }
+    });
+    
+    console.log('');
+    console.log('═══════════════════════════════════════');
+    console.log('✅ VÉRIFICATION TERMINÉE');
+    console.log('═══════════════════════════════════════');
+    console.log('');
   };
 
   const handleProtegerDatos = () => {
-    if (confirm('🔒 PROTEGER DATOS\n\nEsta acción marcará sus datos actuels comme DATOS REALES et evitará que se eliminen automatiquement.\n\n¿Desea continuar?')) {
+    if (confirm('🔒 PROTEGER DATOS\n\nEsta acción marcará sus datos actuels comme DATOS REALES et évitera que se eliminen automatiquement.\n\n¿Desea continuar?')) {
       marcarComoSistemaConDatosReales();
       setDatosProtegidos(true);
       toast.success('✅ Datos protegidos avec succès', {
@@ -217,23 +331,45 @@ export function BackupManager() {
           </div>
         </div>
 
-        {/* Inspeccionar datos */}
-        <div className="border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Database className="w-5 h-5 text-gray-600" />
-            <h4 className="font-semibold text-gray-900">Inspecter les Données</h4>
+        {/* Inspeccionar y Verificar datos - Grid de 2 columnas */}
+        <div className="grid md:grid-cols-2 gap-4 mb-6">
+          {/* Inspeccionar datos */}
+          <div className="border border-purple-200 bg-purple-50 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Database className="w-5 h-5 text-purple-600" />
+              <h4 className="font-semibold text-purple-900">Inspecter les Données</h4>
+            </div>
+            <p className="text-sm text-gray-600 mb-3">
+              Consultez la taille et le contenu de votre localStorage
+            </p>
+            <Button
+              onClick={handleInspect}
+              variant="outline"
+              className="w-full border-purple-300 text-purple-700 hover:bg-purple-100"
+            >
+              <Info className="w-4 h-4 mr-2" />
+              Inspecter (voir console)
+            </Button>
           </div>
-          <p className="text-sm text-gray-600 mb-3">
-            Consultez la taille et le contenu de votre localStorage
-          </p>
-          <Button
-            onClick={handleInspect}
-            variant="outline"
-            className="w-full"
-          >
-            <Info className="w-4 h-4 mr-2" />
-            Inspecter (voir console)
-          </Button>
+
+          {/* Verificar Backup */}
+          <div className="border border-blue-200 bg-blue-50 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <CheckCircle className="w-5 h-5 text-blue-600" />
+              <h4 className="font-semibold text-blue-900">Vérifier le Backup</h4>
+            </div>
+            <p className="text-sm text-gray-600 mb-3">
+              Vérifiez que TOUTES les clés sont incluses dans le backup
+            </p>
+            <Button
+              onClick={handleVerifierBackup}
+              variant="outline"
+              className="w-full border-blue-300 text-blue-700 hover:bg-blue-100"
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Vérifier Intégrité
+            </Button>
+          </div>
         </div>
 
         {/* Advertencias */}

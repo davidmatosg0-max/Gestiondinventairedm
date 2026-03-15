@@ -40,7 +40,7 @@ function CommandDialog({
 }) {
   return (
     <Dialog {...props}>
-      <DialogContent className="overflow-hidden p-0" aria-describedby="command-dialog-description">
+      <DialogContent className="overflow-hidden p-0">
         <DialogHeader className="sr-only">
           <DialogTitle>{title || "Command Menu"}</DialogTitle>
           <DialogDescription id="command-dialog-description">{description || "Search and select commands"}</DialogDescription>
