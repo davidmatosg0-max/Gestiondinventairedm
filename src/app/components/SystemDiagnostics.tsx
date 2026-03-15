@@ -33,6 +33,7 @@ import {
   repararDatosCorruptos,
 } from '../utils/systemValidation';
 import { logger } from '../utils/logger';
+import { descargarArchivoConCarpetaPredefinida } from '../utils/fileSystemAccess';
 
 export function SystemDiagnostics() {
   const { t } = useTranslation();
@@ -76,22 +77,24 @@ export function SystemDiagnostics() {
     }
   };
 
-  const handleExportarDatos = () => {
+  const handleExportarDatos = async () => {
     try {
       const datos = exportarDatosCompletos();
-      const blob = new Blob([datos], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `backup-banque-alimentaire-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const nombreArchivo = `backup-banque-alimentaire-${new Date().toISOString().split('T')[0]}.json`;
       
-      toast.success('Datos exportados exitosamente');
-      logger.info('Backup creado exitosamente');
-    } catch (e) {
+      const resultado = await descargarArchivoConCarpetaPredefinida(nombreArchivo, datos, 'application/json');
+      
+      if (resultado.success) {
+        if (resultado.usedCustomFolder) {
+          toast.success('Backup sauvegardé dans le dossier prédéfini');
+        } else {
+          toast.success('Datos exportados exitosamente');
+        }
+        logger.info('Backup creado exitosamente');
+      } else {
+        throw new Error(resultado.error || 'Error desconocido');
+      }
+    } catch (e: any) {
       toast.error('Error al exportar datos');
       logger.error('Error al exportar datos', e);
     }
@@ -145,23 +148,23 @@ export function SystemDiagnostics() {
     }
   };
 
-  const handleGenerarReporte = () => {
+  const handleGenerarReporte = async () => {
     try {
       const reporte = generarReporteSalud();
       console.log(reporte);
       
-      // Mostrar en consola y descargar
-      const blob = new Blob([reporte], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `reporte-salud-${new Date().toISOString().split('T')[0]}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const nombreArchivo = `reporte-salud-${new Date().toISOString().split('T')[0]}.txt`;
+      const resultado = await descargarArchivoConCarpetaPredefinida(nombreArchivo, reporte, 'text/plain');
       
-      toast.success('Reporte generado y descargado');
+      if (resultado.success) {
+        if (resultado.usedCustomFolder) {
+          toast.success('Rapport sauvegardé dans le dossier prédéfini');
+        } else {
+          toast.success('Reporte generado y descargado');
+        }
+      } else {
+        throw new Error(resultado.error || 'Error desconocido');
+      }
     } catch (e) {
       toast.error('Error al generar reporte');
       logger.error('Error al generar reporte', e);

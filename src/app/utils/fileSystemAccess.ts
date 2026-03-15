@@ -180,6 +180,81 @@ export function limpiarCarpetaSeleccionada(): void {
   limpiarHandleDeIndexedDB();
 }
 
+/**
+ * 📥 FUNCIÓN UNIVERSAL DE DESCARGA CON CARPETA PREDEFINIDA
+ * 
+ * Intenta guardar en la carpeta predefinida si está configurada,
+ * de lo contrario usa descarga normal del navegador.
+ * 
+ * @param nombreArchivo - Nombre del archivo a guardar
+ * @param contenido - Contenido del archivo (string o Blob)
+ * @param tipoMime - Tipo MIME del archivo (por defecto 'application/json')
+ * @returns Promise<{success: boolean, usedCustomFolder: boolean, error?: string}>
+ */
+export async function descargarArchivoConCarpetaPredefinida(
+  nombreArchivo: string,
+  contenido: string | Blob,
+  tipoMime: string = 'application/json'
+): Promise<{ success: boolean; usedCustomFolder: boolean; error?: string }> {
+  // Obtener configuración de backup automático
+  let usarCarpetaPersonalizada = false;
+  
+  try {
+    const config = localStorage.getItem('autoBackupConfig');
+    if (config) {
+      const parsedConfig = JSON.parse(config);
+      usarCarpetaPersonalizada = parsedConfig.customFolder === true;
+    }
+  } catch (e) {
+    // Ignorar error de configuración
+  }
+  
+  // Si está configurada carpeta personalizada, intentar usarla
+  if (usarCarpetaPersonalizada && soportaFileSystemAccess()) {
+    // Intentar recuperar handle si no está en memoria
+    if (!directoryHandle) {
+      try {
+        directoryHandle = await recuperarHandleDeIndexedDB();
+      } catch (e) {
+        console.warn('No se pudo recuperar carpeta desde IndexedDB');
+      }
+    }
+    
+    if (directoryHandle) {
+      const contenidoString = typeof contenido === 'string' ? contenido : await contenido.text();
+      const resultado = await guardarArchivoEnCarpeta(nombreArchivo, contenidoString);
+      
+      if (resultado.success) {
+        return { success: true, usedCustomFolder: true };
+      }
+    }
+  }
+  
+  // Fallback: Descarga normal del navegador
+  try {
+    const blob = typeof contenido === 'string' 
+      ? new Blob([contenido], { type: tipoMime })
+      : contenido;
+      
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = nombreArchivo;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    return { success: true, usedCustomFolder: false };
+  } catch (error: any) {
+    return {
+      success: false,
+      usedCustomFolder: false,
+      error: error.message || 'Error al descargar archivo'
+    };
+  }
+}
+
 // ============================================
 // Persistencia en IndexedDB (Experimental)
 // ============================================
