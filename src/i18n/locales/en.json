@@ -193,6 +193,20 @@
       "various": "Various"
     }
   },
+  "notifications": {
+    "title": "Notifications",
+    "clear": "Clear",
+    "all": "All",
+    "unread": "Unread",
+    "markAllAsRead": "Mark all as read",
+    "noNotifications": "You have no notifications",
+    "noUnreadNotifications": "You have no unread notifications",
+    "justNow": "Just now",
+    "minutesAgo": "{minutes} min ago",
+    "hoursAgo": "{hours} h ago",
+    "yesterday": "Yesterday",
+    "daysAgo": "{days} days ago"
+  },
   "auth": {
     "login": "Log In",
     "logout": "Log Out",
@@ -1016,6 +1030,38 @@
       "toast": {
         "title": "Version 3.0.0 Available!",
         "description": "New: Logo management system for organizations. Try it by creating a new organization!"
+      },
+      "history": {
+        "title": "Version History",
+        "description": "Latest updates and system improvements",
+        "currentVersion": "Current Version",
+        "current": "Current",
+        "build": "Build",
+        "releaseDate": "Release date",
+        "type": {
+          "major": "Major",
+          "minor": "Minor",
+          "patch": "Patch",
+          "hotfix": "Hotfix"
+        },
+        "changeType": {
+          "feature": "New feature",
+          "improvement": "Improvement",
+          "bugfix": "Bug fix",
+          "security": "Security"
+        },
+        "badges": {
+          "critical": "Critical",
+          "breaking": "Breaking"
+        }
+      },
+      "notification": {
+        "newVersion": "New version",
+        "criticalUpdate": "Critical update",
+        "importantUpdate": "Important update",
+        "viewDetails": "View details",
+        "understood": "Understood",
+        "ok": "OK"
       }
     },
     "email": {

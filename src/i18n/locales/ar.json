@@ -193,6 +193,20 @@
       "various": "متنوع"
     }
   },
+  "notifications": {
+    "title": "الإشعارات",
+    "clear": "مسح",
+    "all": "الكل",
+    "unread": "غير مقروءة",
+    "markAllAsRead": "وضع علامة مقروء على الكل",
+    "noNotifications": "ليس لديك إشعارات",
+    "noUnreadNotifications": "ليس لديك إشعارات غير مقروءة",
+    "justNow": "الآن",
+    "minutesAgo": "منذ {minutes} دقيقة",
+    "hoursAgo": "منذ {hours} ساعة",
+    "yesterday": "أمس",
+    "daysAgo": "منذ {days} أيام"
+  },
   "auth": {
     "login": "تسجيل الدخول",
     "logout": "تسجيل الخروج",
@@ -1029,6 +1043,38 @@
       "toast": {
         "title": "الإصدار 3.0.0 متاح!",
         "description": "جديد: نظام إدارة الشعارات للمنظمات. جربه عن طريق إنشاء منظمة جديدة!"
+      },
+      "history": {
+        "title": "سجل الإصدارات",
+        "description": "آخر التحديثات والتحسينات في النظام",
+        "currentVersion": "الإصدار الحالي",
+        "current": "الحالي",
+        "build": "البناء",
+        "releaseDate": "تاريخ الإصدار",
+        "type": {
+          "major": "رئيسي",
+          "minor": "ثانوي",
+          "patch": "تصحيح",
+          "hotfix": "عاجل"
+        },
+        "changeType": {
+          "feature": "ميزة جديدة",
+          "improvement": "تحسين",
+          "bugfix": "إصلاح خطأ",
+          "security": "أمان"
+        },
+        "badges": {
+          "critical": "حرج",
+          "breaking": "Breaking"
+        }
+      },
+      "notification": {
+        "newVersion": "إصدار جديد",
+        "criticalUpdate": "تحديث حرج",
+        "importantUpdate": "تحديث مهم",
+        "viewDetails": "عرض التفاصيل",
+        "understood": "مفهوم",
+        "ok": "حسناً"
       }
     },
     "email": {

@@ -7,7 +7,7 @@ import { APP_VERSION, RELEASE_NOTES, type ReleaseNote } from '../version';
 import { Package, Calendar, AlertCircle, Shield, Zap, Bug, Lock } from 'lucide-react';
 
 export function VersionHistory() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const currentLang = i18n.language as 'fr' | 'es' | 'en' | 'ar';
   const lang = ['fr', 'es', 'en', 'ar'].includes(currentLang) ? currentLang : 'fr';
 
@@ -22,13 +22,10 @@ export function VersionHistory() {
   };
 
   const getVersionTypeLabel = (type: ReleaseNote['type']) => {
-    const labels = {
-      major: { fr: 'Majeure', es: 'Mayor', en: 'Major', ar: 'رئيسي' },
-      minor: { fr: 'Mineure', es: 'Menor', en: 'Minor', ar: 'ثانوي' },
-      patch: { fr: 'Correctif', es: 'Parche', en: 'Patch', ar: 'تصحيح' },
-      hotfix: { fr: 'Urgente', es: 'Urgente', en: 'Hotfix', ar: 'عاجل' }
-    };
-    return labels[type][lang];
+    const key = `organisms.version.history.type.${type}`;
+    const translated = t(key);
+    // Si la traducción no existe, devolver el tipo en mayúsculas como fallback
+    return translated === key ? type.toUpperCase() : translated;
   };
 
   const getChangeTypeIcon = (type: 'feature' | 'improvement' | 'bugfix' | 'security') => {
@@ -63,13 +60,13 @@ export function VersionHistory() {
               </div>
               <div>
                 <CardTitle className="text-2xl" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  Version Actuelle: {APP_VERSION.version}
+                  {t('organisms.version.history.currentVersion')}: {APP_VERSION.version}
                 </CardTitle>
                 <CardDescription className="flex items-center gap-2 mt-1">
                   <Calendar className="w-4 h-4" />
                   {APP_VERSION.releaseDate}
                   <Badge className="ml-2 bg-[#2d9561] text-white">
-                    Build {APP_VERSION.buildNumber}
+                    {t('organisms.version.history.build')} {APP_VERSION.buildNumber}
                   </Badge>
                   <Badge className="bg-[#1a4d7a] text-white">
                     {APP_VERSION.environment}
@@ -85,10 +82,10 @@ export function VersionHistory() {
       <Card>
         <CardHeader>
           <CardTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
-            📋 Historique des Versions
+            📋 {t('organisms.version.history.title')}
           </CardTitle>
           <CardDescription>
-            Les dernières mises à jour et améliorations du système
+            {t('organisms.version.history.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -114,7 +111,7 @@ export function VersionHistory() {
                           </h3>
                           {index === 0 && (
                             <Badge className="bg-[#2d9561] text-white">
-                              Actuelle
+                              {t('organisms.version.history.current')}
                             </Badge>
                           )}
                         </div>
@@ -128,13 +125,13 @@ export function VersionHistory() {
                           {release.critical && (
                             <Badge className="bg-[#DC3545] text-white">
                               <AlertCircle className="w-3 h-3 mr-1" />
-                              Critique
+                              {t('organisms.version.history.badges.critical')}
                             </Badge>
                           )}
                           {release.breaking && (
                             <Badge className="bg-[#FFC107] text-white">
                               <Shield className="w-3 h-3 mr-1" />
-                              Breaking
+                              {t('organisms.version.history.badges.breaking')}
                             </Badge>
                           )}
                         </div>

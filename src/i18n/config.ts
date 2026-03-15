@@ -31,6 +31,11 @@ i18n
     react: {
       useSuspense: false, // Desactivar suspense porque recursos se cargan síncronamente
     },
+    // Habilitar modo debug temporal para verificar traducciones
+    debug: false,
+    // Asegurar que se actualicen las traducciones
+    returnEmptyString: false,
+    returnNull: false,
   });
 
 // Guardar idioma cuando cambie

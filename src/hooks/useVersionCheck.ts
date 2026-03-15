@@ -7,7 +7,7 @@ const VERSION_STORAGE_KEY = 'banco_alimentos_app_version';
 const VERSION_DISMISSED_KEY = 'banco_alimentos_version_dismissed';
 
 export function useVersionCheck() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [hasNewVersion, setHasNewVersion] = useState(false);
 
   useEffect(() => {
@@ -80,7 +80,7 @@ ${changesText}
 
     // Determinar el tipo de notificación según la criticidad
     if (latestRelease.critical) {
-      toast.error(`🚨 Mise à jour critique ${newVersion}`, {
+      toast.error(`🚨 ${t('organisms.version.notification.criticalUpdate')} ${newVersion}`, {
         description: notificationMessage,
         duration: 15000,
         position: 'top-center',
@@ -93,7 +93,7 @@ ${changesText}
           whiteSpace: 'pre-line'
         },
         action: {
-          label: 'Voir détails',
+          label: t('organisms.version.notification.viewDetails'),
           onClick: () => {
             // Aquí podrías abrir un modal con más detalles
             console.log('Ver detalles de la actualización');
@@ -101,7 +101,7 @@ ${changesText}
         }
       });
     } else if (latestRelease.breaking) {
-      toast.warning(`⚠️ Mise à jour importante ${newVersion}`, {
+      toast.warning(`⚠️ ${t('organisms.version.notification.importantUpdate')} ${newVersion}`, {
         description: notificationMessage,
         duration: 12000,
         position: 'top-center',
@@ -114,14 +114,14 @@ ${changesText}
           whiteSpace: 'pre-line'
         },
         action: {
-          label: 'Compris',
+          label: t('organisms.version.notification.understood'),
           onClick: () => {
             localStorage.setItem(VERSION_DISMISSED_KEY, newVersion);
           }
         }
       });
     } else {
-      toast.success(`✨ Nouvelle version ${newVersion}`, {
+      toast.success(`✨ ${t('organisms.version.notification.newVersion')} ${newVersion}`, {
         description: notificationMessage,
         duration: 10000,
         position: 'top-center',
@@ -135,7 +135,7 @@ ${changesText}
           boxShadow: '0 4px 20px rgba(76, 175, 80, 0.3)'
         },
         action: {
-          label: '👍 OK',
+          label: `👍 ${t('organisms.version.notification.ok')}`,
           onClick: () => {
             localStorage.setItem(VERSION_DISMISSED_KEY, newVersion);
           }

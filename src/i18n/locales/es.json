@@ -193,6 +193,20 @@
       "various": "Varios"
     }
   },
+  "notifications": {
+    "title": "Notificaciones",
+    "clear": "Limpiar",
+    "all": "Todas",
+    "unread": "No leídas",
+    "markAllAsRead": "Marcar todas como leídas",
+    "noNotifications": "No tienes notificaciones",
+    "noUnreadNotifications": "No tienes notificaciones sin leer",
+    "justNow": "Justo ahora",
+    "minutesAgo": "Hace {minutes} min",
+    "hoursAgo": "Hace {hours} h",
+    "yesterday": "Ayer",
+    "daysAgo": "Hace {days} días"
+  },
   "auth": {
     "login": "Iniciar Sesión",
     "logout": "Cerrar Sesión",
@@ -899,6 +913,38 @@
       "toast": {
         "title": "¡Versión 3.0.0 Disponible!",
         "description": "Nuevo: Sistema de gestión de logos para organismos. ¡Pruébalo creando un nuevo organismo!"
+      },
+      "history": {
+        "title": "Historial de Versiones",
+        "description": "Las últimas actualizaciones y mejoras del sistema",
+        "currentVersion": "Versión Actual",
+        "current": "Actual",
+        "build": "Build",
+        "releaseDate": "Fecha de lanzamiento",
+        "type": {
+          "major": "Mayor",
+          "minor": "Menor",
+          "patch": "Parche",
+          "hotfix": "Urgente"
+        },
+        "changeType": {
+          "feature": "Nueva funcionalidad",
+          "improvement": "Mejora",
+          "bugfix": "Corrección de error",
+          "security": "Seguridad"
+        },
+        "badges": {
+          "critical": "Crítico",
+          "breaking": "Breaking"
+        }
+      },
+      "notification": {
+        "newVersion": "Nueva versión",
+        "criticalUpdate": "Actualización crítica",
+        "importantUpdate": "Actualización importante",
+        "viewDetails": "Ver detalles",
+        "understood": "Entendido",
+        "ok": "OK"
       }
     },
     "email": {

@@ -195,7 +195,6 @@ export function AnalisisPredictivoStock() {
               <Tooltip />
               <Legend />
               <Line 
-                key="stock-proyectado-line"
                 type="monotone" 
                 dataKey="stockProyectado" 
                 stroke="#1E73BE" 
@@ -203,7 +202,6 @@ export function AnalisisPredictivoStock() {
                 name="Stock Proyectado"
               />
               <Line 
-                key="consumo-acumulado-line"
                 type="monotone" 
                 dataKey="consumoAcumulado" 
                 stroke="#DC3545" 

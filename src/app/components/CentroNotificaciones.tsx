@@ -67,11 +67,11 @@ export function CentroNotificaciones() {
     const horas = Math.floor(diff / 3600000);
     const dias = Math.floor(diff / 86400000);
 
-    if (minutos < 1) return 'Justo ahora';
-    if (minutos < 60) return `Hace ${minutos} min`;
-    if (horas < 24) return `Hace ${horas} h`;
-    if (dias === 1) return 'Ayer';
-    if (dias < 7) return `Hace ${dias} días`;
+    if (minutos < 1) return t('notifications.justNow');
+    if (minutos < 60) return t('notifications.minutesAgo', { minutes: minutos });
+    if (horas < 24) return t('notifications.hoursAgo', { hours: horas });
+    if (dias === 1) return t('notifications.yesterday');
+    if (dias < 7) return t('notifications.daysAgo', { days: dias });
     
     return new Date(fecha).toLocaleDateString('es-ES', {
       day: '2-digit',
@@ -118,7 +118,7 @@ export function CentroNotificaciones() {
               className="text-base sm:text-lg text-[#333333]"
               style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
             >
-              Notificaciones
+              {t('notifications.title')}
             </h3>
             {notificaciones.length > 0 && (
               <Button
@@ -128,7 +128,7 @@ export function CentroNotificaciones() {
                 className="text-[#DC3545] hover:bg-red-50 h-6 sm:h-7 text-xs sm:text-sm px-2 sm:px-3"
               >
                 <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                <span className="hidden sm:inline">Limpiar</span>
+                <span className="hidden sm:inline">{t('notifications.clear')}</span>
               </Button>
             )}
           </div>
@@ -141,7 +141,7 @@ export function CentroNotificaciones() {
               onClick={() => setFiltro('todas')}
               className={`text-xs sm:text-sm h-7 sm:h-8 ${filtro === 'todas' ? 'bg-[#1E73BE]' : ''}`}
             >
-              Todas ({notificaciones.length})
+              {t('notifications.all')} ({notificaciones.length})
             </Button>
             <Button
               variant={filtro === 'noLeidas' ? 'default' : 'outline'}
@@ -149,7 +149,7 @@ export function CentroNotificaciones() {
               onClick={() => setFiltro('noLeidas')}
               className={`text-xs sm:text-sm h-7 sm:h-8 ${filtro === 'noLeidas' ? 'bg-[#1E73BE]' : ''}`}
             >
-              No leídas ({noLeidas})
+              {t('notifications.unread')} ({noLeidas})
             </Button>
           </div>
 
@@ -161,7 +161,7 @@ export function CentroNotificaciones() {
               className="w-full mt-2 text-[#1E73BE] hover:bg-blue-50"
             >
               <Check className="w-4 h-4 mr-1" />
-              Marcar todas como leídas
+              {t('notifications.markAllAsRead')}
             </Button>
           )}
         </div>
@@ -173,8 +173,8 @@ export function CentroNotificaciones() {
               <Bell className="w-12 h-12 text-gray-300 mb-3" />
               <p className="text-[#666666] text-sm">
                 {filtro === 'noLeidas'
-                  ? 'No tienes notificaciones sin leer'
-                  : 'No tienes notificaciones'}
+                  ? t('notifications.noUnreadNotifications')
+                  : t('notifications.noNotifications')}
               </p>
             </div>
           ) : (

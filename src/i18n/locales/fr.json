@@ -193,6 +193,20 @@
       "various": "Divers"
     }
   },
+  "notifications": {
+    "title": "Notifications",
+    "clear": "Effacer",
+    "all": "Toutes",
+    "unread": "Non lues",
+    "markAllAsRead": "Marquer toutes comme lues",
+    "noNotifications": "Vous n'avez pas de notifications",
+    "noUnreadNotifications": "Vous n'avez pas de notifications non lues",
+    "justNow": "À l'instant",
+    "minutesAgo": "Il y a {minutes} min",
+    "hoursAgo": "Il y a {hours} h",
+    "yesterday": "Hier",
+    "daysAgo": "Il y a {days} jours"
+  },
   "auth": {
     "login": "Se connecter",
     "logout": "Se déconnecter",
@@ -1075,6 +1089,38 @@
       "toast": {
         "title": "Version 3.0.0 Disponible!",
         "description": "Nouveau: Système de gestion de logos pour les organismes. Essayez-le en créant un nouvel organisme!"
+      },
+      "history": {
+        "title": "Historique des Versions",
+        "description": "Les dernières mises à jour et améliorations du système",
+        "currentVersion": "Version Actuelle",
+        "current": "Actuelle",
+        "build": "Build",
+        "releaseDate": "Date de sortie",
+        "type": {
+          "major": "Majeure",
+          "minor": "Mineure",
+          "patch": "Correctif",
+          "hotfix": "Urgente"
+        },
+        "changeType": {
+          "feature": "Nouvelle fonctionnalité",
+          "improvement": "Amélioration",
+          "bugfix": "Correction de bug",
+          "security": "Sécurité"
+        },
+        "badges": {
+          "critical": "Critique",
+          "breaking": "Breaking"
+        }
+      },
+      "notification": {
+        "newVersion": "Nouvelle version",
+        "criticalUpdate": "Mise à jour critique",
+        "importantUpdate": "Mise à jour importante",
+        "viewDetails": "Voir détails",
+        "understood": "Compris",
+        "ok": "OK"
       }
     },
     "email": {
