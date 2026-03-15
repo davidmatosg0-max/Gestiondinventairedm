@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Bell, AlertTriangle, Calendar, TrendingDown, CheckCircle, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -9,7 +8,7 @@ import { toast } from 'sonner';
 import { obtenerProductos } from '../../utils/productStorage';
 import { obtenerEntradas } from '../../utils/entradaInventarioStorage';
 import { format, differenceInDays } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { fr } from 'date-fns/locale';
 
 type Alerta = {
   id: string;
@@ -24,7 +23,6 @@ type Alerta = {
 };
 
 export function AlertasInteligentes() {
-  const { t } = useTranslation();
   const [alertas, setAlertas] = useState<Alerta[]>([]);
   const [alertasLeidas, setAlertasLeidas] = useState<string[]>([]);
 
@@ -52,8 +50,8 @@ export function AlertasInteligentes() {
           prioridad: 'alta',
           productoId: producto.id,
           productoNombre: producto.nombre,
-          mensaje: t('alerts.criticalStock', { quantity: producto.stockActual }),
-          accion: t('alerts.requestReplenishment'),
+          mensaje: `Stock critique pour ${producto.nombre} : ${producto.stockActual}`,
+          accion: 'Demander un approvisionnement',
           fecha: ahora,
           leida: false
         });
@@ -70,8 +68,8 @@ export function AlertasInteligentes() {
             prioridad: diasHastaCaducidad <= 7 ? 'alta' : 'media',
             productoId: producto.id,
             productoNombre: producto.nombre,
-            mensaje: t('alerts.expiresIn', { days: diasHastaCaducidad, date: format(new Date(producto.fechaVencimiento), 'dd/MM/yyyy') }),
-            accion: diasHastaCaducidad <= 7 ? t('alerts.distributeUrgently') : t('alerts.planDistribution'),
+            mensaje: `Produit ${producto.nombre} expirera dans ${diasHastaCaducidad} jours le ${format(new Date(producto.fechaVencimiento), 'dd/MM/yyyy') }`,
+            accion: diasHastaCaducidad <= 7 ? 'Distribuer immédiatement' : 'Planifier la distribution',
             fecha: ahora,
             leida: false
           });
@@ -86,8 +84,8 @@ export function AlertasInteligentes() {
           prioridad: 'baja',
           productoId: producto.id,
           productoNombre: producto.nombre,
-          mensaje: t('alerts.highStock', { quantity: producto.stockActual, percentage: Math.round((producto.stockActual / producto.stockMinimo) * 100) }),
-          accion: t('alerts.considerMassDistribution'),
+          mensaje: `Stock élevé pour ${producto.nombre} : ${producto.stockActual} (${Math.round((producto.stockActual / producto.stockMinimo) * 100)}%)`,
+          accion: 'Considérer une distribution en masse',
           fecha: ahora,
           leida: false
         });
@@ -108,8 +106,8 @@ export function AlertasInteligentes() {
             prioridad: 'media',
             productoId: producto.id,
             productoNombre: producto.nombre,
-            mensaje: t('alerts.noMovementSince', { days: diasSinMovimiento }),
-            accion: t('alerts.reviewDemandStorage'),
+            mensaje: `Aucun mouvement pour ${producto.nombre} depuis ${diasSinMovimiento} jours`,
+            accion: 'Revoir la demande et le stockage',
             fecha: ahora,
             leida: false
           });
@@ -134,7 +132,7 @@ export function AlertasInteligentes() {
 
   const marcarTodasComoLeidas = () => {
     setAlertasLeidas(alertas.map(a => a.id));
-    toast.success(`✅ ${t('alerts.allAlertsMarkedAsRead')}`);
+    toast.success(`✅ Toutes les alertes ont été marquées comme lues`);
   };
 
   const obtenerIconoAlerta = (tipo: Alerta['tipo']) => {
@@ -186,11 +184,11 @@ export function AlertasInteligentes() {
           <div className="flex items-center gap-2">
             <Bell className="h-5 w-5 text-[#1E73BE]" />
             <CardTitle style={{ fontFamily: 'Montserrat, sans-serif' }}>
-              {t('alerts.intelligentAlerts')}
+              Alertes intelligentes
             </CardTitle>
             {alertasNoLeidas.length > 0 && (
               <Badge className="bg-[#DC3545] text-white">
-                {alertasNoLeidas.length} {t('alerts.newAlerts')}
+                {alertasNoLeidas.length} nouvelles alertes
               </Badge>
             )}
           </div>
@@ -202,7 +200,7 @@ export function AlertasInteligentes() {
               className="text-[#1E73BE]"
             >
               <CheckCircle className="h-4 w-4 mr-1" />
-              {t('alerts.markAllAsRead')}
+              Marquer toutes comme lues
             </Button>
           )}
         </div>
@@ -211,17 +209,17 @@ export function AlertasInteligentes() {
         <div className="flex gap-2 mt-3">
           {alertasPorPrioridad.alta > 0 && (
             <Badge className="bg-[#DC3545] text-white">
-              🔴 {alertasPorPrioridad.alta} {t('alerts.high')}
+              🔴 {alertasPorPrioridad.alta} haute
             </Badge>
           )}
           {alertasPorPrioridad.media > 0 && (
             <Badge className="bg-[#FFC107] text-white">
-              🟡 {alertasPorPrioridad.media} {t('alerts.medium')}
+              🟡 {alertasPorPrioridad.media} moyenne
             </Badge>
           )}
           {alertasPorPrioridad.baja > 0 && (
             <Badge className="bg-[#1E73BE] text-white">
-              🔵 {alertasPorPrioridad.baja} {t('alerts.low')}
+              🔵 {alertasPorPrioridad.baja} basse
             </Badge>
           )}
         </div>
@@ -231,8 +229,8 @@ export function AlertasInteligentes() {
         {alertasNoLeidas.length === 0 ? (
           <div className="py-12 text-center">
             <CheckCircle className="mx-auto h-12 w-12 text-[#4CAF50] mb-3" />
-            <p className="text-[#666666] font-medium">✅ {t('alerts.noPendingAlerts')}</p>
-            <p className="text-sm text-[#999999] mt-1">{t('alerts.allProductsUnderControl')}</p>
+            <p className="text-[#666666] font-medium">✅ Aucune alerte en attente</p>
+            <p className="text-sm text-[#999999] mt-1">Tous les produits sont sous contrôle</p>
           </div>
         ) : (
           <ScrollArea className="h-[400px] pr-4">
@@ -248,11 +246,11 @@ export function AlertasInteligentes() {
                         <Badge className={obtenerColorPrioridad(alerta.prioridad)}>
                           {obtenerIconoAlerta(alerta.tipo)}
                           <span className="ml-1 uppercase text-xs">
-                            {alerta.prioridad === 'alta' ? t('alerts.high') : alerta.prioridad === 'media' ? t('alerts.medium') : t('alerts.low')}
+                            {alerta.prioridad === 'alta' ? 'haute' : alerta.prioridad === 'media' ? 'moyenne' : 'basse'}
                           </span>
                         </Badge>
                         <span className="text-xs text-[#666666]">
-                          {format(alerta.fecha, 'HH:mm', { locale: es })}
+                          {format(alerta.fecha, 'HH:mm', { locale: fr })}
                         </span>
                       </div>
 
