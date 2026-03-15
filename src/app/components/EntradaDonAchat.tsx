@@ -74,6 +74,7 @@ interface FormDataDonAchat {
   unidad: string;
   pesoUnitario: number;
   peso: number;
+  valorUnitario: number; // Valor monetario por unidad en CAD$
   temperatura: TipoTemperatura;
   fechaCaducidad: string;
   lote: string;
@@ -99,6 +100,8 @@ interface ProductoAgregado {
   lote?: string;
   fechaCaducidad?: string;
   detallesEmpaque?: string;
+  valorUnitario?: number; // Valor monetario por unidad en CAD$
+  valorTotal?: number; // Valor monetario total en CAD$
 }
 
 interface FormSubcategoria {
@@ -153,6 +156,7 @@ const FORM_DATA_INICIAL: FormDataDonAchat = {
   unidad: '',
   pesoUnitario: 0,
   peso: 0,
+  valorUnitario: 0,
   temperatura: '',
   fechaCaducidad: '',
   lote: '',
@@ -1155,6 +1159,8 @@ export function EntradaDonAchat() {
             lote: formData.lote ? `${formData.lote}-${prefijoLote}${i}` : `${prefijoLote}${i}`,
             fechaCaducidad: formData.fechaCaducidad,
             detallesEmpaque: formData.detallesEmpaque,
+            valorUnitario: formData.valorUnitario || 0,
+            valorTotal: formData.valorUnitario || 0,
           };
           
           productosNuevos.push(productoIndividual);
@@ -1200,6 +1206,8 @@ export function EntradaDonAchat() {
           lote: formData.lote,
           fechaCaducidad: formData.fechaCaducidad,
           detallesEmpaque: formData.detallesEmpaque,
+          valorUnitario: formData.valorUnitario || 0,
+          valorTotal: (formData.valorUnitario || 0) * formData.cantidad,
         };
 
         setProductosAgregados(prev => [...prev, nuevoProducto]);
@@ -1230,6 +1238,7 @@ export function EntradaDonAchat() {
         cantidad: 0,
         unidad: '',
         peso: 0,
+        valorUnitario: 0,
         fechaCaducidad: '',
         lote: '',
         detallesEmpaque: '',
@@ -1355,6 +1364,8 @@ export function EntradaDonAchat() {
           fechaCaducidad: prod.fechaCaducidad,
           detallesEmpaque: prod.detallesEmpaque,
           observaciones: formData.observaciones,
+          valorUnitario: prod.valorUnitario || 0,
+          valorTotal: prod.valorTotal || 0,
         });
         
         entradasRegistradas++;
@@ -2150,6 +2161,24 @@ export function EntradaDonAchat() {
                   })()}
                 </div>
 
+                {/* Valor Monetario */}
+                <div>
+                  <Label>Valeur Unitaire (CAD$)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.valorUnitario || ''}
+                    onChange={(e) => handleFieldChange('valorUnitario', parseFloat(e.target.value) || 0)}
+                    placeholder="0.00"
+                  />
+                  {formData.valorUnitario > 0 && formData.cantidad > 0 && (
+                    <p className="text-xs text-green-600 mt-1 font-semibold">
+                      💰 Valeur totale: CAD$ {(formData.valorUnitario * formData.cantidad).toFixed(2)}
+                    </p>
+                  )}
+                </div>
+
                 {/* Temperatura */}
                 <div>
                   <Label>Température *</Label>
@@ -2321,14 +2350,27 @@ export function EntradaDonAchat() {
                     <h3 className="font-semibold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                       Produits Ajoutés ({productosAgregados.length})
                     </h3>
-                    <Badge variant="secondary">
-                      {productosAgregados.reduce((sum, p) => {
-                        const pesoNeto = p.pesoUnidad && p.pesoUnidad > 0 
-                          ? Math.max(0, p.pesoTotal - p.pesoUnidad)
-                          : p.pesoTotal;
-                        return sum + pesoNeto;
-                      }, 0).toFixed(2)} kg net total
-                    </Badge>
+                    <div className="flex gap-2">
+                      <Badge variant="secondary">
+                        {productosAgregados.reduce((sum, p) => {
+                          const pesoNeto = p.pesoUnidad && p.pesoUnidad > 0 
+                            ? Math.max(0, p.pesoTotal - p.pesoUnidad)
+                            : p.pesoTotal;
+                          return sum + pesoNeto;
+                        }, 0).toFixed(2)} kg net total
+                      </Badge>
+                      {(() => {
+                        const totalMonetario = productosAgregados.reduce((sum, p) => sum + (p.valorTotal || 0), 0);
+                        if (totalMonetario > 0) {
+                          return (
+                            <Badge className="bg-green-600 text-white">
+                              💰 CAD$ {totalMonetario.toFixed(2)}
+                            </Badge>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
                   </div>
 
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
@@ -2365,6 +2407,14 @@ export function EntradaDonAchat() {
                                    producto.temperatura === 'refrigerado' ? 'RÉF' : 'CONG'}
                                 </span>
                               </Badge>
+                              {producto.valorTotal && producto.valorTotal > 0 && (
+                                <>
+                                  <span>•</span>
+                                  <span className="font-semibold text-green-700">
+                                    CAD$ {producto.valorTotal.toFixed(2)}
+                                  </span>
+                                </>
+                              )}
                             </div>
                           </div>
                           <Button

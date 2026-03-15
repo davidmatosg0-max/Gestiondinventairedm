@@ -55,6 +55,10 @@ export type EntradaInventario = {
   pesoUnidad: number; // kg por unidad
   pesoTotal: number; // cantidad × pesoUnidad
   
+  // Valores monetarios
+  valorUnitario?: number; // Valor por unidad en CAD$
+  valorTotal?: number; // valorUnitario × cantidad
+  
   // Temperatura
   temperatura: 'ambiente' | 'refrigerado' | 'congelado';
   
@@ -188,12 +192,33 @@ function registrarEnInventario(entrada: EntradaInventario) {
     // ✅ CASO A: El producto YA EXISTE en localStorage - ACTUALIZAR STOCK
     productoId = productoExistenteLS.id;
     
+    const nuevoStockActual = productoExistenteLS.stockActual + entrada.cantidad;
+    
+    // Calcular valorUnitario y valorTotal si están disponibles en la entrada
+    let valorUnitario = productoExistenteLS.valorUnitario;
+    let valorTotal = productoExistenteLS.valorTotal;
+    
+    // Si la entrada tiene valor unitario, actualizar
+    if (entrada.valorUnitario && entrada.valorUnitario > 0) {
+      // Promedio ponderado de valores
+      const valorAnterior = (productoExistenteLS.valorUnitario || 0) * productoExistenteLS.stockActual;
+      const valorNuevo = entrada.valorUnitario * entrada.cantidad;
+      valorUnitario = (valorAnterior + valorNuevo) / nuevoStockActual;
+    }
+    
+    // Recalcular valorTotal basado en el nuevo stock
+    if (valorUnitario && valorUnitario > 0) {
+      valorTotal = valorUnitario * nuevoStockActual;
+    }
+    
     // Actualizar en localStorage (persistente)
     actualizarProducto(productoId, {
-      stockActual: productoExistenteLS.stockActual + entrada.cantidad,
+      stockActual: nuevoStockActual,
       lote: entrada.lote || productoExistenteLS.lote,
       fechaVencimiento: entrada.fechaCaducidad || productoExistenteLS.fechaVencimiento,
-      pesoRegistrado: (productoExistenteLS.pesoRegistrado || 0) + entrada.pesoTotal
+      pesoRegistrado: (productoExistenteLS.pesoRegistrado || 0) + entrada.pesoTotal,
+      valorUnitario,
+      valorTotal
     });
     
     // Actualizar también en mockProductos (memoria) para reflejar cambios inmediatamente
@@ -280,6 +305,8 @@ function registrarEnInventario(entrada: EntradaInventario) {
       peso: entrada.pesoUnidad,
       pesoUnitario: entrada.pesoUnidad,
       pesoRegistrado: entrada.pesoTotal,
+      valorUnitario: entrada.valorUnitario || 0,
+      valorTotal: entrada.valorUnitario ? entrada.valorUnitario * entrada.cantidad : 0,
       lote: entrada.lote || '',
       fechaVencimiento: entrada.fechaCaducidad || '',
       icono: entrada.variante?.icono || entrada.productoIcono || '📦', // Usar icono de la variante si existe

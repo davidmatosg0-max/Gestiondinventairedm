@@ -79,12 +79,22 @@ export function Reportes() {
         
         case 'general':
         default:
+          // Calcular valor total real del inventario
+          const valorTotalCalculado = mockProductos.reduce((sum, p) => {
+            if (p.valorTotal && p.valorTotal > 0) {
+              return sum + p.valorTotal;
+            } else if (p.valorUnitario && p.valorUnitario > 0) {
+              return sum + (p.valorUnitario * p.stockActual);
+            }
+            return sum;
+          }, 0);
+          
           const estadisticas = {
             totalProductos: mockProductos.length,
             totalStock: mockProductos.reduce((sum, p) => sum + p.stockActual, 0),
             totalComandas: comandas.length,
             totalOrganismos: mockOrganismos.filter(o => o.activo).length,
-            valorTotal: 25450.75,
+            valorTotal: valorTotalCalculado,
             periodo: `${fechaInicio} - ${fechaFin}`,
           };
           

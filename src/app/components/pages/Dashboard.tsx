@@ -51,8 +51,16 @@ export function Dashboard() {
     
     // Calcular valor total del inventario
     const valorTotal = productos.reduce((sum, p) => {
-      const categoria = p.categoria; // Aquí deberías obtener el valorMonetario de la categoría
-      return sum + (p.stockActual * 1.5); // Valor temporal, debe venir de categoría
+      // Prioridad 1: Usar valorTotal si está disponible
+      if (p.valorTotal && p.valorTotal > 0) {
+        return sum + p.valorTotal;
+      }
+      // Prioridad 2: Calcular desde valorUnitario
+      if (p.valorUnitario && p.valorUnitario > 0) {
+        return sum + (p.valorUnitario * p.stockActual);
+      }
+      // Si no hay valores monetarios específicos, no sumar nada
+      return sum;
     }, 0);
 
     setStats({

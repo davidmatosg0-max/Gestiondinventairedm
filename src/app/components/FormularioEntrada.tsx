@@ -37,6 +37,10 @@ type FormEntrada = {
   unidad: string;
   peso: number;
   
+  // Valor monetario
+  valorUnitario?: number; // Valor por unidad en CAD$
+  valorTotal?: number; // Valor total calculado (cantidad × valorUnitario)
+  
   // Detalles adicionales
   temperatura: 'ambiente' | 'refrigerado' | 'congelado' | '';
   fechaCaducidad: string;
@@ -91,6 +95,8 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
     cantidad: 0,
     unidad: '',
     peso: 0,
+    valorUnitario: 0,
+    valorTotal: 0,
     temperatura: '',
     fechaCaducidad: '',
     lote: '',
@@ -581,6 +587,10 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
       unidad: formData.unidad,
       pesoUnidad: pesoUnitario,
       pesoTotal: formData.peso,
+      
+      // Valores monetarios
+      valorUnitario: formData.valorUnitario || 0,
+      valorTotal: formData.valorTotal || 0,
       
       // Temperatura
       temperatura: (formData.temperatura || 'ambiente') as 'ambiente' | 'refrigerado' | 'congelado',
@@ -1257,7 +1267,15 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                       min="0"
                       step="1"
                       value={formData.cantidad || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, cantidad: parseFloat(e.target.value) || 0 }))}
+                      onChange={(e) => {
+                        const cantidad = parseFloat(e.target.value) || 0;
+                        const valorUnitario = formData.valorUnitario || 0;
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          cantidad,
+                          valorTotal: cantidad * valorUnitario
+                        }));
+                      }}
                       placeholder="0"
                       className="h-11 text-sm pr-10 border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE]"
                     />
@@ -1406,6 +1424,75 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                           → {formData.cantidad} palettes × {(formData.peso / formData.cantidad).toFixed(3)} kg = {formData.peso.toFixed(3)} kg total
                         </div>
                       )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* ✅ Sección: Valores Monetarios */}
+              <div className="grid grid-cols-2 gap-5 mt-4">
+                {/* Valor Unitario */}
+                <div className="space-y-2">
+                  <Label htmlFor="valorUnitario" className="text-sm font-medium flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    💰 Valeur unitaire (CAD$)
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="valorUnitario"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.valorUnitario || ''}
+                      onChange={(e) => {
+                        const valorUnitario = parseFloat(e.target.value) || 0;
+                        const cantidad = formData.cantidad || 0;
+                        setFormData(prev => ({ 
+                          ...prev, 
+                          valorUnitario,
+                          valorTotal: cantidad * valorUnitario
+                        }));
+                      }}
+                      placeholder="0.00"
+                      className="h-11 text-sm pr-16 border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE]"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#999999] text-xs font-medium pointer-events-none">
+                      CAD$
+                    </div>
+                  </div>
+                </div>
+
+                {/* Valor Total (calculado automáticamente) */}
+                <div className="space-y-2">
+                  <Label htmlFor="valorTotal" className="text-sm font-medium flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    💵 Valeur totale (CAD$)
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="valorTotal"
+                      type="number"
+                      value={(formData.valorTotal || 0).toFixed(2)}
+                      readOnly
+                      disabled
+                      className="h-11 text-sm pr-16 bg-gray-50 text-gray-700 font-bold border-gray-300"
+                      placeholder="0.00"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#999999] text-xs font-medium pointer-events-none">
+                      CAD$
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Info de valor monetario calculado */}
+              {formData.valorUnitario && formData.valorUnitario > 0 && formData.cantidad > 0 && (
+                <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-100">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-600">💰</span>
+                    <div className="text-xs text-green-700 font-medium space-y-1">
+                      <div>Valor total calculado: {formData.cantidad} {formData.unidad || 'unités'} × CAD$ {(formData.valorUnitario || 0).toFixed(2)} = CAD$ {(formData.valorTotal || 0).toFixed(2)}</div>
+                      <div className="text-green-600">
+                        💡 La valeur sera enregistrée avec l'entrée et mise à jour dans l'inventaire avec moyenne pondérée
+                      </div>
                     </div>
                   </div>
                 </div>

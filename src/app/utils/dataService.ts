@@ -55,6 +55,8 @@ export interface Producto {
   productoBaseId?: string;
   productoBaseNombre?: string;
   valorMonetario?: number;
+  valorUnitario?: number; // Valor monetario por unidad en CAD$
+  valorTotal?: number; // Valor monetario total en CAD$ (valorUnitario × stockActual)
   factorConversionCaja?: number; // Cuántas cajas hay en una paleta
   factorConversionUnidad?: number; // Cuántas unidades hay en una caja
   factorConversionSaco?: number; // Cuántas unidades hay en un saco

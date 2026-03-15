@@ -1678,7 +1678,32 @@ export function Inventario() {
                             </TableCell>
                             <TableCell className="py-1 px-2">
                               {(() => {
-                                // 🎯 CORRECCIÓN: Calcular el valor monetario basado en el PESO TOTAL del stock
+                                // 🎯 PRIORIDAD 1: Usar valorTotal o valorUnitario si están disponibles
+                                if (producto.valorTotal && producto.valorTotal > 0) {
+                                  return (
+                                    <div className="flex flex-col items-start bg-green-50 px-1.5 py-0.5 rounded border border-green-200">
+                                      <span className="text-xs font-bold text-[#2d9561]">
+                                        CAD$ {producto.valorTotal.toFixed(2)}
+                                      </span>
+                                    </div>
+                                  );
+                                }
+                                
+                                if (producto.valorUnitario && producto.valorUnitario > 0) {
+                                  const valorTotal = producto.valorUnitario * producto.stockActual;
+                                  return (
+                                    <div className="flex flex-col items-start bg-green-50 px-1.5 py-0.5 rounded border border-green-200">
+                                      <span className="text-xs font-bold text-[#2d9561]">
+                                        CAD$ {valorTotal.toFixed(2)}
+                                      </span>
+                                      <span className="text-[9px] text-gray-600">
+                                        ${producto.valorUnitario.toFixed(2)}/u
+                                      </span>
+                                    </div>
+                                  );
+                                }
+                                
+                                // 🎯 PRIORIDAD 2: Calcular el valor monetario basado en el PESO TOTAL del stock
                                 // peso total = stockActual × pesoUnitario
                                 const pesoUnitario = producto.pesoUnitario || producto.peso || 0;
                                 const pesoTotal = producto.stockActual * pesoUnitario;
@@ -1877,6 +1902,60 @@ export function Inventario() {
                               <p className="text-xs text-[#999999]">por {producto.unidad}</p>
                             </div>
                           )}
+
+                          {/* Valor Monetario */}
+                          {(() => {
+                            // 🎯 PRIORIDAD 1: Usar valorTotal o valorUnitario si están disponibles
+                            if (producto.valorTotal && producto.valorTotal > 0) {
+                              return (
+                                <div className="text-center bg-green-50 rounded py-2 border border-green-200">
+                                  <p className="text-xs text-[#666666]">💰 Valor Total</p>
+                                  <p className="text-sm font-bold text-[#2d9561]">
+                                    CAD$ {producto.valorTotal.toFixed(2)}
+                                  </p>
+                                </div>
+                              );
+                            }
+                            
+                            if (producto.valorUnitario && producto.valorUnitario > 0) {
+                              const valorTotal = producto.valorUnitario * producto.stockActual;
+                              return (
+                                <div className="text-center bg-green-50 rounded py-2 border border-green-200">
+                                  <p className="text-xs text-[#666666]">💰 Valor Total</p>
+                                  <p className="text-sm font-bold text-[#2d9561]">
+                                    CAD$ {valorTotal.toFixed(2)}
+                                  </p>
+                                  <p className="text-xs text-gray-600">
+                                    ${producto.valorUnitario.toFixed(2)}/u
+                                  </p>
+                                </div>
+                              );
+                            }
+                            
+                            // 🎯 PRIORIDAD 2: Calcular usando categoría
+                            const pesoUnitario = producto.pesoUnitario || producto.peso || 0;
+                            const pesoTotal = producto.stockActual * pesoUnitario;
+                            
+                            const valorCalculado = calcularValorMonetario(
+                              pesoTotal,
+                              producto.categoria,
+                              producto.subcategoria,
+                              producto.varianteId
+                            );
+                            
+                            if (valorCalculado !== undefined && valorCalculado > 0) {
+                              return (
+                                <div className="text-center bg-green-50 rounded py-2 border border-green-200">
+                                  <p className="text-xs text-[#666666]">💰 Valor Total</p>
+                                  <p className="text-sm font-bold text-[#2d9561]">
+                                    CAD$ {valorCalculado.toFixed(2)}
+                                  </p>
+                                </div>
+                              );
+                            }
+                            
+                            return null;
+                          })()}
 
                           {/* Estado */}
                           <div className="flex justify-center">

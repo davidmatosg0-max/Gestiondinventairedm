@@ -157,6 +157,15 @@ export function HistorialEntradasCompacto({ onAgregarAlCarrito }: HistorialEntra
                     {(entrada.pesoTotal || 0).toFixed(2)} kg
                   </span>
                 </div>
+                {/* Valor Total */}
+                {entrada.valorTotal && entrada.valorTotal > 0 && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs">💰</span>
+                    <span className="font-bold text-sm text-[#2d9561]">
+                      CAD$ {entrada.valorTotal.toFixed(2)}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Temperatura */}

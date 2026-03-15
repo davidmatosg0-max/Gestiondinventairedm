@@ -24,6 +24,8 @@ export type ProductoCreado = {
   temperaturaAlmacenamiento?: 'Temperatura Ambiente' | 'Refrigerado' | 'Congelado';
   productoOrigenId?: string; // ID del producto origen en caso de conversión
   esConversion?: boolean; // Indica si es un producto resultado de conversión
+  valorUnitario?: number; // Valor monetario por unidad en CAD$
+  valorTotal?: number; // Valor monetario total en CAD$ (valorUnitario × stockActual)
 };
 
 const STORAGE_KEY = 'banco_alimentos_productos';
@@ -253,4 +255,30 @@ if (typeof window !== 'undefined') {
   };
   
   console.log('🔍 Función de debug disponible: verificarProductosSinPeso()');
+  
+  // 💰 Función para recalcular valores monetarios de todos los productos
+  (window as any).recalcularValoresMonetarios = () => {
+    const productos = obtenerProductos();
+    let productosActualizados = 0;
+    
+    productos.forEach(producto => {
+      let actualizado = false;
+      
+      // Si tiene valorUnitario pero no valorTotal, calcularlo
+      if (producto.valorUnitario && producto.valorUnitario > 0) {
+        const nuevoValorTotal = producto.valorUnitario * producto.stockActual;
+        if (producto.valorTotal !== nuevoValorTotal) {
+          actualizarProducto(producto.id, { valorTotal: nuevoValorTotal });
+          actualizado = true;
+        }
+      }
+      
+      if (actualizado) productosActualizados++;
+    });
+    
+    console.log(`✅ ${productosActualizados} productos actualizados con valores monetarios`);
+    return productosActualizados;
+  };
+  
+  console.log('💰 Función disponible: recalcularValoresMonetarios()');
 }

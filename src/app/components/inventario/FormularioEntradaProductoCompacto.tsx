@@ -44,6 +44,8 @@ interface FormEntradaProductoData {
   proveedorTelefono?: string;
   observaciones: string;
   imagen: string | null;
+  valorUnitario?: number; // ✅ AGREGADO: Valor monetario por unidad en CAD$
+  valorTotal?: number; // ✅ AGREGADO: Valor total calculado (cantidad × valorUnitario)
 }
 
 interface Categoria {
@@ -450,7 +452,15 @@ export function FormularioEntradaProductoCompacto({
                           id="cantidad"
                           type="number"
                           value={formulario.cantidad}
-                          onChange={(e) => setFormulario({ ...formulario, cantidad: parseInt(e.target.value) || 0 })}
+                          onChange={(e) => {
+                            const cantidad = parseInt(e.target.value) || 0;
+                            const valorUnitario = formulario.valorUnitario || 0;
+                            setFormulario({ 
+                              ...formulario, 
+                              cantidad,
+                              valorTotal: cantidad * valorUnitario
+                            });
+                          }}
                           placeholder="10"
                           className="h-9"
                         />
@@ -475,6 +485,78 @@ export function FormularioEntradaProductoCompacto({
                         />
                       </div>
                     </div>
+
+                    {/* ✅ NUEVO: Campos de Valor Monetario */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="valorUnitario" className="text-xs">
+                          💰 Valeur unitaire (CAD$)
+                        </Label>
+                        <Input
+                          id="valorUnitario"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={formulario.valorUnitario || ''}
+                          onChange={(e) => {
+                            const valorUnitario = parseFloat(e.target.value) || 0;
+                            const cantidad = formulario.cantidad || 0;
+                            setFormulario({ 
+                              ...formulario, 
+                              valorUnitario,
+                              valorTotal: cantidad * valorUnitario
+                            });
+                          }}
+                          placeholder="2.50"
+                          className="h-9"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="valorTotal" className="text-xs">
+                          💵 Valeur totale (CAD$)
+                        </Label>
+                        <Input
+                          id="valorTotal"
+                          type="number"
+                          value={(formulario.valorTotal || 0).toFixed(2)}
+                          readOnly
+                          disabled
+                          className="h-9 bg-gray-50 text-gray-700 font-bold"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Información de valor monetario */}
+                    {formulario.valorUnitario && formulario.valorUnitario > 0 && (
+                      <div className="p-4 bg-green-50 border-2 border-green-200 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <div className="text-2xl">💰</div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-sm text-green-900 mb-2">
+                              Calcul de la valeur monétaire
+                            </h4>
+                            <div className="grid grid-cols-3 gap-3 text-xs">
+                              <div className="bg-white p-2 rounded border border-green-300">
+                                <p className="text-green-700 font-medium mb-1">Valeur unitaire:</p>
+                                <p className="text-lg font-bold text-green-900">CAD$ {(formulario.valorUnitario || 0).toFixed(2)}</p>
+                              </div>
+                              <div className="bg-white p-2 rounded border border-green-300">
+                                <p className="text-green-700 font-medium mb-1">Quantité:</p>
+                                <p className="text-lg font-bold text-green-900">{formulario.cantidad} {unidades.find(u => u.id === formulario.unidadId)?.abreviatura || 'unités'}</p>
+                              </div>
+                              <div className="bg-gradient-to-br from-green-100 to-emerald-100 p-2 rounded border-2 border-green-500">
+                                <p className="text-green-700 font-medium mb-1">Valeur totale:</p>
+                                <p className="text-lg font-bold text-green-700">CAD$ {(formulario.valorTotal || 0).toFixed(2)}</p>
+                              </div>
+                            </div>
+                            <p className="text-xs text-green-700 mt-2">
+                              💡 La valeur sera enregistrée avec l'entrée et mise à jour dans l'inventaire avec moyenne pondérée
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     
                     {/* Información de deducción de tara */}
                     {(() => {
