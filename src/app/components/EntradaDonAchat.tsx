@@ -219,7 +219,7 @@ export function EntradaDonAchat() {
   const [searchProductoQuery, setSearchProductoQuery] = useState('');
   const [selectContactoOpen, setSelectContactoOpen] = useState(false);
   const [searchContactoQuery, setSearchContactoQuery] = useState('');
-  const [detallesOpcionalesAbiertos, setDetallesOpcionalesAbiertos] = useState(false);
+  const [detallesOpcionalesAbiertos, setDetallesOpcionalesAbiertos] = useState(true); // Siempre visible por defecto
   const [imprimirAutomaticamente, setImprimirAutomaticamente] = useState(true);
   
   // 🎯 Estados específicos para productos PRS
