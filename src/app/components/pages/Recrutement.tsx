@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBranding } from '../../../hooks/useBranding';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -43,6 +43,11 @@ interface Candidate {
   experience: string;
   availability: string;
   numeroArchivo?: string; // ✅ Agregar número de archivo
+  adresse?: string; // ✅ Dirección completa
+  appartement?: string; // ✅ Apartamento/Unidad
+  ville?: string; // ✅ Ciudad
+  codePostal?: string; // ✅ Código postal
+  departamentoIds?: string[]; // ✅ IDs de departamentos asignados
 }
 
 export function Recrutement() {
@@ -116,6 +121,20 @@ export function Recrutement() {
       applicationDate: '2024-02-07',
       experience: 'Permis classe 3, 10 ans d\'expérience',
       availability: 'Flexible'
+    },
+    {
+      id: 5,
+      name: 'Sylvain Forget',
+      email: 'sylvain_forget@videotron.ca',
+      phone: '514 718-1068',
+      position: 'Bénévole - Entrepôt',
+      status: 'accepted',
+      applicationDate: '2026-03-16',
+      experience: 'Bénévole expérimenté',
+      availability: 'Variable',
+      adresse: '7184 Boulevard des Mille-Îles',
+      ville: 'Laval',
+      codePostal: 'H7T 1C7'
     }
   ]);
 
@@ -241,10 +260,10 @@ export function Recrutement() {
           notas: `${candidate.experience}\n\nCandidature du: ${new Date(candidate.applicationDate).toLocaleDateString('fr-FR')}`,
           evenements: [eventoCreacion],
           // Champs optionnels
-          direccion: '',
-          apartamento: '',
-          ciudad: '',
-          codigoPostal: '',
+          direccion: candidate.adresse || '',
+          apartamento: candidate.appartement || '',
+          ciudad: candidate.ville || '',
+          codigoPostal: candidate.codePostal || '',
           cargo: candidate.position,
           idiomas: [],
           documents: []
@@ -388,10 +407,10 @@ export function Recrutement() {
         notas: `${candidatoParaAssignar.experience}\n\nCandidature du: ${new Date(candidatoParaAssignar.applicationDate).toLocaleDateString('fr-FR')}\n\nAssigné manuellement au département ${departamento.nombre}`,
         evenements: [eventoCreacion],
         // Champs optionnels
-        direccion: '',
-        apartamento: '',
-        ciudad: '',
-        codigoPostal: '',
+        direccion: candidatoParaAssignar.adresse || '',
+        apartamento: candidatoParaAssignar.appartement || '',
+        ciudad: candidatoParaAssignar.ville || '',
+        codigoPostal: candidatoParaAssignar.codePostal || '',
         cargo: candidatoParaAssignar.position,
         idiomas: [],
         documents: []
@@ -428,6 +447,71 @@ export function Recrutement() {
       toast.error('Erreur lors de l\'assignation au département');
     }
   };
+
+  // 🔄 SINCRONIZAR números de archivo desde contactos a candidatos
+  useEffect(() => {
+    const sincronizarCandidatos = () => {
+      const contactos = obtenerContactosPorDepartamento('8'); // Departamento Bénévoles
+      let actualizado = false;
+      
+      const candidatosActualizados = candidates.map(candidate => {
+        // Buscar contacto correspondiente por email
+        const contacto = contactos.find(c => 
+          c.email.toLowerCase() === candidate.email.toLowerCase()
+        );
+        
+        // Si existe el contacto, sincronizar número de archivo y departamentos
+        if (contacto) {
+          const cambios: Partial<Candidate> = {};
+          
+          if (contacto.numeroArchivo && contacto.numeroArchivo !== candidate.numeroArchivo) {
+            console.log(`🔄 Sincronizando número de archivo para candidato ${candidate.name}: ${contacto.numeroArchivo}`);
+            cambios.numeroArchivo = contacto.numeroArchivo;
+            actualizado = true;
+          }
+          
+          // Sincronizar departamentos asignados
+          const departamentosContacto = contacto.departamentoIds || (contacto.departamentoId ? [contacto.departamentoId] : []);
+          const departamentosActuales = candidate.departamentoIds || [];
+          
+          if (JSON.stringify(departamentosContacto.sort()) !== JSON.stringify(departamentosActuales.sort())) {
+            console.log(`🔄 Sincronizando departamentos para candidato ${candidate.name}:`, departamentosContacto);
+            cambios.departamentoIds = departamentosContacto;
+            actualizado = true;
+          }
+          
+          if (Object.keys(cambios).length > 0) {
+            return {
+              ...candidate,
+              ...cambios
+            };
+          }
+        }
+        
+        return candidate;
+      });
+      
+      if (actualizado) {
+        console.log('✅ Sincronización de candidatos actualizada');
+        setCandidates(candidatosActualizados);
+      }
+    };
+    
+    // Ejecutar sincronización al montar el componente
+    sincronizarCandidatos();
+    
+    // Escuchar cambios en contactos
+    const handleContactosUpdate = () => {
+      console.log('🔔 Recrutement: Evento contactos-actualizados recibido');
+      sincronizarCandidatos();
+    };
+    
+    window.addEventListener('contactos-actualizados', handleContactosUpdate);
+    
+    return () => {
+      window.removeEventListener('contactos-actualizados', handleContactosUpdate);
+    };
+  }, [candidates]);
 
   return (
     <div 
@@ -753,6 +837,35 @@ export function Recrutement() {
                       <span className="line-clamp-1">{candidate.experience}</span>
                     </div>
 
+                    {/* Mostrar departamentos asignados */}
+                    {candidate.departamentoIds && candidate.departamentoIds.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 p-2 rounded-lg bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200/50">
+                        <span className="text-xs font-medium text-[#666666] flex items-center gap-1">
+                          <Users className="w-3 h-3" style={{ color: branding.primaryColor }} />
+                          Département{candidate.departamentoIds.length > 1 ? 's' : ''}:
+                        </span>
+                        {candidate.departamentoIds.map(deptId => {
+                          const dept = departamentosDisponibles.find(d => d.id === deptId);
+                          if (!dept) return null;
+                          return (
+                            <Badge 
+                              key={deptId}
+                              className="text-xs px-2 py-0.5 border-0 shadow-sm"
+                              style={{ 
+                                backgroundColor: `${dept.color}15`,
+                                color: dept.color,
+                                fontFamily: 'Montserrat, sans-serif',
+                                fontWeight: 600
+                              }}
+                            >
+                              <span className="mr-1">{dept.icono}</span>
+                              {dept.nombre}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
+
                     <div className="flex gap-2 pt-3 border-t border-gray-200">
                       <Button 
                         variant="outline" 
@@ -996,13 +1109,13 @@ export function Recrutement() {
 
       {/* Dialog: Profil Détaillé du Candidat */}
       <Dialog open={dialogPerfilOpen} onOpenChange={setDialogPerfilOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="perfil-candidato-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               <Users className="w-6 h-6" style={{ color: branding.primaryColor }} />
               Profil du Candidat
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription id="perfil-candidato-description">
               Détails complets de la candidature de {candidatoParaPerfil?.name}
             </DialogDescription>
           </DialogHeader>
@@ -1087,6 +1200,34 @@ export function Recrutement() {
                     </div>
                   </div>
                 </div>
+
+                {/* Adresse (si disponible) */}
+                {(candidatoParaPerfil.adresse || candidatoParaPerfil.ville || candidatoParaPerfil.codePostal || candidatoParaPerfil.appartement) && (
+                  <div className="space-y-3">
+                    <h4 
+                      className="font-semibold text-lg flex items-center gap-2"
+                      style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}
+                    >
+                      <MapPin className="w-5 h-5" />
+                      Adresse
+                    </h4>
+                    <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
+                      <div className="space-y-2">
+                        {candidatoParaPerfil.adresse && (
+                          <p className="text-sm font-medium">{candidatoParaPerfil.adresse}</p>
+                        )}
+                        {candidatoParaPerfil.appartement && (
+                          <p className="text-sm text-gray-600">Apt/Unité: {candidatoParaPerfil.appartement}</p>
+                        )}
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          {candidatoParaPerfil.ville && <span>{candidatoParaPerfil.ville}</span>}
+                          {candidatoParaPerfil.ville && candidatoParaPerfil.codePostal && <span>•</span>}
+                          {candidatoParaPerfil.codePostal && <span>{candidatoParaPerfil.codePostal}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Détails de la candidature */}
                 <div className="space-y-3">

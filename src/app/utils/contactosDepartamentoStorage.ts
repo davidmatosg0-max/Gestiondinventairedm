@@ -310,10 +310,14 @@ export function guardarContacto(contacto: any): ContactoDepartamento {
   );
   
   if (yaExiste) {
-    console.warn('⚠️ Contacto duplicado detectado:', {
-      existente: yaExiste,
-      nuevo: contacto
-    });
+    // ✅ Solo mostrar warning si se intenta crear un nuevo contacto (sin ID)
+    // No mostrar warning para sincronizaciones de contactos existentes
+    if (!contacto.id) {
+      console.warn('⚠️ Contacto duplicado detectado:', {
+        existente: yaExiste,
+        nuevo: contacto
+      });
+    }
     
     // Si el contacto ya existe, verificar si necesita actualizar departamentos
     if (contacto.departamentoId && !yaExiste.departamentoIds?.includes(contacto.departamentoId)) {
@@ -356,11 +360,47 @@ export function guardarContacto(contacto: any): ContactoDepartamento {
   
   console.log('💾 Guardando contacto en localStorage:', nuevoContacto);
   console.log('🆔 Número de archivo generado:', numeroArchivo);
+  console.log('📍 Campos de dirección del nuevo contacto:', {
+    direccion: nuevoContacto.direccion,
+    apartamento: nuevoContacto.apartamento,
+    ciudad: nuevoContacto.ciudad,
+    codigoPostal: nuevoContacto.codigoPostal
+  });
   contactos.push(nuevoContacto);
   guardarTodosContactos(contactos);
   console.log('✅ Total de contactos después de guardar:', contactos.length);
   
+  // ✅ VERIFICACIÓN CRÍTICA: Leer el contacto guardado y verificar que la dirección esté presente
+  const verificacion = obtenerContactosDepartamento();
+  const contactoVerificado = verificacion.find(c => c.id === nuevoContacto.id);
+  if (contactoVerificado) {
+    console.log('🔍 VERIFICACIÓN - Contacto leído de localStorage:', contactoVerificado);
+    console.log('🔍 VERIFICACIÓN - Dirección en localStorage:', {
+      direccion: contactoVerificado.direccion,
+      apartamento: contactoVerificado.apartamento,
+      ciudad: contactoVerificado.ciudad,
+      codigoPostal: contactoVerificado.codigoPostal
+    });
+    
+    // ⚠️ Si la dirección se perdió, forzar una nueva escritura
+    if (nuevoContacto.direccion && !contactoVerificado.direccion) {
+      console.warn('⚠️ DIRECCIÓN PERDIDA - Forzando re-escritura...');
+      const index = verificacion.findIndex(c => c.id === nuevoContacto.id);
+      if (index !== -1) {
+        verificacion[index] = nuevoContacto;
+        guardarTodosContactos(verificacion);
+        console.log('✅ Dirección restaurada con éxito');
+      }
+    }
+  }
+  
   // 🔥 Disparar evento para sincronizar otros componentes
+  console.log('🔥 STORAGE - Disparando evento contactos-actualizados (nuevo contacto):', {
+    departamentoId: nuevoContacto.departamentoId,
+    contactoId: nuevoContacto.id,
+    nombre: nuevoContacto.nombre,
+    apellido: nuevoContacto.apellido
+  });
   window.dispatchEvent(new CustomEvent('contactos-actualizados', {
     detail: { departamentoId: nuevoContacto.departamentoId, contactoId: nuevoContacto.id }
   }));
@@ -373,10 +413,58 @@ export function actualizarContacto(id: string, datosActualizados: Partial<Contac
   const contactos = obtenerContactosDepartamento();
   const index = contactos.findIndex(c => c.id === id);
   if (index !== -1) {
+    console.log('🔄 STORAGE - Contacto ANTES de actualizar:', contactos[index]);
+    console.log('🔄 STORAGE - Datos a actualizar:', datosActualizados);
+    console.log('🔄 STORAGE - Campos de dirección en datosActualizados:', {
+      direccion: datosActualizados.direccion,
+      apartamento: datosActualizados.apartamento,
+      ciudad: datosActualizados.ciudad,
+      codigoPostal: datosActualizados.codigoPostal
+    });
+    
     contactos[index] = { ...contactos[index], ...datosActualizados };
+    
+    console.log('🔄 STORAGE - Contacto DESPUÉS de actualizar:', contactos[index]);
+    console.log('🔄 STORAGE - Campos de dirección DESPUÉS de actualizar:', {
+      direccion: contactos[index].direccion,
+      apartamento: contactos[index].apartamento,
+      ciudad: contactos[index].ciudad,
+      codigoPostal: contactos[index].codigoPostal
+    });
+    
     guardarTodosContactos(contactos);
     
+    // ✅ VERIFICACIÓN CRÍTICA: Leer el contacto guardado y verificar que la dirección esté presente
+    const verificacion = obtenerContactosDepartamento();
+    const contactoVerificado = verificacion.find(c => c.id === id);
+    if (contactoVerificado) {
+      console.log('🔍 VERIFICACIÓN - Contacto actualizado leído de localStorage:', contactoVerificado);
+      console.log('🔍 VERIFICACIÓN - Dirección en localStorage:', {
+        direccion: contactoVerificado.direccion,
+        apartamento: contactoVerificado.apartamento,
+        ciudad: contactoVerificado.ciudad,
+        codigoPostal: contactoVerificado.codigoPostal
+      });
+      
+      // ⚠️ Si la dirección se perdió, forzar una nueva escritura
+      if (contactos[index].direccion && !contactoVerificado.direccion) {
+        console.warn('⚠️ DIRECCIÓN PERDIDA DESPUÉS DE ACTUALIZAR - Forzando re-escritura...');
+        const indexVerif = verificacion.findIndex(c => c.id === id);
+        if (indexVerif !== -1) {
+          verificacion[indexVerif] = contactos[index];
+          guardarTodosContactos(verificacion);
+          console.log('✅ Dirección restaurada con éxito después de actualización');
+        }
+      }
+    }
+    
     // 🔥 Disparar evento para sincronizar otros componentes
+    console.log('🔥 STORAGE - Disparando evento contactos-actualizados:', {
+      departamentoId: contactos[index].departamentoId,
+      contactoId: id,
+      nombre: contactos[index].nombre,
+      apellido: contactos[index].apellido
+    });
     window.dispatchEvent(new CustomEvent('contactos-actualizados', {
       detail: { departamentoId: contactos[index].departamentoId, contactoId: id }
     }));
@@ -648,7 +736,7 @@ export function repararContactosConProblemas(): { reparados: number; eliminados:
 }
 
 // ✅ SINCRONIZACIÓN DE DONATEURS/FOURNISSEURS
-// Sincronizar donadores/fournisseurs del sistema antiguo con contactos departamento
+// Sincronizar donateurs/fournisseurs del sistema antiguo con contactos departamento
 export function sincronizarDonateursFournisseurs(): { sincronizados: number; errores: number } {
   try {
     console.log('🔄 Iniciando sincronización Donateurs & Fournisseurs...');
@@ -1076,6 +1164,7 @@ export function sincronizarDesdeBenevole(benevole: {
   prenom?: string;
   telephone?: string;
   direccion?: string;
+  apartamento?: string;
   ciudad?: string;
   codigoPostal?: string;
   statut?: string;
@@ -1104,6 +1193,12 @@ export function sincronizarDesdeBenevole(benevole: {
         departamentosActualizados.add(contacto.departamentoId);
 
         console.log(`🔄 Sincronizando bénévole a contacto del departamento ${contacto.departamentoId}`);
+        console.log('📍 Sincronizando campos de dirección:', {
+          direccion: benevole.direccion,
+          apartamento: benevole.apartamento,
+          ciudad: benevole.ciudad,
+          codigoPostal: benevole.codigoPostal
+        });
 
         // Actualizar con los nuevos datos del bénévole
         return {
@@ -1113,10 +1208,11 @@ export function sincronizarDesdeBenevole(benevole: {
           ...(benevole.prenom && { nombre: benevole.prenom }),
           // Actualizar información de contacto
           ...(benevole.telephone && { telefono: benevole.telephone }),
-          // Actualizar dirección
-          ...(benevole.direccion && { direccion: benevole.direccion }),
-          ...(benevole.ciudad && { ciudad: benevole.ciudad }),
-          ...(benevole.codigoPostal && { codigoPostal: benevole.codigoPostal }),
+          // Actualizar dirección (TODOS LOS CAMPOS)
+          ...(benevole.direccion !== undefined && { direccion: benevole.direccion }),
+          ...(benevole.apartamento !== undefined && { apartamento: benevole.apartamento }),
+          ...(benevole.ciudad !== undefined && { ciudad: benevole.ciudad }),
+          ...(benevole.codigoPostal !== undefined && { codigoPostal: benevole.codigoPostal }),
           // Actualizar estado activo basado en statut
           ...(benevole.statut && { 
             activo: benevole.statut === 'Actif' || benevole.statut === 'actif'
@@ -1212,8 +1308,12 @@ export function migrarNumerosArchivo(): number {
     
     // Ordenar por fecha de ingreso (más antiguos primero)
     const contactosOrdenados = [...contactosSinNumero].sort((a, b) => {
-      const fechaA = a.fechaIngreso ? new Date(a.fechaIngreso).getTime() : 0;
-      const fechaB = b.fechaIngreso ? new Date(b.fechaIngreso).getTime() : 0;
+      const fechaA = a.fechaIngreso 
+        ? new Date(a.fechaIngreso).getTime() 
+        : 0;
+      const fechaB = b.fechaIngreso 
+        ? new Date(b.fechaIngreso).getTime() 
+        : 0;
       return fechaA - fechaB;
     });
     

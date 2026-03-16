@@ -864,6 +864,15 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                           initialApartment={formulario.apartamento || ''}
                           onChange={(value, details) => {
                             console.log('📝 Formulario BASE - onChange recibido:', { value, details });
+                            console.log('📝 Formulario ACTUAL antes de actualizar:', {
+                              direccion: formulario.direccion,
+                              apartamento: formulario.apartamento,
+                              ciudad: formulario.ciudad,
+                              codigoPostal: formulario.codigoPostal
+                            });
+                            
+                            // ✅ Siempre actualizar con los valores que vienen (ya no preservamos vacíos)
+                            // porque AddressAutocomplete ahora notifica INMEDIATAMENTE cuando cada campo cambia
                             const nuevoFormulario = {
                               ...formulario,
                               direccion: value,
@@ -1404,6 +1413,15 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                           initialApartment={formulario.apartamento || ''}
                           onChange={(value, details) => {
                             console.log('📝 Formulario CONTACT - onChange recibido:', { value, details });
+                            console.log('📝 Formulario ACTUAL antes de actualizar:', {
+                              direccion: formulario.direccion,
+                              apartamento: formulario.apartamento,
+                              ciudad: formulario.ciudad,
+                              codigoPostal: formulario.codigoPostal
+                            });
+                            
+                            // ✅ Siempre actualizar con los valores que vienen (ya no preservamos vacíos)
+                            // porque AddressAutocomplete ahora notifica INMEDIATAMENTE cuando cada campo cambia
                             const nuevoFormulario = {
                               ...formulario,
                               direccion: value,

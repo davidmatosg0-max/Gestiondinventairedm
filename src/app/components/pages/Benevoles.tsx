@@ -158,6 +158,7 @@ interface Benevole {
   dateNaissance?: string;
   langues?: string[];
   adresse?: string;
+  appartement?: string; // NUEVO - Número de apartamento
   ville?: string; // NUEVO - Ciudad/Secteur
   codePostal?: string; // NUEVO - Código postal
   quartier?: string;
@@ -512,29 +513,76 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
   // 🔄 SINCRONIZAR números de archivo desde contactos a bénévoles
   React.useEffect(() => {
     const sincronizarNumerosArchivo = () => {
+      // Leer benevoles directamente de localStorage para evitar dependencias circulares
+      const storedBenevoles = localStorage.getItem('banqueAlimentaire_benevoles');
+      if (!storedBenevoles) return;
+      
+      const benevolesActuales = JSON.parse(storedBenevoles);
       const contactos = obtenerContactosDepartamento();
       let actualizado = false;
       
-      const benevolesActualizados = benevoles.map(benevole => {
+      const benevolesActualizados = benevolesActuales.map((benevole: any) => {
         // Buscar contacto correspondiente por email
         const contacto = contactos.find(c => 
           c.email.toLowerCase() === benevole.email.toLowerCase() && c.tipo === 'benevole'
         );
         
-        // Si existe el contacto y tiene número de archivo, sincronizarlo
-        if (contacto?.numeroArchivo && contacto.numeroArchivo !== benevole.numeroArchivo) {
-          console.log(`🔄 Sincronizando número de archivo para ${benevole.prenom} ${benevole.nom}: ${contacto.numeroArchivo}`);
-          actualizado = true;
-          return {
-            ...benevole,
-            numeroArchivo: contacto.numeroArchivo
-          };
+        // ✅ Si existe el contacto, sincronizar TODOS los datos relevantes
+        if (contacto) {
+          // Verificar si hay cambios en cualquier campo relevante
+          const hayCambios = 
+            contacto.numeroArchivo !== benevole.numeroArchivo ||
+            contacto.direccion !== benevole.adresse ||
+            contacto.apartamento !== benevole.appartement ||
+            contacto.ciudad !== benevole.ville ||
+            contacto.codigoPostal !== benevole.codePostal ||
+            contacto.telefono !== benevole.telephone ||
+            contacto.nombre !== benevole.prenom ||
+            contacto.apellido !== benevole.nom ||
+            contacto.notas !== benevole.notasGenerales;
+          
+          if (hayCambios) {
+            console.log(`🔄 Sincronizando datos completos para ${benevole.prenom} ${benevole.nom}:`, {
+              numeroArchivo: contacto.numeroArchivo,
+              direccion: contacto.direccion,
+              apartamento: contacto.apartamento,
+              ciudad: contacto.ciudad,
+              codigoPostal: contacto.codigoPostal,
+              telefono: contacto.telefono
+            });
+            actualizado = true;
+            
+            return {
+              ...benevole,
+              numeroArchivo: contacto.numeroArchivo,
+              prenom: contacto.nombre,
+              nom: contacto.apellido,
+              telephone: contacto.telefono,
+              adresse: contacto.direccion || benevole.adresse,
+              appartement: contacto.apartamento || benevole.appartement,
+              ville: contacto.ciudad || benevole.ville,
+              codePostal: contacto.codigoPostal || benevole.codePostal,
+              notasGenerales: contacto.notas || benevole.notasGenerales,
+              poste: contacto.cargo || benevole.poste,
+              heuresSemaines: contacto.heuresSemaines || benevole.heuresSemaines,
+              reference: contacto.reference || benevole.reference,
+              sexe: contacto.genero || benevole.sexe,
+              dateNaissance: contacto.fechaNacimiento || benevole.dateNaissance,
+              langues: contacto.idiomas?.map(lang => {
+                const langMap: Record<string, string> = { es: 'Espagnol', fr: 'Français', en: 'Anglais', ar: 'Arabe' };
+                return langMap[lang] || lang;
+              }) || benevole.langues,
+              disponibilidadesSemanal: contacto.disponibilidades || benevole.disponibilidadesSemanal,
+              photo: contacto.foto || benevole.photo
+            };
+          }
         }
         
         return benevole;
       });
       
       if (actualizado) {
+        console.log('✅ Sincronización completa de bénévoles actualizada');
         setBenevoles(benevolesActualizados);
       }
     };
@@ -544,6 +592,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     
     // Escuchar cambios en contactos
     const handleContactosUpdate = () => {
+      console.log('🔔 Benevoles: Evento contactos-actualizados recibido');
       sincronizarNumerosArchivo();
     };
     
@@ -552,7 +601,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     return () => {
       window.removeEventListener('contactos-actualizados', handleContactosUpdate);
     };
-  }, [benevoles]);
+  }, []); // ✅ Sin dependencias para evitar loops infinitos
 
   // ⚡ OPTIMIZACIÓN: Debounce del searchTerm para mejorar rendimiento
   React.useEffect(() => {
@@ -1059,6 +1108,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         prenom: editForm.prenom,
         telephone: editForm.telephone,
         direccion: editForm.adresse,
+        apartamento: editForm.appartement,
         ciudad: editForm.ville,
         codigoPostal: editForm.codePostal,
         statut: editForm.statut,
@@ -1172,6 +1222,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
           prenom: newForm.prenom,
           telephone: newForm.telephone,
           direccion: newForm.adresse,
+          apartamento: newForm.appartement,
           ciudad: newForm.ville,
           codigoPostal: newForm.codePostal,
           statut: newForm.statut,
@@ -1270,6 +1321,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
             activo: newForm.statut === 'actif',
             fechaIngreso: newForm.dateInscription || new Date().toISOString().split('T')[0],
             direccion: newForm.adresse || '',
+            apartamento: newForm.appartement || '',
             ciudad: newForm.ville || '',
             codigoPostal: newForm.codePostal || '',
             numeroEmpleado: '',
@@ -1411,6 +1463,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         activo: benevoleSeleccionadoAsignar.statut === 'actif',
         fechaIngreso: benevoleSeleccionadoAsignar.dateInscription || new Date().toISOString().split('T')[0],
         direccion: benevoleSeleccionadoAsignar.adresse || '',
+        apartamento: benevoleSeleccionadoAsignar.appartement || '',
         ciudad: benevoleSeleccionadoAsignar.ville || '',
         codigoPostal: benevoleSeleccionadoAsignar.codePostal || '',
         numeroEmpleado: benevoleSeleccionadoAsignar.numeroArchivo || '',
@@ -2889,6 +2942,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
               prenom: updatedBenevole.prenom,
               telephone: updatedBenevole.telephone,
               direccion: updatedBenevole.adresse,
+              apartamento: updatedBenevole.appartement,
               ciudad: updatedBenevole.ville,
               codigoPostal: updatedBenevole.codePostal,
               statut: updatedBenevole.statut,

@@ -90,7 +90,10 @@ const DialogContent = React.forwardRef<
   // Procesar los children
   const { hasDescription, clonedChildren } = findAndCloneDescription(children);
   
-  // Crear un objeto de props limpio sin aria-describedby
+  // Usar el aria-describedby proporcionado manualmente si existe, de lo contrario usar el generado
+  const ariaDescribedBy = props['aria-describedby'] || (hasDescription ? descriptionId : undefined);
+  
+  // Crear un objeto de props limpio sin aria-describedby (lo agregaremos manualmente)
   const { 'aria-describedby': _ariaDescribedby, ...cleanedProps } = props;
   
   return (
@@ -99,7 +102,7 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         data-slot="dialog-content"
-        aria-describedby={descriptionId}
+        aria-describedby={ariaDescribedBy}
         {...cleanedProps}
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200",
@@ -110,7 +113,7 @@ const DialogContent = React.forwardRef<
         {clonedChildren}
         {/* Si no hay DialogDescription, agregar uno oculto por defecto */}
         {!hasDescription && (
-          <DialogPrimitive.Description id={descriptionId} className="sr-only">
+          <DialogPrimitive.Description id={props['aria-describedby'] || descriptionId} className="sr-only">
             Contenido del diálogo
           </DialogPrimitive.Description>
         )}

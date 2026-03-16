@@ -197,6 +197,7 @@ interface FormData {
   sexe: 'Homme' | 'Femme' | 'Autre' | 'Non spécifié';
   statut: 'actif' | 'inactif' | 'en pause' | 'en attente'; // AGREGADO
   adresse?: string;
+  appartement?: string;
   ville?: string;
   codePostal?: string;
   heuresSemaines?: number;
@@ -771,18 +772,26 @@ export function FormularioNouveauBenevole({
                         </Label>
                         <AddressAutocomplete
                           value={formData.adresse || ''}
-                          onChange={(address) => onFormChange({ 
-                            ...formData, 
-                            adresse: address.street,
-                            ville: address.city,
-                            codePostal: address.postalCode
-                          })}
+                          initialCity={formData.ville || ''}
+                          initialPostalCode={formData.codePostal || ''}
+                          initialApartment={formData.appartement || ''}
+                          onChange={(street, details) => {
+                            // Mantener los valores existentes si details no los proporciona
+                            onFormChange({ 
+                              ...formData, 
+                              adresse: street,
+                              ville: details?.city || formData.ville,
+                              codePostal: details?.postalCode || formData.codePostal,
+                              appartement: details?.apt || formData.appartement
+                            });
+                          }}
                           onSelect={(place) => {
                             onFormChange({
                               ...formData,
                               adresse: place.street,
                               ville: place.city,
-                              codePostal: place.postalCode
+                              codePostal: place.postalCode,
+                              appartement: place.apt || formData.appartement
                             });
                           }}
                         />
@@ -794,6 +803,21 @@ export function FormularioNouveauBenevole({
                             <span className="font-medium">{formData.codePostal}</span>
                           </p>
                         )}
+                      </div>
+
+                      {/* Campo de Apartamento */}
+                      <div>
+                        <Label htmlFor="appartement" className="text-xs">
+                          <Building2 className="w-3 h-3 inline mr-1" />
+                          Appartement / Unité
+                        </Label>
+                        <Input
+                          id="appartement"
+                          value={formData.appartement || ''}
+                          onChange={(e) => onFormChange({ ...formData, appartement: e.target.value })}
+                          placeholder="Apt 305, Unité B, etc."
+                          className="h-9"
+                        />
                       </div>
                     </div>
 

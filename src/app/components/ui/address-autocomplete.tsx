@@ -836,8 +836,12 @@ function AddressAutocompleteComponent({
                 type="text"
                 value={apartment}
                 onChange={(e) => {
-                  setApartment(e.target.value);
+                  const newApartment = e.target.value;
+                  setApartment(newApartment);
                   isUserEditing.current = true;
+                  // ✅ NOTIFICAR al padre cuando cambia el apartamento
+                  console.log('🏢 AddressAutocomplete - Apartamento cambiado:', newApartment);
+                  onChange?.(inputValue, { city, postalCode, apt: newApartment });
                 }}
                 placeholder="Ex: 101"
                 disabled={disabled}
@@ -852,8 +856,12 @@ function AddressAutocompleteComponent({
                 type="text"
                 value={city}
                 onChange={(e) => {
-                  setCity(e.target.value);
+                  const newCity = e.target.value;
+                  setCity(newCity);
                   isUserEditing.current = true;
+                  // ✅ NOTIFICAR al padre cuando cambia la ciudad
+                  console.log('🏙️ AddressAutocomplete - Ciudad cambiada:', newCity);
+                  onChange?.(inputValue, { city: newCity, postalCode, apt: apartment });
                 }}
                 placeholder="Ex: Laval"
                 disabled={disabled}
@@ -878,6 +886,9 @@ function AddressAutocompleteComponent({
                   }
                   setPostalCode(value);
                   isUserEditing.current = true;
+                  // ✅ NOTIFICAR al padre cuando cambia el código postal
+                  console.log('📮 AddressAutocomplete - Código postal cambiado:', value);
+                  onChange?.(inputValue, { city, postalCode: value, apt: apartment });
                 }}
                 placeholder="Ex: H7L 4R3"
                 disabled={disabled}

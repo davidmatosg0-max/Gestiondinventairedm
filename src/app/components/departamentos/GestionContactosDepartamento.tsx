@@ -211,6 +211,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
     activo: true,
     fechaIngreso: new Date().toISOString().split('T')[0],
     direccion: '',
+    apartamento: '', // ✅ Campo apartamento agregado
     ciudad: '',
     codigoPostal: '',
     numeroEmpleado: '',
@@ -267,6 +268,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
     console.log(`🔍 DEBUG - Filtrados ${contactosData.length - soloBenevoles.length} contactos (donadores/fournisseurs)`);
     soloBenevoles.forEach(c => {
       console.log(`  - ${c.nombre} ${c.apellido} (tipo: ${c.tipo}, activo: ${c.activo}, deptId: ${c.departamentoId})`);
+      console.log(`    📍 Dirección: ${c.direccion || 'N/A'}, Apt: ${c.apartamento || 'N/A'}, Ciudad: ${c.ciudad || 'N/A'}, CP: ${c.codigoPostal || 'N/A'}`);
     });
     setContactos(soloBenevoles);
     
@@ -450,7 +452,27 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
   };
 
   const abrirDialogoEditar = (contacto: ContactoDepartamento) => {
-    setFormulario(contacto);
+    console.log('📂 ABRIR DIÁLOGO EDITAR - Contacto original:', contacto);
+    console.log('📂 Dirección del contacto:', {
+      direccion: contacto.direccion,
+      apartamento: contacto.apartamento,
+      ciudad: contacto.ciudad,
+      codigoPostal: contacto.codigoPostal
+    });
+    
+    // ✅ FORZAR copia completa del contacto con todos los campos
+    const formularioCompleto = {
+      ...contacto,
+      // ✅ FORZAR campos de dirección explícitamente
+      direccion: contacto.direccion || '',
+      apartamento: contacto.apartamento || '',
+      ciudad: contacto.ciudad || '',
+      codigoPostal: contacto.codigoPostal || ''
+    };
+    
+    console.log('📂 Formulario preparado:', formularioCompleto);
+    
+    setFormulario(formularioCompleto);
     setContactoSeleccionado(contacto);
     setModoEdicion(true);
     setFotoPreview(contacto.foto || null);
@@ -552,10 +574,27 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       };
       
       const eventosActuales = contactoSeleccionado.evenements || [];
-      actualizarContacto(contactoSeleccionado.id, {
+      
+      // ✅ FORZAR que TODOS los campos se guarden, especialmente la dirección
+      const datosActualizados = {
         ...formulario,
+        // ✅ PRESERVAR explícitamente los campos de dirección
+        direccion: formulario.direccion || '',
+        apartamento: formulario.apartamento || '',
+        ciudad: formulario.ciudad || '',
+        codigoPostal: formulario.codigoPostal || '',
         evenements: [...eventosActuales, eventoModificacion]
+      };
+      
+      console.log('💾 GUARDANDO CONTACTO ACTUALIZADO:', datosActualizados);
+      console.log('💾 Campos de dirección a guardar:', {
+        direccion: datosActualizados.direccion,
+        apartamento: datosActualizados.apartamento,
+        ciudad: datosActualizados.ciudad,
+        codigoPostal: datosActualizados.codigoPostal
       });
+      
+      actualizarContacto(contactoSeleccionado.id, datosActualizados);
       toast.success('Contact mis à jour avec succès');
       cargarContactos();
     } else {
