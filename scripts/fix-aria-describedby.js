@@ -5,8 +5,12 @@
  * cuando no hay un DialogDescription correspondiente
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Lista de archivos que SÍ tienen DialogDescription (no tocar)
 const filesWithDescription = [
@@ -55,7 +59,7 @@ const filesToFix = [
 ];
 
 function fixFile(filePath) {
-  const fullPath = path.join(process.cwd(), filePath);
+  const fullPath = path.join(__dirname, filePath);
   
   if (!fs.existsSync(fullPath)) {
     console.log(`⚠️  Archivo no encontrado: ${filePath}`);
