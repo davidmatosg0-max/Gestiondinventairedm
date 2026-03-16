@@ -1082,7 +1082,7 @@ export function EmailOrganismos({ onNavigate }: { onNavigate?: (page: string) =>
             <div className="relative">
               <div className="text-gray-600 text-sm mb-2 font-medium">{t('liaison.totalBeneficiaries')}</div>
               <div className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
-                {totalBeneficiarios.toLocaleString()}
+                {totalBeneficiarios}
               </div>
             </div>
           </div>

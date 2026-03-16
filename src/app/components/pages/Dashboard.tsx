@@ -10,6 +10,7 @@ import { EntradaDonAchat } from '../EntradaDonAchat';
 import { VerificacionesRecientes } from '../VerificacionesRecientes';
 import { AlertasInteligentes } from '../inventario/AlertasInteligentes';
 import { useBranding } from '../../../hooks/useBranding';
+import { formatLargeNumber } from '../../utils/formatUtils';
 import { 
   obtenerProductosActivos, 
   type ProductoCreado 
@@ -148,7 +149,7 @@ export function Dashboard() {
               {t('dashboard.totalInventory')}
             </p>
             <div className="text-2xl sm:text-3xl font-bold mb-1" style={{ color: '#1a4d7a', fontFamily: 'Montserrat, sans-serif' }}>
-              {stockTotal.toLocaleString()}
+              {formatLargeNumber(stockTotal)}
             </div>
             <div className="badge-primary text-xs">
               {totalProductos} {t('dashboard.differentProducts')}

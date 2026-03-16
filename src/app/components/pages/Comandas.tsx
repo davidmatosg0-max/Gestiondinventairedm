@@ -1005,7 +1005,7 @@ export function Comandas() {
                                       </div>
                                       <div className="bg-white rounded p-2 text-center">
                                         <p className="text-xs text-[#666666]">Peso Total</p>
-                                        <p className="font-bold text-[#4CAF50]">{totalKilos.toFixed(1)} kg</p>
+                                        <p className="font-bold text-[#4CAF50]">{Math.round(totalKilos)} kg</p>
                                       </div>
                                       <div className="bg-white rounded p-2 text-center">
                                         <p className="text-xs text-[#666666]">Valor</p>
@@ -1198,7 +1198,7 @@ export function Comandas() {
                         <div className="grid grid-cols-3 gap-2 mt-2">
                           <div className="text-center">
                             <p className="text-xs text-[#666666]">Peso Total</p>
-                            <p className="font-semibold text-[#4CAF50]">{pesoTotal.toFixed(2)} kg</p>
+                            <p className="font-semibold text-[#4CAF50]">{Math.round(pesoTotal)} kg</p>
                           </div>
                           <div className="text-center">
                             <p className="text-xs text-[#666666]">Valor/kg</p>
@@ -1233,7 +1233,7 @@ export function Comandas() {
                       {solicitudSeleccionada.productosAceptados.reduce((sum: number, p: ProductoAceptado) => {
                         const producto = ofertaParaSolicitud.productos.find((prod: ProductoOferta) => prod.productoId === p.productoId);
                         return sum + (producto?.peso || 0) * p.cantidadAceptada;
-                      }, 0).toFixed(1)} kg
+                      }, 0)} kg
                     </p>
                   </div>
                   <div className="text-center">

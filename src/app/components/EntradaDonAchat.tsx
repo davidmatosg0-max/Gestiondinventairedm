@@ -231,6 +231,7 @@ export function EntradaDonAchat() {
   const [nuevaSubcategoriaDialogOpen, setNuevaSubcategoriaDialogOpen] = useState(false);
   const [nuevaVarianteDialogOpen, setNuevaVarianteDialogOpen] = useState(false);
   const [ayudaImpresionOpen, setAyudaImpresionOpen] = useState(false);
+  const [dialogConfirmacion, setDialogConfirmacion] = useState(false);
   
   // ========== Estados de formularios secundarios ==========
   const [formSubcategoria, setFormSubcategoria] = useState<FormSubcategoria>(FORM_SUBCATEGORIA_INICIAL);
@@ -1035,43 +1036,8 @@ export function EntradaDonAchat() {
     }
   }, [formData.donadorId, contactosDisponibles, branding]);
 
-  const agregarProductoALista = useCallback(async () => {
-    // Validaciones
-    if (!formData.tipoEntrada) {
-      toast.error("Sélectionnez un type d'entrée");
-      return;
-    }
-
-    if (!formData.donadorId) {
-      toast.error("Sélectionnez un donateur/fournisseur");
-      return;
-    }
-
-    // Validar que al menos tenga categoría y subcategoría
-    if (!formData.categoriaId || !formData.categoriaNombre) {
-      toast.error("Sélectionnez une catégorie");
-      return;
-    }
-
-    if (!formData.subcategoriaId || !formData.subcategoriaNombre) {
-      toast.error("Sélectionnez une sous-catégorie");
-      return;
-    }
-
-    if (formData.cantidad <= 0) {
-      toast.error("La quantité doit être supérieure à 0");
-      return;
-    }
-
-    if (!formData.unidad) {
-      toast.error("L'unité est requise");
-      return;
-    }
-
-    if (!formData.temperatura) {
-      toast.error("La température est requise");
-      return;
-    }
+  // Función auxiliar que procesa el guardado real del producto
+  const procesarAgregarProducto = useCallback(async () => {
 
     try {
       const nombreFinal = formData.nombreProducto || formData.productoCustom;
@@ -1252,6 +1218,75 @@ export function EntradaDonAchat() {
       toast.error("Erreur lors de l'ajout du produit");
     }
   }, [formData, imprimirAutomaticamente, imprimirEtiquetaProducto]);
+
+  // Función que confirma y procede con el guardado
+  const confirmarYAgregar = useCallback(() => {
+    setDialogConfirmacion(false);
+    procesarAgregarProducto();
+  }, [procesarAgregarProducto]);
+
+  // Función principal que valida y decide si mostrar el diálogo de confirmación
+  const agregarProductoALista = useCallback(async () => {
+    // Validaciones básicas
+    if (!formData.tipoEntrada) {
+      toast.error("Sélectionnez un type d'entrée");
+      return;
+    }
+
+    if (!formData.donadorId) {
+      toast.error("Sélectionnez un donateur/fournisseur");
+      return;
+    }
+
+    // Validar que al menos tenga categoría y subcategoría
+    if (!formData.categoriaId || !formData.categoriaNombre) {
+      toast.error("Sélectionnez une catégorie");
+      return;
+    }
+
+    if (!formData.subcategoriaId || !formData.subcategoriaNombre) {
+      toast.error("Sélectionnez une sous-catégorie");
+      return;
+    }
+
+    if (formData.cantidad <= 0) {
+      toast.error("La quantité doit être supérieure à 0");
+      return;
+    }
+
+    if (!formData.unidad) {
+      toast.error("L'unité est requise");
+      return;
+    }
+
+    if (!formData.temperatura) {
+      toast.error("La température est requise");
+      return;
+    }
+
+    // ⚠️ VERIFICAR CAMPOS OPCIONALES IMPORTANTES: Fecha de Caducidad y Número de Lote
+    const faltaFechaCaducidad = !formData.fechaCaducidad || formData.fechaCaducidad.trim() === '';
+    const faltaLote = !formData.lote || formData.lote.trim() === '';
+    
+    // 🐛 DEBUG: Mostrar valores de los campos
+    console.log('🔍 VALORES DE CAMPOS OPCIONALES:', {
+      fechaCaducidad: formData.fechaCaducidad,
+      lote: formData.lote,
+      faltaFechaCaducidad,
+      faltaLote
+    });
+    
+    if (faltaFechaCaducidad || faltaLote) {
+      console.log('🔔 Mostrando alerta de campos faltantes:', { faltaFechaCaducidad, faltaLote });
+      // Mostrar diálogo de confirmación
+      setDialogConfirmacion(true);
+      console.log('🔔 dialogConfirmacion establecido a true');
+      return;
+    }
+
+    // Si llegamos aquí, todos los campos opcionales están completos, proceder normalmente
+    await procesarAgregarProducto();
+  }, [formData, procesarAgregarProducto]);
 
   const finalizarEntrada = useCallback(async () => {
     if (productosAgregados.length === 0) {
@@ -2830,6 +2865,109 @@ export function EntradaDonAchat() {
               <Save className="w-4 h-4 mr-2" />
               Créer Sous-catégorie
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Confirmación - Recordatorio de Campos Opcionales */}
+      {dialogConfirmacion && console.log('🎨 Renderizando diálogo de confirmación')}
+      <Dialog open={dialogConfirmacion} onOpenChange={setDialogConfirmacion} modal>
+        <DialogContent 
+          className="max-w-lg bg-gradient-to-br from-amber-50 via-white to-orange-50 border-2 border-amber-200" 
+          aria-describedby="confirmacion-campos-description"
+          style={{ zIndex: 9999 }}
+        >
+          <DialogHeader className="pb-4">
+            <DialogTitle className="text-xl flex items-center gap-4" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-xl ring-4 ring-amber-100">
+                <span className="text-3xl">⚠️</span>
+              </div>
+              <div>
+                <span className="text-amber-900">Rappel Important</span>
+                <p className="text-sm text-amber-700 font-normal mt-1" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                  Champs optionnels non remplis
+                </p>
+              </div>
+            </DialogTitle>
+            <DialogDescription id="confirmacion-campos-description" className="sr-only">
+              Confirmación para continuar sin fecha de caducidad o número de lote
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 pt-4">
+            {/* Mensaje principal */}
+            <div className="bg-white rounded-xl p-5 border-2 border-amber-200 shadow-md">
+              <p className="text-base text-gray-800 mb-4" style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 500 }}>
+                Les champs suivants sont <span className="font-bold text-amber-700">très importants</span> mais n'ont pas été remplis :
+              </p>
+              
+              <div className="space-y-3">
+                {(!formData.fechaCaducidad || formData.fechaCaducidad.trim() === '') && (
+                  <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                    <div className="h-8 w-8 rounded-lg bg-amber-500 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <span className="text-lg">📅</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-amber-900" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        Date d'expiration
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Essentiel pour la gestion des stocks et la sécurité alimentaire
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {(!formData.lote || formData.lote.trim() === '') && (
+                  <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                    <div className="h-8 w-8 rounded-lg bg-orange-500 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <span className="text-lg">🏷️</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-orange-900" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        Numéro de lot
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Important pour la traçabilité et le contrôle qualité
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Pregunta de confirmación */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border-2 border-blue-200">
+              <p className="text-center text-base font-semibold text-gray-800" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                Voulez-vous continuer sans remplir ces champs ?
+              </p>
+              <p className="text-center text-sm text-gray-600 mt-2">
+                Vous pourrez les ajouter plus tard depuis l'inventaire
+              </p>
+            </div>
+
+            {/* Botones de confirmación */}
+            <div className="flex gap-3 pt-2">
+              <Button
+                type="button"
+                onClick={() => setDialogConfirmacion(false)}
+                variant="outline"
+                className="flex-1 h-11 border-2 border-gray-300 hover:bg-gray-50"
+                style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Annuler
+              </Button>
+              <Button
+                type="button"
+                onClick={confirmarYAgregar}
+                className="flex-1 h-11 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white shadow-lg"
+                style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}
+              >
+                <Check className="w-4 h-4 mr-2" />
+                Continuer Quand Même
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

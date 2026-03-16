@@ -47,7 +47,7 @@ import { BalanceProvider } from '../contexts/BalanceContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { logger, showWelcomeBanner } from './utils/logger';
 import { runDataMigrations } from './utils/dataMigration';
-import { inicializarAutoBackup } from './utils/autoBackupStorage';
+import { inicializarAutoBackup, diagnosticarAutoBackup, ejecutarBackupAutomatico } from './utils/autoBackupStorage';
 import { inicializarFileSystem } from './utils/fileSystemAccess';
 // 🔍 Herramientas de verificación PRS
 import './utils/verificarPRS';
@@ -122,6 +122,15 @@ function AppContent() {
     // 🔄 INICIALIZAR SISTEMA DE BACKUP AUTOMÁTICO
     inicializarAutoBackup();
     logger.info('🔄 Sistema de backup automático inicializado');
+    
+    // 🔍 EXPONER FUNCIONES DE DIAGNÓSTICO GLOBALMENTE (para testing)
+    if (typeof window !== 'undefined') {
+      (window as any).diagnosticarBackup = diagnosticarAutoBackup;
+      (window as any).ejecutarBackupManual = ejecutarBackupAutomatico;
+      console.log('🔧 Funciones de diagnóstico de backup disponibles en consola:');
+      console.log('  - diagnosticarBackup() - Ver estado completo del sistema');
+      console.log('  - ejecutarBackupManual() - Ejecutar backup inmediato');
+    }
     
     // 📁 INICIALIZAR SISTEMA DE ARCHIVOS (File System Access API)
     inicializarFileSystem().then(() => {

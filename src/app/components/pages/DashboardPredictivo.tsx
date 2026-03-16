@@ -30,6 +30,7 @@ import {
   TendenciaProducto,
   AlertaInteligente
 } from '../../utils/predictiveAnalytics';
+import { formatLargeNumber } from '../../utils/formatUtils';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export function DashboardPredictivo() {
@@ -187,7 +188,7 @@ export function DashboardPredictivo() {
                   <p className="text-sm font-medium text-green-700">Valor Monetario</p>
                 </div>
                 <p className="text-2xl font-bold text-green-700">
-                  CAD$ {impacto.valorMonetario.toLocaleString()}
+                  CAD$ {formatLargeNumber(impacto.valorMonetario)}
                 </p>
               </div>
 
@@ -197,7 +198,7 @@ export function DashboardPredictivo() {
                   <p className="text-sm font-medium text-blue-700">Personas Alimentadas</p>
                 </div>
                 <p className="text-2xl font-bold text-blue-700">
-                  {impacto.personasAlimentadas.toLocaleString()}
+                  {impacto.personasAlimentadas}
                 </p>
               </div>
 
@@ -207,7 +208,7 @@ export function DashboardPredictivo() {
                   <p className="text-sm font-medium text-orange-700">Kg Distribuidos</p>
                 </div>
                 <p className="text-2xl font-bold text-orange-700">
-                  {impacto.kgDistribuidos.toLocaleString()} kg
+                  {formatLargeNumber(impacto.kgDistribuidos)} kg
                 </p>
               </div>
 
@@ -217,7 +218,7 @@ export function DashboardPredictivo() {
                   <p className="text-sm font-medium text-teal-700">CO₂ Evitado</p>
                 </div>
                 <p className="text-2xl font-bold text-teal-700">
-                  {impacto.co2Evitado.toLocaleString()} kg
+                  {formatLargeNumber(impacto.co2Evitado)} kg
                 </p>
               </div>
 

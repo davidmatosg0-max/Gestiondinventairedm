@@ -17,6 +17,7 @@ import { obtenerProductos, type ProductoCreado } from '../utils/productStorage';
 import type { Categoria, Subcategoria } from '../data/configuracionData';
 import { generarIconoAutomatico } from '../utils/iconoUtils';
 import { useBalanceContext } from '../../contexts/BalanceContext';
+import { formatLargeNumber } from '../utils/formatUtils';
 
 type FormularioEntradaProps = {
   open: boolean;
@@ -71,6 +72,8 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
   const [productosPRS, setProductosPRS] = useState<ProductoCreado[]>([]);
   const [busquedaPRS, setBusquedaPRS] = useState('');
   const [dialogSubcategoria, setDialogSubcategoria] = useState(false);
+  const [dialogConfirmacion, setDialogConfirmacion] = useState(false);
+  const [accionPendiente, setAccionPendiente] = useState<'guardar' | 'guardarYAgregar' | null>(null);
   const [nuevaSubcategoria, setNuevaSubcategoria] = useState({
     nombre: '',
     icono: '',
@@ -102,6 +105,11 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
     lote: '',
     observaciones: ''
   });
+
+  // Monitorear el estado del diálogo de confirmación
+  useEffect(() => {
+    console.log('📊 Estado dialogConfirmacion:', dialogConfirmacion);
+  }, [dialogConfirmacion]);
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -288,16 +296,16 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
           return {
             ...prev,
             cantidad: nuevaCantidad,
-            peso: parseFloat(pesoTotalCalculado.toFixed(3))
+            peso: Math.round(pesoTotalCalculado)
           };
         });
         
         if (cantidadActual === 1) {
-          toast.success(`⚖️ Peso unitario capturado: ${pesoUnitarioBalanza.toFixed(3)} kg/PLT`, {
+          toast.success(`⚖️ Peso unitario capturado: ${formatLargeNumber(pesoUnitarioBalanza)} kg/PLT`, {
             duration: 2000
           });
         } else {
-          toast.success(`⚖️ Peso capturado: ${pesoUnitarioBalanza.toFixed(3)} kg × ${cantidadActual} PLT = ${pesoTotalCalculado.toFixed(3)} kg`, {
+          toast.success(`⚖️ Peso capturado: ${formatLargeNumber(pesoUnitarioBalanza)} kg × ${cantidadActual} PLT = ${formatLargeNumber(pesoTotalCalculado)} kg`, {
             duration: 3000
           });
         }
@@ -324,7 +332,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
         const pesoCalculado = formData.cantidad * subcategoriaSeleccionada.pesoUnitario;
         setFormData(prev => ({ 
           ...prev, 
-          peso: parseFloat(pesoCalculado.toFixed(1)) 
+          peso: Math.round(pesoCalculado)
         }));
       }
     }
@@ -455,7 +463,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
       `Catégorie: ${producto.categoria}`,
       `Sous-catégorie: ${producto.subcategoria}`,
       `Unité: ${producto.unidad}`,
-      `Poids unitaire: ${pesoUnitarioPRS.toFixed(1)} kg`
+      `Poids unitaire: ${formatLargeNumber(pesoUnitarioPRS)} kg`
     ];
     
     toast.success('💡 Produit PRS sélectionné - Champs auto-remplis', {
@@ -470,61 +478,15 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
     return `${categoriaInicial}-${timestamp}`;
   }, [formData.categoria]);
 
-  const handleSubmit = useCallback((mantenerAbierto: boolean = false) => {
-    // Validaciones
-    if (!formData.tipoEntrada) {
-      toast.error('El tipo de entrada es requerido');
-      return;
-    }
+  // Función que procesa el guardado real
+  const procesarGuardado = useCallback((mantenerAbierto: boolean = false) => {
+    // 🐛 DEBUG: Verificar desde dónde se llama procesarGuardado
+    console.log('🚀 procesarGuardado llamada - Stack trace:', new Error().stack);
+    console.log('📋 Datos del formulario en procesarGuardado:', {
+      fechaCaducidad: formData.fechaCaducidad,
+      lote: formData.lote
+    });
     
-    if (!formData.donadorId) {
-      toast.error('El donador/proveedor es requerido');
-      return;
-    }
-    
-    // 🎯 VALIDACIÓN ESPECIAL PARA TIPO PRS
-    if (formData.tipoEntrada.toLowerCase() === 'prs') {
-      if (!formData.categoria || !formData.subcategoria) {
-        toast.error('⚠️ Pour le type PRS, vous devez sélectionner un produit PRS existant');
-        return;
-      }
-      
-      // Verificar que el producto seleccionado sea realmente un producto PRS
-      const productoSeleccionado = productosPRS.find(
-        p => p.categoria === formData.categoria && p.subcategoria === formData.subcategoria
-      );
-      
-      if (!productoSeleccionado) {
-        toast.error('⚠️ Le produit sélectionné n\'est pas un produit PRS valide');
-        return;
-      }
-    }
-    
-    if (!formData.categoria) {
-      toast.error('La categoría es requerida');
-      return;
-    }
-    
-    if (!formData.subcategoria) {
-      toast.error('La subcategoría es requerida');
-      return;
-    }
-    
-    if (formData.cantidad <= 0) {
-      toast.error('La cantidad debe ser mayor a 0');
-      return;
-    }
-    
-    if (!formData.unidad) {
-      toast.error('La unidad es requerida');
-      return;
-    }
-
-    if (formData.peso <= 0) {
-      toast.error('El peso debe ser mayor a 0');
-      return;
-    }
-
     // Actualizar peso unitario en la configuración para futuras entradas
     const actualizado = actualizarPesoUnitarioSubcategoria(
       formData.categoria,
@@ -637,7 +599,98 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
       
       toast.info('📝 Listo para registrar otra entrada al mismo donador');
     }
-  }, [formData, categorias, subcategorias, programas, productosPRS, generarCodigoProducto, limpiarFormulario, onOpenChange, contactos]);
+  }, [formData, categorias, subcategorias, programas, contactos, generarCodigoProducto, limpiarFormulario, onOpenChange]);
+
+  // Función para confirmar y proceder con el guardado
+  const confirmarYGuardar = useCallback(() => {
+    setDialogConfirmacion(false);
+    const mantenerAbierto = accionPendiente === 'guardarYAgregar';
+    procesarGuardado(mantenerAbierto);
+    setAccionPendiente(null);
+  }, [accionPendiente, procesarGuardado]);
+
+  const handleSubmit = useCallback((mantenerAbierto: boolean = false) => {
+    // 🐛 DEBUG: Inicio de handleSubmit
+    console.log('▶️ handleSubmit INICIADO - mantenerAbierto:', mantenerAbierto);
+    
+    // Validaciones
+    if (!formData.tipoEntrada) {
+      toast.error('El tipo de entrada es requerido');
+      return;
+    }
+    
+    if (!formData.donadorId) {
+      toast.error('El donador/proveedor es requerido');
+      return;
+    }
+    
+    // 🎯 VALIDACIÓN ESPECIAL PARA TIPO PRS
+    if (formData.tipoEntrada.toLowerCase() === 'prs') {
+      if (!formData.categoria || !formData.subcategoria) {
+        toast.error('⚠️ Pour le type PRS, vous devez sélectionner un produit PRS existant');
+        return;
+      }
+      
+      // Verificar que el producto seleccionado sea realmente un producto PRS
+      const productoSeleccionado = productosPRS.find(
+        p => p.categoria === formData.categoria && p.subcategoria === formData.subcategoria
+      );
+      
+      if (!productoSeleccionado) {
+        toast.error('⚠️ Le produit sélectionné n\'est pas un produit PRS valide');
+        return;
+      }
+    }
+    
+    if (!formData.categoria) {
+      toast.error('La categoría es requerida');
+      return;
+    }
+    
+    if (!formData.subcategoria) {
+      toast.error('La subcategoría es requerida');
+      return;
+    }
+    
+    if (formData.cantidad <= 0) {
+      toast.error('La cantidad debe ser mayor a 0');
+      return;
+    }
+    
+    if (!formData.unidad) {
+      toast.error('La unidad es requerida');
+      return;
+    }
+
+    if (formData.peso <= 0) {
+      toast.error('El peso debe ser mayor a 0');
+      return;
+    }
+
+    // ⚠️ VERIFICAR CAMPOS OPCIONALES IMPORTANTES: Fecha de Caducidad y Número de Lote
+    const faltaFechaCaducidad = !formData.fechaCaducidad || formData.fechaCaducidad.trim() === '';
+    const faltaLote = !formData.lote || formData.lote.trim() === '';
+    
+    // 🐛 DEBUG: Mostrar valores de los campos
+    console.log('🔍 VALORES DE CAMPOS OPCIONALES:', {
+      fechaCaducidad: formData.fechaCaducidad,
+      lote: formData.lote,
+      faltaFechaCaducidad,
+      faltaLote
+    });
+    
+    if (faltaFechaCaducidad || faltaLote) {
+      console.log('🔔 Mostrando alerta de campos faltantes:', { faltaFechaCaducidad, faltaLote });
+      // Guardar la acción pendiente y mostrar diálogo de confirmación
+      setAccionPendiente(mantenerAbierto ? 'guardarYAgregar' : 'guardar');
+      setDialogConfirmacion(true);
+      console.log('🔔 dialogConfirmacion establecido a true');
+      return;
+    }
+
+    // Si llegamos aquí, todos los campos opcionales están completos, proceder normalmente
+    procesarGuardado(mantenerAbierto);
+  }, [formData, productosPRS, procesarGuardado]);
 
   const categoriaSeleccionada = categorias.find(c => c.nombre === formData.categoria);
   const programaSeleccionado = programas.find(p => p.codigo.toLowerCase() === formData.tipoEntrada);
@@ -716,18 +769,26 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col p-0 bg-gradient-to-br from-white to-gray-50" aria-describedby="formulario-entrada-description">
-          {/* Header Moderno */}
-          <DialogHeader className="px-8 pt-6 pb-4 border-b bg-white/80 backdrop-blur-sm shrink-0">
-            <DialogTitle className="text-2xl" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
+        <DialogContent className="max-w-6xl max-h-[95vh] flex flex-col p-0 bg-gradient-to-br from-slate-50 via-white to-blue-50" aria-describedby="formulario-entrada-description">
+          {/* Header Moderno con Gradiente */}
+          <DialogHeader className="px-8 pt-8 pb-6 border-b-2 border-blue-100 bg-gradient-to-r from-[#1a4d7a] via-[#1E73BE] to-[#2d9561] relative overflow-hidden shrink-0">
+            {/* Patrón de fondo decorativo */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute inset-0" style={{
+                backgroundImage: 'radial-gradient(circle at 20px 20px, white 2px, transparent 0)',
+                backgroundSize: '40px 40px'
+              }} />
+            </div>
+            
+            <DialogTitle className="text-2xl relative z-10" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#1E73BE] to-[#1557a0] flex items-center justify-center shadow-lg">
-                  <PackagePlus className="h-6 w-6 text-white" />
+                <div className="h-14 w-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-2xl border-2 border-white/30 ring-4 ring-white/10">
+                  <PackagePlus className="h-7 w-7 text-white drop-shadow-lg" />
                 </div>
                 <div>
-                  <span>{t('inventory.newEntry') || 'Nueva Entrada de Inventario'}</span>
-                  <p className="text-sm text-[#666666] mt-1" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                    Registra productos recibidos en el almacén
+                  <span className="text-white drop-shadow-md">{t('inventory.newEntry') || 'Nueva Entrada de Inventario'}</span>
+                  <p className="text-sm text-white/90 mt-1 font-normal drop-shadow-sm" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                    ✨ Registra productos recibidos en el almacén
                   </p>
                 </div>
               </div>
@@ -740,17 +801,17 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
           {/* Contenido del formulario con scroll */}
           <div className="px-8 py-6 flex-1 overflow-y-auto space-y-6">
             {/* Sección 1: Información Básica */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <span className="text-xl">📋</span>
+            <div className="bg-white rounded-2xl border-2 border-blue-100 p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-[#1a4d7a]/30">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#1a4d7a] to-[#1E73BE] flex items-center justify-center shadow-lg ring-4 ring-blue-50">
+                  <span className="text-2xl drop-shadow-sm">📋</span>
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-[#333333]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <h3 className="text-lg font-bold text-[#1a4d7a]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     Información Básica
                   </h3>
-                  <p className="text-xs text-[#666666]" style={{ fontFamily: 'Roboto, sans-serif' }}>
-                    Tipo de entrada y procedencia
+                  <p className="text-xs text-gray-600 font-medium" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                    ✨ Tipo de entrada y procedencia
                   </p>
                 </div>
               </div>
@@ -758,15 +819,15 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
               <div className="grid grid-cols-2 gap-5">
                 {/* Tipo de Entrada */}
                 <div className="space-y-2">
-                  <Label htmlFor="tipoEntrada" className="text-sm font-medium flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <Label htmlFor="tipoEntrada" className="text-sm font-semibold flex items-center gap-2 text-gray-700" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     {t('common.entryType') || 'Tipo de Entrada'}
-                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Requerido</Badge>
+                    <Badge variant="destructive" className="text-[10px] px-2 py-0.5 shadow-sm">Requerido</Badge>
                   </Label>
                   <Select 
                     value={formData.tipoEntrada} 
                     onValueChange={(value) => setFormData(prev => ({ ...prev, tipoEntrada: value }))}
                   >
-                    <SelectTrigger className="h-11 text-sm border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE]">
+                    <SelectTrigger className="h-12 text-sm border-2 border-gray-200 focus:border-[#1a4d7a] focus:ring-2 focus:ring-[#1a4d7a]/20 hover:border-gray-300 transition-colors rounded-lg shadow-sm">
                       <SelectValue placeholder="Seleccionar tipo de entrada..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -830,7 +891,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                     onValueChange={(value) => setFormData(prev => ({ ...prev, donadorId: value }))}
                     disabled={!formData.tipoEntrada}
                   >
-                    <SelectTrigger className="h-11 text-sm border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE]">
+                    <SelectTrigger className="h-12 text-sm border-2 border-gray-200 focus:border-[#1a4d7a] focus:ring-2 focus:ring-[#1a4d7a]/20 hover:border-gray-300 transition-colors rounded-lg shadow-sm">
                       <SelectValue placeholder={
                         !formData.tipoEntrada 
                           ? "Sélectionner d'abord un type d'entrée..."
@@ -899,16 +960,16 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
             </div>
 
             {/* Sección 2: Producto */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
-                  <span className="text-xl">📦</span>
+            <div className="bg-white rounded-2xl border-2 border-green-100 p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-[#2d9561]/30">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#2d9561] to-[#25825a] flex items-center justify-center shadow-lg ring-4 ring-green-50">
+                  <span className="text-2xl drop-shadow-sm">📦</span>
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-[#333333]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <h3 className="text-lg font-bold text-[#2d9561]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     Información del Producto
                   </h3>
-                  <p className="text-xs text-[#666666]" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                  <p className="text-xs text-gray-600" style={{ fontFamily: 'Roboto, sans-serif' }}>
                     Categoría y subcategoría del producto
                   </p>
                 </div>
@@ -917,21 +978,26 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
               {/* 🎯 SELECTOR RÁPIDO DE PRODUCTOS PRS */}
               {/* MOSTRAR SIEMPRE cuando es tipo PRS, o cuando hay productos PRS disponibles */}
               {(esTipoEntradaPRS || productosPRS.length > 0) && (
-                <div className={`mb-5 p-4 rounded-lg ${
+                <div className={`mb-6 p-5 rounded-2xl backdrop-blur-sm relative overflow-hidden ${
                   esTipoEntradaPRS 
-                    ? 'bg-gradient-to-r from-purple-100 to-pink-100 border-4 border-purple-400' 
-                    : 'bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200'
+                    ? 'bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-purple-600/10 border-2 border-purple-400 shadow-lg' 
+                    : 'bg-gradient-to-br from-purple-100/50 via-pink-100/50 to-purple-200/50 border-2 border-purple-200 shadow-md'
                 }`}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg">⚡</span>
-                    <h4 className="text-sm font-semibold text-purple-800" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  {/* Efecto de brillo */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-50" />
+                  
+                  <div className="flex items-center gap-2 mb-4 relative z-10">
+                    <div className="h-8 w-8 rounded-lg bg-purple-600 flex items-center justify-center shadow-md">
+                      <span className="text-lg">⚡</span>
+                    </div>
+                    <h4 className="text-base font-bold text-purple-900" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                       {esTipoEntradaPRS ? '🔒 Sélection OBLIGATOIRE - Produits PRS' : 'Sélection Rapide - Produits PRS'}
                     </h4>
-                    <Badge className="text-[9px] px-1.5 py-0 bg-purple-600">
+                    <Badge className="text-[10px] px-2 py-0.5 bg-purple-600 shadow-sm">
                       {productosPRS.length} produits
                     </Badge>
                     {esTipoEntradaPRS && (
-                      <Badge variant="destructive" className="text-[9px] px-1.5 py-0 animate-pulse">
+                      <Badge variant="destructive" className="text-[10px] px-2 py-0.5 animate-pulse shadow-md">
                         OBLIGATOIRE
                       </Badge>
                     )}
@@ -990,7 +1056,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                                   {producto.unidad}
                                 </Badge>
                                 <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-green-50 text-green-700 border-green-200">
-                                  {(producto.pesoUnitario || 0).toFixed(1)} kg
+                                  {formatLargeNumber(producto.pesoUnitario || 0)} kg
                                 </Badge>
                               </div>
                             </div>
@@ -1057,7 +1123,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                             {formData.unidad}
                           </Badge>
                           <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-green-50 text-green-700 border-green-200">
-                            {formData.peso.toFixed(1)} kg
+                            {formatLargeNumber(formData.peso)} kg
                           </Badge>
                         </div>
                       </div>
@@ -1145,7 +1211,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                           
                           if (prev.peso === 0 && pesoUnitarioPRS > 0) {
                             actualizado.peso = pesoUnitarioPRS;
-                            camposAutoRellenados.push(`Poids unitaire: ${pesoUnitarioPRS.toFixed(1)} kg`);
+                            camposAutoRellenados.push(`Poids unitaire: ${formatLargeNumber(pesoUnitarioPRS)} kg`);
                           } else {
                             actualizado.peso = prev.peso;
                           }
@@ -1199,7 +1265,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                                   {((subcategoria.pesoUnitario && subcategoria.pesoUnitario > 0) || 
                                     (datosGuardados?.pesoUnitario && datosGuardados.pesoUnitario > 0)) && (
                                     <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-green-50 text-green-700 border-green-200 font-medium">
-                                      {(subcategoria.pesoUnitario || datosGuardados?.pesoUnitario)?.toFixed(1)} kg
+                                      {formatLargeNumber(subcategoria.pesoUnitario || datosGuardados?.pesoUnitario || 0)} kg
                                     </Badge>
                                   )}
                                 </div>
@@ -1238,7 +1304,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                         )}
                         {datosHeredados.pesoUnitario && datosHeredados.pesoUnitario > 0 && (
                           <span className="text-blue-700 font-medium">
-                            {t('common.weight')}: <strong>{datosHeredados.pesoUnitario.toFixed(1)} kg</strong>
+                            {t('common.weight')}: <strong>{formatLargeNumber(datosHeredados.pesoUnitario)} kg</strong>
                           </span>
                         )}
                       </div>
@@ -1250,16 +1316,16 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
           </div>
 
             {/* Sección 3: Cantidades */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="h-10 w-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                  <span className="text-xl">📊</span>
+            <div className="bg-white rounded-2xl border-2 border-purple-100 p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-purple-500/30">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-lg ring-4 ring-purple-50">
+                  <span className="text-2xl drop-shadow-sm">📊</span>
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-[#333333]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <h3 className="text-lg font-bold text-purple-700" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     Cantidades
                   </h3>
-                  <p className="text-xs text-[#666666]" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                  <p className="text-xs text-gray-600" style={{ fontFamily: 'Roboto, sans-serif' }}>
                     Cantidad, unidad y peso del producto
                   </p>
                 </div>
@@ -1268,9 +1334,9 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
               <div className="grid grid-cols-3 gap-5">
                 {/* Cantidad */}
                 <div className="space-y-2">
-                  <Label htmlFor="cantidad" className="text-sm font-medium flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <Label htmlFor="cantidad" className="text-sm font-semibold flex items-center gap-2 text-gray-700" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     {t('common.quantity') || 'Cantidad'}
-                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Requerido</Badge>
+                    <Badge variant="destructive" className="text-[10px] px-2 py-0.5 shadow-sm">Requerido</Badge>
                   </Label>
                   <div className="relative">
                     <Input
@@ -1299,9 +1365,9 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                         }));
                       }}
                       placeholder="0"
-                      className="h-11 text-sm pr-10 border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE]"
+                      className="h-12 text-sm pr-10 border-2 border-gray-200 focus:border-[#1a4d7a] focus:ring-2 focus:ring-[#1a4d7a]/20 hover:border-gray-300 transition-all rounded-lg shadow-sm font-medium"
                     />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#999999] text-xs">
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-semibold">
                       #
                     </div>
                   </div>
@@ -1309,16 +1375,16 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
 
                 {/* Unidad */}
                 <div className="space-y-2">
-                  <Label htmlFor="unidad" className="text-sm font-medium flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <Label htmlFor="unidad" className="text-sm font-semibold flex items-center gap-2 text-gray-700" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     {t('common.unit') || 'Unidad'}
-                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Requerido</Badge>
+                    <Badge variant="destructive" className="text-[10px] px-2 py-0.5 shadow-sm">Requerido</Badge>
                   </Label>
                   <Select 
                     key={`unidad-${formData.unidad}-${formData.subcategoria}`}
                     value={formData.unidad} 
                     onValueChange={(value) => setFormData(prev => ({ ...prev, unidad: value }))}
                   >
-                    <SelectTrigger className="h-11 text-sm border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE]">
+                    <SelectTrigger className="h-12 text-sm border-2 border-gray-200 focus:border-[#1a4d7a] focus:ring-2 focus:ring-[#1a4d7a]/20 hover:border-gray-300 transition-colors rounded-lg shadow-sm font-medium">
                       <SelectValue placeholder="Unidad..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -1347,16 +1413,16 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
 
                 {/* Peso */}
                 <div className="space-y-2">
-                  <Label htmlFor="peso" className="text-sm font-medium flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <Label htmlFor="peso" className="text-sm font-semibold flex items-center gap-2 text-gray-700" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     {formData.unidad === 'PLT' ? 'Peso Total' : (t('common.weight') || 'Peso')}
-                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Requerido</Badge>
+                    <Badge variant="destructive" className="text-[10px] px-2 py-0.5 shadow-sm">Requerido</Badge>
                     {formData.unidad === 'PLT' && isConnected && currentWeight && currentWeight.stable && (
-                      <Badge variant="outline" className="text-[10px] bg-green-50 text-green-700 border-green-200 animate-pulse">
-                        ⚖️ Peso unitario: {currentWeight.weight.toFixed(3)} kg/PLT
+                      <Badge className="text-[11px] px-3 py-1 bg-gradient-to-r from-[#2d9561] to-[#25825a] text-white border-0 animate-pulse shadow-lg">
+                        ⚖️ Peso unitario: {formatLargeNumber(currentWeight.weight)} kg/PLT
                       </Badge>
                     )}
                     {formData.unidad === 'PLT' && isConnected && currentWeight && !currentWeight.stable && (
-                      <Badge variant="outline" className="text-[10px] bg-yellow-50 text-yellow-700 border-yellow-200">
+                      <Badge className="text-[11px] px-3 py-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0 animate-pulse shadow-md">
                         ⚖️ Estabilizando...
                       </Badge>
                     )}
@@ -1370,9 +1436,10 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                       value={formData.peso || ''}
                       onChange={(e) => setFormData(prev => ({ ...prev, peso: parseFloat(e.target.value) || 0 }))}
                       placeholder={formData.unidad === 'PLT' ? 'Peso calculado automáticamente...' : '0.000'}
-                      className="h-11 text-sm pr-10 border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE] bg-white"
+                      className={`h-12 text-sm pr-10 border-2 border-gray-200 focus:border-[#2d9561] focus:ring-2 focus:ring-[#2d9561]/20 hover:border-gray-300 transition-all rounded-lg shadow-sm ${
+                        formData.unidad === 'PLT' && isConnected && currentWeight?.stable ? 'bg-green-50 border-green-300 font-semibold' : 'bg-white'
+                      }`}
                       readOnly={formData.unidad === 'PLT' && isConnected && currentWeight?.stable}
-                      style={formData.unidad === 'PLT' && isConnected && currentWeight?.stable ? { backgroundColor: '#f0fdf4' } : {}}
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#999999] text-xs font-medium pointer-events-none">
                       kg
@@ -1383,7 +1450,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                   {formData.peso > 0 && datosHeredados?.pesoUnitario === formData.peso && formData.unidad !== 'PLT' && (
                     <div className="flex items-center gap-1 text-xs text-blue-600">
                       <span>💡</span>
-                      <span>Poids unitaire depuis PRS: {formData.peso.toFixed(1)} kg</span>
+                      <span>Poids unitaire depuis PRS: {formatLargeNumber(formData.peso)} kg</span>
                     </div>
                   )}
                   
@@ -1400,7 +1467,7 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                             <div className="flex items-center gap-2 text-xs text-gray-600 ml-5">
                               <Scale className="h-3 w-3" />
                               <span>
-                                Poids unitaire (1 PLT): <strong className="text-green-700">{currentWeight.weight.toFixed(3)} {currentWeight.unit}</strong>
+                                Poids unitaire (1 PLT): <strong className="text-green-700">{formatLargeNumber(currentWeight.weight)} {currentWeight.unit}</strong>
                                 {currentWeight.stable ? (
                                   <span className="ml-2 text-green-600">✓ Stable</span>
                                 ) : (
@@ -1440,10 +1507,10 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                   <div className="flex items-center gap-2">
                     <span className="text-purple-600">💡</span>
                     <div className="text-xs text-purple-700 font-medium space-y-1">
-                      <div>Peso unitario: {(formData.peso / formData.cantidad).toFixed(3)} kg/{formData.unidad || 'unidad'}</div>
+                      <div>Peso unitario: {formatLargeNumber(formData.peso / formData.cantidad)} kg/{formData.unidad || 'unidad'}</div>
                       {formData.unidad === 'PLT' && formData.cantidad > 1 && (
                         <div className="text-purple-600">
-                          → {formData.cantidad} palettes × {(formData.peso / formData.cantidad).toFixed(3)} kg = {formData.peso.toFixed(3)} kg total
+                          → {formData.cantidad} palettes × {formatLargeNumber(formData.peso / formData.cantidad)} kg = {formatLargeNumber(formData.peso)} kg total
                         </div>
                       )}
                     </div>
@@ -1488,9 +1555,9 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
                         }));
                       }}
                       placeholder="0.00"
-                      className="h-11 text-sm pr-16 border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE]"
+                      className="h-12 text-sm pr-16 border-2 border-gray-200 focus:border-[#2d9561] focus:ring-2 focus:ring-[#2d9561]/20 hover:border-gray-300 transition-all rounded-lg shadow-sm font-semibold"
                     />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#999999] text-xs font-medium pointer-events-none">
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2d9561] text-sm font-bold pointer-events-none">
                       CAD$
                     </div>
                   </div>
@@ -1555,20 +1622,39 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
             </div>
 
             {/* Sección 4: Detalles Adicionales */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="h-10 w-10 rounded-lg bg-orange-100 flex items-center justify-center">
-                  <span className="text-xl">📝</span>
+            <div className="bg-white rounded-2xl border-2 border-orange-100 p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-orange-500/30">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg ring-4 ring-orange-50">
+                  <span className="text-2xl drop-shadow-sm">📝</span>
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-[#333333]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <h3 className="text-lg font-bold text-orange-600" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     Detalles Adicionales
                   </h3>
-                  <p className="text-xs text-[#666666]" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                  <p className="text-xs text-gray-600" style={{ fontFamily: 'Roboto, sans-serif' }}>
                     Información complementaria (opcional)
                   </p>
                 </div>
               </div>
+
+              {/* Banner Recordatorio de Campos Importantes */}
+              {(!formData.fechaCaducidad || !formData.lote) && (
+                <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border-l-4 border-amber-500 p-4 rounded-lg shadow-sm mb-5">
+                  <div className="flex items-start gap-3">
+                    <div className="h-8 w-8 rounded-lg bg-amber-500 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <span className="text-lg">💡</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-amber-900 mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        Rappel important
+                      </p>
+                      <p className="text-xs text-gray-700">
+                        La <span className="font-semibold">date d'expiration</span> et le <span className="font-semibold">numéro de lot</span> sont essentiels pour la traçabilité et la sécurité alimentaire.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
                 
               <div className="grid grid-cols-3 gap-5">
                 {/* Temperatura */}
@@ -1608,33 +1694,59 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
 
                 {/* Fecha de Caducidad */}
                 <div className="space-y-2">
-                  <Label htmlFor="fechaCaducidad" className="text-sm font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {t('common.expiryDate') || 'Fecha Caducidad'}
+                  <Label htmlFor="fechaCaducidad" className="text-sm font-semibold flex items-center gap-2 text-gray-700" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    📅 {t('common.expiryDate') || 'Fecha Caducidad'}
+                    <Badge className="text-[10px] px-2 py-0.5 bg-amber-500 hover:bg-amber-600 shadow-sm">
+                      Important
+                    </Badge>
                   </Label>
                   <Input
                     id="fechaCaducidad"
                     type="date"
                     value={formData.fechaCaducidad}
                     onChange={(e) => setFormData(prev => ({ ...prev, fechaCaducidad: e.target.value }))}
-                    className="h-11 text-sm border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE]"
+                    className={`h-12 text-sm border-2 transition-all rounded-lg shadow-sm ${
+                      formData.fechaCaducidad 
+                        ? 'border-green-300 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 bg-green-50' 
+                        : 'border-amber-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 hover:border-amber-300'
+                    }`}
                     placeholder="AAAA-MM-JJ"
                     title="Vous pouvez écrire directement (ex: 2025-12-31)"
                     lang="fr-CA"
                   />
+                  {formData.fechaCaducidad && (
+                    <div className="flex items-center gap-1 text-xs text-green-700 font-medium">
+                      <span>✓</span>
+                      <span>Date complétée</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Lote */}
                 <div className="space-y-2">
-                  <Label htmlFor="lote" className="text-sm font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                    {t('common.batch') || 'Lote'}
+                  <Label htmlFor="lote" className="text-sm font-semibold flex items-center gap-2 text-gray-700" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    🏷️ {t('common.batch') || 'Lote'}
+                    <Badge className="text-[10px] px-2 py-0.5 bg-orange-500 hover:bg-orange-600 shadow-sm">
+                      Important
+                    </Badge>
                   </Label>
                   <Input
                     id="lote"
                     value={formData.lote}
                     onChange={(e) => setFormData(prev => ({ ...prev, lote: e.target.value }))}
                     placeholder="Ej: LOTE-2024-001"
-                    className="h-11 text-sm border-gray-300 focus:border-[#1E73BE] focus:ring-[#1E73BE]"
+                    className={`h-12 text-sm border-2 transition-all rounded-lg shadow-sm ${
+                      formData.lote 
+                        ? 'border-green-300 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 bg-green-50' 
+                        : 'border-orange-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 hover:border-orange-300'
+                    }`}
                   />
+                  {formData.lote && (
+                    <div className="flex items-center gap-1 text-xs text-green-700 font-medium">
+                      <span>✓</span>
+                      <span>Lot complété</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1655,39 +1767,137 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
             </div>
           </div>
 
-          {/* Botones de Acción - Fijos con gradiente */}
-          <div className="flex justify-between gap-3 border-t px-8 py-5 bg-gradient-to-r from-white to-gray-50 shrink-0">
+          {/* Botones de Acción - Fijos con gradiente moderno */}
+          <div className="flex justify-between gap-4 border-t-2 border-gray-100 px-8 py-6 bg-gradient-to-r from-slate-50 via-white to-blue-50 shrink-0">
             <Button 
               variant="outline" 
               onClick={() => {
                 limpiarFormulario();
                 onOpenChange(false);
               }}
-              className="h-11 px-6 border-gray-300 hover:bg-gray-50"
-              style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
+              className="h-12 px-7 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-100 transition-all duration-200 shadow-sm hover:shadow-md"
+              style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
             >
-              <X className="h-4 w-4 mr-2" />
+              <X className="h-5 w-5 mr-2" />
               {t('common.cancel') || 'Cancelar'}
             </Button>
             <div className="flex gap-3">
               <Button
                 onClick={() => handleSubmit(true)}
                 variant="outline"
-                className="h-11 px-6 border-[#4CAF50] text-[#4CAF50] hover:bg-[#4CAF50] hover:text-white transition-all"
-                style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
+                className="h-12 px-7 border-2 border-[#2d9561] text-[#2d9561] hover:bg-[#2d9561] hover:text-white transition-all duration-200 shadow-md hover:shadow-lg"
+                style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-5 w-5 mr-2" />
                 Guardar y Agregar Otra
               </Button>
               <Button
                 onClick={() => handleSubmit(false)}
-                className="h-11 px-8 bg-gradient-to-r from-[#1E73BE] to-[#1557a0] hover:from-[#1557a0] hover:to-[#0d3a6e] shadow-lg hover:shadow-xl transition-all"
-                style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
+                className="h-12 px-9 bg-gradient-to-r from-[#1a4d7a] via-[#1E73BE] to-[#2d9561] hover:from-[#153d63] hover:via-[#1557a0] hover:to-[#25825a] shadow-xl hover:shadow-2xl transition-all duration-200 text-white"
+                style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}
               >
-                <Save className="h-4 w-4 mr-2" />
+                <Save className="h-5 w-5 mr-2" />
                 Guardar y Cerrar
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Confirmación - Recordatorio de Campos Opcionales */}
+      {dialogConfirmacion && console.log('🎨 Renderizando diálogo de confirmación')}
+      <Dialog open={dialogConfirmacion} onOpenChange={setDialogConfirmacion} modal>
+        <DialogContent 
+          className="max-w-lg bg-gradient-to-br from-amber-50 via-white to-orange-50 border-2 border-amber-200" 
+          aria-describedby="confirmacion-campos-description"
+          style={{ zIndex: 9999 }}
+        >
+          <DialogHeader className="pb-4">
+            <DialogTitle className="text-xl flex items-center gap-4" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-xl ring-4 ring-amber-100">
+                <span className="text-3xl">⚠️</span>
+              </div>
+              <div>
+                <span className="text-amber-900">Rappel Important</span>
+                <p className="text-sm text-amber-700 font-normal mt-1" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                  Champs optionnels non remplis
+                </p>
+              </div>
+            </DialogTitle>
+            <DialogDescription id="confirmacion-campos-description" className="sr-only">
+              Confirmación para continuar sin fecha de caducidad o número de lote
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 pt-4">
+            {/* Mensaje principal */}
+            <div className="bg-white rounded-xl p-5 border-2 border-amber-200 shadow-md">
+              <p className="text-base text-gray-800 mb-4" style={{ fontFamily: 'Roboto, sans-serif', fontWeight: 500 }}>
+                Les champs suivants sont <span className="font-bold text-amber-700">très importants</span> mais n'ont pas été remplis :
+              </p>
+              
+              <div className="space-y-3">
+                {(!formData.fechaCaducidad || formData.fechaCaducidad.trim() === '') && (
+                  <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                    <div className="h-8 w-8 rounded-lg bg-amber-500 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <span className="text-lg">📅</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-amber-900" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        Date d'expiration
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Essentiel pour la gestion des stocks et la sécurité alimentaire
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {(!formData.lote || formData.lote.trim() === '') && (
+                  <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                    <div className="h-8 w-8 rounded-lg bg-orange-500 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <span className="text-lg">🏷️</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-orange-900" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        Numéro de lot
+                      </p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Important pour la traçabilité et le contrôle qualité
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Pregunta de confirmación */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border-2 border-blue-200">
+              <p className="text-center text-base font-semibold text-gray-800" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                Voulez-vous continuer sans remplir ces champs ?
+              </p>
+            </div>
+          </div>
+
+          {/* Botones de acción */}
+          <div className="flex gap-3 pt-5 border-t-2 border-amber-100">
+            <Button
+              onClick={() => setDialogConfirmacion(false)}
+              variant="outline"
+              className="flex-1 h-12 border-2 border-[#2d9561] text-[#2d9561] hover:bg-[#2d9561] hover:text-white transition-all duration-200 shadow-md hover:shadow-lg"
+              style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}
+            >
+              <span className="mr-2">✏️</span>
+              Volver y Completar
+            </Button>
+            <Button
+              onClick={confirmarYGuardar}
+              className="flex-1 h-12 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+              style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}
+            >
+              <span className="mr-2">✓</span>
+              Continuar de Todos Modos
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

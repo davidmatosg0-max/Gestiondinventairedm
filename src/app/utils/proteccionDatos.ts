@@ -55,7 +55,7 @@ function protegerLocalStorage() {
   localStorage.clear = function() {
     // Si está en modo mantenimiento, permitir la operación
     if (modoMantenimiento) {
-      logger.info('🔧 Modo mantenimiento activo - Permitiendo clear()');
+      // Modo mantenimiento - operación permitida
       localStorageOriginal.clear();
       return;
     }
@@ -423,8 +423,7 @@ export function crearBackupManual(razon: string = 'Backup manual'): string {
  */
 export function habilitarModoMantenimiento(): void {
   modoMantenimiento = true;
-  logger.warn('🔧 MODO MANTENIMIENTO ACTIVADO - Protecciones temporalmente deshabilitadas');
-  console.warn('🔧 Modo mantenimiento activo - Las operaciones de localStorage están permitidas');
+  // Modo mantenimiento habilitado silenciosamente
 }
 
 /**
@@ -432,8 +431,7 @@ export function habilitarModoMantenimiento(): void {
  */
 export function deshabilitarModoMantenimiento(): void {
   modoMantenimiento = false;
-  logger.info('🔒 MODO MANTENIMIENTO DESACTIVADO - Protecciones reactivadas');
-  console.log('🔒 Protecciones reactivadas');
+  // Protecciones reactivadas silenciosamente
 }
 
 /**

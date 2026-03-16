@@ -1636,7 +1636,7 @@ export function Organismos() {
             <div>
               <p className="text-xs text-[#666666] mb-1" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}>{t('organisms.totalBeneficiaries')}</p>
               <p className="text-2xl font-bold text-[#FFC107]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                {totalBeneficiarios.toLocaleString()}
+                {totalBeneficiarios}
               </p>
             </div>
             <div 

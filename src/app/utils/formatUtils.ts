@@ -157,12 +157,41 @@ export function formatNumber(
 ): string {
   const locale = getCurrentLocale();
   
+  // Por defecto, NO usar separadores de miles y sin decimales
+  const defaultOptions: Intl.NumberFormatOptions = {
+    useGrouping: false,
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    ...options
+  };
+  
   try {
-    return new Intl.NumberFormat(locale, options).format(number);
+    return new Intl.NumberFormat(locale, defaultOptions).format(number);
   } catch (error) {
     console.error('Error al formatear número:', error);
-    return number.toLocaleString();
+    return Math.round(number).toString();
   }
+}
+
+/**
+ * Formatear números grandes dividiéndolos por 1000
+ * Ejemplo: 600000 → 600
+ * También elimina separadores de miles del resultado
+ */
+export function formatLargeNumber(number: number): string {
+  // Si el número es mayor a 1000, dividir por 1000
+  if (Math.abs(number) >= 1000) {
+    return Math.round(number / 1000).toString();
+  }
+  return Math.round(number).toString();
+}
+
+/**
+ * Formatear cualquier número sin separadores ni decimales
+ * Ejemplo: 600000 → 600000 (sin puntos ni comas)
+ */
+export function formatNumberSimple(number: number): string {
+  return Math.round(number).toString();
 }
 
 /**

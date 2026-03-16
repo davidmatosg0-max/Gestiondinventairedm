@@ -256,7 +256,7 @@ export function ReportesAvanzado() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-[#666666] mb-1">Total Beneficiarios</p>
-                <p className="font-bold" style={{ fontSize: '2rem', color: '#FFC107' }}>{totalBeneficiarios.toLocaleString()}</p>
+                <p className="font-bold" style={{ fontSize: '2rem', color: '#FFC107' }}>{totalBeneficiarios}</p>
                 <div className="flex items-center gap-1 mt-2">
                   <ArrowUp className="w-4 h-4 text-[#4CAF50]" />
                   <span className="text-sm text-[#4CAF50]">+8% vs mes anterior</span>
@@ -272,7 +272,7 @@ export function ReportesAvanzado() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-[#666666] mb-1">PRS Rescatados (kg)</p>
-                <p className="font-bold" style={{ fontSize: '2rem', color: '#9C27B0' }}>{totalKgPRS.toLocaleString()}</p>
+                <p className="font-bold" style={{ fontSize: '2rem', color: '#9C27B0' }}>{totalKgPRS}</p>
                 <div className="flex items-center gap-1 mt-2">
                   <ArrowDown className="w-4 h-4 text-[#DC3545]" />
                   <span className="text-sm text-[#DC3545]">-3% vs mes anterior</span>
@@ -543,7 +543,7 @@ export function ReportesAvanzado() {
               <CardContent className="pt-6">
                 <p className="text-sm text-[#666666]">Total KG Rescatados</p>
                 <p className="font-bold" style={{ fontSize: '1.5rem', color: '#4CAF50' }}>
-                  {totalKgPRS.toLocaleString()} kg
+                  {totalKgPRS} kg
                 </p>
               </CardContent>
             </Card>
@@ -617,7 +617,7 @@ export function ReportesAvanzado() {
               <CardContent className="pt-6">
                 <p className="text-sm text-[#666666]">Total Beneficiarios</p>
                 <p className="font-bold" style={{ fontSize: '1.5rem', color: '#FFC107' }}>
-                  {totalBeneficiarios.toLocaleString()}
+                  {totalBeneficiarios}
                 </p>
               </CardContent>
             </Card>

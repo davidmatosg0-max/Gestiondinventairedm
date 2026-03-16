@@ -59,6 +59,7 @@ import { ExportacionAvanzada } from '../inventario/ExportacionAvanzada';
 import { AlertasInteligentes } from '../inventario/AlertasInteligentes';
 import { ConversionUnidadesDialog } from '../inventario/ConversionUnidadesDialog';
 import { filterByThreeLettersMultiple } from '../../utils/searchUtils';
+import { formatLargeNumber } from '../../utils/formatUtils';
 import { MovimientosInventario } from '../inventario/MovimientosInventario';
 import { 
   guardarConversion, 
@@ -594,14 +595,14 @@ export function Inventario() {
       const unidadLower = unidad.toLowerCase();
       
       if (unidadLower === 'kg' || unidadLower === 'kgs' || unidadLower === 'kilogramos') {
-        return { kg: cantidad, textoConversion: `${cantidad.toFixed(1)} kg` };
+        return { kg: cantidad, textoConversion: `${Math.round(cantidad)} kg` };
       } else if (unidadLower === 'g' || unidadLower === 'gr' || unidadLower === 'gramos') {
-        return { kg: cantidad / 1000, textoConversion: `${(cantidad / 1000).toFixed(1)} kg (${cantidad} g)` };
+        return { kg: cantidad / 1000, textoConversion: `${Math.round(cantidad / 1000)} kg (${cantidad} g)` };
       } else if (unidadLower === 'l' || unidadLower === 'lt' || unidadLower === 'litros') {
         // Para líquidos, asumimos densidad similar al agua (1 L ≈ 1 kg)
-        return { kg: cantidad, textoConversion: `${cantidad.toFixed(1)} kg aprox. (${cantidad} L, densidad agua)` };
+        return { kg: cantidad, textoConversion: `${Math.round(cantidad)} kg aprox. (${cantidad} L, densidad agua)` };
       } else if (unidadLower === 'ml' || unidadLower === 'mililitros') {
-        return { kg: cantidad / 1000, textoConversion: `${(cantidad / 1000).toFixed(1)} kg aprox. (${cantidad} mL, densidad agua)` };
+        return { kg: cantidad / 1000, textoConversion: `${Math.round(cantidad / 1000)} kg aprox. (${cantidad} mL, densidad agua)` };
       } else {
         // Unidades, piezas, etc. no se pueden convertir
         return { kg: null, textoConversion: `${cantidad} ${unidad} (no convertible a kg)` };
@@ -665,10 +666,10 @@ export function Inventario() {
         }
       });
       
-      contenido += `Total convertible a kg: ${totalKg.toFixed(1)} kg (${productosConvertibles} productos)\n`;
+      contenido += `Total convertible a kg: ${Math.round(totalKg)} kg (${productosConvertibles} productos)\n`;
       contenido += `Productos no convertibles: ${productosLista.length - productosConvertibles}\n`;
       if (listaGenerada.incluirPrecios) {
-        contenido += `Valor total estimado: $${totalValor.toFixed(1)} CAD\n`;
+        contenido += `Valor total estimado: $${Math.round(totalValor)} CAD\n`;
       }
     }
 
@@ -1657,15 +1658,15 @@ export function Inventario() {
                             <TableCell className="py-1 px-2">
                               {(producto.pesoUnitario && producto.pesoUnitario > 0) ? (
                                 <span className="font-bold text-[#1a4d7a] text-xs">
-                                  {producto.pesoUnitario.toFixed(1)} <span className="text-[10px]">kg</span>
+                                  {Math.round(producto.pesoUnitario)} <span className="text-[10px]">kg</span>
                                 </span>
                               ) : (producto.peso && producto.peso > 0 && producto.stockActual > 0) ? (
                                 <span className="font-bold text-[#1a4d7a] text-xs">
-                                  {(producto.peso / producto.stockActual).toFixed(1)} <span className="text-[10px]">kg</span>
+                                  {Math.round(producto.peso / producto.stockActual)} <span className="text-[10px]">kg</span>
                                 </span>
                               ) : (producto.peso && producto.peso > 0) ? (
                                 <span className="font-bold text-[#1a4d7a] text-xs">
-                                  {producto.peso.toFixed(1)} <span className="text-[10px]">kg</span>
+                                  {Math.round(producto.peso)} <span className="text-[10px]">kg</span>
                                 </span>
                               ) : (
                                 <span className="text-[#999999] text-[10px] italic">N/A</span>
@@ -1898,10 +1899,10 @@ export function Inventario() {
                               <p className="text-xs text-[#666666]">{t('common.unitWeight')}</p>
                               <p className="text-sm font-medium text-[#1a4d7a]">
                                 {(producto.pesoUnitario && producto.pesoUnitario > 0) 
-                                  ? producto.pesoUnitario.toFixed(1) 
+                                  ? Math.round(producto.pesoUnitario) 
                                   : (producto.peso && producto.stockActual > 0)
-                                    ? (producto.peso / producto.stockActual).toFixed(1)
-                                    : producto.peso.toFixed(1)
+                                    ? Math.round(producto.peso / producto.stockActual)
+                                    : Math.round(producto.peso)
                                 } kg
                               </p>
                               <p className="text-xs text-[#999999]">por {producto.unidad}</p>
@@ -2410,9 +2411,9 @@ export function Inventario() {
                                 <p className="text-xs text-[#666666]">
                                   {producto.codigo} • {producto.categoria}
                                   {(producto.pesoUnitario && producto.pesoUnitario > 0) ? (
-                                    <> • {producto.pesoUnitario.toFixed(1)} kg/{producto.unidad}</>
+                                    <> • {Math.round(producto.pesoUnitario)} kg/{producto.unidad}</>
                                   ) : (producto.peso && producto.peso > 0 && producto.stockActual > 0) && (
-                                    <> • {(producto.peso / producto.stockActual).toFixed(1)} kg/{producto.unidad}</>
+                                    <> • {Math.round(producto.peso / producto.stockActual)} kg/{producto.unidad}</>
                                   )}
                                 </p>
                               </div>
@@ -2503,9 +2504,9 @@ export function Inventario() {
                             <p className="text-xs text-[#666666]">
                               {producto.codigo} • {producto.unidad}
                               {(producto.pesoUnitario && producto.pesoUnitario > 0) ? (
-                                <> • {producto.pesoUnitario.toFixed(1)} kg/{producto.unidad}</>
+                                <> • {Math.round(producto.pesoUnitario)} kg/{producto.unidad}</>
                               ) : (producto.peso && producto.peso > 0 && producto.stockActual > 0) && (
-                                <> • {(producto.peso / producto.stockActual).toFixed(1)} kg/{producto.unidad}</>
+                                <> • {Math.round(producto.peso / producto.stockActual)} kg/{producto.unidad}</>
                               )}
                             </p>
                           </div>
