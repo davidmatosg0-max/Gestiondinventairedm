@@ -302,8 +302,11 @@ export function guardarContacto(contacto: any): ContactoDepartamento {
   const contactos = obtenerContactosDepartamento();
   
   // 🔒 VERIFICAR DUPLICADOS: Buscar si ya existe un contacto con el mismo email
+  // ⚠️ IMPORTANTE: No detectar como duplicado si es el mismo contacto (mismo ID)
   const yaExiste = contactos.find(c => 
-    c.email && contacto.email && c.email.toLowerCase() === contacto.email.toLowerCase()
+    c.email && contacto.email && 
+    c.email.toLowerCase() === contacto.email.toLowerCase() &&
+    c.id !== contacto.id // ✅ Excluir el mismo contacto si tiene ID
   );
   
   if (yaExiste) {

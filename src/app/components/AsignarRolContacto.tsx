@@ -287,13 +287,13 @@ export function AsignarRolContacto({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby={undefined}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="asignar-rol-contacto-description">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="w-6 h-6 text-[#1a4d7a]" />
             {usuarioExistente ? 'Modifier l\'Accès au Système' : 'Créer un Accès au Système'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="asignar-rol-contacto-description">
             Assignez un rôle et des identifiants de connexion pour <strong>{nombreCompleto}</strong>
           </DialogDescription>
         </DialogHeader>

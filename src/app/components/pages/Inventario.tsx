@@ -2453,7 +2453,7 @@ export function Inventario() {
                   <Eye className="h-5 w-5 text-[#1a4d7a]" />
                   Vista Previa: {listaGenerada?.nombre}
                 </DialogTitle>
-                <DialogDescription>
+                <DialogDescription id="share-product-list-description">
                   {t('inventory.reviewListAndSelectOrganisms')}
                 </DialogDescription>
               </DialogHeader>
