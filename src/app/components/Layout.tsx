@@ -78,6 +78,8 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
   const [position, setPosition] = React.useState({ x: 0, y: 0 });
   const [dragStart, setDragStart] = React.useState({ x: 0, y: 0 });
   const buttonRef = React.useRef<HTMLButtonElement>(null);
+  const dragThreshold = 5; // Umbral mínimo de movimiento para considerar que es un drag
+  const [totalDragDistance, setTotalDragDistance] = React.useState(0);
   
   const { t } = useTranslation();
   const branding = useBranding();
@@ -114,44 +116,127 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
   // Funciones para drag del botón Guide Complet
   const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (e.button !== 0) return; // Solo botón izquierdo
+    e.preventDefault();
     setIsDragging(true);
-    setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
-    });
+    setTotalDragDistance(0);
+    
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (rect) {
+      setDragStart({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+      setPosition({
+        x: rect.left,
+        y: rect.top
+      });
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+    setTotalDragDistance(0);
+    
+    const touch = e.touches[0];
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (rect) {
+      setDragStart({
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+      });
+      setPosition({
+        x: rect.left,
+        y: rect.top
+      });
+    }
   };
 
   const handleMouseMove = React.useCallback((e: MouseEvent) => {
     if (!isDragging) return;
     
+    e.preventDefault();
     const newX = e.clientX - dragStart.x;
     const newY = e.clientY - dragStart.y;
     
-    // Limitar dentro de la ventana
-    const maxX = window.innerWidth - (buttonRef.current?.offsetWidth || 200);
-    const maxY = window.innerHeight - (buttonRef.current?.offsetHeight || 64);
+    // Límites de la ventana con margen de 10px
+    const margin = 10;
+    const maxX = window.innerWidth - (buttonRef.current?.offsetWidth || 56) - margin;
+    const maxY = window.innerHeight - (buttonRef.current?.offsetHeight || 56) - margin;
+    
+    const boundedX = Math.max(margin, Math.min(newX, maxX));
+    const boundedY = Math.max(margin, Math.min(newY, maxY));
     
     setPosition({
-      x: Math.max(0, Math.min(newX, maxX)),
-      y: Math.max(0, Math.min(newY, maxY))
+      x: boundedX,
+      y: boundedY
     });
-  }, [isDragging, dragStart]);
+    
+    // Calcular distancia total de drag
+    const distance = Math.sqrt(
+      Math.pow(boundedX - position.x, 2) + 
+      Math.pow(boundedY - position.y, 2)
+    );
+    setTotalDragDistance(prev => prev + distance);
+  }, [isDragging, dragStart, position]);
+
+  const handleTouchMove = React.useCallback((e: TouchEvent) => {
+    if (!isDragging) return;
+    
+    e.preventDefault();
+    const touch = e.touches[0];
+    const newX = touch.clientX - dragStart.x;
+    const newY = touch.clientY - dragStart.y;
+    
+    // Límites de la ventana con margen de 10px
+    const margin = 10;
+    const maxX = window.innerWidth - (buttonRef.current?.offsetWidth || 56) - margin;
+    const maxY = window.innerHeight - (buttonRef.current?.offsetHeight || 56) - margin;
+    
+    const boundedX = Math.max(margin, Math.min(newX, maxX));
+    const boundedY = Math.max(margin, Math.min(newY, maxY));
+    
+    setPosition({
+      x: boundedX,
+      y: boundedY
+    });
+    
+    // Calcular distancia total de drag
+    const distance = Math.sqrt(
+      Math.pow(boundedX - position.x, 2) + 
+      Math.pow(boundedY - position.y, 2)
+    );
+    setTotalDragDistance(prev => prev + distance);
+  }, [isDragging, dragStart, position]);
 
   const handleMouseUp = React.useCallback(() => {
     setIsDragging(false);
   }, []);
 
-  // Agregar event listeners
+  const handleTouchEnd = React.useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // Agregar event listeners para mouse y touch
   React.useEffect(() => {
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
+      
+      // Prevenir selección de texto durante el drag
+      document.body.style.userSelect = 'none';
+      
       return () => {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
+        document.body.style.userSelect = '';
       };
     }
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
   const handleLogout = () => {
     if (onLogout) {
@@ -499,14 +584,15 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
       <button
         ref={buttonRef}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
         onClick={(e) => {
-          // Solo abrir el modal si no estamos arrastrando
-          if (!isDragging) {
+          // Solo abrir el modal si no se ha arrastrado (movimiento menor al umbral)
+          if (totalDragDistance < dragThreshold) {
             setShowGuideComplete(true);
           }
         }}
-        className={`text-white rounded-full p-3 sm:p-4 shadow-2xl hover:scale-110 z-40 flex items-center gap-2 backdrop-blur-xl border-2 border-white/30 group ${
-          isDragging ? 'cursor-grabbing scale-110' : 'cursor-grab'
+        className={`text-white rounded-full shadow-2xl z-40 flex items-center justify-center backdrop-blur-xl border-2 border-white/30 group w-12 h-12 sm:w-14 sm:h-14 transition-all ${
+          isDragging ? 'cursor-grabbing scale-110 shadow-[0_0_30px_rgba(26,77,122,0.5)]' : 'cursor-grab hover:scale-110'
         }`}
         style={{ 
           position: 'fixed',
@@ -516,14 +602,15 @@ export function Layout({ children, currentPage, onNavigate, onLogout, hideSideba
           left: position.x !== 0 ? `${position.x}px` : 'auto',
           background: `linear-gradient(135deg, ${branding.primaryColor} 0%, ${branding.primaryColor}dd 100%)`,
           transition: isDragging ? 'none' : 'all 0.3s ease',
-          userSelect: 'none'
+          userSelect: 'none',
+          touchAction: 'none',
+          WebkitTouchCallout: 'none'
         }}
-        title="Guide Complet du Système (Déplaçable)"
+        title="📖 Guide Complet - Glissez pour déplacer"
       >
-        <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 group-hover:rotate-12 transition-transform pointer-events-none" />
-        <span className="hidden md:inline text-sm font-semibold pointer-events-none" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-          Guide Complet
-        </span>
+        <BookOpen className={`w-6 h-6 sm:w-7 sm:h-7 transition-transform pointer-events-none ${
+          isDragging ? '' : 'group-hover:rotate-12'
+        }`} />
       </button>
 
       {/* Modal de Guide Complet */}

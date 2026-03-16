@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBranding } from '../../../hooks/useBranding';
-import { Settings, Plus, Edit, Trash2, DollarSign, Package, FolderTree, Save, Inbox, PackageSearch, Copy, Eye, ChevronDown, ChevronRight, EyeOff, Grid3x3, X, Download, Upload, RotateCcw, Database, Clock, TrendingDown, Percent, Calculator, BookmarkPlus, AlertTriangle, Mail, CheckCircle, AlertCircle, Send, Scale, MapPin, Map, LifeBuoy, HelpCircle, Info, Sparkles, Ruler } from 'lucide-react';
+import { Settings, Plus, Edit, Trash2, DollarSign, Package, FolderTree, Save, Inbox, PackageSearch, Copy, Eye, ChevronDown, ChevronRight, EyeOff, Grid3x3, X, Download, Upload, RotateCcw, Database, Clock, TrendingDown, Percent, Calculator, BookmarkPlus, AlertTriangle, Mail, CheckCircle, AlertCircle, Send, Scale, MapPin, Map, LifeBuoy, HelpCircle, Info, Sparkles, Ruler, Activity } from 'lucide-react';
 import '../../../styles/configuracion-elegante.css';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -42,6 +42,7 @@ import { ConfigurationBalance } from '../ConfigurationBalance';
 import { GestionAdressesQuartiers } from '../GestionAdressesQuartiers';
 import { obtenerUsuarioSesion } from '../../utils/sesionStorage';
 import { BackupManager } from '../BackupManager';
+import { RegistroActividades } from '../RegistroActividades';
 import type { Producto as ProductoTipo, Categoria as CategoriaTipo, Subcategoria as SubcategoriaTipo, Variante as VarianteTipo, Permiso } from '../../types';
 
 type Unidad = {
@@ -1598,6 +1599,16 @@ export function Configuracion() {
               <span className="lg:hidden">Adresses</span>
             </TabsTrigger>
           )}
+
+          <TabsTrigger 
+            value="actividades" 
+            className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-[#1a4d7a] data-[state=active]:to-[#2d9561] data-[state=active]:text-white data-[state=active]:shadow-xl rounded-xl px-4 sm:px-6 py-3 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
+          >
+            <Activity className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+            <span className="hidden lg:inline">Journal d'Activités</span>
+            <span className="lg:hidden">Journal</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Tab: Categorías y Subcategorías */}
@@ -3407,6 +3418,11 @@ export function Configuracion() {
             <GestionAdressesQuartiers />
           </TabsContent>
         )}
+
+        {/* Tab: Journal d'Activités */}
+        <TabsContent value="actividades" className="fade-in">
+          <RegistroActividades />
+        </TabsContent>
       </Tabs>
 
       {/* Dialog Eliminar Categoría */}

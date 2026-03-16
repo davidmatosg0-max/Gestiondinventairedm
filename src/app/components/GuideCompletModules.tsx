@@ -64,6 +64,7 @@ export function GuideCompletModules({ onClose }: GuideCompletModulesProps) {
 
   const secciones = [
     { id: 'inicio', titulo: 'Vue d\'ensemble', icono: BookOpen },
+    { id: 'diseno', titulo: 'Système de Design', icono: Sparkles },
     { id: 'dashboard', titulo: 'Tableau de Bord', icono: LayoutDashboard },
     { id: 'entrepot', titulo: 'Entrepôt (Accordéon)', icono: Warehouse },
     { id: 'inventario', titulo: 'Inventaire', icono: Package },
@@ -238,6 +239,177 @@ export function GuideCompletModules({ onClose }: GuideCompletModulesProps) {
                         <p className="font-medium">Sécurisé</p>
                         <p className="text-sm text-gray-600">Gestion avancée des rôles et permissions</p>
                       </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SYSTÈME DE DESIGN */}
+            {seccionActiva === 'diseno' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 text-white rounded-2xl p-8 shadow-xl">
+                  <div className="flex items-start gap-4">
+                    <Sparkles className="w-16 h-16 flex-shrink-0" />
+                    <div>
+                      <h3 className="text-3xl font-bold mb-3" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        Système de Design Standardisé
+                      </h3>
+                      <p className="text-purple-50 text-lg">
+                        Interface moderne, cohérente et professionnelle pour tous les modules!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-md border-2 border-purple-200">
+                  <h4 className="font-bold text-xl mb-4 flex items-center gap-2">
+                    <Target className="w-6 h-6 text-purple-600" />
+                    Composants Partagés
+                  </h4>
+                  <p className="text-gray-600 mb-4">
+                    Tous les modules utilisent désormais un ensemble de composants standardisés pour garantir une expérience utilisateur cohérente.
+                  </p>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                      <h5 className="font-bold text-purple-900 mb-2">ModuleContainer</h5>
+                      <p className="text-sm text-gray-600">Conteneur principal avec fond dégradé et formes décoratives animées</p>
+                    </div>
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                      <h5 className="font-bold text-purple-900 mb-2">ModuleHeader</h5>
+                      <p className="text-sm text-gray-600">En-tête standardisé avec icône, titre, description et actions</p>
+                    </div>
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                      <h5 className="font-bold text-purple-900 mb-2">StatCard</h5>
+                      <p className="text-sm text-gray-600">Cartes de statistiques avec effet glassmorphism</p>
+                    </div>
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                      <h5 className="font-bold text-purple-900 mb-2">ModuleSection</h5>
+                      <p className="text-sm text-gray-600">Sections de contenu organisées et élégantes</p>
+                    </div>
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                      <h5 className="font-bold text-purple-900 mb-2">ModuleTable</h5>
+                      <p className="text-sm text-gray-600">Tables avec effets hover et design professionnel</p>
+                    </div>
+                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                      <h5 className="font-bold text-purple-900 mb-2">ModuleCardList</h5>
+                      <p className="text-sm text-gray-600">Listes de cartes avec grille responsive</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-md">
+                  <h4 className="font-bold text-xl mb-4 flex items-center gap-2">
+                    <Sparkles className="w-6 h-6 text-pink-600" />
+                    Effets Visuels Modernes
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border-l-4 border-blue-600">
+                      <h5 className="font-bold text-blue-900 mb-2">✨ Glassmorphism</h5>
+                      <p className="text-sm text-blue-800">
+                        Effet de verre avec transparence et flou pour une interface moderne et élégante
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border-l-4 border-purple-600">
+                      <h5 className="font-bold text-purple-900 mb-2">🎨 Gradients Sophistiqués</h5>
+                      <p className="text-sm text-purple-800">
+                        Dégradés subtils pour boutons, en-têtes et éléments mis en évidence
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border-l-4 border-green-600">
+                      <h5 className="font-bold text-green-900 mb-2">💫 Animations Fluides</h5>
+                      <p className="text-sm text-green-800">
+                        Entrées avec slideInUp, fadeInScale et effets hover élégants
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-lg border-l-4 border-orange-600">
+                      <h5 className="font-bold text-orange-900 mb-2">🌈 Ombres Professionnelles</h5>
+                      <p className="text-sm text-orange-800">
+                        Système d'ombres à plusieurs niveaux (sm, md, lg, xl) pour donner de la profondeur
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-md">
+                  <h4 className="font-bold text-xl mb-4 flex items-center gap-2">
+                    <Award className="w-6 h-6 text-[#2d9561]" />
+                    Palette de Couleurs
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="w-full h-24 rounded-lg mb-2" style={{ backgroundColor: '#1a4d7a' }}></div>
+                      <p className="font-medium text-sm">Primaire</p>
+                      <p className="text-xs text-gray-600">#1a4d7a</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-full h-24 rounded-lg mb-2" style={{ backgroundColor: '#2d9561' }}></div>
+                      <p className="font-medium text-sm">Secondaire</p>
+                      <p className="text-xs text-gray-600">#2d9561</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-full h-24 rounded-lg mb-2" style={{ backgroundColor: '#c23934' }}></div>
+                      <p className="font-medium text-sm">Destructif</p>
+                      <p className="text-xs text-gray-600">#c23934</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-full h-24 rounded-lg mb-2" style={{ backgroundColor: '#e8a419' }}></div>
+                      <p className="font-medium text-sm">Avertissement</p>
+                      <p className="text-xs text-gray-600">#e8a419</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-xl p-6">
+                  <h4 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
+                    <Lightbulb className="w-6 h-6" />
+                    Avantages du Système de Design
+                  </h4>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <div className="flex gap-2 items-start">
+                      <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium">Cohérence Visuelle</p>
+                        <p className="text-sm text-gray-600">Même apparence et comportement dans tous les modules</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 items-start">
+                      <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium">Développement Rapide</p>
+                        <p className="text-sm text-gray-600">Composants réutilisables pour créer de nouvelles fonctionnalités</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 items-start">
+                      <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium">Maintenance Facilitée</p>
+                        <p className="text-sm text-gray-600">Modifications centralisées dans les composants partagés</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 items-start">
+                      <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium">Expérience Utilisateur</p>
+                        <p className="text-sm text-gray-600">Interface moderne et intuitive qui améliore la productivité</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-5">
+                  <div className="flex gap-3">
+                    <Lightbulb className="w-6 h-6 text-yellow-600 flex-shrink-0" />
+                    <div>
+                      <h4 className="font-bold text-yellow-900 mb-2">Documentation Complète</h4>
+                      <p className="text-sm text-yellow-800 mb-2">
+                        Consultez les fichiers de documentation dans <code className="bg-yellow-100 px-2 py-1 rounded">/src/app/components/shared/</code>:
+                      </p>
+                      <ul className="text-sm text-yellow-800 space-y-1 ml-4">
+                        <li>• <strong>DesignStandards.md</strong> - Guide complet des standards</li>
+                        <li>• <strong>README.md</strong> - Référence rapide pour développeurs</li>
+                        <li>• <strong>ModuleTemplate.tsx</strong> - Exemple fonctionnel complet</li>
+                      </ul>
                     </div>
                   </div>
                 </div>

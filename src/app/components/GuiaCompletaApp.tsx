@@ -47,6 +47,8 @@ export function GuiaCompletaApp({ onClose }: GuiaCompletaAppProps) {
 
   const secciones = [
     { id: 'inicio', titulo: 'Inicio', icono: BookOpen },
+    { id: 'diseno', titulo: 'Sistema de Diseño', icono: Sparkles },
+    { id: 'componentes', titulo: 'Componentes Compartidos', icono: Target },
     { id: 'mensajes', titulo: 'Mensajes', icono: MessageSquare },
     { id: 'grupal', titulo: 'Mensajes Grupales', icono: Users },
     { id: 'demandas', titulo: 'Demandas', icono: FileText },
@@ -187,6 +189,199 @@ export function GuiaCompletaApp({ onClose }: GuiaCompletaAppProps) {
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* SISTEMA DE DISEÑO */}
+            {seccionActiva === 'diseno' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white rounded-2xl p-8 shadow-xl">
+                  <div className="flex items-start gap-4">
+                    <Sparkles className="w-16 h-16 flex-shrink-0" />
+                    <div>
+                      <h3 className="text-3xl font-bold mb-3">Sistema de Diseño</h3>
+                      <p className="text-purple-50 text-lg">
+                        Diseño moderno y atractivo para una mejor experiencia de usuario!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-md border-2 border-purple-200">
+                  <h4 className="font-bold text-xl mb-4">🎯 Características</h4>
+                  <div className="bg-purple-50 p-5 rounded-lg border border-purple-200">
+                    <p className="font-medium mb-3">🎨 Interface Visuelle</p>
+                    <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-xl shadow-lg">
+                      <Sparkles className="w-5 h-5" />
+                      <span className="font-medium">Diseño Moderno</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-3">
+                      Interface utilisateur intuitive et esthétique.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-md">
+                  <h4 className="font-bold text-xl mb-4 flex items-center gap-2">
+                    <CheckCheck className="w-6 h-6 text-purple-600" />
+                    Diseño de Componentes
+                  </h4>
+                  
+                  <div className="space-y-4">
+                    <div className="flex gap-4 items-start">
+                      <div className="bg-purple-600 text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-bold">1</div>
+                      <div className="flex-1">
+                        <p className="font-bold mb-2">Botones y Controles</p>
+                        <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                          <p className="text-sm mb-2">Botones de acción y controles de entrada:</p>
+                          <div className="flex gap-3">
+                            <span className="px-3 py-1 text-xs bg-gray-100 text-gray-600 border border-gray-300 rounded-full">Botones</span>
+                            <ChevronRight className="w-4 h-4" />
+                            <span className="px-3 py-1 text-xs bg-purple-100 text-purple-700 border border-purple-300 rounded-full flex items-center gap-1">
+                              <Users className="w-3 h-3" />
+                              Controles
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4 items-start">
+                      <div className="bg-purple-600 text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-bold">2</div>
+                      <div className="flex-1">
+                        <p className="font-bold mb-2">Estilos y Temas</p>
+                        <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                          <p className="text-sm mb-3">Variété de styles et thèmes disponibles:</p>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex items-center gap-2 bg-white p-2 rounded border">
+                              <CheckCheck className="w-4 h-4 text-purple-600" />
+                              <span className="font-medium">Thème Claro</span> - Interface lumineuse
+                            </div>
+                            <div className="flex items-center gap-2 bg-white p-2 rounded border">
+                              <input type="checkbox" className="w-4 h-4" checked readOnly />
+                              <span className="font-medium">Thème Sombre</span> - Interface sombre
+                            </div>
+                            <div className="flex items-center gap-2 bg-white p-2 rounded border">
+                              <X className="w-4 h-4 text-purple-600" />
+                              <span className="font-medium">Thème Personnalisé</span> - Couleurs personnalisées
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4 items-start">
+                      <div className="bg-purple-600 text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-bold">3</div>
+                      <div className="flex-1">
+                        <p className="font-bold mb-2">Diseño de Pantallas</p>
+                        <p className="text-sm text-gray-600">
+                          Diseño de pantallas optimisé pour une meilleure navigation et utilisation.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-green-50 border-2 border-green-500 rounded-xl p-6">
+                  <h4 className="font-bold text-green-900 mb-3 flex items-center gap-2">
+                    <Award className="w-6 h-6" />
+                    Avantages du Sistema de Diseño
+                  </h4>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    <div className="flex gap-2 items-start">
+                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium">Expérience Utilisateur Améliorée</p>
+                        <p className="text-sm text-gray-600">Interface intuitive et esthétique</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 items-start">
+                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium">Navigation Facilitée</p>
+                        <p className="text-sm text-gray-600">Pantallas optimisées pour la navigation</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 items-start">
+                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium">Personnalisation</p>
+                        <p className="text-sm text-gray-600">Thèmes et styles personnalisables</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 items-start">
+                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium">Performance</p>
+                        <p className="text-sm text-gray-600">Diseño optimisé pour des performances élevées</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* COMPONENTES COMPARTIDOS */}
+            {seccionActiva === 'componentes' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-2xl p-8 shadow-xl">
+                  <div className="flex items-start gap-4">
+                    <Target className="w-16 h-16 flex-shrink-0" />
+                    <div>
+                      <h3 className="text-3xl font-bold mb-3">Componentes Compartidos</h3>
+                      <p className="text-green-50 text-lg">Componentes réutilisables pour une meilleure efficacité!</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-md border-2 border-green-200">
+                  <h4 className="font-bold text-xl mb-4">🎯 Características</h4>
+                  <div className="bg-green-50 p-5 rounded-lg border border-green-200">
+                    <p className="font-medium mb-3">🛠️ Componentes Réutilisables</p>
+                    <div className="inline-flex items-center gap-2 bg-gradient-to-r from-[#2d9561] to-green-700 text-white px-6 py-3 rounded-xl shadow-lg">
+                      <Target className="w-5 h-5" />
+                      <span className="font-medium">Componentes Compartidos</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl p-6 shadow-md">
+                  <h4 className="font-bold text-xl mb-4">✅ Avantages</h4>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <Zap className="w-6 h-6 text-green-600 mb-2" />
+                      <p className="font-medium mb-1">Réutilisation</p>
+                      <p className="text-sm text-gray-600">Componentes réutilisables pour économiser du temps</p>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <Send className="w-6 h-6 text-green-600 mb-2" />
+                      <p className="font-medium mb-1">Consistance</p>
+                      <p className="text-sm text-gray-600">Interface cohérente entre les écrans</p>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <Clock className="w-6 h-6 text-green-600 mb-2" />
+                      <p className="font-medium mb-1">Performance</p>
+                      <p className="text-sm text-gray-600">Componentes optimisés pour des performances élevées</p>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <CheckCircle className="w-6 h-6 text-green-600 mb-2" />
+                      <p className="font-medium mb-1">Maintenabilité</p>
+                      <p className="text-sm text-gray-600">Facilité de maintenance et de mise à jour</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border-l-4 border-blue-600 rounded-r-xl p-6">
+                  <h4 className="font-bold text-blue-900 mb-3">📋 Informations à inclure</h4>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex gap-2"><CheckCircle className="w-4 h-4 text-blue-600 mt-0.5" /> Componentes de bouton</li>
+                    <li className="flex gap-2"><CheckCircle className="w-4 h-4 text-blue-600 mt-0.5" /> Componentes de champ de texte</li>
+                    <li className="flex gap-2"><CheckCircle className="w-4 h-4 text-blue-600 mt-0.5" /> Componentes de liste déroulante</li>
+                    <li className="flex gap-2"><CheckCircle className="w-4 h-4 text-blue-600 mt-0.5" /> Componentes de carte</li>
+                    <li className="flex gap-2"><CheckCircle className="w-4 h-4 text-blue-600 mt-0.5" /> Componentes de graphique</li>
+                    <li className="flex gap-2"><CheckCircle className="w-4 h-4 text-blue-600 mt-0.5" /> Componentes de table</li>
+                  </ul>
                 </div>
               </div>
             )}
@@ -878,7 +1073,7 @@ export function GuiaCompletaApp({ onClose }: GuiaCompletaAppProps) {
                       <div>
                         <h4 className="font-bold mb-2">Utilisez les messages groupes</h4>
                         <p className="text-sm text-gray-600">
-                          Pour les annonces générales, gagnez du temps en envoyant �� plusieurs 
+                          Pour les annonces générales, gagnez du temps en envoyant  plusieurs 
                           départements simultanément
                         </p>
                       </div>
