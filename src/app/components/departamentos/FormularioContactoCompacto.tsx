@@ -862,13 +862,15 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                           initialCity={formulario.ciudad || ''}
                           initialPostalCode={formulario.codigoPostal || ''}
                           initialApartment={formulario.apartamento || ''}
+                          initialQuartier={formulario.quartier || ''}
                           onChange={(value, details) => {
                             console.log('📝 Formulario BASE - onChange recibido:', { value, details });
                             console.log('📝 Formulario ACTUAL antes de actualizar:', {
                               direccion: formulario.direccion,
                               apartamento: formulario.apartamento,
                               ciudad: formulario.ciudad,
-                              codigoPostal: formulario.codigoPostal
+                              codigoPostal: formulario.codigoPostal,
+                              quartier: formulario.quartier
                             });
                             
                             // ✅ Siempre actualizar con los valores que vienen (ya no preservamos vacíos)
@@ -878,7 +880,8 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                               direccion: value,
                               ciudad: details?.city !== undefined ? details.city : formulario.ciudad,
                               codigoPostal: details?.postalCode !== undefined ? details.postalCode : formulario.codigoPostal,
-                              apartamento: details?.apt !== undefined ? details.apt : formulario.apartamento
+                              apartamento: details?.apt !== undefined ? details.apt : formulario.apartamento,
+                              quartier: details?.quartier !== undefined ? details.quartier : formulario.quartier
                             };
                             console.log('💾 Formulario BASE - Guardando:', nuevoFormulario);
                             setFormulario(nuevoFormulario);
@@ -1411,13 +1414,15 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                           initialCity={formulario.ciudad || ''}
                           initialPostalCode={formulario.codigoPostal || ''}
                           initialApartment={formulario.apartamento || ''}
+                          initialQuartier={formulario.quartier || ''}
                           onChange={(value, details) => {
                             console.log('📝 Formulario CONTACT - onChange recibido:', { value, details });
                             console.log('📝 Formulario ACTUAL antes de actualizar:', {
                               direccion: formulario.direccion,
                               apartamento: formulario.apartamento,
                               ciudad: formulario.ciudad,
-                              codigoPostal: formulario.codigoPostal
+                              codigoPostal: formulario.codigoPostal,
+                              quartier: formulario.quartier
                             });
                             
                             // ✅ Siempre actualizar con los valores que vienen (ya no preservamos vacíos)
@@ -1427,7 +1432,8 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                               direccion: value,
                               ciudad: details?.city !== undefined ? details.city : formulario.ciudad,
                               codigoPostal: details?.postalCode !== undefined ? details.postalCode : formulario.codigoPostal,
-                              apartamento: details?.apt !== undefined ? details.apt : formulario.apartamento
+                              apartamento: details?.apt !== undefined ? details.apt : formulario.apartamento,
+                              quartier: details?.quartier !== undefined ? details.quartier : formulario.quartier
                             };
                             console.log('💾 Formulario CONTACT - Guardando:', nuevoFormulario);
                             setFormulario(nuevoFormulario);

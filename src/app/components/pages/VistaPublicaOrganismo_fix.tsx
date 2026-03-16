@@ -2046,11 +2046,13 @@ export function VistaPublicaOrganismo({ organismo, onCerrarSesion }: VistaPublic
                   setDatosEdicion({ 
                     ...datosEdicion, 
                     direccion: address.street,
-                    codigoPostal: address.postalCode 
+                    codigoPostal: address.postalCode,
+                    quartier: address.quartier || ''
                   });
                 }}
                 disabled={false}
                 initialValue={datosEdicion.direccion}
+                initialQuartier={datosEdicion.quartier || ''}
                 label="Dirección *"
                 placeholder="Ex: 123 Boulevard Saint-Martin Est"
                 required={true}
