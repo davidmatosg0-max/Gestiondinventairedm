@@ -51,31 +51,33 @@ function AddressAutocompleteComponent({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const isUserEditing = useRef(false);
+  const isInitialized = useRef(false);
 
-  // Sincronizar con value controlado
+  // ✅ Sincronizar con value controlado (SIEMPRE en primera carga)
   useEffect(() => {
-    if (controlledValue !== undefined && controlledValue !== inputValue) {
-      setInputValue(controlledValue);
+    if (controlledValue !== undefined) {
+      if (!isInitialized.current || controlledValue !== inputValue) {
+        console.log('🔄 AddressAutocomplete - Sincronizando inputValue:', controlledValue);
+        setInputValue(controlledValue);
+        isInitialized.current = true;
+      }
     }
   }, [controlledValue]);
 
-  // Sincronizar con valores iniciales de ciudad, código postal y apartamento
+  // ✅ Sincronizar con valores iniciales de ciudad, código postal y apartamento (SIEMPRE en primera carga)
   useEffect(() => {
-    if (initialCity && !isUserEditing.current) {
-      setCity(initialCity);
-    }
+    console.log('🔄 AddressAutocomplete - Sincronizando initialCity:', initialCity);
+    setCity(initialCity);
   }, [initialCity]);
 
   useEffect(() => {
-    if (initialPostalCode && !isUserEditing.current) {
-      setPostalCode(initialPostalCode);
-    }
+    console.log('🔄 AddressAutocomplete - Sincronizando initialPostalCode:', initialPostalCode);
+    setPostalCode(initialPostalCode);
   }, [initialPostalCode]);
 
   useEffect(() => {
-    if (initialApartment && !isUserEditing.current) {
-      setApartment(initialApartment);
-    }
+    console.log('🔄 AddressAutocomplete - Sincronizando initialApartment:', initialApartment);
+    setApartment(initialApartment);
   }, [initialApartment]);
 
   // Base de datos de rues de Québec
@@ -608,8 +610,8 @@ function AddressAutocompleteComponent({
   const handleInputChange = (value: string) => {
     setInputValue(value);
     
-    // ✅ SIEMPRE notificar el cambio al padre
-    onChange?.(value);
+    // ✅ NOTIFICAR con los valores actuales de ciudad, código postal y apartamento
+    onChange?.(value, { city: city, postalCode: postalCode, apt: apartment });
     
     const { civicNumber, streetName } = parseAddress(value);
     
