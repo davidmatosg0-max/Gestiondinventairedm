@@ -775,6 +775,7 @@ export function FormularioNouveauBenevole({
                           initialCity={formData.ville || ''}
                           initialPostalCode={formData.codePostal || ''}
                           initialApartment={formData.appartement || ''}
+                          initialQuartier={formData.quartier || ''}
                           onChange={(street, details) => {
                             // Mantener los valores existentes si details no los proporciona
                             onFormChange({ 
@@ -782,7 +783,8 @@ export function FormularioNouveauBenevole({
                               adresse: street,
                               ville: details?.city || formData.ville,
                               codePostal: details?.postalCode || formData.codePostal,
-                              appartement: details?.apt || formData.appartement
+                              appartement: details?.apt || formData.appartement,
+                              quartier: details?.quartier || formData.quartier
                             });
                           }}
                           onSelect={(place) => {
@@ -791,7 +793,8 @@ export function FormularioNouveauBenevole({
                               adresse: place.street,
                               ville: place.city,
                               codePostal: place.postalCode,
-                              appartement: place.apt || formData.appartement
+                              appartement: place.apt || formData.appartement,
+                              quartier: place.quartier || ''
                             });
                           }}
                         />

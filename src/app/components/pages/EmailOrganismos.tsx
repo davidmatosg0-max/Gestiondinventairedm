@@ -2025,14 +2025,16 @@ export function EmailOrganismos({ onNavigate }: { onNavigate?: (page: string) =>
                       setFormOrganismo({
                         ...formOrganismo,
                         direccion: address.street,
-                        codigoPostal: address.postalCode
+                        codigoPostal: address.postalCode,
+                        quartier: address.quartier || ''
                       });
                       toast.success('📍 Adresse complétée automatiquement', {
-                        description: `Code postal: ${address.postalCode} • Ville: ${address.city}`
+                        description: `Code postal: ${address.postalCode} • Ville: ${address.city}${address.quartier ? ` • Quartier: ${address.quartier}` : ''}`
                       });
                     }}
                     disabled={false}
                     initialValue={formOrganismo.direccion}
+                    initialQuartier={formOrganismo.quartier || ''}
                     label=""
                     placeholder="💡 Tapez le numéro civique et la rue (ex: 123 Boulevard Saint-Martin Est)"
                     required={true}

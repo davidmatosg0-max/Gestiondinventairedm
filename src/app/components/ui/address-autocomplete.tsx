@@ -8,11 +8,12 @@ interface AddressSuggestion {
   city: string;
   postalCode: string;
   apt: string;
+  quartier?: string;
 }
 
 interface AddressAutocompleteProps {
   onAddressSelect?: (address: AddressSuggestion) => void;
-  onChange?: (value: string, details?: { city?: string; postalCode?: string; apt?: string }) => void;
+  onChange?: (value: string, details?: { city?: string; postalCode?: string; apt?: string; quartier?: string }) => void;
   value?: string;
   disabled?: boolean;
   initialValue?: string;
@@ -24,6 +25,7 @@ interface AddressAutocompleteProps {
   initialCity?: string;
   initialPostalCode?: string;
   initialApartment?: string;
+  initialQuartier?: string;
 }
 
 function AddressAutocompleteComponent({
@@ -38,7 +40,8 @@ function AddressAutocompleteComponent({
   showAdditionalFields = true,
   initialCity = '',
   initialPostalCode = '',
-  initialApartment = ''
+  initialApartment = '',
+  initialQuartier = ''
 }: AddressAutocompleteProps) {
   const [inputValue, setInputValue] = useState(controlledValue || initialValue);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -48,6 +51,7 @@ function AddressAutocompleteComponent({
   const [postalCode, setPostalCode] = useState(initialPostalCode);
   const [city, setCity] = useState(initialCity);
   const [apartment, setApartment] = useState(initialApartment);
+  const [quartier, setQuartier] = useState(initialQuartier);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const isUserEditing = useRef(false);
@@ -79,6 +83,14 @@ function AddressAutocompleteComponent({
     console.log('🔄 AddressAutocomplete - Sincronizando initialApartment:', initialApartment);
     setApartment(initialApartment);
   }, [initialApartment]);
+
+  useEffect(() => {
+    console.log('🔄 AddressAutocomplete - Sincronizando initialQuartier:', initialQuartier);
+    // Solo actualizar si hay un valor o si el campo está vacío
+    if (initialQuartier || quartier === '') {
+      setQuartier(initialQuartier);
+    }
+  }, [initialQuartier]);
 
   // Base de datos de rues de Québec
   const streets = [
@@ -611,7 +623,7 @@ function AddressAutocompleteComponent({
     setInputValue(value);
     
     // ✅ NOTIFICAR con los valores actuales de ciudad, código postal y apartamento
-    onChange?.(value, { city: city, postalCode: postalCode, apt: apartment });
+    onChange?.(value, { city: city, postalCode: postalCode, apt: apartment, quartier: quartier });
     
     const { civicNumber, streetName } = parseAddress(value);
     
@@ -656,40 +668,306 @@ function AddressAutocompleteComponent({
     // Extraer información de la dirección
     const { civicNumber, streetName } = parseAddress(fullAddress);
     
-    // Determinar ciudad basado en el nombre de la calle
+    // Determinar ciudad, código postal y quartier basado en el nombre de la calle
     let detectedCity = 'Laval';
     let detectedPostalCode = 'H7T 1C7';
+    let detectedQuartier = '';
     
-    // Código postal específico para Rue Michelin
-    if (streetName.includes('Michelin')) {
+    // LAVAL - AUTEUIL
+    if (streetName.includes('Boulevard des Mille-Îles') || 
+        streetName.includes('Mille-Îles') ||
+        streetName.includes('Beauharnois') || 
+        streetName.includes('Équerre') ||
+        streetName.includes('Valmont') ||
+        streetName.includes('Montée Saint-François') ||
+        streetName.includes('Montée Champagne') ||
+        streetName.includes('Montée Monette')) {
+      detectedCity = 'Laval';
+      detectedPostalCode = 'H7T 1C7';
+      detectedQuartier = 'Auteuil';
+    }
+    // LAVAL - CHOMEDEY
+    else if (streetName.includes('Desmarteau') ||
+             streetName.includes('Le Corbusier') ||
+             streetName.includes('Cartier Ouest') ||
+             streetName.includes('Samson') ||
+             streetName.includes('Chomedey') ||
+             streetName.includes('Concorde Ouest') ||
+             streetName.includes('Industriel') ||
+             streetName.includes('Le Carrefour') ||
+             streetName.includes('de Paris') ||
+             streetName.includes('de Strasbourg') ||
+             streetName.includes('de Calais') ||
+             streetName.includes('de Menton') ||
+             streetName.includes('de Brest') ||
+             streetName.includes('de Bruges') ||
+             streetName.includes('de Monaco') ||
+             streetName.includes('de Grenade') ||
+             streetName.includes('de Sienne') ||
+             streetName.includes('de Naples') ||
+             streetName.includes('de Venise') ||
+             streetName.includes('de Milan') ||
+             streetName.includes('de Vérone') ||
+             streetName.includes('de Florence') ||
+             streetName.includes('de Mantoue') ||
+             streetName.includes('de Gênes') ||
+             streetName.includes('de Bologne') ||
+             streetName.includes('de Padoue') ||
+             streetName.includes('de Parme') ||
+             streetName.includes('de Trieste') ||
+             streetName.includes('de Ferrare') ||
+             streetName.includes('de Modène') ||
+             streetName.includes('de Ravenne') ||
+             streetName.includes('de Rimini') ||
+             streetName.includes('de Salerne') ||
+             streetName.includes('de Bari') ||
+             streetName.includes('de Brindisi') ||
+             streetName.includes('de Tarente') ||
+             streetName.includes('de Syracuse') ||
+             streetName.includes('de Palerme') ||
+             streetName.includes('de Messine') ||
+             streetName.includes('de Catane') ||
+             streetName.includes('Empereur') ||
+             streetName.includes('Buckingham') ||
+             streetName.includes('Versailles') ||
+             streetName.includes('Louvre') ||
+             streetName.includes('Consul') ||
+             streetName.includes('Berlier') ||
+             streetName.includes('Bertrand') ||
+             streetName.includes('Gauthier') ||
+             streetName.includes('Dumouchel') ||
+             streetName.includes('Martin-Plouffe') ||
+             streetName.includes('Léo-Lacombe') ||
+             streetName.includes('Odilon-Gauthier') ||
+             streetName.includes('Hector-Lanthier') ||
+             streetName.includes('Olivier') ||
+             streetName.includes('de Clichy') ||
+             streetName.includes('de Vimy') ||
+             streetName.includes('des Aristocrates') ||
+             streetName.includes('Georges V') ||
+             streetName.includes('du Pacifique') ||
+             streetName.includes('de la Renaissance') ||
+             streetName.includes('du Parc-Laval') ||
+             streetName.includes('Ampère')) {
+      detectedCity = 'Laval';
+      detectedPostalCode = 'H7N 3N8';
+      detectedQuartier = 'Chomedey';
+    }
+    // LAVAL - VIMONT
+    else if (streetName.includes('Michelin') ||
+             streetName.includes('Saint-Elzéar Est') ||
+             streetName.includes('Dagenais Est') ||
+             streetName.includes('Daniel-Johnson') ||
+             streetName.includes('de l\'Avenir') ||
+             streetName.includes('Industrielle') ||
+             streetName.includes('des Affaires') ||
+             streetName.includes('Bombardier') ||
+             streetName.includes('de la Technologie') ||
+             streetName.includes('du Commerce') ||
+             streetName.includes('de l\'Industrie') ||
+             streetName.includes('des Entreprises') ||
+             streetName.includes('Innovation') ||
+             streetName.includes('des Satellites') ||
+             streetName.includes('Louis-Bisson')) {
       detectedCity = 'Laval';
       detectedPostalCode = 'H7L 4R3';
-    } else if (streetName.includes('Saint-Laurent') || streetName.includes('Mont-Royal') || 
-        streetName.includes('Saint-Denis') || streetName.includes('Sainte-Catherine') ||
-        streetName.includes('Sherbrooke') || streetName.includes('Notre-Dame') ||
-        streetName.includes('René-Lévesque') || streetName.includes('Maisonneuve') ||
-        streetName.includes('du Parc') || streetName.includes('McGill')) {
+      detectedQuartier = 'Vimont';
+    }
+    // LAVAL - DUVERNAY
+    else if (streetName.includes('de Java') ||
+             streetName.includes('de Bali') ||
+             streetName.includes('de Sumatra') ||
+             streetName.includes('de Timor') ||
+             streetName.includes('de Flores') ||
+             streetName.includes('de Lombok') ||
+             streetName.includes('de Célèbes') ||
+             streetName.includes('de Mindanao') ||
+             streetName.includes('de Luçon') ||
+             streetName.includes('de Palawan') ||
+             streetName.includes('de Négros') ||
+             streetName.includes('de Mindoro') ||
+             streetName.includes('de Samar') ||
+             streetName.includes('de Panay') ||
+             streetName.includes('de Leyte') ||
+             streetName.includes('de Cebu') ||
+             streetName.includes('des Orchidées') ||
+             streetName.includes('Benoit') ||
+             streetName.includes('Berri') ||
+             streetName.includes('Émile') ||
+             (streetName.includes('Pie-IX') && !streetName.includes('Pie-XII'))) {
+      detectedCity = 'Laval';
+      detectedPostalCode = 'H7E 2T7';
+      detectedQuartier = 'Duvernay';
+    }
+    // LAVAL - PONT-VIAU
+    else if (streetName.includes('Léonard-de-Vinci') ||
+             streetName.includes('Lamartine') ||
+             streetName.includes('Victor-Hugo') ||
+             streetName.includes('Balzac') ||
+             streetName.includes('Rousseau') ||
+             streetName.includes('Voltaire') ||
+             streetName.includes('Molière') ||
+             streetName.includes('Racine') ||
+             streetName.includes('Corneille')) {
+      detectedCity = 'Laval';
+      detectedPostalCode = 'H7G 2V4';
+      detectedQuartier = 'Pont-Viau';
+    }
+    // LAVAL - LAVAL-DES-RAPIDES
+    else if (streetName.includes('Cartier Est') ||
+             streetName.includes('Éthier') ||
+             streetName.includes('Guilbault') ||
+             streetName.includes('Provost') ||
+             streetName.includes('Leblanc') ||
+             streetName.includes('Préfontaine') ||
+             streetName.includes('Dufresne') ||
+             streetName.includes('Panet') ||
+             streetName.includes('Marcel-Villeneuve') ||
+             streetName.includes('Taniata') ||
+             streetName.includes('des Flamands')) {
+      detectedCity = 'Laval';
+      detectedPostalCode = 'H7N 5B3';
+      detectedQuartier = 'Laval-des-Rapides';
+    }
+    // LAVAL - FABREVILLE
+    else if (streetName.includes('des Gouverneurs') ||
+             streetName.includes('Dagenais Ouest') ||
+             streetName.includes('de la Station') ||
+             streetName.includes('Promenade') ||
+             streetName.includes('du Ruisseau') ||
+             streetName.includes('des Trembles') ||
+             streetName.includes('Gaston-Dumoulin') ||
+             streetName.includes('Péladeau') ||
+             streetName.includes('de la Goudrelle') ||
+             streetName.includes('des Patriotes') ||
+             streetName.includes('Montée Gagnon')) {
+      detectedCity = 'Laval';
+      detectedPostalCode = 'H7P 1A3';
+      detectedQuartier = 'Fabreville';
+    }
+    // LAVAL - SAINTE-ROSE
+    else if (streetName.includes('Boulevard Sainte-Rose') ||
+             streetName.includes('du Souvenir') ||
+             streetName.includes('Cléroux') ||
+             streetName.includes('Montée Masson') ||
+             streetName.includes('Montée du Moulin')) {
+      detectedCity = 'Laval';
+      detectedPostalCode = 'H7L 1M3';
+      detectedQuartier = 'Sainte-Rose';
+    }
+    // LAVAL - LAVAL-OUEST
+    else if (streetName.includes('55e Avenue') ||
+             streetName.includes('56e Avenue') ||
+             streetName.includes('57e Avenue') ||
+             streetName.includes('58e Avenue') ||
+             streetName.includes('59e Avenue') ||
+             streetName.includes('60e Avenue') ||
+             streetName.includes('61e Avenue') ||
+             streetName.includes('62e Avenue') ||
+             streetName.includes('63e Avenue') ||
+             streetName.includes('64e Avenue') ||
+             streetName.includes('65e Avenue') ||
+             streetName.includes('de l\'Aqueduc') ||
+             streetName.includes('du Havre')) {
+      detectedCity = 'Laval';
+      detectedPostalCode = 'H7R 1A1';
+      detectedQuartier = 'Laval-Ouest';
+    }
+    // LAVAL - LAVAL-SUR-LE-LAC
+    else if (streetName.includes('de l\'Anse') ||
+             streetName.includes('de la Berge') ||
+             streetName.includes('du Boisé') ||
+             streetName.includes('du Lac') ||
+             streetName.includes('du Rivage') ||
+             streetName.includes('du Golf')) {
+      detectedCity = 'Laval';
+      detectedPostalCode = 'H7R 5Z8';
+      detectedQuartier = 'Laval-sur-le-Lac';
+    }
+    // LAVAL - SAINT-VINCENT-DE-PAUL
+    else if (streetName.includes('Saint-Pierre') ||
+             streetName.includes('de l\'Église') ||
+             streetName.includes('du Curé')) {
+      detectedCity = 'Laval';
+      detectedPostalCode = 'H7C 1R7';
+      detectedQuartier = 'Saint-Vincent-de-Paul';
+    }
+    // LAVAL - SAINT-FRANÇOIS
+    else if (streetName.includes('Boulevard Saint-François') ||
+             streetName.includes('Rang du Haut-Saint-François') ||
+             streetName.includes('Rang Saint-François')) {
+      detectedCity = 'Laval';
+      detectedPostalCode = 'H7B 1B3';
+      detectedQuartier = 'Saint-François';
+    }
+    // LAVAL - SAINTE-DOROTHÉE
+    else if (streetName.includes('du Plateau') ||
+             streetName.includes('de la Seigneurie') ||
+             (streetName.includes('Autoroute') && (streetName.includes('13') || streetName.includes('440')))) {
+      detectedCity = 'Laval';
+      detectedPostalCode = 'H7X 1S1';
+      detectedQuartier = 'Sainte-Dorothée';
+    }
+    // LAVAL - ÎLES-LAVAL
+    else if (streetName.includes('des Îles') ||
+             streetName.includes('de la Grande-Île') ||
+             streetName.includes('de l\'Île-Jésus') ||
+             streetName.includes('de l\'Île-Bigras') ||
+             streetName.includes('de l\'Île-Saint-Pierre')) {
+      detectedCity = 'Laval';
+      detectedPostalCode = 'H7W 1A1';
+      detectedQuartier = 'Îles-Laval';
+    }
+    // MONTRÉAL - Plateau-Mont-Royal
+    else if (streetName.includes('Saint-Laurent') || 
+             streetName.includes('Mont-Royal') || 
+             streetName.includes('Saint-Denis') ||
+             streetName.includes('du Parc')) {
       detectedCity = 'Montréal';
       detectedPostalCode = 'H2J 1Y1';
-    } else if (streetName.includes('Grande Allée') || streetName.includes('Cartier')) {
+      detectedQuartier = 'Le Plateau-Mont-Royal';
+    }
+    // MONTRÉAL - Centre-Ville
+    else if (streetName.includes('Sainte-Catherine') ||
+             streetName.includes('René-Lévesque') ||
+             streetName.includes('Maisonneuve') ||
+             streetName.includes('McGill') ||
+             streetName.includes('Peel') ||
+             streetName.includes('University')) {
+      detectedCity = 'Montréal';
+      detectedPostalCode = 'H3B 1A1';
+      detectedQuartier = 'Ville-Marie';
+    }
+    // MONTRÉAL - Autres quartiers
+    else if (streetName.includes('Sherbrooke') ||
+             streetName.includes('Notre-Dame')) {
+      detectedCity = 'Montréal';
+      detectedPostalCode = 'H2J 1Y1';
+      detectedQuartier = 'Montréal';
+    }
+    // QUÉBEC
+    else if (streetName.includes('Grande Allée') || streetName.includes('Cartier')) {
       detectedCity = 'Québec';
       detectedPostalCode = 'G1R 2K5';
+      detectedQuartier = 'La Cité-Limoilou';
     }
     
     // Actualizar estados locales
     setCity(detectedCity);
     setPostalCode(detectedPostalCode);
+    setQuartier(detectedQuartier);
     
     // Notificar al componente padre
     onAddressSelect?.({
       street: fullAddress,
       city: detectedCity,
       postalCode: detectedPostalCode,
-      apt: apartment
+      apt: apartment,
+      quartier: detectedQuartier
     });
     
     // Notificar cambios a través de onChange
-    onChange?.(fullAddress, { city: detectedCity, postalCode: detectedPostalCode, apt: apartment });
+    onChange?.(fullAddress, { city: detectedCity, postalCode: detectedPostalCode, apt: apartment, quartier: detectedQuartier });
   };
 
   // Notificar cambios cuando se editen los campos adicionales
@@ -701,23 +979,25 @@ function AddressAutocompleteComponent({
           inputValue,
           city,
           postalCode,
-          apartment
+          apartment,
+          quartier
         });
         
         onAddressSelect?.({
           street: inputValue,
           city: city,
           postalCode: postalCode,
-          apt: apartment
+          apt: apartment,
+          quartier: quartier
         });
         
-        onChange?.(inputValue, { city: city, postalCode: postalCode, apt: apartment });
+        onChange?.(inputValue, { city: city, postalCode: postalCode, apt: apartment, quartier: quartier });
         isUserEditing.current = false;
       }, 500);
       
       return () => clearTimeout(timeoutId);
     }
-  }, [postalCode, city, apartment, inputValue]);
+  }, [postalCode, city, apartment, inputValue, quartier]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!showSuggestions || suggestions.length === 0) return;
@@ -826,7 +1106,7 @@ function AddressAutocompleteComponent({
       {/* Campos adicionales editables - SIEMPRE VISIBLES */}
       {showAdditionalFields && (
         <div className="mt-3 space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             {/* Apartamento */}
             <div>
               <Label className="mb-2 block text-sm text-[#333333]">
@@ -841,7 +1121,7 @@ function AddressAutocompleteComponent({
                   isUserEditing.current = true;
                   // ✅ NOTIFICAR al padre cuando cambia el apartamento
                   console.log('🏢 AddressAutocomplete - Apartamento cambiado:', newApartment);
-                  onChange?.(inputValue, { city, postalCode, apt: newApartment });
+                  onChange?.(inputValue, { city, postalCode, apt: newApartment, quartier });
                 }}
                 placeholder="Ex: 101"
                 disabled={disabled}
@@ -861,9 +1141,31 @@ function AddressAutocompleteComponent({
                   isUserEditing.current = true;
                   // ✅ NOTIFICAR al padre cuando cambia la ciudad
                   console.log('🏙️ AddressAutocomplete - Ciudad cambiada:', newCity);
-                  onChange?.(inputValue, { city: newCity, postalCode, apt: apartment });
+                  onChange?.(inputValue, { city: newCity, postalCode, apt: apartment, quartier });
                 }}
                 placeholder="Ex: Laval"
+                disabled={disabled}
+                className="w-full"
+              />
+            </div>
+
+            {/* Quartier - EDITABLE */}
+            <div>
+              <Label className="mb-2 block text-sm text-[#333333]">
+                Quartier <span className="text-[#999999]">(auto)</span>
+              </Label>
+              <Input
+                type="text"
+                value={quartier}
+                onChange={(e) => {
+                  const newQuartier = e.target.value;
+                  setQuartier(newQuartier);
+                  isUserEditing.current = true;
+                  // ✅ NOTIFICAR al padre cuando cambia el quartier
+                  console.log('🏘️ AddressAutocomplete - Quartier cambiado:', newQuartier);
+                  onChange?.(inputValue, { city, postalCode, apt: apartment, quartier: newQuartier });
+                }}
+                placeholder="Ex: Chomedey"
                 disabled={disabled}
                 className="w-full"
               />
@@ -888,7 +1190,7 @@ function AddressAutocompleteComponent({
                   isUserEditing.current = true;
                   // ✅ NOTIFICAR al padre cuando cambia el código postal
                   console.log('📮 AddressAutocomplete - Código postal cambiado:', value);
-                  onChange?.(inputValue, { city, postalCode: value, apt: apartment });
+                  onChange?.(inputValue, { city, postalCode: value, apt: apartment, quartier });
                 }}
                 placeholder="Ex: H7L 4R3"
                 disabled={disabled}

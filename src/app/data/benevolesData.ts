@@ -15,6 +15,7 @@ export interface Benevole {
   dateInscription: string;
   adresse: string;
   codePostal: string;
+  quartier?: string;
   competences: string[];
   disponibilite: string;
   joursDisponibles: JourDisponible[];

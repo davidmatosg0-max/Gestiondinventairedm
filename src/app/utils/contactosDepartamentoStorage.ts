@@ -57,6 +57,7 @@ export interface ContactoDepartamento {
   apartamento?: string; // Número de apartamento
   ciudad?: string;
   codigoPostal?: string;
+  quartier?: string; // Quartier/Barrio
   numeroEmpleado?: string;
   horario?: string;
   heuresSemaines?: number; // Horas semanales
@@ -1167,6 +1168,7 @@ export function sincronizarDesdeBenevole(benevole: {
   apartamento?: string;
   ciudad?: string;
   codigoPostal?: string;
+  quartier?: string;
   statut?: string;
   disponibilites?: any[];
   disponibilitesSemanal?: any[];
@@ -1197,7 +1199,8 @@ export function sincronizarDesdeBenevole(benevole: {
           direccion: benevole.direccion,
           apartamento: benevole.apartamento,
           ciudad: benevole.ciudad,
-          codigoPostal: benevole.codigoPostal
+          codigoPostal: benevole.codigoPostal,
+          quartier: benevole.quartier
         });
 
         // Actualizar con los nuevos datos del bénévole
@@ -1213,6 +1216,7 @@ export function sincronizarDesdeBenevole(benevole: {
           ...(benevole.apartamento !== undefined && { apartamento: benevole.apartamento }),
           ...(benevole.ciudad !== undefined && { ciudad: benevole.ciudad }),
           ...(benevole.codigoPostal !== undefined && { codigoPostal: benevole.codigoPostal }),
+          ...(benevole.quartier !== undefined && { quartier: benevole.quartier }),
           // Actualizar estado activo basado en statut
           ...(benevole.statut && { 
             activo: benevole.statut === 'Actif' || benevole.statut === 'actif'
