@@ -4,9 +4,9 @@
  */
 
 export const APP_VERSION = {
-  version: '2.5.3',
-  releaseDate: '2026-03-15',
-  buildNumber: 253,
+  version: '2.5.4',
+  releaseDate: '2026-03-16',
+  buildNumber: 254,
   environment: 'production' as 'development' | 'staging' | 'production'
 };
 
@@ -44,6 +44,90 @@ export interface ReleaseNote {
  * Mantener ordenadas de más reciente a más antigua
  */
 export const RELEASE_NOTES: ReleaseNote[] = [
+  {
+    version: '2.5.4',
+    date: '2026-03-16',
+    type: 'patch',
+    title: {
+      fr: 'Système de Protection Totale des Données',
+      es: 'Sistema de Protección Total de Datos',
+      en: 'Total Data Protection System',
+      ar: 'نظام الحماية الكاملة للبيانات'
+    },
+    description: {
+      fr: 'Implémentation d\'un système de protection multicouche qui empêche toute suppression accidentelle de données, avec backups automatiques et surveillance continue.',
+      es: 'Implementación de un sistema de protección multicapa que previene cualquier eliminación accidental de datos, con backups automáticos y monitoreo continuo.',
+      en: 'Implementation of a multi-layer protection system that prevents any accidental data deletion, with automatic backups and continuous monitoring.',
+      ar: 'تنفيذ نظام حماية متعدد الطبقات يمنع أي حذف عرضي للبيانات، مع نسخ احتياطية تلقائية ومراقبة مستمرة.'
+    },
+    changes: [
+      {
+        type: 'security',
+        description: {
+          fr: '🛡️ Protection totale contre localStorage.clear() et removeItem() pour les clés critiques',
+          es: '🛡️ Protección total contra localStorage.clear() y removeItem() para claves críticas',
+          en: '🛡️ Full protection against localStorage.clear() and removeItem() for critical keys',
+          ar: '🛡️ حماية كاملة ضد localStorage.clear() و removeItem() للمفاتيح الحرجة'
+        }
+      },
+      {
+        type: 'security',
+        description: {
+          fr: '⌨️ Blocage des combinaisons de touches dangereuses (Ctrl+Delete, Ctrl+Shift+Delete, etc.)',
+          es: '⌨️ Bloqueo de combinaciones de teclas peligrosas (Ctrl+Delete, Ctrl+Shift+Delete, etc.)',
+          en: '⌨️ Blocking of dangerous key combinations (Ctrl+Delete, Ctrl+Shift+Delete, etc.)',
+          ar: '⌨️ حظر مجموعات المفاتيح الخطيرة (Ctrl+Delete، Ctrl+Shift+Delete، إلخ.)'
+        }
+      },
+      {
+        type: 'feature',
+        description: {
+          fr: '💾 Backups automatiques avant fermeture de l\'onglet et lors de changements suspects',
+          es: '💾 Backups automáticos antes de cerrar pestaña y ante cambios sospechosos',
+          en: '💾 Automatic backups before tab closing and on suspicious changes',
+          ar: '💾 نسخ احتياطية تلقائية قبل إغلاق علامة التبويب وعند التغييرات المشبوهة'
+        }
+      },
+      {
+        type: 'feature',
+        description: {
+          fr: '👁️ Surveillance continue du localStorage avec alertes automatiques',
+          es: '👁️ Monitoreo continuo del localStorage con alertas automáticas',
+          en: '👁️ Continuous localStorage monitoring with automatic alerts',
+          ar: '👁️ مراقبة مستمرة لـ localStorage مع تنبيهات تلقائية'
+        }
+      },
+      {
+        type: 'feature',
+        description: {
+          fr: '🖥️ Fonctions de console pour diagnostics et restauration (proteccionDatos.info())',
+          es: '🖥️ Funciones de consola para diagnósticos y restauración (proteccionDatos.info())',
+          en: '🖥️ Console functions for diagnostics and restoration (proteccionDatos.info())',
+          ar: '🖥️ وظائف وحدة التحكم للتشخيص والاستعادة (proteccionDatos.info())'
+        }
+      },
+      {
+        type: 'improvement',
+        description: {
+          fr: '🎨 Notifications visuelles élégantes lors de blocage d\'actions destructives',
+          es: '🎨 Notificaciones visuelles elegantes al bloquear acciones destructivas',
+          en: '🎨 Elegant visual notifications when blocking destructive actions',
+          ar: '🎨 إشعارات مرئية أنيقة عند حظر الإجراءات المدمرة'
+        }
+      },
+      {
+        type: 'bugfix',
+        description: {
+          fr: '🔧 Suppression du champ "Valeur Unitaire" redondant dans le formulaire d\'entrée',
+          es: '🔧 Eliminación del campo "Valor Unitario" redundante en el formulario de entrada',
+          en: '🔧 Removed redundant "Unit Value" field from entry form',
+          ar: '🔧 إزالة حقل "القيمة الوحدوية" الزائد من نموذج الإدخال'
+        }
+      }
+    ],
+    breaking: false,
+    critical: false
+  },
   {
     version: '2.5.3',
     date: '2026-03-15',
@@ -101,7 +185,7 @@ export const RELEASE_NOTES: ReleaseNote[] = [
         type: 'improvement',
         description: {
           fr: '✨ Interface de notifications avec couleurs personnalisées selon le type d\'action',
-          es: '✨ Interfaz de notificaciones con colores personalizados según el tipo de acción',
+          es: '✨ Interfaz de notificaciones avec colores personalizados selon le type de acción',
           en: '✨ Notification interface with custom colors based on action type',
           ar: '✨ واجهة إشعارات بألوان مخصصة حسب نوع الإجراء'
         }
@@ -179,7 +263,7 @@ export const RELEASE_NOTES: ReleaseNote[] = [
         type: 'improvement',
         description: {
           fr: 'Optimisation de la vitesse de chargement',
-          es: 'Optimización de la velocidad de carga',
+          es: 'Optimisation de la velocidad de chargement',
           en: 'Loading speed optimization',
           ar: 'تحسين سرعة التحميل'
         }

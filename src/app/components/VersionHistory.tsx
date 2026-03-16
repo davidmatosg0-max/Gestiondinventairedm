@@ -4,12 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
 import { APP_VERSION, RELEASE_NOTES, type ReleaseNote } from '../version';
-import { Package, Calendar, AlertCircle, Shield, Zap, Bug, Lock } from 'lucide-react';
+import { Package, Calendar, AlertCircle, Shield, Zap, Bug, Lock, RefreshCw } from 'lucide-react';
+import { useAutoVersionUpdate } from '../../hooks/useAutoVersionUpdate';
+import { Button } from './ui/button';
 
 export function VersionHistory() {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language as 'fr' | 'es' | 'en' | 'ar';
   const lang = ['fr', 'es', 'en', 'ar'].includes(currentLang) ? currentLang : 'fr';
+  const { currentVersion, shouldRefresh, checkForVersionUpdate } = useAutoVersionUpdate();
 
   const getVersionTypeColor = (type: ReleaseNote['type']) => {
     const colors = {
@@ -74,6 +77,15 @@ export function VersionHistory() {
                 </CardDescription>
               </div>
             </div>
+            {shouldRefresh && (
+              <Button
+                className="bg-[#2d9561] text-white"
+                onClick={checkForVersionUpdate}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                {t('organisms.version.history.update')}
+              </Button>
+            )}
           </div>
         </CardHeader>
       </Card>

@@ -165,3 +165,8 @@ Si necesitas ayuda o encuentras algún problema:
 
 **Última actualización**: 16/03/2026
 **Versión del Sistema**: 5.0 PRO con Protección Total de Datos
+
+## Documentación Relacionada
+
+- 📄 [Sistema de Actualización Automática de Versiones](./ACTUALIZACION_AUTOMATICA.md)
+- 🔒 Sistema de Protección Total de Datos (este documento)
