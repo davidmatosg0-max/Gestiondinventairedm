@@ -42,6 +42,7 @@ interface Candidate {
   applicationDate: string;
   experience: string;
   availability: string;
+  numeroArchivo?: string; // ✅ Agregar número de archivo
 }
 
 export function Recrutement() {
@@ -55,6 +56,10 @@ export function Recrutement() {
   const [dialogAssignerOpen, setDialogAssignerOpen] = useState(false);
   const [candidatoParaAssignar, setCandidatoParaAssignar] = useState<Candidate | null>(null);
   const [departamentoSeleccionado, setDepartamentoSeleccionado] = useState('');
+  
+  // 🎯 Estado para el diálogo de perfil detallado
+  const [dialogPerfilOpen, setDialogPerfilOpen] = useState(false);
+  const [candidatoParaPerfil, setCandidatoParaPerfil] = useState<Candidate | null>(null);
 
   // ✅ LISTA CORRECTA DE DEPARTAMENTOS CON IDs NUMÉRICOS (coinciden con departamentosStorage.ts)
   const departamentosDisponibles = [
@@ -290,6 +295,24 @@ export function Recrutement() {
       (contacto.nombre.toLowerCase() === candidate.name.split(' ')[0].toLowerCase() &&
        contacto.apellido.toLowerCase() === candidate.name.split(' ').slice(1).join(' ').toLowerCase())
     );
+  };
+
+  // 🔍 Fonction pour obtenir le numéro d'archive d'un candidat s'il est déjà assigné
+  const obtenerNumeroArchivoCandidato = (candidate: Candidate): string | null => {
+    // Buscar en tous les departamentos
+    for (const dept of departamentosDisponibles) {
+      const contactosExistentes = obtenerContactosPorDepartamento(dept.id);
+      const contactoEncontrado = contactosExistentes.find(contacto => 
+        contacto.email.toLowerCase() === candidate.email.toLowerCase() ||
+        (contacto.nombre.toLowerCase() === candidate.name.split(' ')[0].toLowerCase() &&
+         contacto.apellido.toLowerCase() === candidate.name.split(' ').slice(1).join(' ').toLowerCase())
+      );
+      
+      if (contactoEncontrado && contactoEncontrado.numeroArchivo) {
+        return contactoEncontrado.numeroArchivo;
+      }
+    }
+    return null;
   };
 
   // 🎯 Fonction pour assigner candidat à un département spécifique
@@ -651,6 +674,9 @@ export function Recrutement() {
               // Alternar colores
               const cardColor = index % 2 === 0 ? branding.primaryColor : branding.secondaryColor;
               
+              // ✅ Obtener número de archivo si existe
+              const numeroArchivo = obtenerNumeroArchivoCandidato(candidate);
+              
               return (
                 <Card 
                   key={candidate.id}
@@ -687,6 +713,18 @@ export function Recrutement() {
                             {candidate.name}
                           </CardTitle>
                           <p className="text-sm text-[#666666] truncate">{candidate.position}</p>
+                          {/* ✅ Mostrar número de archivo si existe */}
+                          {numeroArchivo && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <FileText className="w-3 h-3" style={{ color: branding.primaryColor }} />
+                              <span 
+                                className="text-xs font-mono font-semibold tracking-wide"
+                                style={{ color: branding.primaryColor }}
+                              >
+                                {numeroArchivo}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                       {getStatusBadge(candidate.status)}
@@ -762,6 +800,11 @@ export function Recrutement() {
                           color: cardColor,
                           borderColor: `${cardColor}30`
                         }}
+                        onClick={() => {
+                          setCandidatoParaPerfil(candidate);
+                          setDialogPerfilOpen(true);
+                        }}
+                        title="Voir le profil détaillé"
                       >
                         <FileText className="w-4 h-4" />
                       </Button>
@@ -948,6 +991,188 @@ export function Recrutement() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Profil Détaillé du Candidat */}
+      <Dialog open={dialogPerfilOpen} onOpenChange={setDialogPerfilOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              <Users className="w-6 h-6" style={{ color: branding.primaryColor }} />
+              Profil du Candidat
+            </DialogTitle>
+            <DialogDescription>
+              Détails complets de la candidature de {candidatoParaPerfil?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          {candidatoParaPerfil && (() => {
+            const numeroArchivo = obtenerNumeroArchivoCandidato(candidatoParaPerfil);
+            const cardColor = branding.primaryColor;
+            
+            return (
+              <div className="space-y-6">
+                {/* En-tête du profil avec avatar */}
+                <div 
+                  className="p-6 rounded-xl relative overflow-hidden"
+                  style={{
+                    background: `linear-gradient(135deg, ${branding.primaryColor}15 0%, ${branding.secondaryColor}10 100%)`
+                  }}
+                >
+                  <div className="flex items-start gap-4">
+                    <div 
+                      className="w-20 h-20 rounded-2xl flex items-center justify-center text-white flex-shrink-0"
+                      style={{ 
+                        background: `linear-gradient(135deg, ${cardColor} 0%, ${cardColor}dd 100%)`,
+                        boxShadow: `0 4px 12px ${cardColor}30`
+                      }}
+                    >
+                      <Users className="w-10 h-10" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 
+                        className="text-2xl font-bold mb-1"
+                        style={{ 
+                          fontFamily: 'Montserrat, sans-serif',
+                          color: branding.primaryColor
+                        }}
+                      >
+                        {candidatoParaPerfil.name}
+                      </h3>
+                      <p className="text-lg mb-2" style={{ color: branding.secondaryColor }}>
+                        {candidatoParaPerfil.position}
+                      </p>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {getStatusBadge(candidatoParaPerfil.status)}
+                        {numeroArchivo && (
+                          <div className="flex items-center gap-1 px-3 py-1 rounded-lg bg-white/80">
+                            <FileText className="w-4 h-4" style={{ color: branding.primaryColor }} />
+                            <span 
+                              className="text-sm font-mono font-semibold tracking-wide"
+                              style={{ color: branding.primaryColor }}
+                            >
+                              {numeroArchivo}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Informations de contact */}
+                <div className="space-y-3">
+                  <h4 
+                    className="font-semibold text-lg flex items-center gap-2"
+                    style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}
+                  >
+                    <Mail className="w-5 h-5" />
+                    Coordonnées
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200">
+                      <Mail className="w-5 h-5 flex-shrink-0" style={{ color: cardColor }} />
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Email</p>
+                        <p className="text-sm font-medium">{candidatoParaPerfil.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200">
+                      <Phone className="w-5 h-5 flex-shrink-0" style={{ color: cardColor }} />
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Téléphone</p>
+                        <p className="text-sm font-medium">{candidatoParaPerfil.phone}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Détails de la candidature */}
+                <div className="space-y-3">
+                  <h4 
+                    className="font-semibold text-lg flex items-center gap-2"
+                    style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}
+                  >
+                    <Briefcase className="w-5 h-5" />
+                    Détails de la candidature
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex items-start gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200">
+                      <Calendar className="w-5 h-5 flex-shrink-0 mt-1" style={{ color: cardColor }} />
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Date de candidature</p>
+                        <p className="text-sm font-medium">
+                          {new Date(candidatoParaPerfil.applicationDate).toLocaleDateString('fr-FR', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200">
+                      <Clock className="w-5 h-5 flex-shrink-0 mt-1" style={{ color: cardColor }} />
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Disponibilité</p>
+                        <p className="text-sm font-medium">{candidatoParaPerfil.availability}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expérience */}
+                <div className="space-y-3">
+                  <h4 
+                    className="font-semibold text-lg flex items-center gap-2"
+                    style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}
+                  >
+                    <Sparkles className="w-5 h-5" />
+                    Expérience
+                  </h4>
+                  <div 
+                    className="p-4 rounded-xl border-l-4"
+                    style={{ 
+                      backgroundColor: `${branding.secondaryColor}10`,
+                      borderLeftColor: branding.secondaryColor
+                    }}
+                  >
+                    <p className="text-sm leading-relaxed">{candidatoParaPerfil.experience}</p>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3 justify-end pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setDialogPerfilOpen(false);
+                      setCandidatoParaPerfil(null);
+                    }}
+                    style={{ fontFamily: 'Montserrat, sans-serif' }}
+                  >
+                    Fermer
+                  </Button>
+                  <Button
+                    className="text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                    style={{
+                      background: `linear-gradient(135deg, ${branding.secondaryColor} 0%, ${branding.secondaryColor}dd 100%)`,
+                      fontFamily: 'Montserrat, sans-serif'
+                    }}
+                    onClick={() => {
+                      setDialogPerfilOpen(false);
+                      setCandidatoParaAssignar(candidatoParaPerfil);
+                      setDialogAssignerOpen(true);
+                    }}
+                  >
+                    <Link className="w-4 h-4 mr-2" />
+                    Assigner au département
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>

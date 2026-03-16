@@ -34,6 +34,7 @@ export interface DisponibilidadDia {
 
 export interface ContactoDepartamento {
   id: string;
+  numeroArchivo?: string; // 🆕 Código identificativo único del contacto (ej: "CONT-2024-0001")
   departamentoId: string; // Mantener para compatibilidad con contactos existentes
   departamentoIds?: string[]; // Nuevo: múltiples departamentos
   tipo: TipoContacto;
@@ -270,6 +271,32 @@ function guardarTodosContactos(contactos: ContactoDepartamento[]): void {
   }
 }
 
+/**
+ * 🆕 Generar número de archivo único para contactos
+ * Formato: CONT-YYYY-NNNN (ej: CONT-2024-0001)
+ */
+function generarNumeroArchivo(): string {
+  const contactos = obtenerContactosDepartamento();
+  const añoActual = new Date().getFullYear();
+  
+  // Encontrar el número más alto del año actual
+  const numerosDelAño = contactos
+    .filter(c => c.numeroArchivo && c.numeroArchivo.startsWith(`CONT-${añoActual}-`))
+    .map(c => {
+      const match = c.numeroArchivo?.match(/CONT-\d{4}-(\d{4})/);
+      return match ? parseInt(match[1], 10) : 0;
+    })
+    .filter(n => !isNaN(n));
+  
+  const numeroMasAlto = numerosDelAño.length > 0 ? Math.max(...numerosDelAño) : 0;
+  const nuevoNumero = numeroMasAlto + 1;
+  
+  // Formatear con ceros a la izquierda (4 dígitos)
+  const numeroFormateado = nuevoNumero.toString().padStart(4, '0');
+  
+  return `CONT-${añoActual}-${numeroFormateado}`;
+}
+
 // Guardar un nuevo contacto
 export function guardarContacto(contacto: any): ContactoDepartamento {
   const contactos = obtenerContactosDepartamento();
@@ -304,22 +331,28 @@ export function guardarContacto(contacto: any): ContactoDepartamento {
     return yaExiste;
   }
   
+  // 🆕 Generar número de archivo si no existe
+  const numeroArchivo = contacto.numeroArchivo || generarNumeroArchivo();
+  
   // Si el contacto ya tiene id y fechaIngreso, usarlos
   const nuevoContacto: ContactoDepartamento = contacto.id && contacto.fechaIngreso 
     ? {
         ...contacto,
+        numeroArchivo, // ✅ Agregar número de archivo
         // ✅ GARANTIZAR que departamentoIds siempre exista
         departamentoIds: contacto.departamentoIds || [contacto.departamentoId]
       }
     : {
         ...contacto,
         id: Date.now().toString(),
+        numeroArchivo, // ✅ Agregar número de archivo
         fechaIngreso: new Date().toISOString(),
         // ✅ GARANTIZAR que departamentoIds siempre exista
         departamentoIds: contacto.departamentoIds || [contacto.departamentoId]
       };
   
   console.log('💾 Guardando contacto en localStorage:', nuevoContacto);
+  console.log('🆔 Número de archivo generado:', numeroArchivo);
   contactos.push(nuevoContacto);
   guardarTodosContactos(contactos);
   console.log('✅ Total de contactos después de guardar:', contactos.length);
@@ -1152,5 +1185,88 @@ export function sincronizarDesdeBenevole(benevole: {
   } catch (error) {
     console.error('❌ Error al sincronizar desde bénévole:', error);
     return { actualizados: 0, departamentos: [] };
+  }
+}
+
+/**
+ * 🔄 Migrar contactos existentes para asignarles números de archivo
+ * Esta función se ejecuta automáticamente al cargar el sistema
+ */
+export function migrarNumerosArchivo(): number {
+  try {
+    const contactos = obtenerContactosDepartamento();
+    let contactosMigrados = 0;
+    
+    // Verificar si hay contactos sin número de archivo
+    const contactosSinNumero = contactos.filter(c => !c.numeroArchivo);
+    
+    if (contactosSinNumero.length === 0) {
+      console.log('✅ Todos los contactos ya tienen número de archivo');
+      return 0;
+    }
+    
+    console.log(`🔄 Iniciando migración de ${contactosSinNumero.length} contactos sin número de archivo...`);
+    
+    // Ordenar por fecha de ingreso (más antiguos primero)
+    const contactosOrdenados = [...contactosSinNumero].sort((a, b) => {
+      const fechaA = a.fechaIngreso ? new Date(a.fechaIngreso).getTime() : 0;
+      const fechaB = b.fechaIngreso ? new Date(b.fechaIngreso).getTime() : 0;
+      return fechaA - fechaB;
+    });
+    
+    // Asignar números de archivo a cada contacto
+    const contactosActualizados = contactos.map(contacto => {
+      if (!contacto.numeroArchivo) {
+        // Generar número de archivo basado en la fecha de ingreso
+        const año = contacto.fechaIngreso 
+          ? new Date(contacto.fechaIngreso).getFullYear() 
+          : new Date().getFullYear();
+        
+        // Contar contactos del mismo año
+        const contactosDelAño = contactos.filter(c => {
+          if (!c.fechaIngreso) return false;
+          return new Date(c.fechaIngreso).getFullYear() === año;
+        });
+        
+        const numeroSecuencial = contactosDelAño.indexOf(contacto) + 1;
+        const numeroFormateado = numeroSecuencial.toString().padStart(4, '0');
+        const numeroArchivo = `CONT-${año}-${numeroFormateado}`;
+        
+        contactosMigrados++;
+        
+        return {
+          ...contacto,
+          numeroArchivo
+        };
+      }
+      return contacto;
+    });
+    
+    // Guardar los contactos actualizados
+    guardarTodosContactos(contactosActualizados);
+    
+    console.log(`✅ Migración completada: ${contactosMigrados} contactos actualizados con números de archivo`);
+    
+    return contactosMigrados;
+  } catch (error) {
+    console.error('❌ Error al migrar números de archivo:', error);
+    return 0;
+  }
+}
+
+// 🔄 Ejecutar migración automática al cargar el módulo
+if (typeof window !== 'undefined') {
+  // Ejecutar migración solo una vez al cargar la página
+  const MIGRATION_KEY = 'banqueAlimentaire_numerosArchivo_migrado';
+  const yaMigrado = localStorage.getItem(MIGRATION_KEY);
+  
+  if (!yaMigrado) {
+    console.log('🚀 Ejecutando migración automática de números de archivo...');
+    const migrados = migrarNumerosArchivo();
+    
+    if (migrados > 0) {
+      localStorage.setItem(MIGRATION_KEY, 'true');
+      console.log(`✅ Migración automática completada: ${migrados} contactos`);
+    }
   }
 }

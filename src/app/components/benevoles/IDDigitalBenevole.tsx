@@ -12,6 +12,7 @@ interface Benevole {
   dateInscription: string;
   statut: 'actif' | 'inactif' | 'en pause';
   heuresTotal: number;
+  numeroArchivo?: string;
 }
 
 interface IDDigitalBenevoleProps {
@@ -22,7 +23,7 @@ interface IDDigitalBenevoleProps {
 
 export function IDDigitalBenevole({ benevole, isOpen, onClose }: IDDigitalBenevoleProps) {
   const idData: IDDigitalData = {
-    identifiant: benevole.identifiant,
+    identifiant: benevole.numeroArchivo || '',
     nom: benevole.nom,
     prenom: benevole.prenom,
     email: benevole.email,

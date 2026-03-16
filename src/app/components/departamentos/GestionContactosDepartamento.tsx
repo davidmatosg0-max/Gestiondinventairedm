@@ -666,7 +666,8 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       `${contacto.nombre} ${contacto.apellido}`.toLowerCase().includes(searchText) ||
       (contacto.nombreEmpresa || '').toLowerCase().includes(searchText) ||
       contacto.email.toLowerCase().includes(searchText) ||
-      contacto.telefono.includes(busqueda);
+      contacto.telefono.includes(busqueda) ||
+      (contacto.numeroArchivo || '').toLowerCase().includes(searchText);
     
     const matchTipo = tipoFiltro === 'todos' || contacto.tipo === tipoFiltro;
     
@@ -1099,6 +1100,20 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                                 </h3>
                               </div>
                               
+                              {/* 🆔 Número de archivo */}
+                              {contacto.numeroArchivo && (
+                                <Badge 
+                                  className="text-[10px] mb-2 font-mono font-semibold rounded-md px-2 py-0.5" 
+                                  style={{ 
+                                    backgroundColor: '#1a4d7a15', 
+                                    color: '#1a4d7a',
+                                    border: '1px solid #1a4d7a30'
+                                  }}
+                                >
+                                  {contacto.numeroArchivo}
+                                </Badge>
+                              )}
+                              
                               <Badge 
                                 className="text-xs mb-2 font-medium rounded-lg" 
                                 style={{ backgroundColor: `${config.color}15`, color: config.color, fontFamily: 'Roboto, sans-serif' }}
@@ -1278,6 +1293,21 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                     }}>
                       {contactoSeleccionado.nombre} {contactoSeleccionado.apellido}
                     </h3>
+                    {/* 🆔 Número de archivo prominente */}
+                    {contactoSeleccionado.numeroArchivo && (
+                      <div className="mb-3">
+                        <Badge 
+                          className="text-sm font-mono font-bold shadow-md px-3 py-1.5"
+                          style={{ 
+                            backgroundColor: '#1a4d7a',
+                            color: 'white',
+                            fontFamily: 'monospace'
+                          }}
+                        >
+                          📋 {contactoSeleccionado.numeroArchivo}
+                        </Badge>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <Badge 
                         className="text-sm font-medium shadow-sm"
@@ -1300,6 +1330,27 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
               </div>
               
               <div className="grid grid-cols-2 gap-4 text-sm">
+                {/* 🆔 Número de archivo */}
+                {contactoSeleccionado.numeroArchivo && (
+                  <div className="p-3 rounded-lg border-2" style={{ 
+                    borderColor: '#1a4d7a',
+                    backgroundColor: '#1a4d7a10'
+                  }}>
+                    <span className="font-semibold flex items-center gap-2 mb-1" style={{ 
+                      color: '#1a4d7a',
+                      fontFamily: 'Montserrat, sans-serif'
+                    }}>
+                      <FileText className="w-4 h-4" />
+                      N° de Dossier:
+                    </span>
+                    <p className="font-mono font-bold text-base" style={{ 
+                      fontFamily: 'monospace',
+                      color: '#1a4d7a'
+                    }}>
+                      {contactoSeleccionado.numeroArchivo}
+                    </p>
+                  </div>
+                )}
                 {contactoSeleccionado.email && (
                   <div className="p-3 rounded-lg border" style={{ 
                     borderColor: `${getTipoConfig(contactoSeleccionado.tipo).color}30`,

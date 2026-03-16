@@ -23,7 +23,7 @@ import { obtenirQuartiersLaval } from '../../data/quartiersLaval';
 import { SelecteurJoursDisponibles, type JourDisponible } from '../shared/SelecteurJoursDisponibles';
 import { obtenerDepartamentos } from '../../utils/departamentosStorage';
 import { obtenerUsuarioSesion, tienePermiso } from '../../utils/sesionStorage';
-import { guardarContacto, type ContactoDepartamento, sincronizarDesdeBenevole } from '../../utils/contactosDepartamentoStorage';
+import { guardarContacto, type ContactoDepartamento, sincronizarDesdeBenevole, obtenerContactosDepartamento } from '../../utils/contactosDepartamentoStorage';
 import { sincronizarVoluntariosEntrepot } from '../../utils/sincronizarVoluntariosEntrepot';
 import { BoutonRetourHeader } from '../shared/BoutonRetour';
 import { 
@@ -139,7 +139,8 @@ interface DisponibilidadDiaBenevole {
 
 interface Benevole {
   id: number;
-  identifiant: string; // Format BEN-XXX
+  identifiant: string; // DEPRECADO - Solo se usa numeroArchivo ahora
+  numeroArchivo?: string; // 🆕 Número de archivo del sistema de contactos (CONT-YYYY-NNNN)
   tipo?: TipoBenevole; // NUEVO - Tipo de bénévole
   nom: string;
   prenom: string;
@@ -213,6 +214,11 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
   // Edit modal state
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingBenevole, setEditingBenevole] = useState<Benevole | null>(null);
+  
+  // 🎯 Profile modal state (pour voir les détails complets)
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [profileBenevole, setProfileBenevole] = useState<Benevole | null>(null);
+  
   const [editForm, setEditForm] = useState({
     tipo: 'benevole' as TipoBenevole,
     nom: '',
@@ -501,6 +507,51 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
   // Guardar bénévoles en localStorage cada vez que cambien
   React.useEffect(() => {
     localStorage.setItem('banqueAlimentaire_benevoles', JSON.stringify(benevoles));
+  }, [benevoles]);
+
+  // 🔄 SINCRONIZAR números de archivo desde contactos a bénévoles
+  React.useEffect(() => {
+    const sincronizarNumerosArchivo = () => {
+      const contactos = obtenerContactosDepartamento();
+      let actualizado = false;
+      
+      const benevolesActualizados = benevoles.map(benevole => {
+        // Buscar contacto correspondiente por email
+        const contacto = contactos.find(c => 
+          c.email.toLowerCase() === benevole.email.toLowerCase() && c.tipo === 'benevole'
+        );
+        
+        // Si existe el contacto y tiene número de archivo, sincronizarlo
+        if (contacto?.numeroArchivo && contacto.numeroArchivo !== benevole.numeroArchivo) {
+          console.log(`🔄 Sincronizando número de archivo para ${benevole.prenom} ${benevole.nom}: ${contacto.numeroArchivo}`);
+          actualizado = true;
+          return {
+            ...benevole,
+            numeroArchivo: contacto.numeroArchivo
+          };
+        }
+        
+        return benevole;
+      });
+      
+      if (actualizado) {
+        setBenevoles(benevolesActualizados);
+      }
+    };
+    
+    // Ejecutar sincronización al montar el componente
+    sincronizarNumerosArchivo();
+    
+    // Escuchar cambios en contactos
+    const handleContactosUpdate = () => {
+      sincronizarNumerosArchivo();
+    };
+    
+    window.addEventListener('contactos-actualizados', handleContactosUpdate);
+    
+    return () => {
+      window.removeEventListener('contactos-actualizados', handleContactosUpdate);
+    };
   }, [benevoles]);
 
   // ⚡ OPTIMIZACIÓN: Debounce del searchTerm para mejorar rendimiento
@@ -1037,13 +1088,6 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     setEditFormPhotoPreview(null);
   };
 
-  // Fonction pour générer un identifiant unique
-  const generateIdentifiant = () => {
-    const maxId = Math.max(...benevoles.map(b => b.id), 0);
-    const nextId = maxId + 1;
-    return `VOL-${String(nextId).padStart(3, '0')}`;
-  };
-
   // Handlers for new modal - Ahora maneja tanto creación como edición
   const handleSaveNew = () => {
     if (!newForm.nom || !newForm.prenom || !newForm.email) {
@@ -1159,7 +1203,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       
       const nouveauBenevole: Benevole = {
         id: maxId + 1,
-        identifiant: generateIdentifiant(),
+        identifiant: '', // Solo se usa numeroArchivo
         tipo: newForm.tipo,
         nom: newForm.nom,
         prenom: newForm.prenom,
@@ -1295,7 +1339,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         direccion: benevoleSeleccionadoAsignar.adresse || '',
         ciudad: benevoleSeleccionadoAsignar.ville || '',
         codigoPostal: benevoleSeleccionadoAsignar.codePostal || '',
-        numeroEmpleado: benevoleSeleccionadoAsignar.identifiant || '',
+        numeroEmpleado: benevoleSeleccionadoAsignar.numeroArchivo || '',
         horario: '',
         heuresSemaines: benevoleSeleccionadoAsignar.heuresSemaines || 0,
         reference: benevoleSeleccionadoAsignar.reference || '',
@@ -1884,8 +1928,8 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
               <div class="section-title">Informations Personnelles</div>
               <div class="field-group">
                 <div class="field">
-                  <div class="field-label">Identifiant</div>
-                  <div class="field-value" style="font-family: monospace; color: #1E73BE; font-weight: bold;">${selectedBenevole.identifiant}</div>
+                  <div class="field-label">Numéro de dossier</div>
+                  <div class="field-value" style="font-family: monospace; color: #1E73BE; font-weight: bold;">${selectedBenevole.numeroArchivo || 'N/A'}</div>
                 </div>
                 <div class="field full-width">
                   <div class="field-label">Nom complet</div>
@@ -2625,6 +2669,11 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                       <td className="px-6 py-4">
                         <div>
                           <p className="font-semibold text-[#333333]">{benevole.prenom} {benevole.nom}</p>
+                          {benevole.numeroArchivo && (
+                            <p className="text-xs font-mono font-semibold text-[#1a4d7a] mb-0.5">
+                              📋 {benevole.numeroArchivo}
+                            </p>
+                          )}
                           <p className="text-sm text-[#666666]">{benevole.email}</p>
                         </div>
                       </td>
@@ -2643,7 +2692,10 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleOpenEditModal(benevole)}
+                            onClick={() => {
+                              setProfileBenevole(benevole);
+                              setProfileModalOpen(true);
+                            }}
                             className="border-[#1E73BE] text-[#1E73BE] hover:bg-[#1E73BE] hover:text-white"
                             title="Voir le profil"
                           >
@@ -4916,7 +4968,6 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         departements={departements}
         photoPreview={newFormPhotoPreview}
         onPhotoChange={handleNewFormPhotoChange}
-        generateIdentifiant={generateIdentifiant}
         getTipoBenevoleConfig={getTipoBenevoleConfig}
         onOpenGestionTiposContacto={() => {
           setNewModalOpen(false);
@@ -5060,6 +5111,465 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
           }}
         />
       )}
+
+      {/* Dialog: Profil Détaillé du Bénévole */}
+      <Dialog open={profileModalOpen} onOpenChange={setProfileModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              <Users className="w-6 h-6" style={{ color: branding.primaryColor }} />
+              Profil du Bénévole
+            </DialogTitle>
+          </DialogHeader>
+
+          {profileBenevole && (() => {
+            const cardColor = branding.primaryColor;
+            const departamentos = obtenerDepartamentos();
+            const departementsNoms = Array.isArray(profileBenevole.departement)
+              ? profileBenevole.departement.map(deptId => {
+                  const dept = departamentos.find(d => d.id.toString() === deptId.toString());
+                  return dept ? dept.nombre : deptId;
+                })
+              : [profileBenevole.departement];
+            
+            return (
+              <div className="space-y-6">
+                {/* En-tête du profil avec avatar et badge */}
+                <div 
+                  className="p-6 rounded-xl relative overflow-hidden"
+                  style={{
+                    background: `linear-gradient(135deg, ${branding.primaryColor}15 0%, ${branding.secondaryColor}10 100%)`
+                  }}
+                >
+                  <div className="flex items-start gap-4">
+                    <div 
+                      className="w-20 h-20 rounded-2xl flex items-center justify-center text-white flex-shrink-0 relative"
+                      style={{ 
+                        background: `linear-gradient(135deg, ${cardColor} 0%, ${cardColor}dd 100%)`,
+                        boxShadow: `0 4px 12px ${cardColor}30`
+                      }}
+                    >
+                      {profileBenevole.photo ? (
+                        <img 
+                          src={profileBenevole.photo} 
+                          alt={profileBenevole.prenom}
+                          className="w-full h-full rounded-2xl object-cover"
+                        />
+                      ) : (
+                        <Users className="w-10 h-10" />
+                      )}
+                      {profileBenevole.statut === 'actif' && (
+                        <div 
+                          className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-4 border-white flex items-center justify-center"
+                          style={{ backgroundColor: branding.secondaryColor }}
+                        >
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 
+                            className="text-2xl font-bold mb-1"
+                            style={{ 
+                              fontFamily: 'Montserrat, sans-serif',
+                              color: branding.primaryColor
+                            }}
+                          >
+                            {profileBenevole.prenom} {profileBenevole.nom}
+                          </h3>
+                          {profileBenevole.poste && (
+                            <p className="text-lg mb-2" style={{ color: branding.secondaryColor }}>
+                              {profileBenevole.poste}
+                            </p>
+                          )}
+                        </div>
+                        <Badge
+                          className="text-xs px-3 py-1"
+                          style={{
+                            backgroundColor: profileBenevole.statut === 'actif' 
+                              ? branding.secondaryColor 
+                              : profileBenevole.statut === 'en pause'
+                                ? '#FFC107'
+                                : '#DC3545',
+                            color: 'white'
+                          }}
+                        >
+                          {profileBenevole.statut.charAt(0).toUpperCase() + profileBenevole.statut.slice(1)}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-3 flex-wrap mt-2">
+                        {profileBenevole.numeroArchivo && (
+                          <div className="flex items-center gap-1 px-3 py-1 rounded-lg bg-white/80">
+                            <FileText className="w-4 h-4" style={{ color: branding.secondaryColor }} />
+                            <span 
+                              className="text-sm font-mono font-semibold tracking-wide"
+                              style={{ color: branding.secondaryColor }}
+                            >
+                              {profileBenevole.numeroArchivo}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Statistiques du bénévole */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div 
+                    className="p-4 rounded-xl border-l-4"
+                    style={{ 
+                      backgroundColor: `${branding.primaryColor}10`,
+                      borderLeftColor: branding.primaryColor
+                    }}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="w-4 h-4" style={{ color: branding.primaryColor }} />
+                      <p className="text-xs text-gray-500">Total Heures</p>
+                    </div>
+                    <p 
+                      className="text-2xl font-bold"
+                      style={{ 
+                        fontFamily: 'Montserrat, sans-serif',
+                        color: branding.primaryColor
+                      }}
+                    >
+                      {formaterHeures(profileBenevole.heuresTotal)}
+                    </p>
+                  </div>
+                  <div 
+                    className="p-4 rounded-xl border-l-4"
+                    style={{ 
+                      backgroundColor: `${branding.secondaryColor}10`,
+                      borderLeftColor: branding.secondaryColor
+                    }}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Calendar className="w-4 h-4" style={{ color: branding.secondaryColor }} />
+                      <p className="text-xs text-gray-500">Ce mois</p>
+                    </div>
+                    <p 
+                      className="text-2xl font-bold"
+                      style={{ 
+                        fontFamily: 'Montserrat, sans-serif',
+                        color: branding.secondaryColor
+                      }}
+                    >
+                      {formaterHeures(profileBenevole.heuresMois)}
+                    </p>
+                  </div>
+                  <div 
+                    className="p-4 rounded-xl border-l-4"
+                    style={{ 
+                      backgroundColor: `${branding.primaryColor}10`,
+                      borderLeftColor: branding.primaryColor
+                    }}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <CalendarDays className="w-4 h-4" style={{ color: branding.primaryColor }} />
+                      <p className="text-xs text-gray-500">Inscription</p>
+                    </div>
+                    <p className="text-sm font-medium">
+                      {new Date(profileBenevole.dateInscription).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Informations de contact */}
+                <div className="space-y-3">
+                  <h4 
+                    className="font-semibold text-lg flex items-center gap-2"
+                    style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}
+                  >
+                    <Mail className="w-5 h-5" />
+                    Coordonnées
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200">
+                      <Mail className="w-5 h-5 flex-shrink-0" style={{ color: cardColor }} />
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500 mb-1">Email</p>
+                        <p className="text-sm font-medium truncate">{profileBenevole.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200">
+                      <Phone className="w-5 h-5 flex-shrink-0" style={{ color: cardColor }} />
+                      <div>
+                        <p className="text-xs text-gray-500 mb-1">Téléphone</p>
+                        <p className="text-sm font-medium">{profileBenevole.telephone}</p>
+                      </div>
+                    </div>
+                    {profileBenevole.adresse && (
+                      <div className="flex items-start gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200 md:col-span-2">
+                        <MapPin className="w-5 h-5 flex-shrink-0 mt-1" style={{ color: cardColor }} />
+                        <div className="min-w-0">
+                          <p className="text-xs text-gray-500 mb-1">Adresse</p>
+                          <p className="text-sm font-medium">{profileBenevole.adresse}</p>
+                          {(profileBenevole.ville || profileBenevole.codePostal) && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              {profileBenevole.ville && profileBenevole.ville}
+                              {profileBenevole.codePostal && `, ${profileBenevole.codePostal}`}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Départements et Disponibilités */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Départements */}
+                  <div className="space-y-3">
+                    <h4 
+                      className="font-semibold text-lg flex items-center gap-2"
+                      style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}
+                    >
+                      <Building2 className="w-5 h-5" />
+                      Départements
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {departementsNoms.map((nom, idx) => {
+                        const dept = departamentos.find(d => d.nombre === nom);
+                        return (
+                          <Badge
+                            key={idx}
+                            className="px-3 py-1"
+                            style={{
+                              backgroundColor: dept?.color ? `${dept.color}20` : `${branding.primaryColor}20`,
+                              color: dept?.color || branding.primaryColor,
+                              border: `1px solid ${dept?.color || branding.primaryColor}40`
+                            }}
+                          >
+                            {dept?.icono} {nom}
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Langues */}
+                  {profileBenevole.langues && profileBenevole.langues.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 
+                        className="font-semibold text-lg flex items-center gap-2"
+                        style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}
+                      >
+                        <Languages className="w-5 h-5" />
+                        Langues
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {profileBenevole.langues.map((langue, idx) => (
+                          <Badge
+                            key={idx}
+                            className="px-3 py-1"
+                            style={{
+                              backgroundColor: `${branding.secondaryColor}20`,
+                              color: branding.secondaryColor,
+                              border: `1px solid ${branding.secondaryColor}40`
+                            }}
+                          >
+                            {langue}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Disponibilités hebdomadaires */}
+                {profileBenevole.disponibilidadesSemanal && profileBenevole.disponibilidadesSemanal.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 
+                      className="font-semibold text-lg flex items-center gap-2"
+                      style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}
+                    >
+                      <CalendarDays className="w-5 h-5" />
+                      Disponibilités
+                    </h4>
+                    <div className="grid grid-cols-7 gap-2">
+                      {profileBenevole.disponibilidadesSemanal.map((dispo, idx) => {
+                        const hasDisponibilite = dispo.am || dispo.pm;
+                        return (
+                          <div 
+                            key={idx}
+                            className={`p-3 rounded-lg text-center ${hasDisponibilite ? 'border-2' : 'border'}`}
+                            style={{
+                              backgroundColor: hasDisponibilite ? `${branding.secondaryColor}10` : '#f9fafb',
+                              borderColor: hasDisponibilite ? branding.secondaryColor : '#e5e7eb'
+                            }}
+                          >
+                            <p 
+                              className="text-xs font-semibold mb-2"
+                              style={{ 
+                                color: hasDisponibilite ? branding.secondaryColor : '#9ca3af',
+                                fontFamily: 'Montserrat, sans-serif'
+                              }}
+                            >
+                              {dispo.jour.substring(0, 3)}
+                            </p>
+                            <div className="space-y-1">
+                              <div 
+                                className={`text-xs px-1 py-0.5 rounded ${dispo.am ? 'font-medium' : ''}`}
+                                style={{
+                                  backgroundColor: dispo.am ? branding.secondaryColor : 'transparent',
+                                  color: dispo.am ? 'white' : '#d1d5db'
+                                }}
+                              >
+                                AM
+                              </div>
+                              <div 
+                                className={`text-xs px-1 py-0.5 rounded ${dispo.pm ? 'font-medium' : ''}`}
+                                style={{
+                                  backgroundColor: dispo.pm ? branding.secondaryColor : 'transparent',
+                                  color: dispo.pm ? 'white' : '#d1d5db'
+                                }}
+                              >
+                                PM
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Contact d'urgence */}
+                {(profileBenevole.contactoEmergenciaNombre || profileBenevole.contactoEmergenciaTelefono) && (
+                  <div className="space-y-3">
+                    <h4 
+                      className="font-semibold text-lg flex items-center gap-2"
+                      style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}
+                    >
+                      <AlertCircle className="w-5 h-5" />
+                      Contact d'urgence
+                    </h4>
+                    <div 
+                      className="p-4 rounded-xl border-l-4"
+                      style={{ 
+                        backgroundColor: '#FFF3CD',
+                        borderLeftColor: '#FFC107'
+                      }}
+                    >
+                      {profileBenevole.contactoEmergenciaNombre && (
+                        <p className="text-sm mb-1">
+                          <strong>Nom:</strong> {profileBenevole.contactoEmergenciaNombre}
+                          {profileBenevole.contactoEmergenciaRelacion && ` (${profileBenevole.contactoEmergenciaRelacion})`}
+                        </p>
+                      )}
+                      {profileBenevole.contactoEmergenciaTelefono && (
+                        <p className="text-sm mb-1">
+                          <strong>Téléphone:</strong> {profileBenevole.contactoEmergenciaTelefono}
+                        </p>
+                      )}
+                      {profileBenevole.contactoEmergenciaEmail && (
+                        <p className="text-sm">
+                          <strong>Email:</strong> {profileBenevole.contactoEmergenciaEmail}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Notes */}
+                {profileBenevole.notes && (
+                  <div className="space-y-3">
+                    <h4 
+                      className="font-semibold text-lg flex items-center gap-2"
+                      style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}
+                    >
+                      <StickyNote className="w-5 h-5" />
+                      Notes
+                    </h4>
+                    <div 
+                      className="p-4 rounded-xl border-l-4"
+                      style={{ 
+                        backgroundColor: `${branding.primaryColor}05`,
+                        borderLeftColor: branding.primaryColor
+                      }}
+                    >
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{profileBenevole.notes}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Documents */}
+                {profileBenevole.documents && profileBenevole.documents.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 
+                      className="font-semibold text-lg flex items-center gap-2"
+                      style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}
+                    >
+                      <FileText className="w-5 h-5" />
+                      Documents ({profileBenevole.documents.length})
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {profileBenevole.documents.map((doc) => (
+                        <div 
+                          key={doc.id}
+                          className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200 hover:border-gray-300 transition-colors"
+                        >
+                          <div 
+                            className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                            style={{ backgroundColor: `${branding.primaryColor}15` }}
+                          >
+                            {doc.type.includes('image') ? (
+                              <ImageIcon className="w-5 h-5" style={{ color: branding.primaryColor }} />
+                            ) : (
+                              <File className="w-5 h-5" style={{ color: branding.primaryColor }} />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{doc.nom}</p>
+                            <p className="text-xs text-gray-500">
+                              {doc.taille} • {new Date(doc.date).toLocaleDateString('fr-FR')}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-3 justify-end pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setProfileModalOpen(false);
+                      setProfileBenevole(null);
+                    }}
+                    style={{ fontFamily: 'Montserrat, sans-serif' }}
+                  >
+                    Fermer
+                  </Button>
+                  <Button
+                    className="text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                    style={{
+                      background: `linear-gradient(135deg, ${branding.primaryColor} 0%, ${branding.primaryColor}dd 100%)`,
+                      fontFamily: 'Montserrat, sans-serif'
+                    }}
+                    onClick={() => {
+                      setProfileModalOpen(false);
+                      handleOpenEditModal(profileBenevole);
+                    }}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Modifier
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
 
       {/* Botón flotante para agregar bénévole */}
       <button

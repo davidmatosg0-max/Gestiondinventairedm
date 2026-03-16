@@ -96,6 +96,9 @@ export function AsignarRolContacto({
         setUsuarioExistente(usuarioEncontrado);
         setRolSeleccionado(usuarioEncontrado.rol);
         setUsername(usuarioEncontrado.username);
+        setPassword(usuarioEncontrado.password); // Mostrar contraseña actual
+        setConfirmarPassword(usuarioEncontrado.password);
+        setMostrarPassword(true); // Mostrar contraseña visible por defecto
         setAccesoActivo(true);
       } else {
         // Si es un nuevo usuario, generar contraseña automáticamente y mostrarla
@@ -191,8 +194,9 @@ export function AsignarRolContacto({
       }
     }
 
+    // Validar password
     if (!usuarioExistente) {
-      // Solo validar password si es un nuevo usuario
+      // Nuevo usuario: password es obligatoria
       if (!password) {
         toast.error('Veuillez entrer un mot de passe');
         return;
@@ -200,6 +204,17 @@ export function AsignarRolContacto({
 
       if (password.length < 6) {
         toast.error('Le mot de passe doit contenir au moins 6 caractères');
+        return;
+      }
+
+      if (password !== confirmarPassword) {
+        toast.error('Les mots de passe ne correspondent pas');
+        return;
+      }
+    } else if (password) {
+      // Usuario existente: si se ingresó nueva password, validarla
+      if (password.length < 6) {
+        toast.error('Le nouveau mot de passe doit contenir au moins 6 caractères');
         return;
       }
 
@@ -272,13 +287,13 @@ export function AsignarRolContacto({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="assign-rol-description">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="w-6 h-6 text-[#1a4d7a]" />
             {usuarioExistente ? 'Modifier l\'Accès au Système' : 'Créer un Accès au Système'}
           </DialogTitle>
-          <DialogDescription id="assign-rol-description">
+          <DialogDescription>
             Assignez un rôle et des identifiants de connexion pour <strong>{nombreCompleto}</strong>
           </DialogDescription>
         </DialogHeader>
@@ -396,104 +411,95 @@ export function AsignarRolContacto({
                 value={username}
                 onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ''))}
                 placeholder="Ex: jdupont"
-                disabled={!!usuarioExistente}
               />
               <p className="text-xs text-gray-500">
-                {usuarioExistente 
-                  ? '⚠️ Le nom d\'utilisateur ne peut pas être modifié'
-                  : 'Lettres minuscules sans espaces ni accents'}
+                Lettres minuscules sans espaces ni accents
               </p>
             </div>
 
             {/* Password */}
-            {!usuarioExistente && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm">
-                    Mot de passe *
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={mostrarPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Minimum 6 caractères"
-                      className="pr-10"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
-                      onClick={() => setMostrarPassword(!mostrarPassword)}
-                    >
-                      {mostrarPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </Button>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-sm">
+                  Mot de passe {usuarioExistente ? '' : '*'}
+                </Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleGenerarPassword}
+                  className="h-7 text-xs text-[#2d9561] hover:text-[#267d51] hover:bg-[#2d9561]/10"
+                >
+                  <RefreshCw className="w-3 h-3 mr-1" />
+                  Générer automatiquement
+                </Button>
+              </div>
+              
+              {/* Mostrar contraseña actual si existe usuario */}
+              {usuarioExistente && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-2">
+                  <div className="flex items-start gap-2">
+                    <Key className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-green-800 mb-1">
+                        Mot de passe actuel:
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <code className="text-sm font-mono bg-white px-2 py-1 rounded border border-green-300 text-green-900 break-all">
+                          {password}
+                        </code>
+                      </div>
+                    </div>
                   </div>
                 </div>
+              )}
+              
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={mostrarPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={usuarioExistente ? "Modifier le mot de passe" : "Saisir manuellement ou générer automatiquement"}
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                  onClick={() => setMostrarPassword(!mostrarPassword)}
+                >
+                  {mostrarPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </Button>
+              </div>
+              {password && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopiarPassword}
+                  className="w-full h-8 text-xs border-[#2d9561] text-[#2d9561] hover:bg-[#2d9561] hover:text-white"
+                >
+                  <Copy className="w-3 h-3 mr-1" />
+                  Copier le mot de passe
+                </Button>
+              )}
+            </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="confirmar-password" className="text-sm">
-                    Confirmer le mot de passe *
-                  </Label>
-                  <Input
-                    id="confirmar-password"
-                    type="password"
-                    value={confirmarPassword}
-                    onChange={(e) => setConfirmarPassword(e.target.value)}
-                    placeholder="Retaper le mot de passe"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleGenerarPassword}
-                    className="w-full"
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Régénérer
-                  </Button>
-
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={handleCopiarPassword}
-                    className="w-full bg-[#2d9561] hover:bg-[#267d51] text-white"
-                    disabled={!password}
-                  >
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copier
-                  </Button>
-                </div>
-
-                {/* Botón para copiar acceso completo */}
-                {username && password && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCopiarAccesoCompleto}
-                    className="w-full border-2 border-[#1a4d7a] text-[#1a4d7a] hover:bg-[#1a4d7a] hover:text-white font-semibold"
-                  >
-                    <Copy className="w-4 h-4 mr-2" />
-                    📋 Copier l'accès complet (Nom d'utilisateur + Mot de passe)
-                  </Button>
-                )}
-              </>
-            )}
-
-            {usuarioExistente && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
-                <Lock className="w-5 h-5 text-amber-600 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm text-amber-800">
-                    Pour modifier le mot de passe, utilisez l'option "Gérer le Mot de Passe" dans la gestion des utilisateurs.
-                  </p>
-                </div>
+            {/* Confirmar Password - Solo si se ingresó una nueva contraseña */}
+            {password && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmar-password" className="text-sm">
+                  Confirmer le mot de passe *
+                </Label>
+                <Input
+                  id="confirmar-password"
+                  type="password"
+                  value={confirmarPassword}
+                  onChange={(e) => setConfirmarPassword(e.target.value)}
+                  placeholder="Retaper le mot de passe"
+                />
               </div>
             )}
           </div>

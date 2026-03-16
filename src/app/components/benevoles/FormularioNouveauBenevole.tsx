@@ -221,7 +221,6 @@ interface FormularioNouveauBenevoleProps {
   departements: string[];
   photoPreview: string | null;
   onPhotoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  generateIdentifiant: () => string;
   getTipoBenevoleConfig: (tipo: TipoBenevole) => {
     icon: React.ComponentType<any>;
     label: string;
@@ -242,7 +241,6 @@ export function FormularioNouveauBenevole({
   departements,
   photoPreview,
   onPhotoChange,
-  generateIdentifiant,
   getTipoBenevoleConfig,
   onOpenGestionTiposContacto,
   isEditMode = false,

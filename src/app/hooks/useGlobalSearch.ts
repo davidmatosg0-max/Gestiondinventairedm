@@ -54,16 +54,28 @@ export function useGlobalSearch(options: UseGlobalSearchOptions = {}) {
           barcode.includes(normalizedQuery)
         );
       })
-      .map((producto) => ({
-        id: `producto-${producto.id}`,
-        title: producto.nombre,
-        subtitle: producto.categoria || 'Sin categoría',
-        description: `Stock: ${producto.stock} ${producto.unidad || 'unités'} • ${producto.temperatura || 'N/A'}`,
-        category: 'productos' as const,
-        icon: '📦',
-        data: producto,
-        route: 'inventario',
-      }))
+      .map((producto) => {
+        // Construir información detallada del producto
+        const stock = producto.stock || 0;
+        const unidad = producto.unidad || 'unités';
+        const temperatura = producto.temperatura || 'N/A';
+        const peso = producto.peso ? `${producto.peso} kg` : '';
+        
+        const description = peso 
+          ? `Stock: ${stock} ${unidad} • ${temperatura} • ${peso}`
+          : `Stock: ${stock} ${unidad} • ${temperatura}`;
+        
+        return {
+          id: `producto-${producto.id}`,
+          title: producto.nombre,
+          subtitle: producto.categoria || 'Sin categoría',
+          description,
+          category: 'productos' as const,
+          icon: '📦',
+          data: producto,
+          route: 'inventario',
+        };
+      })
       .slice(0, Math.floor(maxResults / 5));
   }, [maxResults]);
 
@@ -84,16 +96,32 @@ export function useGlobalSearch(options: UseGlobalSearchOptions = {}) {
           estado.includes(normalizedQuery)
         );
       })
-      .map((comanda) => ({
-        id: `comanda-${comanda.id}`,
-        title: `Commande #${comanda.numero}`,
-        subtitle: comanda.nombreOrganismo,
-        description: `État: ${comanda.estado} • ${comanda.fecha ? new Date(comanda.fecha).toLocaleDateString('fr-FR') : 'N/A'}`,
-        category: 'comandas' as const,
-        icon: '📋',
-        data: comanda,
-        route: 'comandas',
-      }))
+      .map((comanda) => {
+        // Construir información detallada de la comanda
+        const fecha = comanda.fecha 
+          ? new Date(comanda.fecha).toLocaleDateString('fr-FR', { 
+              day: '2-digit', 
+              month: 'short', 
+              year: 'numeric' 
+            })
+          : 'N/A';
+        
+        const totalProductos = comanda.productos?.length || 0;
+        const estadoLabel = comanda.estado || 'Pendiente';
+        
+        const description = `État: ${estadoLabel} • ${fecha} • ${totalProductos} produit${totalProductos !== 1 ? 's' : ''}`;
+        
+        return {
+          id: `comanda-${comanda.id}`,
+          title: `Commande #${comanda.numero}`,
+          subtitle: comanda.nombreOrganismo || 'Organisme non défini',
+          description,
+          category: 'comandas' as const,
+          icon: '📋',
+          data: comanda,
+          route: 'comandas',
+        };
+      })
       .slice(0, Math.floor(maxResults / 5));
   }, [maxResults]);
 
@@ -108,24 +136,40 @@ export function useGlobalSearch(options: UseGlobalSearchOptions = {}) {
         const tipo = organismo.tipo?.toLowerCase() || '';
         const responsable = organismo.responsable?.toLowerCase() || '';
         const ciudad = organismo.ciudad?.toLowerCase() || '';
+        const telefono = organismo.telefono?.toLowerCase() || '';
+        const email = organismo.email?.toLowerCase() || '';
         
         return (
           nombre.includes(normalizedQuery) ||
           tipo.includes(normalizedQuery) ||
           responsable.includes(normalizedQuery) ||
-          ciudad.includes(normalizedQuery)
+          ciudad.includes(normalizedQuery) ||
+          telefono.includes(normalizedQuery) ||
+          email.includes(normalizedQuery)
         );
       })
-      .map((organismo) => ({
-        id: `organismo-${organismo.id}`,
-        title: organismo.nombre,
-        subtitle: organismo.tipo,
-        description: `${organismo.responsable} • ${organismo.ciudad || 'N/A'} • ${organismo.beneficiarios || 0} bénéficiaires`,
-        category: 'organismos' as const,
-        icon: '🏢',
-        data: organismo,
-        route: 'organismos',
-      }))
+      .map((organismo) => {
+        // Construir información detallada del organismo
+        const responsable = organismo.responsable || 'N/A';
+        const ciudad = organismo.ciudad || 'N/A';
+        const beneficiarios = organismo.beneficiarios || 0;
+        const telefono = organismo.telefono || '';
+        
+        const description = telefono
+          ? `${responsable} • ${ciudad} • ${beneficiarios} bénéficiaires • ${telefono}`
+          : `${responsable} • ${ciudad} • ${beneficiarios} bénéficiaires`;
+        
+        return {
+          id: `organismo-${organismo.id}`,
+          title: organismo.nombre,
+          subtitle: organismo.tipo || 'Type non défini',
+          description,
+          category: 'organismos' as const,
+          icon: '🏢',
+          data: organismo,
+          route: 'organismos',
+        };
+      })
       .slice(0, Math.floor(maxResults / 5));
   }, [maxResults]);
 
@@ -140,24 +184,43 @@ export function useGlobalSearch(options: UseGlobalSearchOptions = {}) {
         const conductor = ruta.conductor?.toLowerCase() || '';
         const destino = ruta.destino?.toLowerCase() || '';
         const vehiculo = ruta.vehiculo?.toLowerCase() || '';
+        const estado = ruta.estado?.toLowerCase() || '';
         
         return (
           numero.includes(normalizedQuery) ||
           conductor.includes(normalizedQuery) ||
           destino.includes(normalizedQuery) ||
-          vehiculo.includes(normalizedQuery)
+          vehiculo.includes(normalizedQuery) ||
+          estado.includes(normalizedQuery)
         );
       })
-      .map((ruta) => ({
-        id: `ruta-${ruta.id}`,
-        title: `Route #${ruta.numero}`,
-        subtitle: ruta.destino || 'Destination non définie',
-        description: `Conducteur: ${ruta.conductor || 'N/A'} • Véhicule: ${ruta.vehiculo || 'N/A'}`,
-        category: 'transporte' as const,
-        icon: '🚛',
-        data: ruta,
-        route: 'transporte',
-      }))
+      .map((ruta) => {
+        // Construir información detallada de la ruta
+        const conductor = ruta.conductor || 'N/A';
+        const vehiculo = ruta.vehiculo || 'N/A';
+        const estado = ruta.estado || 'Planifiée';
+        const fecha = ruta.fecha 
+          ? new Date(ruta.fecha).toLocaleDateString('fr-FR', { 
+              day: '2-digit', 
+              month: 'short' 
+            })
+          : '';
+        
+        const description = fecha
+          ? `${conductor} • ${vehiculo} • ${estado} • ${fecha}`
+          : `${conductor} • ${vehiculo} • ${estado}`;
+        
+        return {
+          id: `ruta-${ruta.id}`,
+          title: `Route #${ruta.numero}`,
+          subtitle: ruta.destino || 'Destination non définie',
+          description,
+          category: 'transporte' as const,
+          icon: '🚛',
+          data: ruta,
+          route: 'transporte',
+        };
+      })
       .slice(0, Math.floor(maxResults / 5));
   }, [maxResults]);
 
@@ -168,28 +231,49 @@ export function useGlobalSearch(options: UseGlobalSearchOptions = {}) {
 
     return contactos
       .filter((contacto) => {
-        const nombre = `${contacto.prenom || ''} ${contacto.nom || ''}`.toLowerCase();
+        // Los contactos usan 'nombre' y 'apellido' como campos principales
+        const nombreCompleto = `${contacto.nombre || ''} ${contacto.apellido || ''}`.toLowerCase();
         const email = contacto.email?.toLowerCase() || '';
-        const departamento = contacto.departement?.toLowerCase() || '';
-        const empresa = contacto.nomEntreprise?.toLowerCase() || '';
+        const telefono = contacto.telefono?.toLowerCase() || '';
+        const cargo = contacto.cargo?.toLowerCase() || '';
+        const nombreEmpresa = contacto.nombreEmpresa?.toLowerCase() || '';
+        const numeroArchivo = contacto.numeroArchivo?.toLowerCase() || '';
         
         return (
-          nombre.includes(normalizedQuery) ||
+          nombreCompleto.includes(normalizedQuery) ||
           email.includes(normalizedQuery) ||
-          departamento.includes(normalizedQuery) ||
-          empresa.includes(normalizedQuery)
+          telefono.includes(normalizedQuery) ||
+          cargo.includes(normalizedQuery) ||
+          nombreEmpresa.includes(normalizedQuery) ||
+          numeroArchivo.includes(normalizedQuery)
         );
       })
-      .map((contacto) => ({
-        id: `contacto-${contacto.id}`,
-        title: contacto.nomEntreprise || `${contacto.prenom} ${contacto.nom}`,
-        subtitle: contacto.categorie || 'Contact',
-        description: `${contacto.email || 'N/A'} • ${contacto.departement || 'N/A'}`,
-        category: 'contactos' as const,
-        icon: '👤',
-        data: contacto,
-        route: 'contactos-almacen',
-      }))
+      .map((contacto) => {
+        // Construir el título mostrando el nombre completo
+        const nombreCompleto = `${contacto.nombre || ''} ${contacto.apellido || ''}`.trim();
+        const title = nombreCompleto || contacto.nombreEmpresa || 'Contact';
+        
+        // Construir subtitle mostrando número de archivo y cargo
+        const numeroArchivo = contacto.numeroArchivo || '';
+        const cargo = contacto.cargo || contacto.tipo || 'Contact';
+        const subtitle = numeroArchivo ? `${numeroArchivo} • ${cargo}` : cargo;
+        
+        // Construir description con email y teléfono
+        const email = contacto.email || 'N/A';
+        const telefono = contacto.telefono || 'N/A';
+        const description = `${email} • ${telefono}`;
+        
+        return {
+          id: `contacto-${contacto.id}`,
+          title,
+          subtitle,
+          description,
+          category: 'contactos' as const,
+          icon: '👤',
+          data: contacto,
+          route: 'contactos-almacen',
+        };
+      })
       .slice(0, Math.floor(maxResults / 5));
   }, [maxResults]);
 
