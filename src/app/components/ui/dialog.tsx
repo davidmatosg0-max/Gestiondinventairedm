@@ -53,8 +53,15 @@ const DialogContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => {
   // Generar un ID único para la descripción
   const generatedId = React.useId();
-  const descriptionId = (props['aria-describedby'] && props['aria-describedby'] !== 'undefined') 
-    ? props['aria-describedby'] 
+  
+  // Limpiar aria-describedby si es undefined o string 'undefined'
+  const ariaDescribedBy = props['aria-describedby'];
+  const shouldUseProvidedId = ariaDescribedBy && 
+                               ariaDescribedBy !== 'undefined' && 
+                               ariaDescribedBy !== undefined;
+  
+  const descriptionId = shouldUseProvidedId 
+    ? ariaDescribedBy 
     : `dialog-description-${generatedId}`;
   
   // Verificar si children contiene un DialogDescription
@@ -76,14 +83,18 @@ const DialogContent = React.forwardRef<
     return false;
   });
   
+  // Crear un objeto de props limpio sin aria-describedby si no fue proporcionado
+  const cleanedProps = { ...props };
+  delete cleanedProps['aria-describedby'];
+  
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
         ref={ref}
         data-slot="dialog-content"
-        aria-describedby={descriptionId}
-        {...props}
+        aria-describedby={hasDescription ? undefined : descriptionId}
+        {...cleanedProps}
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200",
           !className?.includes("max-w-") && "max-w-[calc(100%-2rem)] sm:max-w-lg",

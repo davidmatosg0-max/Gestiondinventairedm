@@ -8,6 +8,8 @@
  * - Protección de datos reales
  */
 
+import { ejecutarEnModoMantenimiento } from './proteccionDatos';
+
 /**
  * 🔄 MIGRACIÓN AUTOMÁTICA DE CLAVES DE STORAGE
  * 
@@ -214,67 +216,69 @@ export function backupLocalStorage(): string {
  * Restaurar datos desde un backup
  * 🔒🔒🔒 PROTECCIÓN MÁXIMA: Al restaurar, marcar INMEDIATAMENTE como protegido
  */
-export function restoreLocalStorage(backupString: string): boolean {
-  try {
-    // 🔒🔒🔒 PASO 1: MARCAR INMEDIATAMENTE COMO PROTEGIDO ANTES DE RESTAURAR
-    localStorage.setItem('sistema_con_datos_reales', 'true');
-    localStorage.setItem('limpieza_completa_ejecutada', 'true');
-    localStorage.setItem('limpieza_completa_fecha', new Date().toISOString());
-    console.log('🔒🔒🔒 PRE-PROTECCIÓN ACTIVADA - Sistema marcado como CON DATOS REALES');
-    
-    const backup = JSON.parse(backupString);
-    
-    // PASO 2: Limpiar localStorage actual
-    console.log('🧹 Limpiando localStorage actual...');
-    localStorage.clear();
-    
-    // PASO 3: Restaurar todos los datos del backup
-    console.log('��� Restaurando datos del backup...');
-    let keysRestored = 0;
-    
-    Object.keys(backup).forEach(key => {
-      localStorage.setItem(key, backup[key]);
-      keysRestored++;
-    });
-    
-    console.log(`✅ ${keysRestored} claves restauradas`);
-    
-    // PASO 4: Ejecutar migración automática de claves
-    console.log('🔄 Ejecutando migración automática de claves...');
-    migrateStorageKeys();
-    
-    // 🔒🔒🔒 PASO 5: VOLVER A MARCAR COMO PROTEGIDO DESPUÉS DE RESTAURAR
-    localStorage.setItem('sistema_con_datos_reales', 'true');
-    localStorage.setItem('limpieza_completa_ejecutada', 'true');
-    localStorage.setItem('limpieza_completa_fecha', new Date().toISOString());
-    console.log('🔒🔒🔒 POST-PROTECCIÓN ACTIVADA - Datos restaurados y protegidos');
-    
-    // PASO 6: Actualizar versión de datos
-    setDataVersion(CURRENT_DATA_VERSION);
-    
-    // PASO 7: Disparar evento para notificar a los componentes
-    window.dispatchEvent(new Event('backupRestored'));
-    
-    console.log('');
-    console.log('═══════════════════════════════════════');
-    console.log('✅ RESTAURATION COMPLÈTE TERMINÉE');
-    console.log('═══════════════════════════════════════');
-    console.log('🔄 Migrations appliquées automatiquement');
-    console.log('🔒 Données protégées contre la suppression');
-    console.log('💡 Rechargez la page (F5) pour voir les changements');
-    console.log('═══════════════════════════════════════');
-    console.log('');
-    
-    return true;
-  } catch (error) {
-    console.error('❌ Erreur lors de la restauration:', error);
-    
-    // 🔒🔒🔒 ASEGURAR PROTECCIÓN INCLUSO SI FALLA
-    localStorage.setItem('sistema_con_datos_reales', 'true');
-    localStorage.setItem('limpieza_completa_ejecutada', 'true');
-    
-    return false;
-  }
+export async function restoreLocalStorage(backupString: string): Promise<boolean> {
+  return ejecutarEnModoMantenimiento(() => {
+    try {
+      // 🔒🔒🔒 PASO 1: MARCAR INMEDIATAMENTE COMO PROTEGIDO ANTES DE RESTAURAR
+      localStorage.setItem('sistema_con_datos_reales', 'true');
+      localStorage.setItem('limpieza_completa_ejecutada', 'true');
+      localStorage.setItem('limpieza_completa_fecha', new Date().toISOString());
+      console.log('🔒🔒🔒 PRE-PROTECCIÓN ACTIVADA - Sistema marcado como CON DATOS REALES');
+      
+      const backup = JSON.parse(backupString);
+      
+      // PASO 2: Limpiar localStorage actual (permitido en modo mantenimiento)
+      console.log('🧹 Limpiando localStorage actual...');
+      localStorage.clear();
+      
+      // PASO 3: Restaurar todos los datos del backup
+      console.log('📦 Restaurando datos del backup...');
+      let keysRestored = 0;
+      
+      Object.keys(backup).forEach(key => {
+        localStorage.setItem(key, backup[key]);
+        keysRestored++;
+      });
+      
+      console.log(`✅ ${keysRestored} claves restauradas`);
+      
+      // PASO 4: Ejecutar migración automática de claves
+      console.log('🔄 Ejecutando migración automática de claves...');
+      migrateStorageKeys();
+      
+      // 🔒🔒🔒 PASO 5: VOLVER A MARCAR COMO PROTEGIDO DESPUÉS DE RESTAURAR
+      localStorage.setItem('sistema_con_datos_reales', 'true');
+      localStorage.setItem('limpieza_completa_ejecutada', 'true');
+      localStorage.setItem('limpieza_completa_fecha', new Date().toISOString());
+      console.log('🔒🔒🔒 POST-PROTECCIÓN ACTIVADA - Datos restaurados y protegidos');
+      
+      // PASO 6: Actualizar versión de datos
+      setDataVersion(CURRENT_DATA_VERSION);
+      
+      // PASO 7: Disparar evento para notificar a los componentes
+      window.dispatchEvent(new Event('backupRestored'));
+      
+      console.log('');
+      console.log('═══════════════════════════════════════');
+      console.log('✅ RESTAURATION COMPLÈTE TERMINÉE');
+      console.log('═══════════════════════════════════════');
+      console.log('🔄 Migrations appliquées automatiquement');
+      console.log('🔒 Données protégées contre la suppression');
+      console.log('💡 Rechargez la page (F5) pour voir les changements');
+      console.log('═══════════════════════════════════════');
+      console.log('');
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Erreur lors de la restauration:', error);
+      
+      // 🔒🔒🔒 ASEGURAR PROTECCIÓN INCLUSO SI FALLA
+      localStorage.setItem('sistema_con_datos_reales', 'true');
+      localStorage.setItem('limpieza_completa_ejecutada', 'true');
+      
+      return false;
+    }
+  });
 }
 
 /**

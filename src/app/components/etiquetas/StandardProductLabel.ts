@@ -639,10 +639,10 @@ export async function printStandardLabel(data: ProductLabelData, silent: boolean
           }
         });
         
-        // Timeout de seguridad: si después de 3 segundos no se cargaron, continuar
+        // Timeout de seguridad: si después de 500ms no se cargaron, continuar de todos modos
         setTimeout(() => {
           resolveImages();
-        }, 3000);
+        }, 500);
       });
     };
     
@@ -652,19 +652,22 @@ export async function printStandardLabel(data: ProductLabelData, silent: boolean
         // Esperar a que todas las imágenes se carguen
         await waitForImagesToLoad();
         
-        // Esperar un poco más para que las fuentes se carguen
-        await new Promise(r => setTimeout(r, 800));
+        // Sin delay - imprimir inmediatamente
+        // El QR code ya está en base64, no necesita tiempo de carga adicional
         
         // Enfocar el iframe y llamar a print()
         iframe.contentWindow?.focus();
         iframe.contentWindow?.print();
         
-        // Escuchar cuando se cierra el diálogo de impresión
+        // ✅ RESOLVER INMEDIATAMENTE - No esperar a que el usuario cierre el diálogo
+        // Esto permite que la siguiente impresión se lance al instante
+        resolve();
+        
+        // Limpiar el iframe después de que se cierre el diálogo (en background)
         const afterPrint = () => {
           if (document.body.contains(iframe)) {
             document.body.removeChild(iframe);
           }
-          resolve();
         };
         
         // Usar onafterprint si está disponible
@@ -677,7 +680,6 @@ export async function printStandardLabel(data: ProductLabelData, silent: boolean
           if (document.body.contains(iframe)) {
             document.body.removeChild(iframe);
           }
-          resolve();
         }, 30000);
         
       } catch (err) {

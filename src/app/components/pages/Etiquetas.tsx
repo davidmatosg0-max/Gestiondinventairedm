@@ -407,7 +407,8 @@ export function Etiquetas() {
 
     // Imprimir etiquetas de producto con el sistema estandarizado
     if (etiquetasProducto.length > 0) {
-      for (const etiqueta of etiquetasProducto) {
+      // Imprimir todas las etiquetas sin esperar - cada una se abre instantáneamente
+      etiquetasProducto.forEach((etiqueta) => {
         const producto = todosLosProductos.find(p => p.nombre === etiqueta.titulo);
         if (producto) {
           const labelData: ProductLabelData = {
@@ -442,18 +443,13 @@ export function Etiquetas() {
             }
           };
 
-          try {
-            await printStandardLabel(labelData);
-            // Esperar 1 segundo entre impresiones
-            if (etiquetasProducto.indexOf(etiqueta) < etiquetasProducto.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-          } catch (err) {
+          // No usar await - lanzar todas las impresiones simultáneamente
+          printStandardLabel(labelData).catch(err => {
             console.error('Error al imprimir etiqueta:', err);
             toast.error(`Error al imprimir ${producto.nombre}`);
-          }
+          });
         }
-      }
+      });
       
       toast.success(`${etiquetasProducto.length} ${t('labels.productLabels')} ${t('labels.printed')}`);
     }

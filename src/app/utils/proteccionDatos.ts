@@ -9,6 +9,9 @@
 
 import { logger } from './logger';
 
+// Flag para permitir operaciones de mantenimiento (restauración de backups)
+let modoMantenimiento = false;
+
 // Lista de claves críticas que NUNCA deben ser eliminadas
 const CLAVES_CRITICAS = [
   'sistema_con_datos_reales',
@@ -50,6 +53,13 @@ function protegerLocalStorage() {
 
   // Sobrescribir clear para prevenir borrado total
   localStorage.clear = function() {
+    // Si está en modo mantenimiento, permitir la operación
+    if (modoMantenimiento) {
+      logger.info('🔧 Modo mantenimiento activo - Permitiendo clear()');
+      localStorageOriginal.clear();
+      return;
+    }
+    
     logger.warn('🛡️ PROTECCIÓN ACTIVADA: Intento de borrar localStorage bloqueado');
     console.warn('⚠️ No se puede borrar el localStorage. Los datos están protegidos.');
     
@@ -93,7 +103,7 @@ function protegerLocalStorage() {
 
   // Sobrescribir removeItem para proteger claves críticas
   localStorage.removeItem = function(clave: string) {
-    if (esClaveProtegida(clave)) {
+    if (esClaveProtegida(clave) && !modoMantenimiento) {
       logger.warn(`🛡️ PROTECCIÓN ACTIVADA: Intento de eliminar clave protegida bloqueado: ${clave}`);
       console.warn(`⚠️ La clave "${clave}" está protegida y no puede ser eliminada.`);
       return;
@@ -404,5 +414,39 @@ export function crearBackupManual(razon: string = 'Backup manual'): string {
   } catch (error) {
     logger.error('❌ Error al crear backup manual:', error);
     throw error;
+  }
+}
+
+/**
+ * Habilita el modo mantenimiento para permitir operaciones de restauración
+ * IMPORTANTE: Solo usar para restauración de backups autorizados
+ */
+export function habilitarModoMantenimiento(): void {
+  modoMantenimiento = true;
+  logger.warn('🔧 MODO MANTENIMIENTO ACTIVADO - Protecciones temporalmente deshabilitadas');
+  console.warn('🔧 Modo mantenimiento activo - Las operaciones de localStorage están permitidas');
+}
+
+/**
+ * Deshabilita el modo mantenimiento y reactiva todas las protecciones
+ */
+export function deshabilitarModoMantenimiento(): void {
+  modoMantenimiento = false;
+  logger.info('🔒 MODO MANTENIMIENTO DESACTIVADO - Protecciones reactivadas');
+  console.log('🔒 Protecciones reactivadas');
+}
+
+/**
+ * Ejecuta una operación en modo mantenimiento y luego lo deshabilita automáticamente
+ */
+export async function ejecutarEnModoMantenimiento<T>(
+  operacion: () => T | Promise<T>
+): Promise<T> {
+  try {
+    habilitarModoMantenimiento();
+    const resultado = await operacion();
+    return resultado;
+  } finally {
+    deshabilitarModoMantenimiento();
   }
 }

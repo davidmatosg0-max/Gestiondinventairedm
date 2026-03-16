@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-// Build: 15-03-2026-1835 - Forzar recompilación
+// Build: 16-03-2026-OPTIMIZACION-IMPRESION - Eliminados delays, impresión instantánea
 
 export default defineConfig({
   base: './', // Usa rutas relativas para GitHub Pages
