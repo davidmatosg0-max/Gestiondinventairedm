@@ -1241,6 +1241,80 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       };
 
       setBenevoles([...benevoles, nouveauBenevole]);
+      
+      // 🆕 CREAR AUTOMÁTICAMENTE CONTACTO EN DEPARTAMENTO(S) PARA GENERAR NÚMERO DE ARCHIVO
+      const departamentosArray = Array.isArray(newForm.departement) 
+        ? newForm.departement 
+        : (newForm.departement ? [newForm.departement] : []);
+      
+      if (departamentosArray.length > 0) {
+        departamentosArray.forEach((deptId) => {
+          const nuevoContacto: Omit<ContactoDepartamento, 'id'> = {
+            departamentoId: deptId,
+            departamentoIds: departamentosArray,
+            tipo: 'benevole',
+            nombre: newForm.nom,
+            apellido: newForm.prenom,
+            fechaNacimiento: newForm.dateNaissance || '',
+            genero: newForm.sexe === 'Homme' ? 'Homme' : newForm.sexe === 'Femme' ? 'Femme' : 'Non spécifié',
+            email: newForm.email,
+            telefono: newForm.telephone,
+            cargo: newForm.poste || '',
+            disponibilidad: newForm.disponibilites || '',
+            disponibilidades: newForm.joursDisponibles?.map((j: any) => ({
+              jour: j.jour,
+              am: j.am || false,
+              pm: j.pm || false
+            })) || [],
+            notas: newForm.notasGenerales || '',
+            activo: newForm.statut === 'actif',
+            fechaIngreso: newForm.dateInscription || new Date().toISOString().split('T')[0],
+            direccion: newForm.adresse || '',
+            ciudad: newForm.ville || '',
+            codigoPostal: newForm.codePostal || '',
+            numeroEmpleado: '',
+            horario: '',
+            heuresSemaines: newForm.heuresSemaines || 0,
+            reference: newForm.reference || '',
+            supervisor: '',
+            especialidad: '',
+            certificaciones: [],
+            idiomas: newForm.langues || [],
+            foto: newForm.photo || '',
+            documents: newForm.documents || [],
+            urgenceNom: newForm.contactoEmergenciaNombre || '',
+            urgenceRelacion: newForm.contactoEmergenciaRelacion || '',
+            urgenceTelephone: newForm.contactoEmergenciaTelefono || '',
+            urgenceEmail: newForm.contactoEmergenciaEmail || ''
+          };
+
+          const resultado = guardarContacto(nuevoContacto);
+          console.log(`📝 Contacto creado automáticamente en departamento ${deptId} con número: ${resultado.numeroArchivo}`);
+          
+          // Actualizar el bénévole con el número de archivo generado
+          if (resultado.numeroArchivo) {
+            nouveauBenevole.numeroArchivo = resultado.numeroArchivo;
+            console.log(`✅ Número de archivo asignado: ${resultado.numeroArchivo}`);
+          }
+        });
+        
+        // Actualizar el bénévole en el array con el número de archivo
+        setBenevoles(prev => prev.map(b => 
+          b.id === nouveauBenevole.id ? { ...b, numeroArchivo: nouveauBenevole.numeroArchivo } : b
+        ));
+        
+        // 🔄 SINCRONIZAR AUTOMÁTICAMENTE SI SE ASIGNÓ A ENTREPÔT
+        if (departamentosArray.some(dept => dept.toLowerCase().includes('entrepôt') || dept.toLowerCase().includes('entrepot'))) {
+          console.log('🔄 Sincronizando bénévole a contactos de Entrepôt...');
+          setTimeout(() => {
+            const resultado = sincronizarVoluntariosEntrepot();
+            if (resultado.sincronizados > 0) {
+              toast.success('✅ Bénévole synchronisé automatiquement vers Contacts Entrepôt');
+            }
+          }, 500);
+        }
+      }
+      
       toast.success('Nouveau bénévole créé avec succès');
     }
 
