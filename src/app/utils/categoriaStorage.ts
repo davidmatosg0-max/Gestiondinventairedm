@@ -11,10 +11,11 @@ export function obtenerCategorias(): Categoria[] {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored !== null) {
       const categorias: Categoria[] = JSON.parse(stored);
-      // Convertir valorMonetario a enteros para compatibilidad
+      // Asegurar que valorMonetario y valorPorKg sean números válidos
       return categorias.map(cat => ({
         ...cat,
-        valorMonetario: Math.round(cat.valorMonetario)
+        valorMonetario: typeof cat.valorMonetario === 'number' ? cat.valorMonetario : parseFloat(cat.valorMonetario as any) || 0,
+        valorPorKg: cat.valorMonetario || cat.valorPorKg || 0 // Sincronizar ambos campos
       }));
     } else {
       // Solo inicializar la primera vez
@@ -32,7 +33,14 @@ export function obtenerCategorias(): Categoria[] {
  */
 export function guardarCategorias(categorias: Categoria[]): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(categorias));
+    // Sincronizar valorMonetario con valorPorKg antes de guardar
+    const categoriasNormalizadas = categorias.map(cat => ({
+      ...cat,
+      valorPorKg: cat.valorMonetario || cat.valorPorKg || 0,
+      valorMonetario: cat.valorMonetario || cat.valorPorKg || 0
+    }));
+    
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(categoriasNormalizadas));
     // ELIMINADO: window.dispatchEvent para evitar actualizaciones de estado durante render
     // Los componentes deben escuchar cambios de storage o usar refreshKey/callbacks
   } catch (error) {
@@ -459,8 +467,8 @@ export function obtenerValorPorKg(
       }
     }
     
-    // Finalmente, usar el valor de la categoría
-    return categoria.valorPorKg;
+    // Finalmente, usar el valor de la categoría (priorizar valorMonetario sobre valorPorKg)
+    return categoria.valorMonetario || categoria.valorPorKg;
   } catch (error) {
     console.error('Error al obtener valor por kg:', error);
     return undefined;

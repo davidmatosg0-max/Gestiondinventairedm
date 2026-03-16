@@ -2161,24 +2161,6 @@ export function EntradaDonAchat() {
                   })()}
                 </div>
 
-                {/* Valor Monetario */}
-                <div>
-                  <Label>Valeur Unitaire (CAD$)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.valorUnitario || ''}
-                    onChange={(e) => handleFieldChange('valorUnitario', parseFloat(e.target.value) || 0)}
-                    placeholder="0.00"
-                  />
-                  {formData.valorUnitario > 0 && formData.cantidad > 0 && (
-                    <p className="text-xs text-green-600 mt-1 font-semibold">
-                      💰 Valeur totale: CAD$ {(formData.valorUnitario * formData.cantidad).toFixed(2)}
-                    </p>
-                  )}
-                </div>
-
                 {/* Temperatura */}
                 <div>
                   <Label>Température *</Label>

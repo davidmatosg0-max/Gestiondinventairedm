@@ -588,80 +588,118 @@ export async function generateStandardProductLabel(
 export async function printStandardLabel(data: ProductLabelData, silent: boolean = false): Promise<void> {
   const html = await generateStandardProductLabel(data);
   
-  if (silent) {
-    // Modo silencioso: Crear iframe oculto para impresión automática
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = 'none';
-    iframe.style.opacity = '0';
-    document.body.appendChild(iframe);
-    
-    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (!iframeDoc) {
-      document.body.removeChild(iframe);
-      throw new Error('No se pudo crear el documento de impresión');
-    }
-    
-    iframeDoc.open();
-    iframeDoc.write(html);
-    iframeDoc.close();
-    
-    // Retornar promesa que se resuelve cuando se completa la impresión
-    return new Promise((resolve, reject) => {
-      iframe.onload = () => {
-        setTimeout(() => {
-          try {
-            // Imprimir directamente
-            iframe.contentWindow?.focus();
-            iframe.contentWindow?.print();
-            
-            // Limpiar después de imprimir
-            setTimeout(() => {
-              if (document.body.contains(iframe)) {
-                document.body.removeChild(iframe);
-              }
-              resolve();
-            }, 1000);
-          } catch (err) {
-            console.error('Error en impresión silenciosa:', err);
-            if (document.body.contains(iframe)) {
-              document.body.removeChild(iframe);
-            }
-            reject(err);
+  // Crear iframe con dimensiones reales pero fuera de la vista
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'absolute';
+  iframe.style.left = '-9999px';
+  iframe.style.top = '-9999px';
+  iframe.style.width = '8.5in';
+  iframe.style.height = '11in';
+  iframe.style.border = 'none';
+  document.body.appendChild(iframe);
+  
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+  if (!iframeDoc) {
+    document.body.removeChild(iframe);
+    throw new Error('No se pudo crear el documento de impresión');
+  }
+  
+  iframeDoc.open();
+  iframeDoc.write(html);
+  iframeDoc.close();
+  
+  // Retornar promesa que se resuelve cuando se completa la impresión
+  return new Promise((resolve, reject) => {
+    // Función para verificar si todas las imágenes están cargadas
+    const waitForImagesToLoad = () => {
+      return new Promise<void>((resolveImages) => {
+        const images = iframeDoc.querySelectorAll('img');
+        
+        if (images.length === 0) {
+          resolveImages();
+          return;
+        }
+        
+        let loadedCount = 0;
+        const totalImages = images.length;
+        
+        const checkAllLoaded = () => {
+          loadedCount++;
+          if (loadedCount === totalImages) {
+            resolveImages();
           }
-        }, 100);
-      };
-      
-      iframe.onerror = () => {
+        };
+        
+        images.forEach(img => {
+          if (img.complete) {
+            checkAllLoaded();
+          } else {
+            img.onload = checkAllLoaded;
+            img.onerror = checkAllLoaded; // Continuar incluso si hay error
+          }
+        });
+        
+        // Timeout de seguridad: si después de 3 segundos no se cargaron, continuar
+        setTimeout(() => {
+          resolveImages();
+        }, 3000);
+      });
+    };
+    
+    // Esperar a que se cargue completamente
+    const printContent = async () => {
+      try {
+        // Esperar a que todas las imágenes se carguen
+        await waitForImagesToLoad();
+        
+        // Esperar un poco más para que las fuentes se carguen
+        await new Promise(r => setTimeout(r, 800));
+        
+        // Enfocar el iframe y llamar a print()
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+        
+        // Escuchar cuando se cierra el diálogo de impresión
+        const afterPrint = () => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+          resolve();
+        };
+        
+        // Usar onafterprint si está disponible
+        if (iframe.contentWindow) {
+          iframe.contentWindow.onafterprint = afterPrint;
+        }
+        
+        // Backup: limpiar después de 30 segundos si el usuario no hace nada
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+          resolve();
+        }, 30000);
+        
+      } catch (err) {
+        console.error('Error en impresión:', err);
         if (document.body.contains(iframe)) {
           document.body.removeChild(iframe);
         }
-        reject(new Error('Error al cargar el iframe'));
-      };
-    });
-  } else {
-    // Modo normal: Abrir ventana nueva
-    const printWindow = window.open('', '_blank', 'width=800,height=900');
-    if (!printWindow) {
-      throw new Error('No se pudo abrir la ventana de impresión');
+        reject(err);
+      }
+    };
+    
+    if (iframeDoc.readyState === 'complete') {
+      printContent();
+    } else {
+      iframe.onload = printContent;
     }
     
-    printWindow.document.write(html);
-    printWindow.document.close();
-    
-    // Esperar a que se cargue el contenido y luego imprimir automáticamente
-    printWindow.onload = () => {
-      setTimeout(() => {
-        printWindow.print();
-        // Cerrar la ventana después de imprimir o cancelar
-        printWindow.onafterprint = () => {
-          printWindow.close();
-        };
-      }, 250);
+    iframe.onerror = () => {
+      if (document.body.contains(iframe)) {
+        document.body.removeChild(iframe);
+      }
+      reject(new Error('Error al cargar el iframe'));
     };
-  }
+  });
 }

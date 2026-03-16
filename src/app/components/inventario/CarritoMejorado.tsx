@@ -100,7 +100,7 @@ export function CarritoMejorado({
     return carrito.reduce((total, item) => {
       const producto = productos.find(p => p.id === item.productoId);
       if (producto) {
-        // Calcular peso total de este item: cantidad × peso unitario
+        // OPCIÓN 1: Usar valorPorKg (sistema nuevo)
         const pesoUnitario = producto.peso || producto.pesoUnitario || 0;
         const pesoTotalItem = item.cantidad * pesoUnitario;
         
@@ -112,7 +112,15 @@ export function CarritoMejorado({
           producto.varianteId
         );
         
-        return total + (valorItem || 0);
+        // Si valorPorKg está configurado, usarlo
+        if (valorItem !== undefined && valorItem > 0) {
+          return total + valorItem;
+        }
+        
+        // OPCIÓN 2: Fallback al sistema antiguo (valorUnitario)
+        if (producto.valorUnitario && producto.valorUnitario > 0) {
+          return total + (item.cantidad * producto.valorUnitario);
+        }
       }
       return total;
     }, 0);
@@ -358,7 +366,9 @@ export function CarritoMejorado({
                         <DollarSign className="w-4 h-4 text-[#4CAF50]" />
                         <div>
                           <p className="text-xs text-[#666666]">Valor</p>
-                          <p className="font-bold text-[#4CAF50]" style={{ fontSize: '1.2rem' }}>CAD$ {calcularValorTotal().toFixed(2)}</p>
+                          <p className="font-bold text-[#4CAF50]" style={{ fontSize: '1.2rem' }}>
+                            CAD$ {(calcularValorTotal() || 0).toFixed(2)}
+                          </p>
                         </div>
                       </div>
                     </CardContent>
@@ -417,12 +427,19 @@ export function CarritoMejorado({
                     // Calcular peso y valor usando la lógica correcta
                     const pesoUnitario = producto?.peso || producto?.pesoUnitario || 0;
                     const pesoTotalItem = item.cantidad * pesoUnitario;
-                    const valorItem = calcularValorMonetario(
+                    
+                    // Intentar calcular con el sistema nuevo (valorPorKg)
+                    let valorItem = calcularValorMonetario(
                       pesoTotalItem,
                       producto?.categoria || '',
                       producto?.subcategoria,
                       producto?.varianteId
-                    ) || 0;
+                    );
+                    
+                    // Si no hay valorPorKg, usar el sistema antiguo (valorUnitario)
+                    if (!valorItem || valorItem === 0) {
+                      valorItem = (producto?.valorUnitario || 0) * item.cantidad;
+                    }
                     
                     const excedeStock = item.cantidad > (producto?.stockActual || 0);
                     

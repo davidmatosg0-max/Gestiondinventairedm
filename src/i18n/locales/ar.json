@@ -1620,6 +1620,7 @@
     "icon": "الأيقونة",
     "selectIcon": "اختر الأيقونة",
     "monetaryValue": "القيمة النقدية",
+    "baseMonetaryValue": "القيمة النقدية الأساسية",
     "perKg": "لكل كجم",
     "unitType": "نوع الوحدة",
     "weight": "الوزن",

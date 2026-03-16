@@ -34,6 +34,7 @@ import {
   actualizarProgramaEntrada, 
   eliminarProgramaEntrada 
 } from '../../utils/programaEntradaStorage';
+import { migrarValoresMonetariosProductos } from '../../utils/migrarValorMonetarioProductos';
 import { GestionVariantes } from '../inventario/GestionVariantes';
 import { GestionUnidades } from '../inventario/GestionUnidades';
 import { obtenerUnidades, type Unidad as UnidadDinamica } from '../../utils/unidadStorage';
@@ -293,6 +294,27 @@ export function Configuracion() {
     const programasGuardados = obtenerProgramasEntrada();
     setProgramasEntrada(programasGuardados);
   }, []);
+
+  // 💰 Migrar valores monetarios de productos existentes al cargar categorías
+  useEffect(() => {
+    if (categorias.length > 0 && productos.length > 0) {
+      // Verificar si algún producto no tiene valorUnitario
+      const productosSinValor = productos.filter(p => !p.valorUnitario || p.valorUnitario === 0);
+      
+      if (productosSinValor.length > 0) {
+        console.log(`💰 Encontrados ${productosSinValor.length} productos sin valor monetario. Ejecutando migración...`);
+        const resultado = migrarValoresMonetariosProductos();
+        
+        if (resultado.exitoso && resultado.productosActualizados > 0) {
+          // Recargar productos después de la migración
+          setProductos(obtenerProductos());
+          toast.success(`✅ ${resultado.productosActualizados} producto(s) actualizado(s) con valores monetarios`, {
+            duration: 3000
+          });
+        }
+      }
+    }
+  }, [categorias, productos]);
 
   // Sincronizar categorías a localStorage cada vez que cambien
   useEffect(() => {
@@ -817,6 +839,20 @@ export function Configuracion() {
       return;
     }
 
+    // 💰 Calcular valor monetario basado en la categoría
+    const categoriaSeleccionada = categorias.find(c => c.nombre === formProductoPRS.categoria);
+    const valorMonetarioBase = categoriaSeleccionada?.valorMonetario || 0;
+    const valorUnitario = valorMonetarioBase * formProductoPRS.peso; // valor por kg * peso del producto
+    const valorTotal = valorUnitario * 0; // Inicialmente 0 porque no hay stock
+    
+    // 🔍 Debug: Mostrar información del cálculo
+    console.log('💰 Cálculo de valor monetario:');
+    console.log('  Categoría:', formProductoPRS.categoria);
+    console.log('  Valor monetario base de categoría:', valorMonetarioBase);
+    console.log('  Peso del producto:', formProductoPRS.peso, 'kg');
+    console.log('  Valor unitario calculado:', valorUnitario);
+    console.log('  Valor total inicial:', valorTotal);
+
     if (editandoProductoPRS) {
       // Editar producto existente
       const productoActualizado: ProductoCreado = {
@@ -832,7 +868,9 @@ export function Configuracion() {
         peso: formProductoPRS.peso,
         pesoUnitario: formProductoPRS.pesoUnitario > 0 ? formProductoPRS.pesoUnitario : undefined,
         ubicacion: formProductoPRS.ubicacion || undefined,
-        esPRS: true
+        esPRS: true,
+        valorUnitario: valorUnitario,
+        valorTotal: valorTotal
       };
 
       actualizarProducto(editandoProductoPRS.id, productoActualizado);
@@ -864,7 +902,9 @@ export function Configuracion() {
         stockActual: 0,
         stockMinimo: 0,
         lote: '',
-        fechaVencimiento: ''
+        fechaVencimiento: '',
+        valorUnitario: valorUnitario,
+        valorTotal: valorTotal
       };
 
       const productoGuardado = guardarProducto(nuevoProducto);
@@ -3208,6 +3248,27 @@ export function Configuracion() {
                   <p className="text-xs text-[#666666]">
                     Le poids d'une seule unité de ce produit
                   </p>
+                  {/* Información del valor monetario calculado */}
+                  {formProductoPRS.categoria && formProductoPRS.peso > 0 && (() => {
+                    const categoriaSeleccionada = categorias.find(c => c.nombre === formProductoPRS.categoria);
+                    const valorMonetarioBase = categoriaSeleccionada?.valorMonetario || 0;
+                    const valorUnitario = valorMonetarioBase * formProductoPRS.peso;
+                    
+                    return valorMonetarioBase > 0 ? (
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-xs text-green-800 flex items-start gap-2">
+                          <span className="text-base">💰</span>
+                          <span>
+                            <strong>Valeur monétaire:</strong> CAD$ {valorUnitario.toFixed(2)} par unité 
+                            <br />
+                            <span className="text-[10px] text-green-600">
+                              (Basé sur CAD$ {valorMonetarioBase.toFixed(2)}/kg de la catégorie "{formProductoPRS.categoria}")
+                            </span>
+                          </span>
+                        </p>
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
 
                 {/* Peso unitario (opcional) */}

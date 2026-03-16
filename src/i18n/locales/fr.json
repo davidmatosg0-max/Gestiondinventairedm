@@ -1664,6 +1664,7 @@
     "icon": "Icône",
     "selectIcon": "Sélectionner une icône",
     "monetaryValue": "Valeur Monétaire",
+    "baseMonetaryValue": "Valeur Monétaire de Base",
     "perKg": "par kg",
     "unitType": "Type d'Unité",
     "weight": "Poids",

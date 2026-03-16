@@ -176,7 +176,10 @@ export function VerificacionesRecientes() {
           </Button>
         </DialogTrigger>
         
-        <DialogContent className="max-w-none !w-[95vw] !h-[95vh] overflow-hidden !p-0">
+        <DialogContent 
+          className="max-w-none !w-[95vw] !h-[95vh] overflow-hidden !p-0"
+          aria-describedby="verificaciones-recientes-description"
+        >
           {/* Header - No se imprime */}
           <div className="print:hidden">
             <DialogHeader 
@@ -211,7 +214,10 @@ export function VerificacionesRecientes() {
                     Vérifications des Entrées Récentes
                     <Sparkles className="w-5 h-5 text-white/80 animate-pulse" />
                   </DialogTitle>
-                  <DialogDescription className="text-white/80 text-sm mt-1">
+                  <DialogDescription 
+                    id="verificaciones-recientes-description"
+                    className="text-white/80 text-sm mt-1"
+                  >
                     Historique des vérifications et entrées d'inventaire
                   </DialogDescription>
                 </div>

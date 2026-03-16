@@ -51,8 +51,30 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentProps<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
-  // Si tiene aria-describedby, verificar si hay DialogDescription hijo
-  const hasDescribedBy = props['aria-describedby'];
+  // Generar un ID único para la descripción
+  const generatedId = React.useId();
+  const descriptionId = (props['aria-describedby'] && props['aria-describedby'] !== 'undefined') 
+    ? props['aria-describedby'] 
+    : `dialog-description-${generatedId}`;
+  
+  // Verificar si children contiene un DialogDescription
+  const hasDescription = React.Children.toArray(children).some((child: any) => {
+    if (React.isValidElement(child)) {
+      // Buscar en el primer nivel
+      if (child.type === DialogDescription || child.props?.['data-slot'] === 'dialog-description') {
+        return true;
+      }
+      // Buscar dentro de DialogHeader
+      if (child.props?.children) {
+        const headerChildren = React.Children.toArray(child.props.children);
+        return headerChildren.some((headerChild: any) => {
+          return React.isValidElement(headerChild) && 
+                 (headerChild.type === DialogDescription || headerChild.props?.['data-slot'] === 'dialog-description');
+        });
+      }
+    }
+    return false;
+  });
   
   return (
     <DialogPortal>
@@ -60,8 +82,8 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         data-slot="dialog-content"
+        aria-describedby={descriptionId}
         {...props}
-        aria-describedby={hasDescribedBy || undefined}
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200",
           !className?.includes("max-w-") && "max-w-[calc(100%-2rem)] sm:max-w-lg",
@@ -69,10 +91,10 @@ const DialogContent = React.forwardRef<
         )}
       >
         {children}
-        {/* Agregar descripción oculta si falta pero hay aria-describedby */}
-        {hasDescribedBy && (
-          <DialogPrimitive.Description id={hasDescribedBy} className="sr-only">
-            Dialog content
+        {/* Si no hay DialogDescription, agregar uno oculto por defecto */}
+        {!hasDescription && (
+          <DialogPrimitive.Description id={descriptionId} className="sr-only">
+            Contenido del diálogo
           </DialogPrimitive.Description>
         )}
         <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">

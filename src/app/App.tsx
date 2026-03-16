@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../i18n/config'; // Inicializar i18n
 // Última actualización: 15/03/2026 - Forzar recompilación
 import { useTranslation } from 'react-i18next';
+import '../utils/translationChecker'; // Verificador de sincronización de traducciones
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/pages/Dashboard';
 import { DashboardMetricas } from './components/pages/DashboardMetricas';
@@ -60,10 +61,11 @@ import { inicializarSincronizacionAutomatica } from './utils/sincronizarVoluntar
 import './utils/debugSincronizacion'; // 🐛 Funciones de debug para sincronización
 import { migrarFlagsCostco, yaMigradoCostco, marcarMigracionCostco } from './utils/migrateCostcoFlags';
 import './utils/migrateCostcoFlags'; // 🆘 Cargar función de emergencia para migración manual
-import './utils/programaEntradaStorage'; // 🆘 Cargar función de debug de programas
 import { migrarProgramasEntrada, yaMigradoProgramas, marcarMigracionProgramas } from './utils/migrateProgramasEntrada';
 import './utils/migrateProgramasEntrada'; // 🆘 Cargar funciones de emergencia para programas
 import { migrarPesoUnitarioProductos } from './utils/productStorage';
+import './utils/calcularValorMonetarioProductos'; // 💰 Cargar funciones de cálculo de valores monetarios
+import { inicializarProteccionDatos } from './utils/proteccionDatos'; // 🛡️ Sistema de protección total de datos
 
 // Suprimir warnings internos de Figma Make al inicio
 suppressFigmaWarningsConditional();
@@ -82,6 +84,10 @@ function AppContent() {
 
   // Crear ofertas de ejemplo e inicializar unidades al cargar la app
   useEffect(() => {
+    // 🛡️🛡️🛡️ ACTIVAR SISTEMA DE PROTECCIÓN TOTAL DE DATOS
+    // DEBE SER LO PRIMERO QUE SE EJECUTE
+    inicializarProteccionDatos();
+    
     // 🔒🔒🔒 PROTECCIÓN MÁXIMA - MARCAR INMEDIATAMENTE COMO SISTEMA CON DATOS REALES
     // Esto previene CUALQUIER limpieza automática
     localStorage.setItem('sistema_con_datos_reales', 'true');

@@ -55,7 +55,10 @@ export type Categoria = {
   icono: string;
   activa: boolean;
   valorPorKg?: number;
+  valorMonetario?: number; // Valor monetario base de la categoría (CAD$ por kg)
   subcategorias?: Subcategoria[];
+  color?: string;
+  descripcion?: string;
 };
 
 export const programasEntradaIniciales: ProgramaEntrada[] = [];
