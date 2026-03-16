@@ -161,7 +161,17 @@ export function AutoBackupConfig() {
   const handleDownloadBackup = (backup: any) => {
     try {
       descargarBackup(backup, config.filePrefix);
-      toast.success('Backup téléchargé');
+      
+      // Mensaje personalizado según la configuración
+      if (config.customFolder && tieneCarpetaSeleccionada()) {
+        toast.success('Backup téléchargé dans le dossier personnalisé 📁', {
+          description: `Sauvegardé dans: ${config.folderName || 'dossier sélectionné'}`
+        });
+      } else {
+        toast.success('Backup téléchargé 📥', {
+          description: 'Le fichier a été téléchargé normalement'
+        });
+      }
     } catch (error) {
       toast.error('Erreur lors du téléchargement');
     }

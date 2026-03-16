@@ -299,8 +299,17 @@ export async function descargarBackup(backup: StoredBackup, customPrefix?: strin
     const tipo = backup.automatic ? 'auto' : 'manual';
     const nombreArchivo = `${prefix}-${tipo}-${fecha}-${hora}.json`;
     
+    console.log('📥 Descargando backup:', {
+      id: backup.id,
+      tamaño: formatearTamano(backup.size),
+      automático: backup.automatic,
+      carpetaPersonalizada: config.customFolder,
+      nombreArchivo: nombreArchivo
+    });
+    
     // Si está configurada carpeta personalizada y es soportada, intentar guardar ahí
     if (config.customFolder && soportaFileSystemAccess() && tieneCarpetaSeleccionada()) {
+      console.log('📁 Intentando guardar en carpeta personalizada...');
       const resultado = await guardarArchivoEnCarpeta(nombreArchivo, backup.data);
       
       if (resultado.success) {
@@ -308,10 +317,18 @@ export async function descargarBackup(backup: StoredBackup, customPrefix?: strin
         return;
       } else {
         console.warn('⚠️ No se pudo guardar en carpeta personalizada, usando descarga normal');
+        console.warn('Razón:', resultado.error || 'Desconocida');
+      }
+    } else {
+      if (config.customFolder) {
+        console.log('ℹ️ Carpeta personalizada configurada pero no disponible:');
+        console.log('  - Soporta File System Access:', soportaFileSystemAccess());
+        console.log('  - Carpeta seleccionada:', tieneCarpetaSeleccionada());
       }
     }
     
     // Fallback: Descarga normal
+    console.log('📥 Usando descarga normal del navegador...');
     const blob = new Blob([backup.data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -321,8 +338,9 @@ export async function descargarBackup(backup: StoredBackup, customPrefix?: strin
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    console.log('✅ Descarga iniciada:', nombreArchivo);
   } catch (error) {
-    console.error('Error al descargar backup:', error);
+    console.error('❌ Error al descargar backup:', error);
     throw error;
   }
 }
