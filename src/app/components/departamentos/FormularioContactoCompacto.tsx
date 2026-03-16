@@ -159,6 +159,7 @@ interface FormularioContactoCompactoProps {
   tiposPermitidos: TipoContacto[];
   departamentoId?: string; // Nuevo: para identificar el departamento
   departamentoNombre?: string; // Nuevo: nombre del departamento para mostrar
+  contactoId?: string; // ✅ NUEVO: ID del contacto en modo edición para forzar reinicialización de componentes
 }
 
 // Mapeo de iconos
@@ -183,7 +184,8 @@ export function FormularioContactoCompacto({
   updateDisponibilidad,
   tiposPermitidos,
   departamentoId, // Nuevo parámetro
-  departamentoNombre = 'Département' // Nuevo parámetro con valor por defecto
+  departamentoNombre = 'Département', // Nuevo parámetro con valor por defecto
+  contactoId // ✅ NUEVO: ID del contacto en modo edición
 }: FormularioContactoCompactoProps) {
   const branding = useBranding();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -855,6 +857,7 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                           <span className="text-blue-900">📍 Adresse de l'entreprise</span>
                         </Label>
                         <AddressAutocomplete
+                          key={`address-base-${contactoId || 'new'}-${abierto}`}
                           value={formulario.direccion || ''}
                           initialCity={formulario.ciudad || ''}
                           initialPostalCode={formulario.codigoPostal || ''}
@@ -1394,6 +1397,7 @@ ${stats.fechaCreacionMasReciente ? `📅 Plus récent: ${new Date(stats.fechaCre
                       <div>
                         <Label className="text-xs">Adresse complète</Label>
                         <AddressAutocomplete
+                          key={`address-contact-${contactoId || 'new'}-${abierto}`}
                           value={formulario.direccion || ''}
                           initialCity={formulario.ciudad || ''}
                           initialPostalCode={formulario.codigoPostal || ''}

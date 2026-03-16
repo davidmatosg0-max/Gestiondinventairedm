@@ -1252,6 +1252,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         tiposPermitidos={tiposPermitidos}
         departamentoId={departamentoId}
         departamentoNombre={departamentoNombre}
+        contactoId={contactoSeleccionado?.id}
       />
 
       {/* Dialog Détails */}
