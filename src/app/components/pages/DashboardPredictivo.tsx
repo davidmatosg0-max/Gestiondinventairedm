@@ -77,7 +77,8 @@ export function DashboardPredictivo() {
   };
 
   // Datos para gráfico de tendencias
-  const datosTendencias = tendencias.slice(0, 8).map(t => ({
+  const datosTendencias = tendencias.slice(0, 8).map((t, index) => ({
+    id: `tendencia-${index}`,
     producto: t.producto.length > 15 ? t.producto.substring(0, 15) + '...' : t.producto,
     actual: t.demandaPromedio,
     prediccion: t.prediccionProximoMes,

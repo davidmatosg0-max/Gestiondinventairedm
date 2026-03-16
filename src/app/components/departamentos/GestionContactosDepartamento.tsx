@@ -1661,7 +1661,15 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                     return (
                     <Card 
                       key={benevole.id} 
-                      className={`p-4 transition-shadow hover:shadow-lg cursor-pointer ${yaAsignadoAqui ? 'opacity-75 bg-gray-50' : ''}`}
+                      className={`p-4 transition-all hover:shadow-lg cursor-pointer ${
+                        yaAsignadoAqui 
+                          ? 'border-2 bg-green-50/30' 
+                          : 'border hover:border-gray-300'
+                      }`}
+                      style={yaAsignadoAqui ? { 
+                        borderColor: branding.secondaryColor,
+                        backgroundColor: 'rgba(45, 149, 97, 0.05)' // Verde elegante con transparencia
+                      } : {}}
                       onClick={() => asignarBenevoleExistente(benevole)}
                     >
                       <div className="flex items-center gap-4">
@@ -1691,13 +1699,13 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                             </Badge>
                             {yaAsignadoAqui && (
                               <Badge 
-                                className="text-xs"
+                                className="text-xs font-semibold"
                                 style={{ 
-                                  backgroundColor: '#FCD34D',
-                                  color: '#78350F'
+                                  backgroundColor: branding.secondaryColor,
+                                  color: 'white'
                                 }}
                               >
-                                Déjà assigné ici
+                                ✓ Déjà assigné ici
                               </Badge>
                             )}
                           </div>

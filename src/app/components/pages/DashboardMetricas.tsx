@@ -268,7 +268,8 @@ export function DashboardMetricas() {
   // Funciones auxiliares para calcular datos de gráficos
   const calcularMovimientosSemana = (productos: any[]) => {
     const dias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-    return dias.map(dia => ({
+    return dias.map((dia, index) => ({
+      id: `movimiento-${index}`,
       dia,
       entradas: Math.floor(Math.random() * 500) + 200,
       salidas: Math.floor(Math.random() * 400) + 150,
@@ -282,7 +283,8 @@ export function DashboardMetricas() {
       categorias[cat] = (categorias[cat] || 0) + p.stock;
     });
 
-    return Object.entries(categorias).map(([nombre, cantidad]) => ({
+    return Object.entries(categorias).map(([nombre, cantidad], index) => ({
+      id: `categoria-${index}`,
       nombre,
       cantidad,
     })).slice(0, 6);
@@ -290,7 +292,8 @@ export function DashboardMetricas() {
 
   const calcularTendenciaMensual = (comandas: any[]) => {
     const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
-    return meses.map(mes => ({
+    return meses.map((mes, index) => ({
+      id: `mes-${index}`,
       mes,
       comandas: Math.floor(Math.random() * 50) + 20,
       completadas: Math.floor(Math.random() * 40) + 15,
@@ -305,6 +308,7 @@ export function DashboardMetricas() {
       const fecha = new Date(hoy);
       fecha.setDate(fecha.getDate() - i);
       ultimos7Dias.push({
+        id: `actividad-${i}`,
         fecha: fecha.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
         actividad: Math.floor(Math.random() * 100) + 20,
       });
@@ -473,7 +477,7 @@ export function DashboardMetricas() {
             </h3>
           </div>
           <ResponsiveContainer width="100%" height={180}>
-            <AreaChart data={chartData.actividadReciente}>
+            <AreaChart data={chartData.actividadReciente} id="chart-actividad">
               <defs>
                 <linearGradient id="colorActividad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#1a4d7a" stopOpacity={0.8}/>
@@ -484,7 +488,7 @@ export function DashboardMetricas() {
               <XAxis dataKey="fecha" stroke="#666666" style={{ fontSize: '12px' }} />
               <YAxis stroke="#666666" style={{ fontSize: '12px' }} />
               <Tooltip />
-              <Area type="monotone" dataKey="actividad" stroke="#1a4d7a" fillOpacity={1} fill="url(#colorActividad)" />
+              <Area key="area-actividad" type="monotone" dataKey="actividad" stroke="#1a4d7a" fillOpacity={1} fill="url(#colorActividad)" />
             </AreaChart>
           </ResponsiveContainer>
         </motion.div>
@@ -502,7 +506,7 @@ export function DashboardMetricas() {
             📊 Mouvements Hebdomadaires
           </h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData.movimientosSemana}>
+            <BarChart data={chartData.movimientosSemana} id="chart-movimientos">
               <CartesianGrid strokeDasharray="3 3" stroke="#cccccc30" />
               <XAxis dataKey="dia" />
               <YAxis />
@@ -535,9 +539,10 @@ export function DashboardMetricas() {
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="cantidad"
+                nameKey="nombre"
               >
                 {chartData.distribucionCategorias.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell key={`cell-cat-${entry.id || index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip />
@@ -556,7 +561,7 @@ export function DashboardMetricas() {
             📈 Tendance Mensuelle des Commandes
           </h3>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData.tendenciaMensual}>
+            <LineChart data={chartData.tendenciaMensual} id="chart-tendencias">
               <CartesianGrid strokeDasharray="3 3" stroke="#cccccc30" />
               <XAxis dataKey="mes" />
               <YAxis />
