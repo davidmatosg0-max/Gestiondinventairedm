@@ -23,9 +23,10 @@
 
 **Problema resuelto:**
 - ❌ `ReferenceError: require is not defined in ES module scope`
+- ❌ `SyntaxError: Destructuring error en update-version.js`
 
 **Archivos convertidos:**
-1. `/scripts/update-version.js` - ✅ Convertido a `import`
+1. `/scripts/update-version.js` - ✅ Convertido a `import` + **Fix destructuring**
 2. `/scripts/fix-aria-describedby.js` - ✅ Convertido a `import`
 3. `/scripts/verify-corrections.js` - ✅ Convertido a `import`
 
@@ -42,6 +43,17 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+```
+
+**Fix adicional en update-version.js:**
+```javascript
+// ANTES (Error)
+let [_, major, minor, patch] = versionMatch.map(Number);
+
+// AHORA (Correcto)
+let major = parseInt(versionMatch[1]);
+let minor = parseInt(versionMatch[2]);
+let patch = parseInt(versionMatch[3]);
 ```
 
 ---

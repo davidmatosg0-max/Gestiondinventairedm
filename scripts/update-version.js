@@ -36,7 +36,9 @@ if (!versionMatch || !buildMatch || !releaseDateMatch) {
   process.exit(1);
 }
 
-let [_, major, minor, patch] = versionMatch.map(Number);
+let major = parseInt(versionMatch[1]);
+let minor = parseInt(versionMatch[2]);
+let patch = parseInt(versionMatch[3]);
 let buildNumber = parseInt(buildMatch[1]);
 const currentDate = releaseDateMatch[1];
 
