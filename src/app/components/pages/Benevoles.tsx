@@ -5114,12 +5114,15 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
       {/* Dialog: Profil Détaillé du Bénévole */}
       <Dialog open={profileModalOpen} onOpenChange={setProfileModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="benevole-profile-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               <Users className="w-6 h-6" style={{ color: branding.primaryColor }} />
               Profil du Bénévole
             </DialogTitle>
+            <DialogDescription id="benevole-profile-description">
+              Informations détaillées du bénévole et son activité
+            </DialogDescription>
           </DialogHeader>
 
           {profileBenevole && (() => {

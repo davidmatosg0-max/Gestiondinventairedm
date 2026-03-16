@@ -1126,7 +1126,7 @@ export function EntradaDonAchat() {
             fechaCaducidad: formData.fechaCaducidad,
             detallesEmpaque: formData.detallesEmpaque,
             valorUnitario: formData.valorUnitario || 0,
-            valorTotal: formData.valorUnitario || 0,
+            valorTotal: (formData.valorUnitario || 0) * 1, // ✅ Una unidad individual = valorUnitario × 1
           };
           
           productosNuevos.push(productoIndividual);

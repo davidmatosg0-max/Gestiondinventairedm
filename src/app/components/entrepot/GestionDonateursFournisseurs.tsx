@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useBranding } from '../../../hooks/useBranding';
-import { Plus, Search, Edit2, Trash2, Building2, Phone, MapPin, User, Mail, X, Save, ChevronRight, UserPlus, Upload, Image as ImageIcon, Check, Eye, History, Clock, Package, ShoppingCart, TrendingUp, LayoutGrid, List, Table as TableIcon, Users, Gift, Store, Truck } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Building2, Phone, MapPin, User, Mail, X, Save, ChevronRight, UserPlus, Upload, Image as ImageIcon, Check, Eye, History, Clock, Package, ShoppingCart, TrendingUp, LayoutGrid, List, Table as TableIcon, Users, Gift, Store, Truck, RefreshCw } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -35,6 +35,8 @@ interface ActiviteHistorique {
   type: 'donation' | 'achat';
   produits: string[];
   quantite: number;
+  unites: string[]; // Array de unidades usadas
+  pesoTotal: number; // Peso total en kg
   valeur: number;
   reference: string;
 }
@@ -65,6 +67,134 @@ const obtenirDonnees = (): DonateurFournisseur[] => {
 
 const sauvegarderDonnees = (donnees: DonateurFournisseur[]) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(donnees));
+};
+
+// Función para sincronizar entradas de inventario con el historial del donador
+const sincroniserActivites = (): void => {
+  try {
+    // Obtener entradas de inventario
+    const entradas = localStorage.getItem('banco_alimentos_entradas_inventario');
+    if (!entradas) {
+      console.log('⚠️ No hay entradas de inventario para sincronizar');
+      return;
+    }
+    
+    const entradasParsed = JSON.parse(entradas);
+    const donnees = obtenirDonnees();
+    
+    console.log(`📊 Sincronizando ${entradasParsed.length} entradas con ${donnees.length} donadores/fournisseurs`);
+    
+    // Agrupar entradas por donador y fecha
+    const actividadesPorDonador: { [donadorId: string]: { [fecha: string]: any[] } } = {};
+    
+    entradasParsed.forEach((entrada: any) => {
+      if (!entrada.donadorId || !entrada.activo) return;
+      
+      // La fecha puede estar en 'fecha' o 'fechaCreacion'
+      const fechaEntrada = entrada.fecha || entrada.fechaCreacion;
+      if (!fechaEntrada) return;
+      
+      const fechaSolo = fechaEntrada.split('T')[0]; // Solo fecha sin hora
+      
+      if (!actividadesPorDonador[entrada.donadorId]) {
+        actividadesPorDonador[entrada.donadorId] = {};
+      }
+      
+      if (!actividadesPorDonador[entrada.donadorId][fechaSolo]) {
+        actividadesPorDonador[entrada.donadorId][fechaSolo] = [];
+      }
+      
+      actividadesPorDonador[entrada.donadorId][fechaSolo].push(entrada);
+    });
+    
+    // Crear actividades agrupadas por donador y fecha
+    Object.keys(actividadesPorDonador).forEach(donadorId => {
+      const donador = donnees.find(d => d.id === donadorId);
+      if (!donador) {
+        console.log(`⚠️ Donador no encontrado: ${donadorId}`);
+        return;
+      }
+      
+      console.log(`📦 Sincronizando actividades para: ${donador.nomEntreprise}`);
+      
+      // Limpiar historial existente para re-sincronizar
+      donador.historiqueActivites = [];
+      
+      Object.keys(actividadesPorDonador[donadorId]).forEach(fecha => {
+        const entradasDelDia = actividadesPorDonador[donadorId][fecha];
+        
+        // Agrupar por tipo de entrada
+        const donations = entradasDelDia.filter(e => e.tipoEntrada?.toLowerCase() === 'don');
+        const achats = entradasDelDia.filter(e => e.tipoEntrada?.toLowerCase() === 'achat');
+        
+        console.log(`  📅 ${fecha}: ${donations.length} donations, ${achats.length} achats`);
+        
+        // Crear actividad para donaciones
+        if (donations.length > 0) {
+          const produits = [...new Set(donations.map((e: any) => e.nombreProducto))];
+          const quantite = donations.reduce((sum: number, e: any) => sum + (e.cantidad || 0), 0);
+          const unites = [...new Set(donations.map((e: any) => e.unidad).filter(Boolean))];
+          const pesoTotal = donations.reduce((sum: number, e: any) => sum + (e.pesoTotal || 0), 0);
+          const valeur = donations.reduce((sum: number, e: any) => sum + (e.valorTotal || 0), 0);
+          
+          console.log(`    💚 Donation: ${quantite} unités (${unites.join('/')}) | ${pesoTotal.toFixed(2)} kg | CAD$ ${valeur.toFixed(2)}`);
+          
+          const activite: ActiviteHistorique = {
+            id: `ACT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            date: donations[0].fecha,
+            type: 'donation',
+            produits,
+            quantite,
+            unites,
+            pesoTotal,
+            valeur,
+            reference: donations[0].id
+          };
+          
+          donador.historiqueActivites!.push(activite);
+        }
+        
+        // Crear actividad para compras
+        if (achats.length > 0) {
+          const produits = [...new Set(achats.map((e: any) => e.nombreProducto))];
+          const quantite = achats.reduce((sum: number, e: any) => sum + (e.cantidad || 0), 0);
+          const unites = [...new Set(achats.map((e: any) => e.unidad).filter(Boolean))];
+          const pesoTotal = achats.reduce((sum: number, e: any) => sum + (e.pesoTotal || 0), 0);
+          const valeur = achats.reduce((sum: number, e: any) => sum + (e.valorTotal || 0), 0);
+          
+          console.log(`    🛒 Achat: ${quantite} unités (${unites.join('/')}) | ${pesoTotal.toFixed(2)} kg | CAD$ ${valeur.toFixed(2)}`);
+          
+          const activite: ActiviteHistorique = {
+            id: `ACT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            date: achats[0].fecha,
+            type: 'achat',
+            produits,
+            quantite,
+            unites,
+            pesoTotal,
+            valeur,
+            reference: achats[0].id
+          };
+          
+          donador.historiqueActivites!.push(activite);
+        }
+      });
+      
+      // Ordenar actividades por fecha (más reciente primero)
+      if (donador.historiqueActivites) {
+        donador.historiqueActivites.sort((a, b) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        console.log(`  ✅ ${donador.historiqueActivites.length} actividades registradas`);
+      }
+    });
+    
+    sauvegarderDonnees(donnees);
+    const totalActivites = donnees.reduce((sum, d) => sum + (d.historiqueActivites?.length || 0), 0);
+    console.log(`✅ Activités synchronisées avec succès: ${totalActivites} activités pour ${Object.keys(actividadesPorDonador).length} partenaires`);
+  } catch (error) {
+    console.error('❌ Erreur lors de la synchronisation des activités:', error);
+  }
 };
 
 export function GestionDonateursFournisseurs() {
@@ -182,10 +312,27 @@ export function GestionDonateursFournisseurs() {
     setLogoPreview('');
   };
 
-  // Cargar datos al iniciar
+  // Cargar datos al iniciar y sincronizar actividades
   useEffect(() => {
+    // Sincronizar actividades desde entradas de inventario
+    sincroniserActivites();
+    
+    // Cargar datos actualizados
     const data = obtenirDonnees();
     setDonnees(data);
+    
+    // Escuchar eventos de nueva entrada para actualizar en tiempo real
+    const handleEntradaGuardada = () => {
+      sincroniserActivites();
+      const dataActualizada = obtenirDonnees();
+      setDonnees(dataActualizada);
+    };
+    
+    window.addEventListener('entradaGuardada', handleEntradaGuardada);
+    
+    return () => {
+      window.removeEventListener('entradaGuardada', handleEntradaGuardada);
+    };
   }, []);
 
   // Resetear formulario
@@ -388,6 +535,14 @@ export function GestionDonateursFournisseurs() {
     setHistoriqueTab('modifications');
   };
 
+  // Sincronizar manualmente las actividades
+  const sincroniserManuellement = () => {
+    sincroniserActivites();
+    const dataActualizada = obtenirDonnees();
+    setDonnees(dataActualizada);
+    toast.success('✅ Activités synchronisées avec succès');
+  };
+
   // Filtrar datos según tab activo, búsqueda y filtro PRS
   const donneesFiltrees = donnees.filter(d => {
     const matchType = activeTab === 'donateurs' ? d.isDonateur : d.isFournisseur;
@@ -431,6 +586,16 @@ export function GestionDonateursFournisseurs() {
                 </CardDescription>
               </div>
             </div>
+            <Button
+              onClick={sincroniserManuellement}
+              variant="ghost"
+              size="sm"
+              className="bg-white/10 hover:bg-white/20 text-white border border-white/20"
+              title="Synchroniser les activités"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Sync
+            </Button>
           </div>
 
           {/* Badges informativos */}
@@ -629,7 +794,7 @@ export function GestionDonateursFournisseurs() {
                                 <img 
                                   src={item.logo} 
                                   alt={item.nomEntreprise}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-contain p-1"
                                 />
                               ) : (
                                 <Building2 className="w-6 h-6 text-gray-400" />
@@ -751,7 +916,7 @@ export function GestionDonateursFournisseurs() {
                                 <img 
                                   src={item.logo} 
                                   alt={item.nomEntreprise}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-contain p-1"
                                 />
                               ) : (
                                 <Building2 className="w-6 h-6 text-gray-400" />
@@ -847,12 +1012,12 @@ export function GestionDonateursFournisseurs() {
 
       {/* Dialog de formulario - DISEÑO MODERNO */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 gap-0" aria-describedby="donateurs-form-description">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 gap-0">
           <DialogHeader className="sr-only">
               <DialogTitle>
                 {modeEdition ? 'Modifier' : 'Nouveau'} {activeTab === 'donateurs' ? 'Donateur' : 'Fournisseur'}
               </DialogTitle>
-              <DialogDescription id="donateurs-form-description">
+              <DialogDescription>
                 {modeEdition ? 'Mettez à jour les informations du partenaire' : 'Ajoutez un nouveau partenaire à votre réseau'}
               </DialogDescription>
             </DialogHeader>
@@ -1026,7 +1191,7 @@ export function GestionDonateursFournisseurs() {
                             <img
                               src={logoPreview}
                               alt="Logo"
-                              className="w-24 h-24 object-cover rounded-2xl shadow-lg border-2 border-white"
+                              className="w-24 h-24 object-contain rounded-2xl shadow-lg border-2 border-white p-2 bg-white"
                             />
                             <div className="flex-1">
                               <p className="text-sm font-semibold text-[#333333] mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -1589,10 +1754,10 @@ export function GestionDonateursFournisseurs() {
 
       {/* Dialog de Historial - VISUALIZACIÓN */}
       <Dialog open={dialogHistoriqueOpen} onOpenChange={setDialogHistoriqueOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden p-0 gap-0" aria-describedby="historique-description">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden p-0 gap-0">
           <DialogHeader className="sr-only">
               <DialogTitle>Historique du Partenaire</DialogTitle>
-              <DialogDescription id="historique-description">
+              <DialogDescription>
                 Consultez l'historique des modifications et des activités
               </DialogDescription>
             </DialogHeader>
@@ -1610,7 +1775,7 @@ export function GestionDonateursFournisseurs() {
                   <img
                     src={itemVisualization.logo}
                     alt={itemVisualization.nomEntreprise}
-                    className="w-16 h-16 object-cover rounded-2xl shadow-lg border-2 border-white"
+                    className="w-16 h-16 object-contain rounded-2xl shadow-lg border-2 border-white p-1 bg-white"
                   />
                 ) : (
                   <div 
@@ -1827,7 +1992,7 @@ export function GestionDonateursFournisseurs() {
                                       Réf: {activite.reference}
                                     </Badge>
                                   </div>
-                                  <div className="grid md:grid-cols-3 gap-4 mb-3">
+                                  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
                                     <div className="space-y-1">
                                       <p className="text-xs text-[#999999] uppercase tracking-wide">Produits</p>
                                       <p className="text-sm text-[#666666]">
@@ -1838,12 +2003,24 @@ export function GestionDonateursFournisseurs() {
                                     </div>
                                     <div className="space-y-1">
                                       <p className="text-xs text-[#999999] uppercase tracking-wide">Quantité</p>
-                                      <p className="text-sm font-medium text-[#333333]">{activite.quantite} unités</p>
+                                      <p className="text-sm font-medium text-[#333333]">
+                                        {activite.quantite} {activite.unites && activite.unites.length > 0 ? activite.unites.join('/') : 'unités'}
+                                      </p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-xs text-[#999999] uppercase tracking-wide">Poids Total</p>
+                                      <p className="text-sm font-medium text-[#333333]">
+                                        {activite.pesoTotal 
+                                          ? `${activite.pesoTotal.toLocaleString('fr-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg`
+                                          : '—'}
+                                      </p>
                                     </div>
                                     <div className="space-y-1">
                                       <p className="text-xs text-[#999999] uppercase tracking-wide">Valeur</p>
                                       <p className="text-sm font-bold" style={{ color: activite.type === 'donation' ? '#4CAF50' : '#FF9800' }}>
-                                        CAD$ {activite.valeur.toLocaleString('fr-CA', { minimumFractionDigits: 2 })}
+                                        {activite.valeur > 0
+                                          ? `CAD$ ${activite.valeur.toLocaleString('fr-CA', { minimumFractionDigits: 2 })}`
+                                          : '—'}
                                       </p>
                                     </div>
                                   </div>
