@@ -119,11 +119,11 @@ export function ValidacionEntradasDialog({ open, onOpenChange }: ValidacionEntra
   const obtenerBadgeAlerta = (alerta?: EntradaPendiente['alerta']) => {
     switch (alerta) {
       case 'caducidad-proxima':
-        return <Badge className="bg-[#FFC107] text-white">⚠️ Caducidad Próxima</Badge>;
+        return <Badge className="bg-[#FFC107] text-white">⚠️ {t('alerts.nearExpiry')}</Badge>;
       case 'stock-alto':
-        return <Badge className="bg-[#1E73BE] text-white">📊 Stock Alto</Badge>;
+        return <Badge className="bg-[#1E73BE] text-white">📊 {t('alerts.highStockBadge')}</Badge>;
       case 'revision-manual':
-        return <Badge className="bg-[#DC3545] text-white">🔍 Revisión Manual</Badge>;
+        return <Badge className="bg-[#DC3545] text-white">🔍 {t('alerts.manualReview')}</Badge>;
       default:
         return null;
     }

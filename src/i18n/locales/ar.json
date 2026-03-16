@@ -538,7 +538,10 @@
     "highStock": "مخزون عالٍ: {quantity} وحدة ({percentage}٪)",
     "considerMassDistribution": "النظر في التوزيع الشامل",
     "noMovementSince": "لا حركة منذ {days} يوم",
-    "reviewDemandStorage": "مراجعة الطلب والتخزين"
+    "reviewDemandStorage": "مراجعة الطلب والتخزين",
+    "nearExpiry": "انتهاء الصلاحية القريب",
+    "highStockBadge": "مخزون عالٍ",
+    "manualReview": "مراجعة يدوية"
   },
   "orders": {
     "title": "إدارة الطلبات",

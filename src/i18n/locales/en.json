@@ -530,7 +530,10 @@
     "highStock": "High stock: {quantity} units ({percentage}%)",
     "considerMassDistribution": "Consider mass distribution",
     "noMovementSince": "No movement for {days} days",
-    "reviewDemandStorage": "Review demand and storage"
+    "reviewDemandStorage": "Review demand and storage",
+    "nearExpiry": "Near Expiry",
+    "highStockBadge": "High Stock",
+    "manualReview": "Manual Review"
   },
   "orders": {
     "title": "Order Management",

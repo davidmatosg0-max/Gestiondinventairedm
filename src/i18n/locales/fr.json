@@ -533,7 +533,10 @@
     "highStock": "Stock élevé: {quantity} unités ({percentage}%)",
     "considerMassDistribution": "Envisager une distribution massive",
     "noMovementSince": "Aucun mouvement depuis {days} jours",
-    "reviewDemandStorage": "Revoir la demande et le stockage"
+    "reviewDemandStorage": "Revoir la demande et le stockage",
+    "nearExpiry": "Caducité Proche",
+    "highStockBadge": "Stock Élevé",
+    "manualReview": "Révision Manuelle"
   },
   "orders": {
     "title": "Gestion des Commandes",
