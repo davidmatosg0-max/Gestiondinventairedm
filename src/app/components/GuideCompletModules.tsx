@@ -51,9 +51,12 @@ import {
   ChefHat,
   UserPlus,
   Gift,
-  Tag
+  Tag,
+  Presentation
 } from 'lucide-react';
 import { Button } from './ui/button';
+import { toast } from 'sonner';
+import { generarPresentacionHTML } from '../utils/presentacionHTML';
 
 interface GuideCompletModulesProps {
   onClose: () => void;
@@ -61,6 +64,31 @@ interface GuideCompletModulesProps {
 
 export function GuideCompletModules({ onClose }: GuideCompletModulesProps) {
   const [seccionActiva, setSeccionActiva] = useState<string>('inicio');
+
+  // Función para abrir presentación en nueva ventana
+  const abrirPresentacion = () => {
+    try {
+      const ventana = window.open('', '_blank', 'width=1400,height=900');
+      
+      if (!ventana) {
+        toast.error('Veuillez autoriser les fenêtres contextuelles pour ouvrir la présentation');
+        return;
+      }
+
+      // Generar y escribir el HTML
+      const htmlContent = generarPresentacionHTML();
+      ventana.document.write(htmlContent);
+      ventana.document.close();
+      
+      toast.success('Présentation ouverte! Utilisez Ctrl+P ou le bouton pour imprimer en PDF', {
+        duration: 4000
+      });
+      
+    } catch (error) {
+      console.error('Error al abrir presentación:', error);
+      toast.error('Erreur lors de l\'ouverture de la présentation');
+    }
+  };
 
   const secciones = [
     { id: 'inicio', titulo: 'Vue d\'ensemble', icono: BookOpen },
@@ -132,13 +160,26 @@ export function GuideCompletModules({ onClose }: GuideCompletModulesProps) {
                 <p className="text-blue-100 text-sm">Système de Gestion - Banque Alimentaire</p>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              onClick={onClose}
-              className="text-white hover:bg-white/20"
-            >
-              <X className="w-6 h-6" />
-            </Button>
+            
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={abrirPresentacion}
+                className="bg-[#2d9561] hover:bg-[#26804f] text-white flex items-center gap-2 shadow-lg hover:shadow-xl transition-all"
+                style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}
+              >
+                <Presentation className="w-5 h-5" />
+                <span className="hidden sm:inline">Mode Présentation</span>
+                <Download className="w-4 h-4" />
+              </Button>
+              
+              <Button
+                variant="ghost"
+                onClick={onClose}
+                className="text-white hover:bg-white/20"
+              >
+                <X className="w-6 h-6" />
+              </Button>
+            </div>
           </div>
 
           {/* Contenu scrollable */}
