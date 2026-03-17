@@ -1,6 +1,7 @@
 /**
  * Contexto de Autenticación Híbrido JWT + API Keys
  * Banque Alimentaire PRO v5.0
+ * Última actualización: 2026-03-17 - Soporte para nombre y apellido en JWT
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -151,6 +152,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const tokens = await generarTokens({
         id: usuarioValidado.id,
         nombre: usuarioValidado.nombre,
+        apellido: usuarioValidado.apellido,
         email: usuarioValidado.email,
         rol: usuarioValidado.rol,
         permisos: usuarioValidado.permisos,

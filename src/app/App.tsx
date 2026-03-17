@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../i18n/config'; // Inicializar i18n
-// Última actualización: 15/03/2026 - Forzar recompilación
+// Última actualización: 17/03/2026 - Actualización nombre completo en actividades
 import { useTranslation } from 'react-i18next';
 import '../utils/translationChecker'; // Verificador de sincronización de traducciones
 import { Layout } from './components/Layout';

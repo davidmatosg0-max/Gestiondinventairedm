@@ -421,16 +421,6 @@ export function RegistroActividades({ filtroModulo }: RegistroActividadesProps) 
               <Trash2 className="w-4 h-4" />
               Supprimer tout le registre
             </Button>
-
-            <Button
-              onClick={generarDatosDemostracion}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2 text-blue-600 border-blue-300 hover:bg-blue-50"
-            >
-              <Sparkles className="w-4 h-4" />
-              Générer données de démonstration
-            </Button>
           </div>
 
           {/* Tabla de actividades */}

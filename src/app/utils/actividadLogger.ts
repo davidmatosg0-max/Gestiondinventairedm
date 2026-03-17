@@ -1,5 +1,6 @@
 /**
  * Sistema de Registro de Actividades
+ * Última actualización: 2026-03-17 - Soporte para nombre completo
  * 
  * Este módulo permite registrar todas las acciones de los usuarios
  * en el sistema para auditoría y seguimiento.
@@ -10,8 +11,8 @@
  *    import { registrarActividad } from '../utils/actividadLogger';
  * 
  * 2. Llamar después de cada acción importante:
- *    registrarActividad('Inventario', 'crear', 'Producto "Arroz 1kg" creado');
- *    registrarActividad('Organismos', 'modificar', 'Organismo "Cruz Roja" actualizado');
+ *    registrarActividad('Inventario', 'crear', 'Producto \"Arroz 1kg\" creado');
+ *    registrarActividad('Organismos', 'modificar', 'Organismo \"Cruz Roja\" actualizado');
  *    registrarActividad('Comandas', 'eliminar', 'Comanda #123 eliminada');
  */
 
@@ -54,8 +55,8 @@ export const registrarActividad = (
   detalles?: any
 ): ActividadLog | undefined => {
   try {
-    // Obtener usuario actual
-    const usuario = JSON.parse(localStorage.getItem('usuarioActual') || '{}');
+    // Obtener usuario actual desde usuario_sesion_banco_alimentos (guardado por sesionStorage.ts)
+    const usuario = JSON.parse(localStorage.getItem('usuario_sesion_banco_alimentos') || '{}');
     
     // Crear objeto de actividad
     const actividad: ActividadLog = {

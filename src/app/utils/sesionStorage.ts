@@ -1,4 +1,5 @@
 // Gestión de sesión de usuario conectado
+// Última actualización: 2026-03-17 - Soporte para apellido
 
 export type PermisoModulo = 'administrador_liaison' | 'coordinador' | 'almacenista' | 'transportista' | 'administrador_general' | 'desarrollador' | 'acceso_total';
 
@@ -42,8 +43,8 @@ export function guardarUsuarioSesion(usuarioOUsername: UsuarioSesion | string | 
         usuario = {
           id: usuarioOUsername.userId || usuarioOUsername.id || '1',
           username: usuarioOUsername.username,
-          nombre: usuarioOUsername.username || usuarioOUsername.nombre || 'Usuario',
-          apellido: '',
+          nombre: usuarioOUsername.nombre || usuarioOUsername.username || 'Usuario',
+          apellido: usuarioOUsername.apellido || '',
           email: usuarioOUsername.email || 'usuario@banquealimentaire.ca',
           rol: (usuarioOUsername.role || usuarioOUsername.rol || 'administrador').toLowerCase() as any,
           permisos: (usuarioOUsername.permissions || usuarioOUsername.permisos || ['administrador_general', 'desarrollador', 'acceso_total']) as any,

@@ -1,6 +1,7 @@
 /**
  * Sistema de gestión de JWT (JSON Web Tokens) para Banque Alimentaire PRO
  * Versión: 5.0-PRO HÍBRIDA
+ * Última actualización: 2026-03-17 - Soporte para nombre y apellido
  * 
  * Este módulo maneja la autenticación de usuarios humanos mediante JWT.
  * Los API Keys se mantienen para integraciones máquina-a-máquina.
@@ -19,6 +20,8 @@ const REFRESH_TOKEN_DURATION = 7 * 24 * 60 * 60; // 7 días
 export interface JWTPayload {
   userId: string;
   username: string;
+  nombre?: string;
+  apellido?: string;
   email: string;
   role: string;
   permissions: string[];
@@ -49,6 +52,7 @@ const REFRESH_TOKENS_KEY = 'banque_refresh_tokens';
 export async function generarTokens(usuario: {
   id: string;
   nombre: string;
+  apellido?: string;
   email: string;
   rol: string;
   permisos: string[];
@@ -56,6 +60,8 @@ export async function generarTokens(usuario: {
   const payload = {
     userId: usuario.id,
     username: usuario.nombre,
+    nombre: usuario.nombre,
+    apellido: usuario.apellido,
     email: usuario.email,
     role: usuario.rol,
     permissions: usuario.permisos,
