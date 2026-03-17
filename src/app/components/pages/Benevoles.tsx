@@ -1,5 +1,5 @@
 // Module Bénévoles - Version 2.2 (Optimización de rendimiento)
-import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBranding } from '../../../hooks/useBranding';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -331,6 +331,35 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
   const [dialogAsignarDepartamentos, setDialogAsignarDepartamentos] = useState(false);
   const [benevoleSeleccionadoAsignar, setBenevoleSeleccionadoAsignar] = useState<Benevole | null>(null);
   const [departamentosAsignar, setDepartamentosAsignar] = useState<string[]>([]);
+
+  // ✅ Efecto para cargar departamentos cuando se selecciona un bénévole
+  useEffect(() => {
+    if (benevoleSeleccionadoAsignar && dialogAsignarDepartamentos) {
+      // Cargar departamentos desde los contactos asociados al bénévole
+      const todosLosContactos = obtenerContactosDepartamento();
+      const contactosDelBenevole = todosLosContactos.filter(c => 
+        c.email.toLowerCase() === benevoleSeleccionadoAsignar.email.toLowerCase()
+      );
+      
+      // Extraer los IDs únicos de departamentos donde está asignado
+      const deptsActuales = [...new Set(contactosDelBenevole.map(c => c.departamentoId))].filter(id => id && id !== '');
+      
+      // Filtrar solo los departamentos que existen y están activos
+      const departamentosActivos = obtenerDepartamentos().filter(d => d.activo);
+      const idsActivos = departamentosActivos.map(d => d.id);
+      const deptsValidados = deptsActuales.filter(id => idsActivos.includes(id));
+      
+      console.log('🔄 useEffect - Cargando departamentos del bénévole:', {
+        benevole: `${benevoleSeleccionadoAsignar.prenom} ${benevoleSeleccionadoAsignar.nom}`,
+        email: benevoleSeleccionadoAsignar.email,
+        contactosEncontrados: contactosDelBenevole.length,
+        departamentosAsignados: deptsActuales,
+        departamentosValidados: deptsValidados
+      });
+      
+      setDepartamentosAsignar(deptsValidados);
+    }
+  }, [benevoleSeleccionadoAsignar, dialogAsignarDepartamentos]);
 
   // Ref para input de foto
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1431,33 +1460,10 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
   // Función para abrir dialog de asignación de bénévole a departamentos
   const abrirDialogoAsignarDepartamentos = (benevole: Benevole) => {
+    console.log('📋 Abriendo diálogo de asignación para:', `${benevole.prenom} ${benevole.nom}`);
     setBenevoleSeleccionadoAsignar(benevole);
-    
-    // ✅ Cargar departamentos desde los contactos asociados al bénévole
-    const todosLosContactos = obtenerContactosDepartamento();
-    const contactosDelBenevole = todosLosContactos.filter(c => 
-      c.email.toLowerCase() === benevole.email.toLowerCase()
-    );
-    
-    // Extraer los IDs únicos de departamentos donde está asignado
-    const deptsActuales = [...new Set(contactosDelBenevole.map(c => c.departamentoId))].filter(id => id && id !== '');
-    
-    // ✅ Filtrar solo los departamentos que existen y están activos
-    const departamentosActivos = obtenerDepartamentos().filter(d => d.activo);
-    const idsActivos = departamentosActivos.map(d => d.id);
-    const deptsValidados = deptsActuales.filter(id => idsActivos.includes(id));
-    
-    console.log('📋 Departamentos actuales del bénévole:', {
-      benevole: `${benevole.prenom} ${benevole.nom}`,
-      email: benevole.email,
-      contactosEncontrados: contactosDelBenevole.length,
-      departamentosAsignados: deptsActuales,
-      departamentosValidados: deptsValidados,
-      departamentosDisponibles: departamentosActivos.map(d => ({ id: d.id, nombre: d.nombre }))
-    });
-    
-    setDepartamentosAsignar(deptsValidados);
     setDialogAsignarDepartamentos(true);
+    // El useEffect se encargará de cargar los departamentos
   };
 
   // Función para guardar asignación de bénévole a departamentos

@@ -30,6 +30,16 @@ export function MultiSelectDepartements({
 
   // Asegurar que value siempre sea un array
   const safeValue = Array.isArray(value) ? value : [];
+  
+  // Log para depuración
+  useEffect(() => {
+    console.log('🔍 MultiSelectDepartements - Props recibidas:', {
+      value,
+      safeValue,
+      valueLength: safeValue.length,
+      optionsCount: options.length
+    });
+  }, [value, safeValue, options]);
 
   // Normalizar options para trabajar con objetos { id, label }
   const normalizedOptions: DepartmentOption[] = options.map(opt => 
