@@ -35,6 +35,7 @@ import { OfertasDisponibles } from '../cuisine/OfertasDisponibles';
 import { useBranding } from '../../../hooks/useBranding';
 import { Sparkles } from 'lucide-react';
 import type { Comanda, ItemComanda, Organismo, ProductoOferta, Oferta as OfertaTipo, Solicitud, ProductoAceptado, DatosQR } from '../../types';
+import { registrarActividad } from '../../utils/actividadLogger';
 
 export function Comandas() {
   const { t } = useTranslation();
@@ -123,6 +124,18 @@ export function Comandas() {
       return;
     }
     
+    // 📝 REGISTRAR ACTIVIDAD
+    registrarActividad(
+      'Commandes',
+      'crear',
+      `${selectedOrganismos.length} commande(s) de groupe créée(s) avec ${grupoItems.length} produit(s)`,
+      { 
+        numeroOrganismos: selectedOrganismos.length,
+        numeroProductos: grupoItems.length,
+        fechaEntrega: fechaEntregaGrupo 
+      }
+    );
+    
     toast.success(`${selectedOrganismos.length} ${t('orders.ordersCreatedSuccessfully')}`);
     setComandaGrupoDialogOpen(false);
     setSelectedOrganismos([]);
@@ -192,6 +205,21 @@ export function Comandas() {
     };
     
     const estadoTexto = estadosMap[nuevoEstado] || nuevoEstado;
+    
+    // 📝 REGISTRAR ACTIVIDAD
+    if (comandaSeleccionada) {
+      registrarActividad(
+        'Commandes',
+        'modificar',
+        `Commande N° ${comandaSeleccionada.numero || comandaSeleccionada.id} - État changé à "${estadoTexto}"`,
+        { 
+          comandaId: comandaSeleccionada.id,
+          nuevoEstado,
+          organismo: comandaSeleccionada.organismoNombre 
+        }
+      );
+    }
+    
     toast.success(`${t('orders.statusChangedTo')} ${estadoTexto}`);
   };
 
@@ -202,6 +230,19 @@ export function Comandas() {
   };
 
   const handleAnularComanda = () => {
+    // 📝 REGISTRAR ACTIVIDAD
+    if (comandaSeleccionada) {
+      registrarActividad(
+        'Commandes',
+        'eliminar',
+        `Commande N° ${comandaSeleccionada.numero || comandaSeleccionada.id} annulée - Organisme: ${comandaSeleccionada.organismoNombre}`,
+        { 
+          comandaId: comandaSeleccionada.id,
+          organismo: comandaSeleccionada.organismoNombre 
+        }
+      );
+    }
+    
     toast.success(t('orders.orderCancelled'));
     setMostrarModeloComanda(false);
   };
@@ -281,6 +322,14 @@ export function Comandas() {
   const handleAceptarSolicitud = (ofertaId: string, solicitudId: string, organismoNombre: string) => {
     const exito = aceptarSolicitud(ofertaId, solicitudId);
     if (exito) {
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Commandes',
+        'modificar',
+        `Demande d'offre acceptée - Organisme: ${organismoNombre}`,
+        { ofertaId, solicitudId, organismoNombre }
+      );
+      
       toast.success(`Solicitud de ${organismoNombre} aceptada exitosamente`);
       setRefreshOfertas(prev => prev + 1);
     } else {
@@ -296,6 +345,14 @@ export function Comandas() {
     
     const exito = rechazarSolicitud(ofertaId, solicitudId, motivo);
     if (exito) {
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Commandes',
+        'modificar',
+        `Demande d'offre refusée - Organisme: ${organismoNombre} - Motif: ${motivo}`,
+        { ofertaId, solicitudId, organismoNombre, motivo }
+      );
+      
       toast.success(`Solicitud de ${organismoNombre} rechazada`);
       setRefreshOfertas(prev => prev + 1);
     } else {
@@ -306,6 +363,14 @@ export function Comandas() {
   const handleAnularSolicitud = (ofertaId: string, solicitudId: string, organismoNombre: string) => {
     const exito = anularSolicitud(ofertaId, solicitudId);
     if (exito) {
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Commandes',
+        'eliminar',
+        `Demande d'offre annulée - Organisme: ${organismoNombre}`,
+        { ofertaId, solicitudId, organismoNombre }
+      );
+      
       toast.success(`Solicitud de ${organismoNombre} anulada exitosamente`);
       setRefreshOfertas(prev => prev + 1);
     } else {

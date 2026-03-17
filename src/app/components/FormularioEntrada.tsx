@@ -18,6 +18,7 @@ import type { Categoria, Subcategoria } from '../data/configuracionData';
 import { generarIconoAutomatico } from '../utils/iconoUtils';
 import { useBalanceContext } from '../../contexts/BalanceContext';
 import { formatLargeNumber } from '../utils/formatUtils';
+import { registrarActividad } from '../utils/actividadLogger';
 
 type FormularioEntradaProps = {
   open: boolean;
@@ -574,6 +575,22 @@ export function FormularioEntrada({ open, onOpenChange }: FormularioEntradaProps
     // - Registra el movimiento
     // - Guarda en el historial
     guardarEntrada(entrada);
+    
+    // 📝 REGISTRAR ACTIVIDAD
+    registrarActividad(
+      'Inventaire',
+      'crear',
+      `Nouvelle entrée "${subcategoriaObj?.nombre || formData.subcategoria}" - ${formData.cantidad} ${formData.unidad} (${formData.peso} kg)`,
+      { 
+        entradaId: entrada.id,
+        subcategoria: formData.subcategoria,
+        cantidad: formData.cantidad,
+        unidad: formData.unidad,
+        peso: formData.peso,
+        donador: donadorNombre,
+        tipoEntrada: formData.tipoEntrada
+      }
+    );
 
     toast.success('✅ Entrada registrada correctamente');
     

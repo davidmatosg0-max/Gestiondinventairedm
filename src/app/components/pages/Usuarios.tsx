@@ -21,6 +21,7 @@ import { useBranding } from '../../../hooks/useBranding';
 import { obtenerDepartamentos } from '../../utils/departamentosStorage';
 import { copiarAlPortapapeles } from '../../utils/clipboard';
 import { rolesPredeterminados } from '../../data/rolesPermisos';
+import { registrarActividad } from '../../utils/actividadLogger';
 
 export function Usuarios() {
   const { t } = useTranslation();
@@ -153,6 +154,14 @@ export function Usuarios() {
 
         const success = actualizarUsuario(usuarioSeleccionado.id, datosActualizados);
         if (success) {
+          // 📝 REGISTRAR ACTIVIDAD
+          registrarActividad(
+            'Utilisateurs',
+            'modificar',
+            `Utilisateur "${formUsuario.username}" modifié`,
+            { usuarioId: usuarioSeleccionado.id, rol: formUsuario.rol }
+          );
+          
           toast.success('Utilisateur mis à jour avec succès');
           cargarUsuarios();
           setUsuarioDialogOpen(false);
@@ -174,6 +183,14 @@ export function Usuarios() {
           descripcion: formUsuario.descripcion
         });
         
+        // 📝 REGISTRAR ACTIVIDAD
+        registrarActividad(
+          'Utilisateurs',
+          'crear',
+          `Utilisateur "${nuevoUsuario.username}" créé avec le rôle ${formUsuario.rol}`,
+          { usuarioId: nuevoUsuario.id, rol: formUsuario.rol }
+        );
+        
         toast.success(`Utilisateur créé: ${nuevoUsuario.username}`);
         cargarUsuarios();
         setUsuarioDialogOpen(false);
@@ -191,6 +208,14 @@ export function Usuarios() {
     try {
       const success = eliminarUsuario(usuarioAEliminar.id);
       if (success) {
+        // 📝 REGISTRAR ACTIVIDAD
+        registrarActividad(
+          'Utilisateurs',
+          'eliminar',
+          `Utilisateur "${usuarioAEliminar.username}" supprimé`,
+          { usuarioId: usuarioAEliminar.id, rol: usuarioAEliminar.rol }
+        );
+        
         toast.success(`Utilisateur supprimé: ${usuarioAEliminar.username}`);
         cargarUsuarios();
         setDeleteDialogOpen(false);

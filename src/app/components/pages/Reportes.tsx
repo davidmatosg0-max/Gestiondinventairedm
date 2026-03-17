@@ -25,6 +25,7 @@ import {
 } from '../../utils/exportarExcel';
 import { useBranding } from '../../../hooks/useBranding';
 import { AuditLogViewer } from '../auditoria/AuditLogViewer';
+import { registrarActividad } from '../../utils/actividadLogger';
 
 export function Reportes() {
   const { t } = useTranslation();
@@ -127,6 +128,14 @@ export function Reportes() {
           }
           break;
       }
+      
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Rapports',
+        'crear',
+        `Rapport généré: ${tipoReporte} (${formato.toUpperCase()}) pour la période ${fechaInicio} - ${fechaFin}`,
+        { tipoReporte, formato, fechaInicio, fechaFin }
+      );
       
       toast.success(`✅ Reporte ${formato.toUpperCase()} generado exitosamente`);
     } catch (error) {

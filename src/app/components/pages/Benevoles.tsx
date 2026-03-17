@@ -25,6 +25,7 @@ import { obtenerDepartamentos } from '../../utils/departamentosStorage';
 import { obtenerUsuarioSesion, tienePermiso } from '../../utils/sesionStorage';
 import { guardarContacto, type ContactoDepartamento, sincronizarDesdeBenevole, obtenerContactosDepartamento, eliminarContacto, actualizarContacto } from '../../utils/contactosDepartamentoStorage';
 import { sincronizarVoluntariosEntrepot } from '../../utils/sincronizarVoluntariosEntrepot';
+import { registrarActividad } from '../../utils/actividadLogger';
 import { BoutonRetourHeader } from '../shared/BoutonRetour';
 import { 
   UserPlus, 
@@ -1169,6 +1170,14 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       console.error('❌ Erreur lors de la synchronisation:', error);
     }
 
+    // 📝 REGISTRAR ACTIVIDAD
+    registrarActividad(
+      'Bénévoles',
+      'modificar',
+      `Bénévole "${editForm.prenom} ${editForm.nom}" modifié`,
+      { benevoleId: editingBenevole.id, email: editForm.email }
+    );
+
     toast.success('Bénévole modifié avec succès');
     setEditModalOpen(false);
     setEditingBenevole(null);
@@ -1282,6 +1291,14 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       } catch (error) {
         console.error('❌ Erreur lors de la synchronisation:', error);
       }
+
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Bénévoles',
+        'modificar',
+        `Bénévole "${newForm.prenom} ${newForm.nom}" modifié`,
+        { benevoleId: editingBenevole.id, email: newForm.email }
+      );
 
       toast.success('Bénévole modifié avec succès');
       setEditingBenevole(null);
@@ -1405,6 +1422,14 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         }
       }
       
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Bénévoles',
+        'crear',
+        `Nouveau bénévole "${newForm.prenom} ${newForm.nom}" créé`,
+        { benevoleId: nouveauBenevole.id, email: newForm.email }
+      );
+
       toast.success('Nouveau bénévole créé avec succès');
     }
 
@@ -1725,6 +1750,14 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       // Emitir evento de actualización
       window.dispatchEvent(new CustomEvent('contactos-actualizados'));
       window.dispatchEvent(new CustomEvent('benevoles-actualizados'));
+
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Bénévoles',
+        'eliminar',
+        `Bénévole "${benevole.prenom} ${benevole.nom}" complètement supprimé`,
+        { benevoleId: benevole.id, email: benevole.email }
+      );
 
       toast.success(`✅ Profil de ${benevole.prenom} ${benevole.nom} COMPLÈTEMENT supprimé`);
     } catch (error) {
@@ -2310,7 +2343,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     });
   }, [benevoles, debouncedSearchTerm, filterDepartement, filterStatut]);
 
-  // ⚡ OPTIMIZACIÓN: useCallback para evitar recrear funciones
+  // ⚡ OPTIMIZACI��N: useCallback para evitar recrear funciones
   const toggleSelectAll = useCallback(() => {
     if (selectedBenevolesForEmail.length === filteredBenevoles.length && filteredBenevoles.length > 0) {
       setSelectedBenevolesForEmail([]);
@@ -5603,7 +5636,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
       {/* Dialog Asignar Bénévole a Departamentos */}
       <Dialog open={dialogAsignarDepartamentos} onOpenChange={setDialogAsignarDepartamentos}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="asignar-departamentos-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               <Link className="w-6 h-6" style={{ color: branding.primaryColor }} />

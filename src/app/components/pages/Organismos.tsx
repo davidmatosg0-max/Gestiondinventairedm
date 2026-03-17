@@ -32,6 +32,7 @@ import {
 import { esAdministradorLiaison } from '../../utils/sesionStorage';
 import { useBranding } from '../../../hooks/useBranding';
 import { AsignarRolContacto } from '../AsignarRolContacto';
+import { registrarActividad } from '../../utils/actividadLogger';
 
 // Tipos de organismos predefinidos
 const getTiposOrganismo = (t: any) => [
@@ -329,6 +330,14 @@ export function Organismos() {
     cargarOrganismos();
     console.log('Organismo creado con clave:', claveAcceso);
     
+    // 📝 REGISTRAR ACTIVIDAD
+    registrarActividad(
+      'Organismes',
+      'crear',
+      `Organisme "${formOrganismo.nombre}" créé avec clé d'accès: ${claveAcceso}`,
+      { organismoId: nuevoOrganismo.id, claveAcceso }
+    );
+    
     toast.success(`${t('organisms.organismCreated')} ${claveAcceso}`, {
       duration: 5000,
     });
@@ -461,6 +470,14 @@ export function Organismos() {
       
       // Recargar la lista de organismos
       cargarOrganismos();
+      
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Organismes',
+        'modificar',
+        `Organisme "${formOrganismo.nombre}" modifié`,
+        { organismoId: organismoSeleccionado.id }
+      );
     }
     
     toast.success(t('organisms.changesSaved'));

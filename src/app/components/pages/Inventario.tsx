@@ -46,6 +46,7 @@ import { toast } from 'sonner';
 import { obtenerProductos, guardarProducto, actualizarProducto } from '../../utils/productStorage';
 import { mockProductos, mockOrganismos } from '../../data/mockData';
 import { calcularValorMonetario, obtenerCategorias, actualizarPesoUnitarioSubcategoria, actualizarPesoUnitarioVariante } from '../../utils/categoriaStorage';
+import { registrarActividad } from '../../utils/actividadLogger';
 import { PanierProductos } from '../inventario/PanierProductos';
 import { CarritoMejorado } from '../inventario/CarritoMejorado';
 import type { Producto, ProductoCreado, HistorialEntrada, ProductoConversion, FormConversion, DatosQR } from '../../types';
@@ -876,6 +877,14 @@ export function Inventario() {
       
       actualizarProducto(productoId, actualizacion);
       
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Inventaire',
+        'modificar',
+        `Stock du produit "${productoOrigen.nombre}" ajusté: ${nuevoStock} ${productoOrigen.unidad}`,
+        { productoId, stockAnterior: productoOrigen.stockActual, stockNuevo: nuevoStock }
+      );
+      
       // 2. Calcular el peso total que se está convirtiendo
       // 🎯 FÓRMULA DIRECTA: Peso Unitario Origen ÷ Factor de Conversión = Peso Unitario Destino
       const factorConversion = cantidadDestino / cantidadOrigen;
@@ -898,6 +907,14 @@ export function Inventario() {
           pesoRegistrado: pesoTotalDestino,
           pesoUnitario: pesoUnitarioDestino
         });
+        
+        // 📝 REGISTRAR ACTIVIDAD
+        registrarActividad(
+          'Inventaire',
+          'modificar',
+          `Conversion: ${cantidadOrigen} ${unidadOrigen} → ${cantidadDestino} ${unidadDestino} de "${productoOrigen.nombre}"`,
+          { productoId: productoOrigen.id, unidadOrigen, unidadDestino }
+        );
         
         // 🎯 Memorizar peso actualizado en configuración (excepto PLT)
         if (unidadDestino !== 'PLT' && productoOrigen.categoria && productoOrigen.subcategoria) {
@@ -1146,6 +1163,18 @@ export function Inventario() {
     };
 
     guardarConversion(registroConversion);
+    
+    // 📝 REGISTRAR ACTIVIDAD
+    registrarActividad(
+      'Inventaire',
+      'modificar',
+      `Conversion de produit: "${productoOrigen.nombre}" (${formConversion.cantidadOrigen} ${productoOrigen.unidad}) vers ${productosDestinoData.length} produit(s)`,
+      { 
+        conversionId: registroConversion.id,
+        productoOrigen: productoOrigen.nombre,
+        cantidadDestinos: productosDestinoData.length
+      }
+    );
 
     // Guardar como plantilla si se solicitó
     if (formConversion.guardarComoPlantilla && formConversion.nombrePlantilla) {

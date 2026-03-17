@@ -48,6 +48,7 @@ import {
 } from '../../utils/departamentosStorage';
 import { obtenerContactosDepartamento } from '../../utils/contactosDepartamentoStorage';
 import { sincronizarVoluntariosEntrepot } from '../../utils/sincronizarVoluntariosEntrepot';
+import { registrarActividad } from '../../utils/actividadLogger';
 
 // Mapa de iconos disponibles
 const iconosDisponibles: Record<string, React.ElementType> = {
@@ -162,9 +163,27 @@ export function Departamentos({ onNavigate }: { onNavigate?: (page: string) => v
 
     if (modoEdicion && departamentoSeleccionado) {
       actualizarDepartamento(departamentoSeleccionado.id, formulario);
+      
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Départements',
+        'modificar',
+        `Département "${formulario.nombre}" modifié`,
+        { departamentoId: departamentoSeleccionado.id, codigo: formulario.codigo }
+      );
+      
       toast.success(t('departments.departmentUpdated'));
     } else {
-      guardarDepartamento(formulario);
+      const nuevoDept = guardarDepartamento(formulario);
+      
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Départements',
+        'crear',
+        `Département "${formulario.nombre}" créé`,
+        { codigo: formulario.codigo }
+      );
+      
       toast.success(t('departments.departmentCreated'));
     }
 
@@ -176,6 +195,15 @@ export function Departamentos({ onNavigate }: { onNavigate?: (page: string) => v
   const handleEliminar = () => {
     if (departamentoSeleccionado) {
       eliminarDepartamento(departamentoSeleccionado.id);
+      
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Départements',
+        'eliminar',
+        `Département "${departamentoSeleccionado.nombre}" supprimé`,
+        { departamentoId: departamentoSeleccionado.id, codigo: departamentoSeleccionado.codigo }
+      );
+      
       toast.success(t('departments.departmentDeleted'));
       cargarDepartamentos();
       setDialogEliminar(false);
