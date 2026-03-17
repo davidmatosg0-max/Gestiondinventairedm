@@ -313,7 +313,13 @@ export const RUES_COMPLETES_LAVAL: Record<string, RueData[]> = {
     { nom: 'Rue Dufferin', type: 'rue', codePostal: 'H7N' },
     { nom: 'Avenue Legault', type: 'avenue', codePostal: 'H7N' },
     { nom: 'Boulevard de la Concorde Est', type: 'boulevard', codePostal: 'H7N' },
-    { nom: 'Rue Laurier', type: 'rue', codePostal: 'H7N' }
+    { nom: 'Rue Laurier', type: 'rue', codePostal: 'H7N' },
+    // *** AVENUE DESMARTEAU - DIRECCIÓN 235 EN LAVAL-DES-RAPIDES H7N ***
+    { nom: 'Avenue Desmarteau', type: 'avenue', codePostal: 'H7N' },
+    { nom: 'Rue Papineau', type: 'rue', codePostal: 'H7N' },
+    { nom: 'Rue Viau', type: 'rue', codePostal: 'H7N' },
+    { nom: 'Rue Liège', type: 'rue', codePostal: 'H7N' },
+    { nom: 'Avenue Champagne', type: 'avenue', codePostal: 'H7N' }
   ],
   
   'Vimont': [
