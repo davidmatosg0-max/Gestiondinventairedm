@@ -144,10 +144,20 @@ export function supprimerVille(villeId: string): boolean {
  * Ajouter un quartier à une ville
  */
 export function ajouterQuartier(villeId: string, nom: string, codePostal?: string, description?: string): Quartier | null {
+  console.log('🏙️ ajouterQuartier appelée avec:', { villeId, nom, codePostal, description });
+  
   const villes = obtenirVilles();
+  console.log('📦 Villes obtenues:', villes.length, 'villes');
+  
   const ville = villes.find(v => v.id === villeId);
   
-  if (!ville) return null;
+  if (!ville) {
+    console.error('❌ Ville non trouvée avec ID:', villeId);
+    console.log('🔍 Villes disponibles:', villes.map(v => ({ id: v.id, nom: v.nom })));
+    return null;
+  }
+  
+  console.log('✅ Ville trouvée:', ville.nom, 'avec', ville.quartiers.length, 'quartiers');
   
   const nouveauQuartier: Quartier = {
     id: `quartier-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
@@ -159,10 +169,15 @@ export function ajouterQuartier(villeId: string, nom: string, codePostal?: strin
     dateModification: new Date().toISOString()
   };
   
+  console.log('🆕 Nouveau quartier créé:', nouveauQuartier);
+  
   ville.quartiers.push(nouveauQuartier);
   ville.dateModification = new Date().toISOString();
   
-  sauvegarderVilles(villes);
+  console.log('📝 Quartier ajouté à la ville. Total quartiers:', ville.quartiers.length);
+  
+  const saved = sauvegarderVilles(villes);
+  console.log(saved ? '✅ Données sauvegardées dans localStorage' : '❌ Échec de la sauvegarde');
   
   return nouveauQuartier;
 }

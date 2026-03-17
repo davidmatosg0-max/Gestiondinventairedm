@@ -156,14 +156,30 @@ export function GestionAdressesQuartiers() {
       return;
     }
 
-    if (!villeSeleccionada) return;
+    if (!villeSeleccionada) {
+      toast.error('Aucune ville sélectionnée');
+      console.error('❌ ERROR: villeSeleccionada is null');
+      return;
+    }
+
+    console.log('📍 Ajout de quartier:', {
+      ville: villeSeleccionada.nom,
+      villeId: villeSeleccionada.id,
+      quartier: formQuartier.nom,
+      codePostal: formQuartier.codePostal,
+      description: formQuartier.description
+    });
 
     if (quartierEditando) {
       const success = mettreAJourQuartier(villeSeleccionada.id, quartierEditando.id, formQuartier);
       if (success) {
+        console.log('✅ Quartier mis à jour avec succès');
         toast.success(`Quartier "${formQuartier.nom}" mis à jour avec succès`);
         cargarVilles();
         setDialogQuartierOpen(false);
+      } else {
+        console.error('❌ Échec de mise à jour du quartier');
+        toast.error('Erreur lors de la mise à jour du quartier');
       }
     } else {
       const quartier = ajouterQuartier(
@@ -172,10 +188,17 @@ export function GestionAdressesQuartiers() {
         formQuartier.codePostal, 
         formQuartier.description
       );
+      
+      console.log('🔍 Résultat ajouterQuartier:', quartier);
+      
       if (quartier) {
+        console.log('✅ Quartier ajouté avec succès:', quartier);
         toast.success(`Quartier "${formQuartier.nom}" ajouté avec succès`);
         cargarVilles();
         setDialogQuartierOpen(false);
+      } else {
+        console.error('❌ Échec de l\'ajout du quartier - La fonction a retourné null');
+        toast.error('Erreur lors de l\'ajout du quartier');
       }
     }
   };
@@ -192,9 +215,9 @@ export function GestionAdressesQuartiers() {
 
   // Exportación
   const handleExportar = (format: 'json' | 'csv' | 'excel') => {
-    const data = exporterDonnees(format === 'excel' ? 'csv' : format);
-    const filename = `adresses-quartiers-${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'csv' : format}`;
-    const mimeType = format === 'json' ? 'application/json' : 'text/csv';
+    const data = exporterDonnees(); // Solo exporta JSON
+    const filename = `adresses-quartiers-${new Date().toISOString().split('T')[0]}.json`;
+    const mimeType = 'application/json';
     
     const blob = new Blob([data], { type: mimeType });
     const url = URL.createObjectURL(blob);
