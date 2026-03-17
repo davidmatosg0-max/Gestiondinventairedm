@@ -2303,7 +2303,7 @@ export function Inventario() {
 
       {/* Dialog: Compartir Lista de Productos */}
       <Dialog open={compartirDialogOpen} onOpenChange={setCompartirDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="share-product-list-description">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin">
           {!vistaPreviewLista ? (
             <>
               <DialogHeader>
@@ -2707,7 +2707,7 @@ export function Inventario() {
 
       {/* Dialog Guía de Conversiones */}
       <Dialog open={guiaConversionesOpen} onOpenChange={setGuiaConversionesOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="conversion-guide-description">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               <HelpCircle className="w-6 h-6 text-[#1a4d7a]" />
@@ -2723,7 +2723,7 @@ export function Inventario() {
 
       {/* Dialog Crear Variante de Producto */}
       <Dialog open={varianteDialogOpen} onOpenChange={setVarianteDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="product-variant-description">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               <Copy className="h-5 w-5 text-[#1a4d7a]" />
@@ -2895,7 +2895,7 @@ export function Inventario() {
 
       {/* Diálogo de Localización/Deslocalización */}
       <Dialog open={dialogLocalizacionOpen} onOpenChange={setDialogLocalizacionOpen}>
-        <DialogContent className="max-w-md" aria-describedby="location-management-description">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-[#1a4d7a]" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
               <MapPin className="h-5 w-5" />

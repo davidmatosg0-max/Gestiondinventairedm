@@ -4,10 +4,15 @@ import { useBranding } from '../../../hooks/useBranding';
 import { Badge } from './badge';
 import { Button } from './button';
 
+interface DepartmentOption {
+  id: string;
+  label: string;
+}
+
 interface MultiSelectDepartementsProps {
   value: string[];
   onChange: (value: string[]) => void;
-  options: string[];
+  options: string[] | DepartmentOption[];
   placeholder?: string;
   maxHeight?: string;
 }
@@ -26,6 +31,17 @@ export function MultiSelectDepartements({
   // Asegurar que value siempre sea un array
   const safeValue = Array.isArray(value) ? value : [];
 
+  // Normalizar options para trabajar con objetos { id, label }
+  const normalizedOptions: DepartmentOption[] = options.map(opt => 
+    typeof opt === 'string' ? { id: opt, label: opt } : opt
+  );
+
+  // Crear un mapa para buscar etiquetas rápidamente
+  const optionMap = new Map(normalizedOptions.map(opt => [opt.id, opt.label]));
+
+  // Obtener la etiqueta de un ID
+  const getLabel = (id: string): string => optionMap.get(id) || id;
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -37,17 +53,17 @@ export function MultiSelectDepartements({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const toggleOption = (option: string) => {
-    if (safeValue.includes(option)) {
-      onChange(safeValue.filter(v => v !== option));
+  const toggleOption = (optionId: string) => {
+    if (safeValue.includes(optionId)) {
+      onChange(safeValue.filter(v => v !== optionId));
     } else {
-      onChange([...safeValue, option]);
+      onChange([...safeValue, optionId]);
     }
   };
 
-  const removeOption = (option: string, e: React.MouseEvent) => {
+  const removeOption = (optionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    onChange(safeValue.filter(v => v !== option));
+    onChange(safeValue.filter(v => v !== optionId));
   };
 
   const clearAll = (e: React.MouseEvent) => {
@@ -65,9 +81,9 @@ export function MultiSelectDepartements({
           {safeValue.length === 0 ? (
             <span className="text-[#999999] text-sm">{placeholder}</span>
           ) : (
-            safeValue.map(dept => (
+            safeValue.map(deptId => (
               <Badge
-                key={dept}
+                key={deptId}
                 variant="outline"
                 className="text-xs flex items-center gap-1 px-2 py-1"
                 style={{
@@ -77,9 +93,9 @@ export function MultiSelectDepartements({
                 }}
               >
                 <Building className="w-3 h-3" />
-                {dept}
+                {getLabel(deptId)}
                 <button
-                  onClick={(e) => removeOption(dept, e)}
+                  onClick={(e) => removeOption(deptId, e)}
                   className="ml-1 hover:bg-white/50 rounded-full p-0.5"
                 >
                   <X className="w-3 h-3" />
@@ -110,23 +126,23 @@ export function MultiSelectDepartements({
           style={{ maxHeight }}
         >
           <div className="overflow-y-auto" style={{ maxHeight }}>
-            {options.length === 0 ? (
+            {normalizedOptions.length === 0 ? (
               <div className="px-3 py-4 text-center text-[#999999] text-sm">
                 Aucun département disponible
               </div>
             ) : (
-              options.map(option => {
-                const isSelected = safeValue.includes(option);
+              normalizedOptions.map(option => {
+                const isSelected = safeValue.includes(option.id);
                 return (
                   <div
-                    key={option}
-                    onClick={() => toggleOption(option)}
+                    key={option.id}
+                    onClick={() => toggleOption(option.id)}
                     className="px-3 py-2.5 cursor-pointer hover:bg-gray-50 flex items-center justify-between transition-colors"
                     style={isSelected ? { backgroundColor: `${branding.primaryColor}10` } : {}}
                   >
                     <div className="flex items-center gap-2">
                       <Building className="w-4 h-4 text-[#666666]" />
-                      <span className="text-sm text-[#333333]">{option}</span>
+                      <span className="text-sm text-[#333333]">{option.label}</span>
                     </div>
                     {isSelected && (
                       <Check className="w-4 h-4" style={{ color: branding.primaryColor }} />

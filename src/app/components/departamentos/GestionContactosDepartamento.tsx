@@ -196,8 +196,8 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
   const tiposPermitidos = getTiposPermitidos();
 
   const [formulario, setFormulario] = useState<Omit<ContactoDepartamento, 'id'>>({
-    departamentoId,
-    departamentoIds: [departamentoId], // Initialiser avec le département actuel sélectionné
+    departamentoId: '', // ✅ NO asignar departamento por defecto
+    departamentoIds: [], // ✅ Array vacío - sin departamentos por defecto
     tipo: 'benevole', // SIEMPRE bénévole en contactos de departamento
     nombre: '',
     apellido: '',
@@ -490,8 +490,8 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
 
   const limpiarFormulario = () => {
     setFormulario({
-      departamentoId,
-      departamentoIds: [departamentoId],
+      departamentoId: '', // ✅ NO asignar departamento por defecto
+      departamentoIds: [], // ✅ Array vacío - sin departamentos por defecto
       tipo: 'benevole', // SIEMPRE bénévole en contactos de departamento
       nombre: '',
       apellido: '',
@@ -707,11 +707,14 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         couleur: '#4CAF50'
       };
       
-      // 🔒 FORZAR EL DEPARTAMENTO ACTUAL - No permitir cambios
+      // ✅ PERMITIR CONTACTOS SIN DEPARTAMENTO ASIGNADO
       const contactoParaGuardar = {
         ...formulario,
-        departamentoId: departamentoId, // ✅ FORZAR el departamento actual
-        departamentoIds: [departamentoId], // ✅ FORZAR el departamento actual
+        // ✅ NO forzar departamento - permitir que esté vacío si el usuario no lo selecciona
+        departamentoId: formulario.departamentoId || '', // Usar el departamento seleccionado o vacío
+        departamentoIds: formulario.departamentoIds && formulario.departamentoIds.length > 0 
+          ? formulario.departamentoIds 
+          : [], // Usar departamentos seleccionados o array vacío
         activo: true, // ✅ GARANTIZAR que el campo activo esté definido
         evenements: [eventoCreacion] // ✅ Añadir evento de creación
       };

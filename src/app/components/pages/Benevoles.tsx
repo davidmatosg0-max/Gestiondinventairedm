@@ -372,6 +372,9 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
   const [dialogAsignarRolOpen, setDialogAsignarRolOpen] = useState(false);
   const [benevoleParaRol, setBenevoleParaRol] = useState<any>(null);
 
+  // 🔄 Estado para forzar actualización de departamentos
+  const [refreshDepartamentos, setRefreshDepartamentos] = useState(0);
+
   // Départements - Cargar desde el sistema
   const departementosStorage = obtenerDepartamentos();
   const departements = departementosStorage.map(d => d.nombre).filter(Boolean);
@@ -1427,11 +1430,31 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
   // Función para abrir dialog de asignación de bénévole a departamentos
   const abrirDialogoAsignarDepartamentos = (benevole: Benevole) => {
     setBenevoleSeleccionadoAsignar(benevole);
-    // Cargar departamentos actuales del bénévole
-    const deptsActuales = Array.isArray(benevole.departement) 
-      ? benevole.departement 
-      : (benevole.departement ? [benevole.departement] : []);
-    setDepartamentosAsignar(deptsActuales);
+    
+    // ✅ Cargar departamentos desde los contactos asociados al bénévole
+    const todosLosContactos = obtenerContactosDepartamento();
+    const contactosDelBenevole = todosLosContactos.filter(c => 
+      c.email.toLowerCase() === benevole.email.toLowerCase()
+    );
+    
+    // Extraer los IDs únicos de departamentos donde está asignado
+    const deptsActuales = [...new Set(contactosDelBenevole.map(c => c.departamentoId))].filter(id => id && id !== '');
+    
+    // ✅ Filtrar solo los departamentos que existen y están activos
+    const departamentosActivos = obtenerDepartamentos().filter(d => d.activo);
+    const idsActivos = departamentosActivos.map(d => d.id);
+    const deptsValidados = deptsActuales.filter(id => idsActivos.includes(id));
+    
+    console.log('📋 Departamentos actuales del bénévole:', {
+      benevole: `${benevole.prenom} ${benevole.nom}`,
+      email: benevole.email,
+      contactosEncontrados: contactosDelBenevole.length,
+      departamentosAsignados: deptsActuales,
+      departamentosValidados: deptsValidados,
+      departamentosDisponibles: departamentosActivos.map(d => ({ id: d.id, nombre: d.nombre }))
+    });
+    
+    setDepartamentosAsignar(deptsValidados);
     setDialogAsignarDepartamentos(true);
   };
 
@@ -1444,11 +1467,43 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       return;
     }
 
-    // Crear contacto en cada departamento seleccionado
-    departamentosAsignar.forEach((deptId) => {
+    // ✅ PASO 1: Obtener contactos actuales del bénévole
+    const todosLosContactos = obtenerContactosDepartamento();
+    const contactosActuales = todosLosContactos.filter(c => 
+      c.email.toLowerCase() === benevoleSeleccionadoAsignar.email.toLowerCase()
+    );
+    
+    const deptsActuales = contactosActuales.map(c => c.departamentoId).filter(id => id && id !== '');
+    const deptsNuevos = departamentosAsignar.filter(id => id && id !== '');
+    
+    // ✅ PASO 2: Encontrar departamentos a eliminar y a agregar
+    const deptsAEliminar = deptsActuales.filter(id => !deptsNuevos.includes(id));
+    const deptsAAgregar = deptsNuevos.filter(id => !deptsActuales.includes(id));
+    const deptsQueSeQuedan = deptsActuales.filter(id => deptsNuevos.includes(id));
+    
+    console.log('🔄 Modificando asignación de departamentos:', {
+      benevole: `${benevoleSeleccionadoAsignar.prenom} ${benevoleSeleccionadoAsignar.nom}`,
+      deptsActuales,
+      deptsNuevos,
+      deptsAEliminar,
+      deptsAAgregar,
+      deptsQueSeQuedan
+    });
+
+    // ✅ PASO 3: Eliminar contactos de departamentos que ya no están seleccionados
+    deptsAEliminar.forEach(deptId => {
+      const contactoAEliminar = contactosActuales.find(c => c.departamentoId === deptId);
+      if (contactoAEliminar) {
+        eliminarContacto(contactoAEliminar.id);
+        console.log(`  ❌ Eliminado contacto del departamento ${deptId}`);
+      }
+    });
+
+    // ✅ PASO 4: Crear contactos para departamentos nuevos
+    deptsAAgregar.forEach((deptId) => {
       const nuevoContacto: Omit<ContactoDepartamento, 'id'> = {
         departamentoId: deptId,
-        departamentoIds: departamentosAsignar,
+        departamentoIds: deptsNuevos,
         tipo: 'benevole',
         nombre: benevoleSeleccionadoAsignar.nom,
         apellido: benevoleSeleccionadoAsignar.prenom,
@@ -1483,25 +1538,40 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         documents: benevoleSeleccionadoAsignar.documents || []
       };
 
-      guardarContacto(nuevoContacto);
+      const contactoCreado = guardarContacto(nuevoContacto);
+      console.log(`  ✅ Creado contacto para departamento ${deptId}`, contactoCreado);
+    });
+    
+    // ✅ PASO 5: Actualizar departamentoIds en contactos existentes
+    deptsQueSeQuedan.forEach(deptId => {
+      const contactoExistente = contactosActuales.find(c => c.departamentoId === deptId);
+      if (contactoExistente) {
+        actualizarContacto(contactoExistente.id, {
+          ...contactoExistente,
+          departamentoIds: deptsNuevos
+        });
+        console.log(`  🔄 Actualizado departamentoIds para departamento ${deptId}`);
+      }
     });
 
-    // Actualizar el bénévole con los nuevos departamentos
+    // ✅ PASO 6: Actualizar el bénévole con los nuevos departamentos
     const benevolesActualizados = benevoles.map(b => {
       if (b.id === benevoleSeleccionadoAsignar.id) {
-        // 🔧 FIX: Convertir array a string con comas para compatibilidad
-        const departementString = Array.isArray(departamentosAsignar) 
-          ? departamentosAsignar.join(', ') 
-          : departamentosAsignar;
-        return { ...b, departement: departementString };
+        // 🔧 Mantener departamentosAsignar como array de IDs
+        return { ...b, departement: deptsNuevos };
       }
       return b;
     });
     
-    // 🔒 GUARDAR EN LOCALSTORAGE - ¡ESTO FALTABA!
-    localStorage.setItem('benevoles', JSON.stringify(benevolesActualizados));
+    // 🔒 GUARDAR EN LOCALSTORAGE
     localStorage.setItem('banqueAlimentaire_benevoles', JSON.stringify(benevolesActualizados));
     setBenevoles(benevolesActualizados);
+    
+    console.log('💾 Bénévole actualizado con nuevos departamentos:', {
+      benevole: `${benevoleSeleccionadoAsignar.prenom} ${benevoleSeleccionadoAsignar.nom}`,
+      departamentosGuardados: deptsNuevos,
+      benevolesTotal: benevolesActualizados.length
+    });
 
     // 🔄 SINCRONIZAR AUTOMÁTICAMENTE SI SE ASIGNÓ A ENTREPÔT
     if (departamentosAsignar.some(dept => dept.toLowerCase().includes('entrepôt') || dept.toLowerCase().includes('entrepot'))) {
@@ -1514,7 +1584,36 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       }, 500);
     }
 
-    toast.success(`✅ Bénévole assigné à ${departamentosAsignar.length} département(s)`);
+    // 🔄 PASO 7: Forzar eventos de actualización
+    window.dispatchEvent(new CustomEvent('contactos-actualizados'));
+    window.dispatchEvent(new CustomEvent('benevoles-actualizados'));
+    
+    // ✅ Mensaje de éxito detallado
+    let mensaje = `✅ Départements mis à jour pour ${benevoleSeleccionadoAsignar.prenom} ${benevoleSeleccionadoAsignar.nom}`;
+    if (deptsAAgregar.length > 0) {
+      mensaje += `\n✨ ${deptsAAgregar.length} département(s) ajouté(s)`;
+    }
+    if (deptsAEliminar.length > 0) {
+      mensaje += `\n❌ ${deptsAEliminar.length} département(s) retiré(s)`;
+    }
+    toast.success(mensaje);
+    
+    // 🔄 PASO 8: Forzar actualización de la tabla y verificar resultado final
+    setRefreshDepartamentos(prev => prev + 1);
+    
+    // Verificar que los contactos se guardaron correctamente
+    setTimeout(() => {
+      const contactosFinales = obtenerContactosDepartamento().filter(c => 
+        c.email.toLowerCase() === benevoleSeleccionadoAsignar.email.toLowerCase()
+      );
+      console.log('✅ VERIFICACIÓN FINAL - Contactos guardados:', {
+        benevole: `${benevoleSeleccionadoAsignar.prenom} ${benevoleSeleccionadoAsignar.nom}`,
+        totalContactos: contactosFinales.length,
+        departamentos: contactosFinales.map(c => c.departamentoId),
+        contactosCompletos: contactosFinales
+      });
+    }, 100);
+    
     setDialogAsignarDepartamentos(false);
     setBenevoleSeleccionadoAsignar(null);
     setDepartamentosAsignar([]);
@@ -1551,6 +1650,9 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       if (eliminado) {
         toast.success(`✅ Contact supprimé du département: ${benevole.prenom} ${benevole.nom}`);
         
+        // 🔄 Forzar actualización de la tabla
+        setRefreshDepartamentos(prev => prev + 1);
+        
         // Recargar la página o actualizar el estado si es necesario
         window.dispatchEvent(new CustomEvent('contactos-actualizados'));
       } else {
@@ -1559,6 +1661,67 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     } catch (error) {
       console.error('Error al eliminar contacto:', error);
       toast.error('❌ Erreur lors de la suppression du contact');
+    }
+  };
+
+  // Función para eliminar COMPLETAMENTE el perfil del bénévole
+  const handleEliminarPerfilCompleto = async (benevole: Benevole) => {
+    // Confirmación doble para evitar eliminaciones accidentales
+    const confirmacion = window.confirm(
+      `⚠️ ATTENTION: Cette action est IRRÉVERSIBLE!\n\n` +
+      `Voulez-vous vraiment SUPPRIMER COMPLÈTEMENT le profil de:\n\n` +
+      `👤 ${benevole.prenom} ${benevole.nom}\n` +
+      `📧 ${benevole.email}\n\n` +
+      `Cela supprimera:\n` +
+      `• Le profil du bénévole\n` +
+      `• Tous ses contacts dans les départements\n` +
+      `• Toutes ses feuilles de temps\n` +
+      `• Son accès au système (si existant)\n\n` +
+      `Êtes-vous ABSOLUMENT SÛR(E)?`
+    );
+
+    if (!confirmacion) return;
+
+    try {
+      // 1. Eliminar el bénévole de la lista
+      const benevolesActualizados = benevoles.filter(b => b.id !== benevole.id);
+      localStorage.setItem('banqueAlimentaire_benevoles', JSON.stringify(benevolesActualizados));
+      setBenevoles(benevolesActualizados);
+
+      // 2. Eliminar TODOS los contactos del bénévole en TODOS los departamentos
+      const todosLosContactos = obtenerContactosDepartamento();
+      const contactosActualizados = todosLosContactos.filter(c => 
+        c.email.toLowerCase() !== benevole.email.toLowerCase()
+      );
+      localStorage.setItem('banqueAlimentaire_contactosDepartamentos', JSON.stringify(contactosActualizados));
+
+      // 3. Eliminar todas las feuilles de temps del bénévole
+      const feuillesActualizadas = feuillesTemps.filter(ft => ft.benevoleId !== benevole.id);
+      localStorage.setItem('banqueAlimentaire_feuillesTemps', JSON.stringify(feuillesActualizadas));
+      setFeuillesTemps(feuillesActualizadas);
+
+      // 4. Eliminar el acceso al sistema si existe
+      const usuariosStr = localStorage.getItem('banqueAlimentaire_usuarios');
+      if (usuariosStr) {
+        try {
+          const usuarios = JSON.parse(usuariosStr);
+          const usuariosActualizados = usuarios.filter((u: any) => 
+            u.email?.toLowerCase() !== benevole.email.toLowerCase()
+          );
+          localStorage.setItem('banqueAlimentaire_usuarios', JSON.stringify(usuariosActualizados));
+        } catch (error) {
+          console.error('Error al eliminar usuario del sistema:', error);
+        }
+      }
+
+      // Emitir evento de actualización
+      window.dispatchEvent(new CustomEvent('contactos-actualizados'));
+      window.dispatchEvent(new CustomEvent('benevoles-actualizados'));
+
+      toast.success(`✅ Profil de ${benevole.prenom} ${benevole.nom} COMPLÈTEMENT supprimé`);
+    } catch (error) {
+      console.error('Error al eliminar perfil completo:', error);
+      toast.error('❌ Erreur lors de la suppression du profil complet');
     }
   };
 
@@ -1586,28 +1749,102 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       c.email.toLowerCase() === benevole.email.toLowerCase()
     );
 
-    // Si no hay contactos asociados, mostrar el campo departement del bénévole
+    // Si no hay contactos asociados, indicar claramente que no tiene departamento
     if (contactosAsociados.length === 0) {
-      return benevole.departement || '—';
+      return '⚠️ Aucun département assigné';
     }
 
-    // Si hay múltiples contactos, mostrar todos los departamentos
-    const nombresDepartamentos = contactosAsociados.map(contacto => {
+    // Crear un Map para evitar duplicados de departamentos
+    const departamentosUnicos = new Map<string, { nombre: string; activo: boolean }>();
+    
+    contactosAsociados.forEach(contacto => {
       const departamento = departementosStorage.find(
         d => d.id.toString() === contacto.departamentoId.toString()
       );
       
       if (departamento) {
-        const estadoIcon = contacto.activo ? '✅' : '⚠️';
-        return `${estadoIcon} ${departamento.nombre}`;
+        // Si el departamento ya existe, mantener el estado activo si al menos uno está activo
+        const existing = departamentosUnicos.get(departamento.id.toString());
+        if (existing) {
+          departamentosUnicos.set(departamento.id.toString(), {
+            nombre: departamento.nombre,
+            activo: existing.activo || contacto.activo
+          });
+        } else {
+          departamentosUnicos.set(departamento.id.toString(), {
+            nombre: departamento.nombre,
+            activo: contacto.activo
+          });
+        }
       }
-      return null;
-    }).filter(Boolean);
+    });
+
+    // Convertir a array y formatear con emojis
+    const nombresDepartamentos = Array.from(departamentosUnicos.values()).map(dept => {
+      const estadoIcon = dept.activo ? '✅' : '⚠️';
+      return `${estadoIcon} ${dept.nombre}`;
+    });
 
     // Unir todos los nombres con ", "
     return nombresDepartamentos.length > 0 
       ? nombresDepartamentos.join(', ') 
-      : benevole.departement || '—';
+      : '⚠️ Aucun département assigné';
+  };
+
+  // Función para obtener los departamentos como objetos para badges
+  const obtenerDepartamentosBenevole = (benevole: Benevole): Array<{ id: string; nombre: string; activo: boolean; color: string }> => {
+    // 🔄 IMPORTANTE: Obtener departamentos frescos cada vez
+    const departementosActuales = obtenerDepartamentos();
+    const todosLosContactos = obtenerContactosDepartamento();
+    const contactosAsociados = todosLosContactos.filter(c => 
+      c.email.toLowerCase() === benevole.email.toLowerCase()
+    );
+
+    console.log('🔍 Obteniendo departamentos para:', {
+      benevole: `${benevole.prenom} ${benevole.nom}`,
+      email: benevole.email,
+      contactosAsociados: contactosAsociados.length,
+      departamentosIds: contactosAsociados.map(c => c.departamentoId),
+      refreshKey: refreshDepartamentos
+    });
+
+    if (contactosAsociados.length === 0) {
+      return [];
+    }
+
+    const departamentosUnicos = new Map<string, { nombre: string; activo: boolean; color: string }>();
+    
+    contactosAsociados.forEach(contacto => {
+      const departamento = departementosActuales.find(
+        d => d.id.toString() === contacto.departamentoId.toString()
+      );
+      
+      if (departamento) {
+        const existing = departamentosUnicos.get(departamento.id.toString());
+        if (existing) {
+          departamentosUnicos.set(departamento.id.toString(), {
+            nombre: departamento.nombre,
+            activo: existing.activo || contacto.activo,
+            color: departamento.color
+          });
+        } else {
+          departamentosUnicos.set(departamento.id.toString(), {
+            nombre: departamento.nombre,
+            activo: contacto.activo,
+            color: departamento.color
+          });
+        }
+      }
+    });
+
+    const resultado = Array.from(departamentosUnicos.entries()).map(([id, dept]) => ({
+      id,
+      ...dept
+    }));
+
+    console.log('✅ Departamentos obtenidos:', resultado);
+
+    return resultado;
   };
 
   // Función para cambiar el estado activo/inactivo del contacto
@@ -2929,7 +3166,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                 </thead>
                 <tbody className="divide-y">
                   {filteredBenevoles.map(benevole => (
-                    <tr key={benevole.id} className="hover:bg-[#F9F9F9] transition-colors">
+                    <tr key={`${benevole.id}-${refreshDepartamentos}`} className="hover:bg-[#F9F9F9] transition-colors">
                       <td className="px-4 py-4 text-center">
                         <Checkbox
                           checked={selectedBenevolesForEmail.includes(benevole.id)}
@@ -2948,15 +3185,35 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span 
-                          className={
-                            tieneContactoAsociado(benevole)
-                              ? "font-semibold text-[#1a4d7a]"
-                              : "text-[#666666]"
+                        {(() => {
+                          const departamentos = obtenerDepartamentosBenevole(benevole);
+                          
+                          if (departamentos.length === 0) {
+                            return (
+                              <span className="text-[#c23934] font-medium italic text-sm">
+                                ⚠️ Aucun département assigné
+                              </span>
+                            );
                           }
-                        >
-                          {obtenerNombreDepartamentoContacto(benevole)}
-                        </span>
+                          
+                          return (
+                            <div className="flex flex-wrap gap-1">
+                              {departamentos.map(dept => (
+                                <Badge
+                                  key={dept.id}
+                                  className="text-xs font-semibold px-2 py-1"
+                                  style={{
+                                    backgroundColor: dept.activo ? dept.color : '#9e9e9e',
+                                    color: 'white',
+                                    opacity: dept.activo ? 1 : 0.6
+                                  }}
+                                >
+                                  {dept.activo ? '✓' : '⚠️'} {dept.nombre}
+                                </Badge>
+                              ))}
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <span className="font-bold text-[#1E73BE]">{formaterHeures(benevole.heuresTotal)}</span>
@@ -3031,11 +3288,11 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                               <Button 
                                 variant="outline" 
                                 size="sm" 
-                                onClick={() => handleEliminarContactoBenevole(benevole)}
+                                onClick={() => handleEliminarPerfilCompleto(benevole)}
                                 className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
-                                title="Supprimer le contact du département"
+                                title="Supprimer complètement le profil du bénévole"
                               >
-                                <UserMinus className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4" />
                               </Button>
                             </>
                           )}
@@ -5297,7 +5554,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
       {/* Dialog Asignar Bénévole a Departamentos */}
       <Dialog open={dialogAsignarDepartamentos} onOpenChange={setDialogAsignarDepartamentos}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="asignar-departamentos-description">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               <Link className="w-6 h-6" style={{ color: branding.primaryColor }} />
@@ -5348,44 +5605,23 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                   <span className="text-red-500 font-semibold">* Obligatoire</span> - Sélectionnez au moins un département
                 </p>
 
-                <div className="flex flex-wrap gap-2">
-                  {obtenerDepartamentos()
+                <MultiSelectDepartements
+                  value={departamentosAsignar}
+                  onChange={(nouveauxDepts) => {
+                    console.log('🔄 Nouveaux départements sélectionnés:', {
+                      avant: departamentosAsignar,
+                      apres: nouveauxDepts,
+                      total: nouveauxDepts.length
+                    });
+                    setDepartamentosAsignar(nouveauxDepts);
+                  }}
+                  options={obtenerDepartamentos()
                     .filter(dept => dept.activo)
                     .sort((a, b) => a.orden - b.orden)
-                    .map(dept => {
-                      const isSelected = departamentosAsignar.includes(dept.id);
-                      return (
-                        <button
-                          key={dept.id}
-                          type="button"
-                          onClick={() => {
-                            const newDepts = isSelected
-                              ? departamentosAsignar.filter(id => id !== dept.id)
-                              : [...departamentosAsignar, dept.id];
-                            setDepartamentosAsignar(newDepts);
-                          }}
-                          className={`
-                            px-3 py-2 rounded-lg transition-all duration-200 font-semibold text-xs
-                            ${isSelected 
-                              ? 'ring-2 ring-offset-2 shadow-md scale-105' 
-                              : 'hover:ring-2 hover:ring-offset-1 border-2 hover:scale-102'
-                            }
-                          `}
-                          style={{
-                            backgroundColor: isSelected ? branding.primaryColor : 'white',
-                            color: isSelected ? 'white' : branding.primaryColor,
-                            borderColor: branding.primaryColor,
-                            ringColor: branding.primaryColor
-                          }}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <Building2 className="w-3.5 h-3.5" />
-                            {dept.nombre}
-                          </div>
-                        </button>
-                      );
-                    })}
-                </div>
+                    .map(dept => ({ id: dept.id, label: dept.nombre }))}
+                  placeholder="Cliquez pour sélectionner les départements"
+                  maxHeight="350px"
+                />
               </div>
 
               {/* Botones */}
@@ -5432,7 +5668,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
       {/* Dialog: Profil Détaillé du Bénévole */}
       <Dialog open={profileModalOpen} onOpenChange={setProfileModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="benevole-profile-description">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               <Users className="w-6 h-6" style={{ color: branding.primaryColor }} />
