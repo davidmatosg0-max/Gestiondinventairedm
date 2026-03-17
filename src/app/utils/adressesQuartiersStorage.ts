@@ -4,6 +4,7 @@
  */
 
 import { obtenirRuesLavalParQuartier } from './ruesLavalStorage';
+import { RUES_COMPLETES_LAVAL } from './ruesCompletesLaval';
 
 // ============================================================================
 // CLÉS DE STOCKAGE
@@ -620,7 +621,7 @@ export function synchroniserRuesLaval(): {
     
     // Procesar cada quartier
     laval.quartiers.forEach(quartier => {
-      const ruesDisponibles = RUES_PRINCIPALES_LAVAL[quartier.nom] || [];
+      const ruesDisponibles = RUES_COMPLETES_LAVAL[quartier.nom] || [];
       const codesPostauxDisponibles = LAVAL_CODES_POSTAUX_COMPLETS[quartier.nom] || [];
       
       // Actualizar código postal del quartier si no está establecido o es genérico
