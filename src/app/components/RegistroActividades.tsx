@@ -20,7 +20,8 @@ import {
   FileText,
   AlertCircle,
   CheckCircle,
-  XCircle
+  XCircle,
+  Sparkles
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
@@ -165,6 +166,104 @@ export function RegistroActividades({ filtroModulo }: RegistroActividadesProps) 
     }
   };
 
+  // Generar datos de demostración
+  const generarDatosDemostracion = () => {
+    const actividadesDemo = [
+      {
+        id: 'demo-1',
+        fecha: new Date().toLocaleDateString('fr-CA'),
+        hora: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        usuario: 'David',
+        usuarioId: '1',
+        modulo: 'Inventaire',
+        accion: 'crear' as const,
+        descripcion: 'Produit "Riz 1kg" créé avec succès',
+        detalles: { productoId: 'prod-001' }
+      },
+      {
+        id: 'demo-2',
+        fecha: new Date(Date.now() - 3600000).toLocaleDateString('fr-CA'),
+        hora: new Date(Date.now() - 3600000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        usuario: 'David',
+        usuarioId: '1',
+        modulo: 'Commandes',
+        accion: 'modificar' as const,
+        descripcion: 'Commande #12345 modifiée - Statut changé à "En préparation"',
+        detalles: { comandaId: 'cmd-001' }
+      },
+      {
+        id: 'demo-3',
+        fecha: new Date(Date.now() - 7200000).toLocaleDateString('fr-CA'),
+        hora: new Date(Date.now() - 7200000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        usuario: 'David',
+        usuarioId: '1',
+        modulo: 'Organismes',
+        accion: 'crear' as const,
+        descripcion: 'Organisme "Banque Alimentaire Montréal" créé',
+        detalles: { organismoId: 'org-001' }
+      },
+      {
+        id: 'demo-4',
+        fecha: new Date(Date.now() - 10800000).toLocaleDateString('fr-CA'),
+        hora: new Date(Date.now() - 10800000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        usuario: 'David',
+        usuarioId: '1',
+        modulo: 'Catégories',
+        accion: 'modificar' as const,
+        descripcion: 'Catégorie "Produits Laitiers" mise à jour - Valeur CAD$ 4.50/kg',
+        detalles: { categoriaId: 'cat-001' }
+      },
+      {
+        id: 'demo-5',
+        fecha: new Date(Date.now() - 14400000).toLocaleDateString('fr-CA'),
+        hora: new Date(Date.now() - 14400000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        usuario: 'David',
+        usuarioId: '1',
+        modulo: 'Inventaire',
+        accion: 'eliminar' as const,
+        descripcion: 'Produit "Produit Test" supprimé',
+        detalles: { productoId: 'prod-test' }
+      },
+      {
+        id: 'demo-6',
+        fecha: new Date(Date.now() - 18000000).toLocaleDateString('fr-CA'),
+        hora: new Date(Date.now() - 18000000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        usuario: 'David',
+        usuarioId: '1',
+        modulo: 'Utilisateurs',
+        accion: 'crear' as const,
+        descripcion: 'Nouvel utilisateur "Marie Dubois" créé avec rôle Gestionnaire',
+        detalles: { usuarioId: 'user-002' }
+      },
+      {
+        id: 'demo-7',
+        fecha: new Date(Date.now() - 21600000).toLocaleDateString('fr-CA'),
+        hora: new Date(Date.now() - 21600000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        usuario: 'David',
+        usuarioId: '1',
+        modulo: 'Commandes',
+        accion: 'crear' as const,
+        descripcion: 'Nouvelle commande #12346 créée pour "Centre d\'Accueil" - 15 produits',
+        detalles: { comandaId: 'cmd-002' }
+      },
+      {
+        id: 'demo-8',
+        fecha: new Date(Date.now() - 25200000).toLocaleDateString('fr-CA'),
+        hora: new Date(Date.now() - 25200000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        usuario: 'David',
+        usuarioId: '1',
+        modulo: 'Inventaire',
+        accion: 'modificar' as const,
+        descripcion: 'Stock de "Pâtes Alimentaires 500g" ajusté de 100 à 150 unités',
+        detalles: { productoId: 'prod-002' }
+      }
+    ];
+
+    localStorage.setItem('registroActividades', JSON.stringify(actividadesDemo));
+    cargarActividades();
+    toast.success('Données de démonstration générées avec succès!');
+  };
+
   // Obtener icono según el tipo de acción
   const obtenerIconoAccion = (accion: string) => {
     switch (accion) {
@@ -193,7 +292,7 @@ export function RegistroActividades({ filtroModulo }: RegistroActividadesProps) 
     }
   };
 
-  // Obtener icono según el módulo
+  // Obtener icono según le módulo
   const obtenerIconoModulo = (modulo: string) => {
     const moduloLower = modulo.toLowerCase();
     if (moduloLower.includes('inventario') || moduloLower.includes('produit')) return <Package className="w-4 h-4" />;
@@ -321,6 +420,16 @@ export function RegistroActividades({ filtroModulo }: RegistroActividadesProps) 
             >
               <Trash2 className="w-4 h-4" />
               Supprimer tout le registre
+            </Button>
+
+            <Button
+              onClick={generarDatosDemostracion}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 text-blue-600 border-blue-300 hover:bg-blue-50"
+            >
+              <Sparkles className="w-4 h-4" />
+              Générer données de démonstration
             </Button>
           </div>
 

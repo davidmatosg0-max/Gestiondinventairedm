@@ -1,5 +1,7 @@
 // Sistema de almacenamiento de productos creados en Configuración
 
+import { registrarActividad } from './actividadLogger';
+
 export type ProductoCreado = {
   id: string;
   codigo: string;
@@ -85,6 +87,15 @@ export function guardarProducto(producto: ProductoCreado | Omit<ProductoCreado, 
     productos.push(productoConId);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(productos));
     console.log('✅ Producto guardado exitosamente en localStorage:', productoConId.nombre);
+    
+    // Registrar actividad
+    registrarActividad(
+      'Inventaire',
+      'crear',
+      `Produit "${productoConId.nombre}" créé - Stock: ${productoConId.stockActual} ${productoConId.unidad}`,
+      { productoId: productoConId.id, codigo: productoConId.codigo }
+    );
+    
     return productoConId;
   } catch (error) {
     console.error('❌ Error al guardar producto:', error);
@@ -100,8 +111,27 @@ export function actualizarProducto(id: string, productoActualizado: Partial<Prod
     const productos = obtenerProductos();
     const index = productos.findIndex(p => p.id === id);
     if (index !== -1) {
+      const productoAnterior = { ...productos[index] };
       productos[index] = { ...productos[index], ...productoActualizado };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(productos));
+      
+      // Registrar actividad solo si hay cambios significativos
+      const cambiosSignificativos = [];
+      if (productoActualizado.stockActual !== undefined && productoActualizado.stockActual !== productoAnterior.stockActual) {
+        cambiosSignificativos.push(`Stock: ${productoAnterior.stockActual} → ${productoActualizado.stockActual}`);
+      }
+      if (productoActualizado.nombre !== undefined && productoActualizado.nombre !== productoAnterior.nombre) {
+        cambiosSignificativos.push(`Nom modifié`);
+      }
+      
+      if (cambiosSignificativos.length > 0) {
+        registrarActividad(
+          'Inventaire',
+          'modificar',
+          `Produit "${productos[index].nombre}" modifié - ${cambiosSignificativos.join(', ')}`,
+          { productoId: id, cambios: productoActualizado }
+        );
+      }
     }
   } catch (error) {
     console.error('Error al actualizar producto:', error);
@@ -114,8 +144,19 @@ export function actualizarProducto(id: string, productoActualizado: Partial<Prod
 export function eliminarProducto(id: string): void {
   try {
     const productos = obtenerProductos();
+    const productoAEliminar = productos.find(p => p.id === id);
     const productosFiltrados = productos.filter(p => p.id !== id);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(productosFiltrados));
+    
+    // Registrar actividad
+    if (productoAEliminar) {
+      registrarActividad(
+        'Inventaire',
+        'eliminar',
+        `Produit "${productoAEliminar.nombre}" supprimé du système`,
+        { productoId: id, codigo: productoAEliminar.codigo }
+      );
+    }
   } catch (error) {
     console.error('Error al eliminar producto:', error);
   }
