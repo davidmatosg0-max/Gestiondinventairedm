@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { mockVehiculos, mockUsuarios } from '../../data/mockData';
 import { Vehiculo } from '../../types';
+import { registrarActividad } from '../../utils/actividadLogger';
 
 export function GestionVehiculos() {
   const { t } = useTranslation();
@@ -123,8 +124,33 @@ export function GestionVehiculos() {
     }
 
     if (modoEdicion) {
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Transport',
+        'modificar',
+        `Véhicule "${formVehiculo.placa}" (${formVehiculo.marca} ${formVehiculo.modelo}) mis à jour`,
+        { 
+          placa: formVehiculo.placa, 
+          marca: formVehiculo.marca, 
+          modelo: formVehiculo.modelo,
+          estado: formVehiculo.estado 
+        }
+      );
       toast.success(`${t('transport.vehicle')} ${formVehiculo.placa} ${t('transport.vehicles.vehicleUpdated')}`);
     } else {
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Transport',
+        'crear',
+        `Nouveau véhicule "${formVehiculo.placa}" (${formVehiculo.marca} ${formVehiculo.modelo}) ajouté`,
+        { 
+          placa: formVehiculo.placa, 
+          marca: formVehiculo.marca, 
+          modelo: formVehiculo.modelo,
+          capacidadKg: formVehiculo.capacidadKg,
+          capacidadM3: formVehiculo.capacidadM3
+        }
+      );
       toast.success(`${t('transport.vehicle')} ${formVehiculo.placa} ${t('transport.vehicles.vehicleAdded')}`);
     }
     setVehiculoDialogOpen(false);
@@ -132,6 +158,17 @@ export function GestionVehiculos() {
 
   const handleEliminarVehiculo = () => {
     if (vehiculoAEliminar) {
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Transport',
+        'eliminar',
+        `Véhicule "${vehiculoAEliminar.placa}" (${vehiculoAEliminar.marca} ${vehiculoAEliminar.modelo}) supprimé`,
+        { 
+          placa: vehiculoAEliminar.placa, 
+          marca: vehiculoAEliminar.marca, 
+          modelo: vehiculoAEliminar.modelo 
+        }
+      );
       toast.success(`${t('transport.vehicle')} ${vehiculoAEliminar.placa} ${t('transport.vehicles.vehicleDeleted')}`);
       setDeleteDialogOpen(false);
       setVehiculoAEliminar(null);

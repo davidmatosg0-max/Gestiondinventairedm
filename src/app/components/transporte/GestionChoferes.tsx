@@ -40,6 +40,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { toast } from 'sonner';
 import { mockVehiculos } from '../../data/mockData';
 import { SelecteurJoursDisponibles, type JourDisponible } from '../shared/SelecteurJoursDisponibles';
+import { registrarActividad } from '../../utils/actividadLogger';
 
 type Chofer = {
   id: string;
@@ -215,6 +216,20 @@ export function GestionChoferes() {
             : c
         )
       );
+      
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Transport',
+        'modificar',
+        `Chauffeur "${formData.nombre} ${formData.apellido}" mis à jour - Licence: ${formData.licencia}`,
+        { 
+          choferId: choferActual.id,
+          nombre: formData.nombre,
+          apellido: formData.apellido,
+          licencia: formData.licencia,
+          estado: formData.estado
+        }
+      );
       toast.success(`✅ ${t('transport.driversManagement.driverUpdated')}: ${formData.nombre} ${formData.apellido}`);
     } else {
       // Crear nuevo chofer
@@ -223,6 +238,20 @@ export function GestionChoferes() {
         ...formData
       };
       setChoferes(prev => [...prev, nuevoChofer]);
+      
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Transport',
+        'crear',
+        `Nouveau chauffeur "${formData.nombre} ${formData.apellido}" enregistré - Licence: ${formData.licencia}`,
+        { 
+          choferId: nuevoChofer.id,
+          nombre: formData.nombre,
+          apellido: formData.apellido,
+          licencia: formData.licencia,
+          tipoLicencia: formData.tipoLicencia
+        }
+      );
       toast.success(`✅ ${t('transport.driversManagement.driverRegistered')}: ${formData.nombre} ${formData.apellido}`);
     }
 
@@ -234,6 +263,19 @@ export function GestionChoferes() {
     const chofer = choferes.find(c => c.id === id);
     if (window.confirm(t('transport.driversManagement.confirmDelete', { name: `${chofer?.nombre} ${chofer?.apellido}` }))) {
       setChoferes(prev => prev.filter(c => c.id !== id));
+      
+      // 📝 REGISTRAR ACTIVIDAD
+      registrarActividad(
+        'Transport',
+        'eliminar',
+        `Chauffeur "${chofer?.nombre} ${chofer?.apellido}" supprimé - Licence: ${chofer?.licencia}`,
+        { 
+          choferId: id,
+          nombre: chofer?.nombre,
+          apellido: chofer?.apellido,
+          licencia: chofer?.licencia
+        }
+      );
       toast.success(t('transport.driversManagement.driverDeleted'));
     }
   };
