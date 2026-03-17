@@ -27,7 +27,8 @@ import {
   Sparkles,
   ArrowLeft,
   Trash2,
-  Link
+  Link,
+  UserMinus
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { guardarContacto, obtenerContactosPorDepartamento, eliminarContactosDuplicados, eliminarContacto } from '../../utils/contactosDepartamentoStorage';
@@ -937,25 +938,52 @@ export function Recrutement() {
                     )}
 
                     <div className="flex gap-2 pt-3 border-t border-gray-200">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="hover:scale-105 transition-all duration-300"
-                        style={{ 
-                          fontFamily: 'Montserrat, sans-serif',
-                          color: branding.secondaryColor,
-                          borderColor: `${branding.secondaryColor}40`,
-                          backgroundColor: `${branding.secondaryColor}10`
-                        }}
-                        onClick={() => {
-                          setCandidatoParaAssignar(candidate);
-                          setDialogAssignerOpen(true);
-                        }}
-                        title="Assigner au département"
-                      >
-                        <Link className="w-4 h-4 mr-1" />
-                        Assigner
-                      </Button>
+                      {(() => {
+                        const tieneContacto = obtenerContactoCandidato(candidate);
+                        
+                        if (tieneContacto) {
+                          // Si tiene contacto, mostrar botón para eliminar contacto
+                          return (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="hover:scale-105 transition-all duration-300 hover:bg-orange-50 border-2"
+                              style={{ 
+                                fontFamily: 'Montserrat, sans-serif',
+                                color: '#ff6b35',
+                                borderColor: '#ff6b35'
+                              }}
+                              onClick={() => handleEliminarContacto(candidate)}
+                              title="Supprimer le contact du département"
+                            >
+                              <UserMinus className="w-4 h-4" />
+                            </Button>
+                          );
+                        } else {
+                          // Si no tiene contacto, mostrar botón para asignar
+                          return (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="hover:scale-105 transition-all duration-300"
+                              style={{ 
+                                fontFamily: 'Montserrat, sans-serif',
+                                color: branding.secondaryColor,
+                                borderColor: `${branding.secondaryColor}40`,
+                                backgroundColor: `${branding.secondaryColor}10`
+                              }}
+                              onClick={() => {
+                                setCandidatoParaAssignar(candidate);
+                                setDialogAssignerOpen(true);
+                              }}
+                              title="Assigner au département"
+                            >
+                              <Link className="w-4 h-4" />
+                            </Button>
+                          );
+                        }
+                      })()}
+                      
                       <Select 
                         value={candidate.status}
                         onValueChange={(value) => handleStatusChange(candidate.id, value)}

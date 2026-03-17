@@ -90,7 +90,11 @@ const DialogContent = React.forwardRef<
   
   // Si el usuario proporcionó aria-describedby, confiamos en que sabe lo que hace
   // De lo contrario, usamos fallbackDescriptionId solo si NO hay DialogDescription
-  const finalAriaDescribedBy = props['aria-describedby'] || (!hasExplicitDescription ? fallbackDescriptionId : undefined);
+  const finalAriaDescribedBy = props['aria-describedby'] 
+    ? props['aria-describedby'] 
+    : hasExplicitDescription 
+      ? undefined 
+      : fallbackDescriptionId;
   
   // Remover aria-describedby de props para evitar duplicados
   const { 'aria-describedby': _removed, ...restProps } = props;

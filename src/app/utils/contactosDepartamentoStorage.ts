@@ -311,13 +311,21 @@ export function guardarContacto(contacto: any): ContactoDepartamento {
   );
   
   if (yaExiste) {
-    // ✅ Solo mostrar warning si se intenta crear un nuevo contacto (sin ID)
-    // No mostrar warning para sincronizaciones de contactos existentes
+    // ✅ Solo mostrar warning si se intenta crear un nuevo contacto (sin ID) y los nombres son DIFERENTES
+    // No mostrar warning para sincronizaciones o actualizaciones de contactos existentes
     if (!contacto.id) {
-      console.warn('⚠️ Contacto duplicado detectado:', {
-        existente: yaExiste,
-        nuevo: contacto
-      });
+      // Verificar si los nombres son diferentes (posible duplicado real)
+      const nombreCompleto1 = `${yaExiste.nombre} ${yaExiste.apellido}`.toLowerCase().trim();
+      const nombreCompleto2 = `${contacto.nombre} ${contacto.apellido}`.toLowerCase().trim();
+      const nombreInvertido = `${yaExiste.apellido} ${yaExiste.nombre}`.toLowerCase().trim();
+      
+      // Solo mostrar warning si NO son el mismo nombre ni inverso
+      if (nombreCompleto1 !== nombreCompleto2 && nombreInvertido !== nombreCompleto2) {
+        console.warn('⚠️ Contacto duplicado detectado:', {
+          existente: yaExiste,
+          nuevo: contacto
+        });
+      }
     }
     
     // Si el contacto ya existe, verificar si necesita actualizar departamentos

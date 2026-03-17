@@ -23,7 +23,7 @@ import { obtenirQuartiersLaval } from '../../data/quartiersLaval';
 import { SelecteurJoursDisponibles, type JourDisponible } from '../shared/SelecteurJoursDisponibles';
 import { obtenerDepartamentos } from '../../utils/departamentosStorage';
 import { obtenerUsuarioSesion, tienePermiso } from '../../utils/sesionStorage';
-import { guardarContacto, type ContactoDepartamento, sincronizarDesdeBenevole, obtenerContactosDepartamento } from '../../utils/contactosDepartamentoStorage';
+import { guardarContacto, type ContactoDepartamento, sincronizarDesdeBenevole, obtenerContactosDepartamento, eliminarContacto, actualizarContacto } from '../../utils/contactosDepartamentoStorage';
 import { sincronizarVoluntariosEntrepot } from '../../utils/sincronizarVoluntariosEntrepot';
 import { BoutonRetourHeader } from '../shared/BoutonRetour';
 import { 
@@ -81,7 +81,10 @@ import {
   ShieldPlus,
   Shield,
   AlertCircle,
-  Link
+  Link,
+  UserMinus,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -1517,6 +1520,112 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     setDepartamentosAsignar([]);
   };
 
+  // Función para eliminar contacto del departamento
+  const handleEliminarContactoBenevole = async (benevole: Benevole) => {
+    // Buscar contacto asociado por email
+    const todosLosContactos = obtenerContactosDepartamento();
+    const contactoAsociado = todosLosContactos.find(c => 
+      c.email.toLowerCase() === benevole.email.toLowerCase()
+    );
+
+    if (!contactoAsociado) {
+      toast.error('❌ Aucun contact associé trouvé');
+      return;
+    }
+
+    // Confirmación
+    const confirmacion = window.confirm(
+      `⚠️ Voulez-vous vraiment supprimer le contact du département?\n\n` +
+      `Bénévole: ${benevole.prenom} ${benevole.nom}\n` +
+      `Email: ${benevole.email}\n` +
+      `Contact ID: ${contactoAsociado.numeroArchivo || contactoAsociado.id}\n\n` +
+      `Cette action ne supprimera PAS le bénévole, seulement son lien avec le département.`
+    );
+
+    if (!confirmacion) return;
+
+    try {
+      // Eliminar contacto
+      const eliminado = eliminarContacto(contactoAsociado.id);
+      
+      if (eliminado) {
+        toast.success(`✅ Contact supprimé du département: ${benevole.prenom} ${benevole.nom}`);
+        
+        // Recargar la página o actualizar el estado si es necesario
+        window.dispatchEvent(new CustomEvent('contactos-actualizados'));
+      } else {
+        toast.error('❌ Erreur lors de la suppression du contact');
+      }
+    } catch (error) {
+      console.error('Error al eliminar contacto:', error);
+      toast.error('❌ Erreur lors de la suppression du contact');
+    }
+  };
+
+  // Función para verificar si el bénévole tiene contacto asociado
+  const tieneContactoAsociado = (benevole: Benevole): boolean => {
+    const todosLosContactos = obtenerContactosDepartamento();
+    return todosLosContactos.some(c => 
+      c.email.toLowerCase() === benevole.email.toLowerCase()
+    );
+  };
+
+  // Función para obtener el contacto asociado
+  const obtenerContactoAsociado = (benevole: Benevole): ContactoDepartamento | undefined => {
+    const todosLosContactos = obtenerContactosDepartamento();
+    return todosLosContactos.find(c => 
+      c.email.toLowerCase() === benevole.email.toLowerCase()
+    );
+  };
+
+  // Función para cambiar el estado activo/inactivo del contacto
+  const handleCambiarEstadoContacto = async (benevole: Benevole) => {
+    const contactoAsociado = obtenerContactoAsociado(benevole);
+
+    if (!contactoAsociado) {
+      toast.error('❌ Aucun contact associé trouvé');
+      return;
+    }
+
+    const nuevoEstado = !contactoAsociado.activo;
+    const estadoTexto = nuevoEstado ? 'ACTIF' : 'INACTIF';
+
+    // Confirmación
+    const confirmacion = window.confirm(
+      `⚠️ Voulez-vous changer le statut du contact?\n\n` +
+      `Bénévole: ${benevole.prenom} ${benevole.nom}\n` +
+      `Statut actuel: ${contactoAsociado.activo ? 'ACTIF' : 'INACTIF'}\n` +
+      `Nouveau statut: ${estadoTexto}\n\n` +
+      `Contact ID: ${contactoAsociado.numeroArchivo || contactoAsociado.id}`
+    );
+
+    if (!confirmacion) return;
+
+    try {
+      // Actualizar el estado del contacto
+      const actualizado = actualizarContacto(contactoAsociado.id, {
+        activo: nuevoEstado
+      });
+      
+      if (actualizado) {
+        toast.success(
+          `✅ Contact ${nuevoEstado ? 'activé' : 'désactivé'}: ${benevole.prenom} ${benevole.nom}`
+        );
+        
+        // Recargar la página o actualizar el estado
+        window.dispatchEvent(new CustomEvent('contactos-actualizados'));
+        
+        // Forzar actualización visual
+        setBenevoles([...benevoles]);
+      } else {
+        toast.error('❌ Erreur lors de la modification du statut');
+      }
+    } catch (error) {
+      console.error('Error al cambiar estado del contacto:', error);
+      toast.error('❌ Erreur lors de la modification du statut');
+    }
+  };
+
   // Función genérica para optimizar imágenes
   const optimizeImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -2851,6 +2960,40 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                           >
                             <Link className="w-4 h-4" />
                           </Button>
+                          {tieneContactoAsociado(benevole) && (
+                            <>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleCambiarEstadoContacto(benevole)}
+                                className={
+                                  obtenerContactoAsociado(benevole)?.activo
+                                    ? "border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
+                                    : "border-gray-500 text-gray-500 hover:bg-gray-500 hover:text-white"
+                                }
+                                title={
+                                  obtenerContactoAsociado(benevole)?.activo
+                                    ? "Contact actif - Cliquer pour désactiver"
+                                    : "Contact inactif - Cliquer pour activer"
+                                }
+                              >
+                                {obtenerContactoAsociado(benevole)?.activo ? (
+                                  <CheckCircle className="w-4 h-4" />
+                                ) : (
+                                  <XCircle className="w-4 h-4" />
+                                )}
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleEliminarContactoBenevole(benevole)}
+                                className="border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                                title="Supprimer le contact du département"
+                              >
+                                <UserMinus className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
                           <Button 
                             variant="outline" 
                             size="sm" 
