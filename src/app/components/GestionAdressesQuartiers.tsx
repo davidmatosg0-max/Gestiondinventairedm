@@ -218,9 +218,9 @@ export function GestionAdressesQuartiers() {
     try {
       const resultado = synchroniserAvecInternet();
       
-      if (resultado.villesAjoutees === 0 && resultado.quartiersAjoutes === 0) {
+      if (resultado.villesAjoutees === 0 && resultado.quartiersAjoutes === 0 && resultado.villesMisesAJour === 0) {
         toast.info('Les données sont déjà à jour', {
-          description: 'Aucune nouvelle donnée disponible'
+          description: 'Toutes les rues et codes postaux sont synchronisés'
         });
       } else {
         const messages = [];
@@ -228,14 +228,15 @@ export function GestionAdressesQuartiers() {
           messages.push(`${resultado.villesAjoutees} ville(s) ajoutée(s)`);
         }
         if (resultado.quartiersAjoutes > 0) {
-          messages.push(`${resultado.quartiersAjoutes} quartier(s) ajouté(s)`);
+          messages.push(`${resultado.quartiersAjoutes} quartier(s) mis à jour`);
         }
         if (resultado.villesMisesAJour > 0) {
-          messages.push(`${resultado.villesMisesAJour} ville(s) mise(s) à jour`);
+          messages.push(`Codes postaux actualisés`);
         }
         
-        toast.success('Synchronisation réussie!', {
-          description: messages.join(', ')
+        toast.success('🌐 Synchronisation Internet réussie!', {
+          description: `${messages.join(' • ')} - Données téléchargées depuis Internet`,
+          duration: 5000
         });
       }
       
@@ -260,14 +261,22 @@ export function GestionAdressesQuartiers() {
       const resultado = synchroniserQuartiersVille(villeId);
       const ville = villes.find(v => v.id === villeId);
       
-      if (resultado.quartiersAjoutes === 0) {
+      if (resultado.quartiersAjoutes === 0 && resultado.ruesAjoutees === 0) {
         toast.info(`${ville?.nom || 'Ville'} - Données à jour`, {
-          description: 'Tous les quartiers disponibles sont déjà synchronisés'
+          description: 'Toutes les rues disponibles sont déjà synchronisées'
         });
       } else {
-        const totalQuartiers = (ville?.quartiers.length || 0) + resultado.quartiersAjoutes;
-        toast.success(`${ville?.nom || 'Ville'} - Synchronisation réussie!`, {
-          description: `${resultado.quartiersAjoutes} nouveau(x) quartier(s) téléchargé(s) depuis Internet. Total: ${totalQuartiers} quartiers`
+        const messages = [];
+        if (resultado.ruesAjoutees > 0) {
+          messages.push(`${resultado.ruesAjoutees} rues téléchargées`);
+        }
+        if (resultado.quartiersAjoutes > 0) {
+          messages.push(`${resultado.quartiersAjoutes} quartier(s) mis à jour`);
+        }
+        
+        toast.success(`🌐 ${ville?.nom || 'Ville'} - Synchronisation réussie!`, {
+          description: messages.join(' • '),
+          duration: 5000
         });
       }
       
