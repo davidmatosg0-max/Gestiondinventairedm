@@ -321,7 +321,14 @@ export const RUES_COMPLETES_LAVAL: Record<string, RueData[]> = {
     { nom: 'Boulevard des Laurentides', type: 'boulevard', codePostal: 'H7M' },
     { nom: 'Rue Principale', type: 'rue', codePostal: 'H7M' },
     { nom: 'Boulevard Cléroux', type: 'boulevard', codePostal: 'H7M' },
-    { nom: 'Avenue de l\'Église', type: 'avenue', codePostal: 'H7M' }
+    { nom: 'Avenue de l\'Église', type: 'avenue', codePostal: 'H7M' },
+    // *** RUE DE BRUXELLES - ADRESSE RÉELLE À VIMONT H7M ***
+    { nom: 'Rue de Bruxelles', type: 'rue', codePostal: 'H7M' },
+    { nom: 'Rue de Vimont', type: 'rue', codePostal: 'H7M' },
+    { nom: 'Rue Sylvie', type: 'rue', codePostal: 'H7M' },
+    { nom: 'Rue Sénécal', type: 'rue', codePostal: 'H7M' },
+    { nom: 'Avenue des Perron', type: 'avenue', codePostal: 'H7M' },
+    { nom: 'Rue des Épinettes', type: 'rue', codePostal: 'H7M' }
   ],
   
   'Sainte-Rose': [
@@ -346,5 +353,113 @@ export const RUES_COMPLETES_LAVAL: Record<string, RueData[]> = {
     { nom: 'Montée Masson', type: 'montée', codePostal: 'H7C' },
     { nom: 'Boulevard de la Concorde', type: 'boulevard', codePostal: 'H7C' },
     { nom: 'Rue Principale', type: 'rue', codePostal: 'H7C' }
+  ],
+  
+  'Duvernay-Est': [
+    { nom: 'Montée Montpetit', type: 'montée', codePostal: 'H7E' },
+    { nom: 'Boulevard des Laurentides', type: 'boulevard', codePostal: 'H7E' },
+    { nom: 'Rue de Paris', type: 'rue', codePostal: 'H7G' },
+    { nom: 'Rue de Londres', type: 'rue', codePostal: 'H7G' },
+    { nom: 'Rue de Rome', type: 'rue', codePostal: 'H7G' },
+    { nom: 'Rue d\'Athènes', type: 'rue', codePostal: 'H7G' },
+    { nom: 'Rue de Milan', type: 'rue', codePostal: 'H7G' },
+    { nom: 'Rue de Florence', type: 'rue', codePostal: 'H7G' },
+    { nom: 'Rue de Venise', type: 'rue', codePostal: 'H7G' },
+    { nom: 'Rue de Naples', type: 'rue', codePostal: 'H7G' }
+  ],
+  
+  'Fabreville-Est': [
+    { nom: 'Boulevard Dagenais Ouest', type: 'boulevard', codePostal: 'H7P' },
+    { nom: 'Rue Principale', type: 'rue', codePostal: 'H7P' },
+    { nom: 'Avenue des Bois', type: 'avenue', codePostal: 'H7P' },
+    { nom: 'Rue des Écoles', type: 'rue', codePostal: 'H7P' },
+    { nom: 'Avenue du Parc', type: 'avenue', codePostal: 'H7P' },
+    { nom: 'Rue des Pionniers', type: 'rue', codePostal: 'H7P' },
+    { nom: 'Rue de la Fabrique', type: 'rue', codePostal: 'H7P' }
+  ],
+  
+  'Fabreville-Ouest': [
+    { nom: 'Boulevard Arthur-Sauvé', type: 'boulevard', codePostal: 'H7R' },
+    { nom: 'Boulevard Sainte-Rose', type: 'boulevard', codePostal: 'H7R' },
+    { nom: 'Montée Champagne', type: 'montée', codePostal: 'H7R' },
+    { nom: 'Rue de la Fabrique', type: 'rue', codePostal: 'H7R' },
+    { nom: 'Avenue des Érables', type: 'avenue', codePostal: 'H7R' },
+    { nom: 'Rue des Chênes', type: 'rue', codePostal: 'H7R' },
+    { nom: 'Rue du Boisé', type: 'rue', codePostal: 'H7R' }
+  ],
+  
+  'Îles-Laval': [
+    { nom: 'Boulevard de la Concorde Ouest', type: 'boulevard', codePostal: 'H7W' },
+    { nom: 'Avenue des Îles', type: 'avenue', codePostal: 'H7W' },
+    { nom: 'Rue de l\'Île-Paton', type: 'rue', codePostal: 'H7W' },
+    { nom: 'Rue de l\'Île-Ronde', type: 'rue', codePostal: 'H7W' },
+    { nom: 'Rue de l\'Île-Verte', type: 'rue', codePostal: 'H7W' },
+    { nom: 'Rue de l\'Île-aux-Vaches', type: 'rue', codePostal: 'H7W' },
+    { nom: 'Rue de l\'Île-Bigras', type: 'rue', codePostal: 'H7W' }
+  ],
+  
+  'Laval-Ouest': [
+    { nom: 'Boulevard Arthur-Sauvé', type: 'boulevard', codePostal: 'H7R' },
+    { nom: 'Boulevard Sainte-Rose', type: 'boulevard', codePostal: 'H7R' },
+    { nom: 'Montée Champagne', type: 'montée', codePostal: 'H7R' },
+    { nom: 'Boulevard des Oiseaux', type: 'boulevard', codePostal: 'H7S' },
+    { nom: 'Rue Principale', type: 'rue', codePostal: 'H7R' },
+    { nom: 'Avenue des Chênes', type: 'avenue', codePostal: 'H7R' },
+    { nom: 'Rue de la Colline', type: 'rue', codePostal: 'H7R' },
+    { nom: 'Chemin du Bord-de-l\'Eau', type: 'chemin', codePostal: 'H7R' }
+  ],
+  
+  'Laval-sur-le-Lac': [
+    { nom: 'Boulevard Sainte-Rose', type: 'boulevard', codePostal: 'H7R' },
+    { nom: 'Chemin du Bord-du-Lac', type: 'chemin', codePostal: 'H7R' },
+    { nom: 'Rue Berlioz', type: 'rue', codePostal: 'H7R' },
+    { nom: 'Rue Chopin', type: 'rue', codePostal: 'H7R' },
+    { nom: 'Rue Beethoven', type: 'rue', codePostal: 'H7R' },
+    { nom: 'Rue Mozart', type: 'rue', codePostal: 'H7R' },
+    { nom: 'Rue Schubert', type: 'rue', codePostal: 'H7R' },
+    { nom: 'Rue Vivaldi', type: 'rue', codePostal: 'H7R' }
+  ],
+  
+  'Renaud': [
+    { nom: 'Montée Montpetit', type: 'montée', codePostal: 'H7E' },
+    { nom: 'Boulevard de l\'Avenir', type: 'boulevard', codePostal: 'H7E' },
+    { nom: 'Rue Renaud', type: 'rue', codePostal: 'H7E' },
+    { nom: 'Rue du Domaine', type: 'rue', codePostal: 'H7E' },
+    { nom: 'Avenue des Champs', type: 'avenue', codePostal: 'H7E' },
+    { nom: 'Rue des Prairies', type: 'rue', codePostal: 'H7E' },
+    { nom: 'Rue de la Vallée', type: 'rue', codePostal: 'H7E' }
+  ],
+  
+  'Sainte-Dorothée': [
+    { nom: 'Boulevard Sainte-Rose', type: 'boulevard', codePostal: 'H7X' },
+    { nom: 'Montée Champagne', type: 'montée', codePostal: 'H7X' },
+    { nom: 'Boulevard des Oiseaux', type: 'boulevard', codePostal: 'H7X' },
+    { nom: 'Avenue des Perron', type: 'avenue', codePostal: 'H7X' },
+    { nom: 'Rue Principale', type: 'rue', codePostal: 'H7X' },
+    { nom: 'Rue Cérès', type: 'rue', codePostal: 'H7X' },
+    { nom: 'Rue Athéna', type: 'rue', codePostal: 'H7X' },
+    { nom: 'Rue Héra', type: 'rue', codePostal: 'H7X' },
+    { nom: 'Rue Apollon', type: 'rue', codePostal: 'H7X' },
+    { nom: 'Avenue des Bois', type: 'avenue', codePostal: 'H7X' }
+  ],
+  
+  'Saint-François': [
+    { nom: 'Montée Saint-François', type: 'montée', codePostal: 'H7B' },
+    { nom: 'Boulevard des Mille-Îles', type: 'boulevard', codePostal: 'H7B' },
+    { nom: 'Rue Principale', type: 'rue', codePostal: 'H7B' },
+    { nom: 'Chemin des Patriotes', type: 'chemin', codePostal: 'H7B' },
+    { nom: 'Rue de l\'Église', type: 'rue', codePostal: 'H7B' },
+    { nom: 'Rue du Quai', type: 'rue', codePostal: 'H7B' },
+    { nom: 'Avenue des Îles', type: 'avenue', codePostal: 'H7B' }
+  ],
+  
+  'Val-des-Brises': [
+    { nom: 'Boulevard Dagenais Ouest', type: 'boulevard', codePostal: 'H7P' },
+    { nom: 'Rue des Brises', type: 'rue', codePostal: 'H7P' },
+    { nom: 'Avenue du Lac', type: 'avenue', codePostal: 'H7P' },
+    { nom: 'Rue des Vents', type: 'rue', codePostal: 'H7P' },
+    { nom: 'Avenue des Nuages', type: 'avenue', codePostal: 'H7P' },
+    { nom: 'Rue des Brumes', type: 'rue', codePostal: 'H7P' },
+    { nom: 'Rue de la Brise', type: 'rue', codePostal: 'H7P' }
   ]
 };
