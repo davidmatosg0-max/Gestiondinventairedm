@@ -1578,6 +1578,27 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     );
   };
 
+  // Función para obtener el nombre del departamento del contacto asociado
+  const obtenerNombreDepartamentoContacto = (benevole: Benevole): string => {
+    const contactoAsociado = obtenerContactoAsociado(benevole);
+    if (!contactoAsociado) {
+      return benevole.departement || '—';
+    }
+
+    // Buscar el departamento por ID
+    const departamento = departementosStorage.find(
+      d => d.id.toString() === contactoAsociado.departamentoId.toString()
+    );
+
+    if (departamento) {
+      // Mostrar el estado del contacto con emoji
+      const estadoIcon = contactoAsociado.activo ? '✅' : '⚠️';
+      return `${estadoIcon} ${departamento.nombre}`;
+    }
+
+    return benevole.departement || '—';
+  };
+
   // Función para cambiar el estado activo/inactivo del contacto
   const handleCambiarEstadoContacto = async (benevole: Benevole) => {
     const contactoAsociado = obtenerContactoAsociado(benevole);
@@ -2915,7 +2936,17 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                           <p className="text-sm text-[#666666]">{benevole.email}</p>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-[#666666]">{benevole.departement}</td>
+                      <td className="px-6 py-4">
+                        <span 
+                          className={
+                            tieneContactoAsociado(benevole)
+                              ? "font-semibold text-[#1a4d7a]"
+                              : "text-[#666666]"
+                          }
+                        >
+                          {obtenerNombreDepartamentoContacto(benevole)}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 text-right">
                         <span className="font-bold text-[#1E73BE]">{formaterHeures(benevole.heuresTotal)}</span>
                       </td>
@@ -2971,11 +3002,14 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                                     ? "border-green-600 text-green-600 hover:bg-green-600 hover:text-white"
                                     : "border-gray-500 text-gray-500 hover:bg-gray-500 hover:text-white"
                                 }
-                                title={
-                                  obtenerContactoAsociado(benevole)?.activo
-                                    ? "Contact actif - Cliquer pour désactiver"
-                                    : "Contact inactif - Cliquer pour activer"
-                                }
+                                title={(() => {
+                                  const contacto = obtenerContactoAsociado(benevole);
+                                  const dept = departementosStorage.find(d => d.id.toString() === contacto?.departamentoId.toString());
+                                  const deptNombre = dept?.nombre || 'Département';
+                                  return contacto?.activo
+                                    ? `Contact actif (${deptNombre}) - Cliquer pour désactiver`
+                                    : `Contact inactif (${deptNombre}) - Cliquer pour activer`;
+                                })()}
                               >
                                 {obtenerContactoAsociado(benevole)?.activo ? (
                                   <CheckCircle className="w-4 h-4" />
