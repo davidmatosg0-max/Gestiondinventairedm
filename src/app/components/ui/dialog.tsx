@@ -54,11 +54,31 @@ const DialogContent = React.forwardRef<
   const generatedId = React.useId();
   const defaultDescriptionId = `dialog-description-${generatedId}`;
   
-  // Si se proporciona un aria-describedby personalizado, usarlo; sino, usar el generado
-  const ariaDescribedBy = props['aria-describedby'] || defaultDescriptionId;
+  // Detectar si hay un DialogDescription en los children
+  const hasDescription = React.Children.toArray(children).some((child) => {
+    if (React.isValidElement(child)) {
+      // Buscar en el árbol de children si hay un DialogDescription
+      const checkForDescription = (element: React.ReactElement): boolean => {
+        if (element.type === DialogDescription || 
+            (typeof element.type === 'function' && element.type.name === 'DialogDescription') ||
+            element.props?.['data-slot'] === 'dialog-description') {
+          return true;
+        }
+        if (element.props?.children) {
+          const grandChildren = React.Children.toArray(element.props.children);
+          return grandChildren.some((grandChild) => 
+            React.isValidElement(grandChild) && checkForDescription(grandChild)
+          );
+        }
+        return false;
+      };
+      return checkForDescription(child);
+    }
+    return false;
+  });
   
-  // Eliminar aria-describedby de props para evitar duplicación
-  const { 'aria-describedby': _, ...restProps } = props;
+  // Si hay aria-describedby explícito o hay DialogDescription, no agregamos uno por defecto
+  const shouldAddFallbackDescription = !hasDescription && props['aria-describedby'] === undefined;
   
   return (
     <DialogPortal>
@@ -66,8 +86,8 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         data-slot="dialog-content"
-        {...restProps}
-        aria-describedby={ariaDescribedBy}
+        {...props}
+        aria-describedby={props['aria-describedby'] !== undefined ? props['aria-describedby'] : (shouldAddFallbackDescription ? defaultDescriptionId : undefined)}
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200",
           !className?.includes("max-w-") && "max-w-[calc(100%-2rem)] sm:max-w-lg",
@@ -76,10 +96,12 @@ const DialogContent = React.forwardRef<
       >
         {children}
         
-        {/* Fallback invisible DialogDescription - siempre presente para accesibilidad */}
-        <DialogPrimitive.Description id={defaultDescriptionId} className="sr-only">
-          Dialog content description
-        </DialogPrimitive.Description>
+        {/* Fallback invisible DialogDescription - solo si no hay uno existente */}
+        {shouldAddFallbackDescription && (
+          <DialogPrimitive.Description id={defaultDescriptionId} className="sr-only">
+            Dialog content
+          </DialogPrimitive.Description>
+        )}
         
         <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
           <XIcon />

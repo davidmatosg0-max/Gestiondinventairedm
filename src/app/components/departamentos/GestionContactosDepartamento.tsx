@@ -373,6 +373,15 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         departamentoIds: departamentosActualizados
       });
       
+      // 🔄 Disparar evento de actualización de contactos
+      window.dispatchEvent(new CustomEvent('contactos-actualizados', {
+        detail: {
+          action: 'update',
+          departamentoId,
+          contactoId: yaExisteEnSistema.id
+        }
+      }));
+      
       toast.success(`Bénévole ${benevole.nom || benevole.nombre} ${benevole.prenom || benevole.apellido} assigné à ce département`);
       cargarContactos(); // Recargar para mostrar el cambio
       setDialogAsignarBenevole(false);
@@ -437,6 +446,15 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       }
       
       toast.success(`Bénévole ${benevole.nom || benevole.nombre} ${benevole.prenom || benevole.apellido} assigné avec succès`);
+      
+      // 🔄 Disparar evento de actualización de contactos
+      window.dispatchEvent(new CustomEvent('contactos-actualizados', {
+        detail: {
+          action: 'create',
+          departamentoId,
+          contactoId: contactoGuardado.id
+        }
+      }));
       
       // ✅ RECARGA COMPLETA: Recargar desde localStorage para asegurar persistencia
       cargarContactos();
@@ -766,6 +784,15 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         // ✅ RECARGA COMPLETA: Recargar desde localStorage para asegurar persistencia
         cargarContactos();
         
+        // 🔄 Disparar evento de actualización de contactos
+        window.dispatchEvent(new CustomEvent('contactos-actualizados', {
+          detail: {
+            action: modoEdicion ? 'update' : 'create',
+            departamentoId,
+            contactoId: contactoGuardado.id
+          }
+        }));
+        
         toast.success('Contact créé avec succès');
       } catch (error) {
         console.error('❌ Error al guardar contacto:', error);
@@ -807,6 +834,15 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       }
       
       toast.success('Contact supprimé avec succès');
+      
+      // 🔄 Disparar evento de actualización de contactos
+      window.dispatchEvent(new CustomEvent('contactos-actualizados', {
+        detail: {
+          action: 'delete',
+          departamentoId,
+          contactoId: contactoSeleccionado.id
+        }
+      }));
       
       // ✅ SOLUCIÓN DEFINITIVA: Actualizar el estado inmediatamente
       setContactos(prevContactos => prevContactos.filter(c => c.id !== contactoSeleccionado.id));

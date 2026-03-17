@@ -600,6 +600,8 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     const handleContactosUpdate = () => {
       console.log('🔔 Benevoles: Evento contactos-actualizados recibido');
       sincronizarNumerosArchivo();
+      // 🔄 Forzar actualización de departamentos para reflejar cambios
+      setRefreshDepartamentos(prev => prev + 1);
     };
     
     window.addEventListener('contactos-actualizados', handleContactosUpdate);
@@ -1758,25 +1760,45 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     const departamentosUnicos = new Map<string, { nombre: string; activo: boolean }>();
     
     contactosAsociados.forEach(contacto => {
-      const departamento = departementosStorage.find(
-        d => d.id.toString() === contacto.departamentoId.toString()
-      );
+      // 🔧 CORRECCIÓN: Obtener departamentos tanto de departamentoId como de departamentoIds
+      const departamentosDelContacto = new Set<string>();
       
-      if (departamento) {
-        // Si el departamento ya existe, mantener el estado activo si al menos uno está activo
-        const existing = departamentosUnicos.get(departamento.id.toString());
-        if (existing) {
-          departamentosUnicos.set(departamento.id.toString(), {
-            nombre: departamento.nombre,
-            activo: existing.activo || contacto.activo
-          });
-        } else {
-          departamentosUnicos.set(departamento.id.toString(), {
-            nombre: departamento.nombre,
-            activo: contacto.activo
-          });
-        }
+      // Agregar departamentoId principal
+      if (contacto.departamentoId && contacto.departamentoId !== '') {
+        departamentosDelContacto.add(contacto.departamentoId.toString());
       }
+      
+      // Agregar todos los departamentos de departamentoIds
+      if (contacto.departamentoIds && Array.isArray(contacto.departamentoIds)) {
+        contacto.departamentoIds.forEach(deptId => {
+          if (deptId && deptId !== '') {
+            departamentosDelContacto.add(deptId.toString());
+          }
+        });
+      }
+      
+      // Procesar cada departamento único del contacto
+      departamentosDelContacto.forEach(deptId => {
+        const departamento = departementosStorage.find(
+          d => d.id.toString() === deptId
+        );
+        
+        if (departamento) {
+          // Si el departamento ya existe, mantener el estado activo si al menos uno está activo
+          const existing = departamentosUnicos.get(departamento.id.toString());
+          if (existing) {
+            departamentosUnicos.set(departamento.id.toString(), {
+              nombre: departamento.nombre,
+              activo: existing.activo || contacto.activo
+            });
+          } else {
+            departamentosUnicos.set(departamento.id.toString(), {
+              nombre: departamento.nombre,
+              activo: contacto.activo
+            });
+          }
+        }
+      });
     });
 
     // Convertir a array y formatear con emojis
@@ -1805,6 +1827,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       email: benevole.email,
       contactosAsociados: contactosAsociados.length,
       departamentosIds: contactosAsociados.map(c => c.departamentoId),
+      departamentosIdsArray: contactosAsociados.map(c => c.departamentoIds),
       refreshKey: refreshDepartamentos
     });
 
@@ -1815,26 +1838,46 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     const departamentosUnicos = new Map<string, { nombre: string; activo: boolean; color: string }>();
     
     contactosAsociados.forEach(contacto => {
-      const departamento = departementosActuales.find(
-        d => d.id.toString() === contacto.departamentoId.toString()
-      );
+      // 🔧 CORRECCIÓN: Obtener departamentos tanto de departamentoId como de departamentoIds
+      const departamentosDelContacto = new Set<string>();
       
-      if (departamento) {
-        const existing = departamentosUnicos.get(departamento.id.toString());
-        if (existing) {
-          departamentosUnicos.set(departamento.id.toString(), {
-            nombre: departamento.nombre,
-            activo: existing.activo || contacto.activo,
-            color: departamento.color
-          });
-        } else {
-          departamentosUnicos.set(departamento.id.toString(), {
-            nombre: departamento.nombre,
-            activo: contacto.activo,
-            color: departamento.color
-          });
-        }
+      // Agregar departamentoId principal
+      if (contacto.departamentoId && contacto.departamentoId !== '') {
+        departamentosDelContacto.add(contacto.departamentoId.toString());
       }
+      
+      // Agregar todos los departamentos de departamentoIds
+      if (contacto.departamentoIds && Array.isArray(contacto.departamentoIds)) {
+        contacto.departamentoIds.forEach(deptId => {
+          if (deptId && deptId !== '') {
+            departamentosDelContacto.add(deptId.toString());
+          }
+        });
+      }
+      
+      // Procesar cada departamento único del contacto
+      departamentosDelContacto.forEach(deptId => {
+        const departamento = departementosActuales.find(
+          d => d.id.toString() === deptId
+        );
+        
+        if (departamento) {
+          const existing = departamentosUnicos.get(departamento.id.toString());
+          if (existing) {
+            departamentosUnicos.set(departamento.id.toString(), {
+              nombre: departamento.nombre,
+              activo: existing.activo || contacto.activo,
+              color: departamento.color
+            });
+          } else {
+            departamentosUnicos.set(departamento.id.toString(), {
+              nombre: departamento.nombre,
+              activo: contacto.activo,
+              color: departamento.color
+            });
+          }
+        }
+      });
     });
 
     const resultado = Array.from(departamentosUnicos.entries()).map(([id, dept]) => ({
