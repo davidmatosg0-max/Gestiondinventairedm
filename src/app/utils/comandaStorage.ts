@@ -1,4 +1,5 @@
 import { Comanda } from '../types';
+import { registrarActividad } from './actividadLogger';
 
 const COMANDAS_KEY = 'banco_alimentos_comandas';
 
@@ -22,6 +23,14 @@ export function guardarComanda(comanda: Comanda): void {
     const comandas = obtenerComandas();
     comandas.push(comanda);
     localStorage.setItem(COMANDAS_KEY, JSON.stringify(comandas));
+    
+    // Registrar actividad
+    registrarActividad(
+      'Commandes',
+      'crear',
+      `Commande ${comanda.numero} créée pour "${comanda.organismoNombre}"`,
+      { comandaId: comanda.id, numero: comanda.numero, organismoId: comanda.organismoId }
+    );
   } catch (error) {
     console.error('Error al guardar comanda:', error);
     throw error;
@@ -35,8 +44,22 @@ export function actualizarComanda(comandaActualizada: Comanda): void {
     const index = comandas.findIndex(c => c.id === comandaActualizada.id);
     
     if (index !== -1) {
+      const comandaAnterior = comandas[index];
       comandas[index] = comandaActualizada;
       localStorage.setItem(COMANDAS_KEY, JSON.stringify(comandas));
+      
+      // Registrar actividad con cambios
+      const cambios = [];
+      if (comandaAnterior.estado !== comandaActualizada.estado) {
+        cambios.push(`Statut: ${comandaAnterior.estado} → ${comandaActualizada.estado}`);
+      }
+      
+      registrarActividad(
+        'Commandes',
+        'modificar',
+        `Commande ${comandaActualizada.numero} modifiée${cambios.length > 0 ? ' - ' + cambios.join(', ') : ''}`,
+        { comandaId: comandaActualizada.id, cambios: { estadoAnterior: comandaAnterior.estado, estadoNuevo: comandaActualizada.estado } }
+      );
     }
   } catch (error) {
     console.error('Error al actualizar comanda:', error);
@@ -48,8 +71,19 @@ export function actualizarComanda(comandaActualizada: Comanda): void {
 export function eliminarComanda(comandaId: string): void {
   try {
     const comandas = obtenerComandas();
+    const comandaEliminar = comandas.find(c => c.id === comandaId);
     const comandasFiltradas = comandas.filter(c => c.id !== comandaId);
     localStorage.setItem(COMANDAS_KEY, JSON.stringify(comandasFiltradas));
+    
+    // Registrar actividad
+    if (comandaEliminar) {
+      registrarActividad(
+        'Commandes',
+        'eliminar',
+        `Commande ${comandaEliminar.numero} supprimée`,
+        { comandaId, numero: comandaEliminar.numero }
+      );
+    }
   } catch (error) {
     console.error('Error al eliminar comanda:', error);
     throw error;

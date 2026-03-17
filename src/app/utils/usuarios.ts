@@ -1,6 +1,8 @@
 // Sistema de usuarios con credenciales
 // Usuarios predefinidos del sistema
 
+import { registrarActividad } from './actividadLogger';
+
 // 🎭 ROLES DEL SISTEMA
 export type RolUsuario = 
   | 'desarrollador'           // Acceso total al sistema, debugging, configuración avanzada
@@ -405,6 +407,15 @@ export function agregarUsuario(usuario: Omit<Usuario, 'id'>): Usuario {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(usuarios));
   console.log('✅ Usuario agregado:', nuevoUsuario.username);
   
+  // Registrar actividad
+  const rolConfig = ROLES_CONFIG[nuevoUsuario.rol];
+  registrarActividad(
+    'Utilisateurs',
+    'crear',
+    `Utilisateur "${nuevoUsuario.username}" créé - Rôle: ${rolConfig?.nombre || nuevoUsuario.rol}`,
+    { usuarioId: nuevoUsuario.id, username: nuevoUsuario.username, rol: nuevoUsuario.rol }
+  );
+  
   return nuevoUsuario;
 }
 
@@ -414,9 +425,37 @@ export function actualizarUsuario(id: string, datosActualizados: Partial<Usuario
   const index = usuarios.findIndex(u => u.id === id);
   
   if (index !== -1) {
+    const usuarioAnterior = { ...usuarios[index] };
     usuarios[index] = { ...usuarios[index], ...datosActualizados };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(usuarios));
     console.log('✅ Usuario actualizado:', usuarios[index].username);
+    
+    // Registrar actividad
+    const cambios = [];
+    if (datosActualizados.rol && datosActualizados.rol !== usuarioAnterior.rol) {
+      const rolAnteriorConfig = ROLES_CONFIG[usuarioAnterior.rol];
+      const rolNuevoConfig = ROLES_CONFIG[datosActualizados.rol];
+      cambios.push(`Rôle: ${rolAnteriorConfig?.nombre} → ${rolNuevoConfig?.nombre}`);
+    }
+    if (datosActualizados.nombre || datosActualizados.apellido) {
+      cambios.push('Profil mis à jour');
+    }
+    if (datosActualizados.password) {
+      cambios.push('Mot de passe modifié');
+    }
+    if (datosActualizados.activo !== undefined && datosActualizados.activo !== usuarioAnterior.activo) {
+      cambios.push(datosActualizados.activo ? 'Activé' : 'Désactivé');
+    }
+    
+    if (cambios.length > 0) {
+      registrarActividad(
+        'Utilisateurs',
+        'modificar',
+        `Utilisateur "${usuarios[index].username}" modifié - ${cambios.join(', ')}`,
+        { usuarioId: id, cambios: datosActualizados }
+      );
+    }
+    
     return true;
   }
   
@@ -427,11 +466,24 @@ export function actualizarUsuario(id: string, datosActualizados: Partial<Usuario
 // Eliminar usuario
 export function eliminarUsuario(id: string): boolean {
   const usuarios = obtenerUsuarios();
+  const usuarioEliminar = usuarios.find(u => u.id === id);
   const usuariosFiltrados = usuarios.filter(u => u.id !== id);
   
   if (usuariosFiltrados.length < usuarios.length) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(usuariosFiltrados));
     console.log('✅ Usuario eliminado');
+    
+    // Registrar actividad
+    if (usuarioEliminar) {
+      const rolConfig = ROLES_CONFIG[usuarioEliminar.rol];
+      registrarActividad(
+        'Utilisateurs',
+        'eliminar',
+        `Utilisateur "${usuarioEliminar.username}" supprimé - Rôle: ${rolConfig?.nombre || usuarioEliminar.rol}`,
+        { usuarioId: id, username: usuarioEliminar.username }
+      );
+    }
+    
     return true;
   }
   

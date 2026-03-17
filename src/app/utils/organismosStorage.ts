@@ -2,6 +2,7 @@
 // Utilizado tanto por el módulo Organismos como por el módulo Liaison (EmailOrganismos)
 
 import { notificarCambioOrganismo } from './organismoEvents';
+import { registrarActividad } from './actividadLogger';
 
 export interface JourDisponible {
   jour: string;
@@ -98,6 +99,15 @@ export function crearOrganismo(organismo: Omit<Organismo, 'id' | 'fechaCreacion'
   organismos.push(nuevoOrganismo);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(organismos));
   notificarCambioOrganismo('CREATED', nuevoOrganismo.id);
+  
+  // Registrar actividad
+  registrarActividad(
+    'Organismes',
+    'crear',
+    `Organisme "${nuevoOrganismo.nombre}" créé - Type: ${nuevoOrganismo.tipo}`,
+    { organismoId: nuevoOrganismo.id, tipo: nuevoOrganismo.tipo }
+  );
+  
   return nuevoOrganismo;
 }
 
@@ -110,6 +120,7 @@ export function actualizarOrganismo(id: string, datos: Partial<Organismo>): Orga
     return null;
   }
   
+  const organismoAnterior = { ...organismos[index] };
   organismos[index] = {
     ...organismos[index],
     ...datos,
@@ -119,12 +130,30 @@ export function actualizarOrganismo(id: string, datos: Partial<Organismo>): Orga
   
   localStorage.setItem(STORAGE_KEY, JSON.stringify(organismos));
   notificarCambioOrganismo('UPDATED', organismos[index].id);
+  
+  // Registrar actividad con cambios
+  const cambios = [];
+  if (datos.activo !== undefined && datos.activo !== organismoAnterior.activo) {
+    cambios.push(datos.activo ? 'Activé' : 'Désactivé');
+  }
+  if (datos.nombre && datos.nombre !== organismoAnterior.nombre) {
+    cambios.push('Nom modifié');
+  }
+  
+  registrarActividad(
+    'Organismes',
+    'modificar',
+    `Organisme "${organismos[index].nombre}" modifié${cambios.length > 0 ? ' - ' + cambios.join(', ') : ''}`,
+    { organismoId: id, cambios: datos }
+  );
+  
   return organismos[index];
 }
 
 // Eliminar un organismo
 export function eliminarOrganismo(id: string): boolean {
   const organismos = obtenerOrganismos();
+  const organismoEliminar = organismos.find(org => org.id === id);
   const nuevosOrganismos = organismos.filter(org => org.id !== id);
   
   if (nuevosOrganismos.length === organismos.length) {
@@ -133,6 +162,17 @@ export function eliminarOrganismo(id: string): boolean {
   
   localStorage.setItem(STORAGE_KEY, JSON.stringify(nuevosOrganismos));
   notificarCambioOrganismo('DELETED', id);
+  
+  // Registrar actividad
+  if (organismoEliminar) {
+    registrarActividad(
+      'Organismes',
+      'eliminar',
+      `Organisme "${organismoEliminar.nombre}" supprimé`,
+      { organismoId: id, nombre: organismoEliminar.nombre }
+    );
+  }
+  
   return true;
 }
 
