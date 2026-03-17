@@ -403,9 +403,6 @@ export function PerfilOrganismoDialog({
         aria-describedby="organism-profile-description"
       >
         <DialogHeader className="sticky top-0 z-10 bg-white border-b px-6 py-4 shadow-sm">
-          <DialogDescription id="organism-profile-description" className="sr-only">
-            Profil complet de l'organisme
-          </DialogDescription>
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-4 flex-1">
               {/* Logo del organismo */}
@@ -423,7 +420,7 @@ export function PerfilOrganismoDialog({
                 <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600, fontSize: '1.5rem' }}>
                   {enModoEdicion ? t('organisms.profileDialog.editProfile') : t('organisms.profileDialog.viewProfile')}
                 </DialogTitle>
-                <DialogDescription id="perfil-organismo-description" className="text-sm text-[#666666] mt-1">
+                <DialogDescription id="organism-profile-description" className="text-sm text-[#666666] mt-1">
                   {enModoEdicion 
                     ? t('organisms.profileDialog.editDescription')
                     : t('organisms.profileDialog.viewDescription')}

@@ -56,6 +56,7 @@ import { LanguageSelector } from '../ui/language-selector';
 import {
   obtenerContactosDepartamento,
   obtenerContactosPorDepartamento,
+  obtenerContactoPorId,
   guardarContacto,
   actualizarContacto,
   eliminarContacto,
@@ -214,6 +215,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
     apartamento: '', // ✅ Campo apartamento agregado
     ciudad: '',
     codigoPostal: '',
+    quartier: '', // ✅ Campo quartier agregado - CRÍTICO para persistencia
     numeroEmpleado: '',
     horario: '',
     heuresSemaines: 0,
@@ -457,17 +459,19 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       direccion: contacto.direccion,
       apartamento: contacto.apartamento,
       ciudad: contacto.ciudad,
-      codigoPostal: contacto.codigoPostal
+      codigoPostal: contacto.codigoPostal,
+      quartier: contacto.quartier
     });
     
-    // ✅ FORZAR copia completa del contacto con todos los campos
+    // ✅ FORZAR copia completa del contacto con todos los campos de dirección
     const formularioCompleto = {
       ...contacto,
-      // ✅ FORZAR campos de dirección explícitamente
+      // ✅ FORZAR campos de dirección explícitamente para evitar pérdida de datos
       direccion: contacto.direccion || '',
       apartamento: contacto.apartamento || '',
       ciudad: contacto.ciudad || '',
-      codigoPostal: contacto.codigoPostal || ''
+      codigoPostal: contacto.codigoPostal || '',
+      quartier: contacto.quartier || '' // ✅ CRÍTICO: Incluir quartier para persistencia
     };
     
     console.log('📂 Formulario preparado:', formularioCompleto);
@@ -505,6 +509,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       apartamento: '', // ✅ Campo apartamento
       ciudad: '',
       codigoPostal: '',
+      quartier: '', // ✅ Campo quartier - CRÍTICO para inicialización limpia
       numeroEmpleado: '',
       horario: '',
       heuresSemaines: 0,
@@ -557,7 +562,8 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       direccion: formulario.direccion,
       apartamento: formulario.apartamento,
       ciudad: formulario.ciudad,
-      codigoPostal: formulario.codigoPostal
+      codigoPostal: formulario.codigoPostal,
+      quartier: formulario.quartier
     });
     console.log('  - Departamento actual (forzado):', departamentoId);
 
@@ -575,26 +581,118 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       
       const eventosActuales = contactoSeleccionado.evenements || [];
       
-      // ✅ FORZAR que TODOS los campos se guarden, especialmente la dirección
+      // ✅ GARANTÍA ABSOLUTA: Guardar TODOS los campos del formulario sin excepciones
       const datosActualizados = {
+        // ✅ PASO 1: Copiar ABSOLUTAMENTE TODO del formulario
         ...formulario,
-        // ✅ PRESERVAR explícitamente los campos de dirección
+        
+        // ✅ PASO 2: FORZAR campos críticos de dirección (garantía extra)
         direccion: formulario.direccion || '',
         apartamento: formulario.apartamento || '',
         ciudad: formulario.ciudad || '',
         codigoPostal: formulario.codigoPostal || '',
+        quartier: formulario.quartier || '', // ✅ CRÍTICO: Quartier permanente
+        
+        // ✅ PASO 3: FORZAR campos de contacto
+        email: formulario.email || '',
+        telefono: formulario.telefono || '',
+        emailPrincipal: formulario.emailPrincipal || formulario.email || '',
+        telefonoPrincipal: formulario.telefonoPrincipal || formulario.telefono || '',
+        
+        // ✅ PASO 4: FORZAR datos personales
+        nombre: formulario.nombre || '',
+        apellido: formulario.apellido || '',
+        fechaNacimiento: formulario.fechaNacimiento || '',
+        genero: formulario.genero || 'Non spécifié',
+        
+        // ✅ PASO 5: FORZAR datos laborales
+        cargo: formulario.cargo || '',
+        numeroEmpleado: formulario.numeroEmpleado || '',
+        horario: formulario.horario || '',
+        heuresSemaines: formulario.heuresSemaines || 0,
+        reference: formulario.reference || '',
+        supervisor: formulario.supervisor || '',
+        especialidad: formulario.especialidad || '',
+        
+        // ✅ PASO 6: FORZAR arrays
+        idiomas: formulario.idiomas || [],
+        certificaciones: formulario.certificaciones || [],
+        disponibilidades: formulario.disponibilidades || [],
+        documents: formulario.documents || [],
+        
+        // ✅ PASO 7: FORZAR emergencia y casier
+        contactoEmergencia: formulario.contactoEmergencia,
+        fechaConfirmacionCasier: formulario.fechaConfirmacionCasier,
+        codigoEthiqueSigne: formulario.codigoEthiqueSigne,
+        
+        // ✅ PASO 8: FORZAR foto
+        foto: formulario.foto || fotoPreview || '',
+        
+        // ✅ PASO 9: FORZAR notas
+        notas: formulario.notas || '',
+        
+        // ✅ PASO 10: Agregar historial
         evenements: [...eventosActuales, eventoModificacion]
       };
       
-      console.log('💾 GUARDANDO CONTACTO ACTUALIZADO:', datosActualizados);
-      console.log('💾 Campos de dirección a guardar:', {
+      console.log('💾 ==========================================');
+      console.log('💾 GUARDANDO CONTACTO ACTUALIZADO (TODOS LOS CAMPOS):');
+      console.log('💾 ==========================================');
+      console.log('💾 COMPLETO:', datosActualizados);
+      console.log('💾 📍 DIRECCIÓN:', {
         direccion: datosActualizados.direccion,
         apartamento: datosActualizados.apartamento,
         ciudad: datosActualizados.ciudad,
-        codigoPostal: datosActualizados.codigoPostal
+        codigoPostal: datosActualizados.codigoPostal,
+        quartier: datosActualizados.quartier
       });
+      console.log('💾 📧 CONTACTO:', {
+        email: datosActualizados.email,
+        telefono: datosActualizados.telefono,
+        emailPrincipal: datosActualizados.emailPrincipal,
+        telefonoPrincipal: datosActualizados.telefonoPrincipal
+      });
+      console.log('💾 👤 PERSONAL:', {
+        nombre: datosActualizados.nombre,
+        apellido: datosActualizados.apellido,
+        fechaNacimiento: datosActualizados.fechaNacimiento,
+        genero: datosActualizados.genero
+      });
+      console.log('💾 ==========================================');
       
       actualizarContacto(contactoSeleccionado.id, datosActualizados);
+      
+      // ✅ VERIFICACIÓN POST-GUARDADO: Leer inmediatamente de localStorage
+      setTimeout(() => {
+        const contactoVerificado = obtenerContactoPorId(contactoSeleccionado.id);
+        console.log('✅ ==========================================');
+        console.log('✅ VERIFICACIÓN POST-GUARDADO:');
+        console.log('✅ ==========================================');
+        console.log('✅ Contacto leído de localStorage:', contactoVerificado);
+        console.log('✅ 📍 Dirección verificada:', {
+          direccion: contactoVerificado?.direccion,
+          apartamento: contactoVerificado?.apartamento,
+          ciudad: contactoVerificado?.ciudad,
+          codigoPostal: contactoVerificado?.codigoPostal,
+          quartier: contactoVerificado?.quartier
+        });
+        console.log('✅ 📧 Contacto verificado:', {
+          email: contactoVerificado?.email,
+          telefono: contactoVerificado?.telefono
+        });
+        
+        // ⚠️ ALERTA SI FALTAN DATOS
+        if (!contactoVerificado?.quartier && datosActualizados.quartier) {
+          console.error('❌❌❌ CRÍTICO: ¡El campo quartier NO se guardó!');
+          console.error('❌ Esperado:', datosActualizados.quartier);
+          console.error('❌ Encontrado:', contactoVerificado?.quartier);
+        }
+        if (!contactoVerificado?.direccion && datosActualizados.direccion) {
+          console.error('❌❌❌ CRÍTICO: ¡El campo direccion NO se guardó!');
+        }
+        console.log('✅ ==========================================');
+      }, 100);
+      
       toast.success('Contact mis à jour avec succès');
       cargarContactos();
     } else {
@@ -618,11 +716,49 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         evenements: [eventoCreacion] // ✅ Añadir evento de creación
       };
       
-      console.log('📝 DEBUG - Guardando contacto en departamento actual:', contactoParaGuardar);
+      console.log('📝 ==========================================');
+      console.log('📝 GUARDANDO NUEVO CONTACTO (TODOS LOS CAMPOS):');
+      console.log('📝 ==========================================');
+      console.log('📝 COMPLETO:', contactoParaGuardar);
+      console.log('📝 📍 DIRECCIÓN:', {
+        direccion: contactoParaGuardar.direccion,
+        apartamento: contactoParaGuardar.apartamento,
+        ciudad: contactoParaGuardar.ciudad,
+        codigoPostal: contactoParaGuardar.codigoPostal,
+        quartier: contactoParaGuardar.quartier
+      });
+      console.log('📝 ==========================================');
       
       try {
         const contactoGuardado = guardarContacto(contactoParaGuardar);
         console.log(`✅ DEBUG - Contacto guardado con ID: ${contactoGuardado.id}`);
+        
+        // ✅ VERIFICACIÓN POST-GUARDADO: Leer inmediatamente de localStorage
+        setTimeout(() => {
+          const contactoVerificado = obtenerContactoPorId(contactoGuardado.id);
+          console.log('✅ ==========================================');
+          console.log('✅ VERIFICACIÓN POST-CREACIÓN:');
+          console.log('✅ ==========================================');
+          console.log('✅ Contacto leído de localStorage:', contactoVerificado);
+          console.log('✅ 📍 Dirección verificada:', {
+            direccion: contactoVerificado?.direccion,
+            apartamento: contactoVerificado?.apartamento,
+            ciudad: contactoVerificado?.ciudad,
+            codigoPostal: contactoVerificado?.codigoPostal,
+            quartier: contactoVerificado?.quartier
+          });
+          
+          // ⚠️ ALERTA SI FALTAN DATOS
+          if (!contactoVerificado?.quartier && contactoParaGuardar.quartier) {
+            console.error('❌❌❌ CRÍTICO: ¡El campo quartier NO se guardó en nuevo contacto!');
+            console.error('❌ Esperado:', contactoParaGuardar.quartier);
+            console.error('❌ Encontrado:', contactoVerificado?.quartier);
+          }
+          if (!contactoVerificado?.direccion && contactoParaGuardar.direccion) {
+            console.error('❌❌❌ CRÍTICO: ¡El campo direccion NO se guardó en nuevo contacto!');
+          }
+          console.log('✅ ==========================================');
+        }, 100);
         
         // ✅ RECARGA COMPLETA: Recargar desde localStorage para asegurar persistencia
         cargarContactos();

@@ -1324,6 +1324,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
             apartamento: newForm.appartement || '',
             ciudad: newForm.ville || '',
             codigoPostal: newForm.codePostal || '',
+            quartier: newForm.quartier || '', // ✅ CRÍTICO: Incluir quartier
             numeroEmpleado: '',
             horario: '',
             heuresSemaines: newForm.heuresSemaines || 0,
@@ -1466,6 +1467,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         apartamento: benevoleSeleccionadoAsignar.appartement || '',
         ciudad: benevoleSeleccionadoAsignar.ville || '',
         codigoPostal: benevoleSeleccionadoAsignar.codePostal || '',
+        quartier: benevoleSeleccionadoAsignar.quartier || '', // ✅ CRÍTICO: Incluir quartier
         numeroEmpleado: benevoleSeleccionadoAsignar.numeroArchivo || '',
         horario: '',
         heuresSemaines: benevoleSeleccionadoAsignar.heuresSemaines || 0,

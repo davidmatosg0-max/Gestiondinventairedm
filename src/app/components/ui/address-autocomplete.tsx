@@ -86,10 +86,8 @@ function AddressAutocompleteComponent({
 
   useEffect(() => {
     console.log('🔄 AddressAutocomplete - Sincronizando initialQuartier:', initialQuartier);
-    // Solo actualizar si hay un valor o si el campo está vacío
-    if (initialQuartier || quartier === '') {
-      setQuartier(initialQuartier);
-    }
+    // ✅ SIEMPRE sincronizar, sin condiciones que bloqueen la actualización
+    setQuartier(initialQuartier);
   }, [initialQuartier]);
 
   // Base de datos de rues de Québec
@@ -955,19 +953,30 @@ function AddressAutocompleteComponent({
     // Actualizar estados locales
     setCity(detectedCity);
     setPostalCode(detectedPostalCode);
-    setQuartier(detectedQuartier);
     
-    // Notificar al componente padre
+    // ✅ CRÍTICO: Solo actualizar quartier si se detectó uno nuevo
+    // Esto preserva el valor escrito manualmente por el usuario
+    if (detectedQuartier) {
+      console.log('🏘️ Quartier detectado automáticamente:', detectedQuartier);
+      setQuartier(detectedQuartier);
+    } else {
+      console.log('🏘️ No se detectó quartier, preservando valor existente:', quartier);
+      // NO hacer nada, mantener el valor actual de quartier
+    }
+    
+    // Notificar al componente padre (usar el quartier actual si no se detectó uno nuevo)
+    const finalQuartier = detectedQuartier || quartier;
+    
     onAddressSelect?.({
       street: fullAddress,
       city: detectedCity,
       postalCode: detectedPostalCode,
-      apt: apartment,
-      quartier: detectedQuartier
+      apt: '',
+      quartier: finalQuartier
     });
     
     // Notificar cambios a través de onChange
-    onChange?.(fullAddress, { city: detectedCity, postalCode: detectedPostalCode, apt: apartment, quartier: detectedQuartier });
+    onChange?.(fullAddress, { city: detectedCity, postalCode: detectedPostalCode, apt: '', quartier: finalQuartier });
   };
 
   // Notificar cambios cuando se editen los campos adicionales

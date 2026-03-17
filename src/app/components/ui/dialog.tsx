@@ -51,50 +51,49 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentProps<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
-  // Generar un ID único para la descripción
+  // Generar un ID único para la descripción de fallback
   const generatedId = React.useId();
-  const descriptionId = `dialog-description-${generatedId}`;
+  const fallbackDescriptionId = `dialog-description-${generatedId}`;
   
-  // Función recursiva mejorada para buscar DialogDescription
-  const findAndCloneDescription = (nodes: React.ReactNode): { hasDescription: boolean; clonedChildren: React.ReactNode } => {
-    let hasDescription = false;
+  // Verificar si existe un DialogDescription en los children
+  const hasExplicitDescription = React.useMemo(() => {
+    let found = false;
     
-    const clonedChildren = React.Children.map(nodes, (child) => {
-      if (!React.isValidElement(child)) return child;
-      
-      // Si es un DialogDescription, clonarlo con el ID correcto
-      if (child.type === DialogDescription || child.props?.['data-slot'] === 'dialog-description') {
-        hasDescription = true;
-        return React.cloneElement(child as React.ReactElement<any>, {
-          id: child.props.id || descriptionId,
-        });
-      }
-      
-      // Buscar recursivamente en los children
-      if (child.props?.children) {
-        const result = findAndCloneDescription(child.props.children);
-        if (result.hasDescription) {
-          hasDescription = true;
-          return React.cloneElement(child as React.ReactElement<any>, {
-            children: result.clonedChildren,
-          });
+    const checkChildren = (node: React.ReactNode): void => {
+      React.Children.forEach(node, (child) => {
+        if (!React.isValidElement(child)) return;
+        if (found) return;
+        
+        // Verificar por data-slot
+        if (child.props?.['data-slot'] === 'dialog-description') {
+          found = true;
+          return;
         }
-      }
-      
-      return child;
-    });
+        
+        // Verificar si tiene displayName
+        const childType = child.type as any;
+        if (childType?.displayName === 'DialogDescription') {
+          found = true;
+          return;
+        }
+        
+        // Buscar recursivamente
+        if (child.props?.children) {
+          checkChildren(child.props.children);
+        }
+      });
+    };
     
-    return { hasDescription, clonedChildren };
-  };
+    checkChildren(children);
+    return found;
+  }, [children]);
   
-  // Procesar los children
-  const { hasDescription, clonedChildren } = findAndCloneDescription(children);
+  // Si el usuario proporcionó aria-describedby, confiamos en que sabe lo que hace
+  // De lo contrario, usamos fallbackDescriptionId solo si NO hay DialogDescription
+  const finalAriaDescribedBy = props['aria-describedby'] || (!hasExplicitDescription ? fallbackDescriptionId : undefined);
   
-  // Usar el aria-describedby proporcionado manualmente si existe, de lo contrario usar el generado
-  const ariaDescribedBy = props['aria-describedby'] || (hasDescription ? descriptionId : undefined);
-  
-  // Crear un objeto de props limpio sin aria-describedby (lo agregaremos manualmente)
-  const { 'aria-describedby': _ariaDescribedby, ...cleanedProps } = props;
+  // Remover aria-describedby de props para evitar duplicados
+  const { 'aria-describedby': _removed, ...restProps } = props;
   
   return (
     <DialogPortal>
@@ -102,20 +101,20 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         data-slot="dialog-content"
-        aria-describedby={ariaDescribedBy}
-        {...cleanedProps}
+        aria-describedby={finalAriaDescribedBy}
+        {...restProps}
         className={cn(
           "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200",
           !className?.includes("max-w-") && "max-w-[calc(100%-2rem)] sm:max-w-lg",
           className,
         )}
       >
-        {clonedChildren}
-        {/* Si no hay DialogDescription, agregar uno oculto por defecto */}
-        {!hasDescription && (
-          <span id={props['aria-describedby'] || descriptionId} className="sr-only">
+        {children}
+        {/* Solo agregar descripción oculta si NO hay descripción explícita */}
+        {!hasExplicitDescription && (
+          <DialogPrimitive.Description id={fallbackDescriptionId} className="sr-only">
             Contenido del diálogo
-          </span>
+          </DialogPrimitive.Description>
         )}
         <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
           <XIcon />

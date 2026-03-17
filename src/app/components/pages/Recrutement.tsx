@@ -30,7 +30,7 @@ import {
   Link
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { guardarContacto, obtenerContactosPorDepartamento, eliminarContactosDuplicados } from '../../utils/contactosDepartamentoStorage';
+import { guardarContacto, obtenerContactosPorDepartamento, eliminarContactosDuplicados, eliminarContacto } from '../../utils/contactosDepartamentoStorage';
 
 interface Candidate {
   id: number;
@@ -47,7 +47,9 @@ interface Candidate {
   appartement?: string; // ✅ Apartamento/Unidad
   ville?: string; // ✅ Ciudad
   codePostal?: string; // ✅ Código postal
+  quartier?: string; // ✅ Quartier/Barrio
   departamentoIds?: string[]; // ✅ IDs de departamentos asignados
+  contactoId?: string; // ✅ ID del contacto creado en departamento
 }
 
 export function Recrutement() {
@@ -264,6 +266,7 @@ export function Recrutement() {
           apartamento: candidate.appartement || '',
           ciudad: candidate.ville || '',
           codigoPostal: candidate.codePostal || '',
+          quartier: candidate.quartier || '', // ✅ CRÍTICO: Incluir quartier
           cargo: candidate.position,
           idiomas: [],
           documents: []
@@ -277,6 +280,11 @@ export function Recrutement() {
         const contactoGuardado = guardarContacto(nuevoContacto);
         
         console.log('✅ Contacto sauvegardé avec succès:', contactoGuardado);
+        
+        // ✅ Guardar el ID del contacto en el candidato
+        setCandidates(prev => 
+          prev.map(c => c.id === candidateId ? { ...c, contactoId: contactoGuardado.id } : c)
+        );
         
         // 🔥 Déclencher événement personnalisé pour synchroniser départements
         window.dispatchEvent(new CustomEvent('contactos-actualizados', {
@@ -306,6 +314,44 @@ export function Recrutement() {
     }
   };
 
+  // 🗑️ Fonction pour supprimer le contact créé depuis Recrutement
+  const handleEliminarContacto = (candidate: Candidate) => {
+    // Buscar el contacto asociado
+    const contactoInfo = obtenerContactoCandidato(candidate);
+    
+    if (!contactoInfo) {
+      toast.error('Aucun contact associé à ce candidat');
+      return;
+    }
+
+    if (confirm(`Êtes-vous sûr de vouloir supprimer le contact de ${candidate.name}?\n\nCette action supprimera le contact du département mais conservera la candidature.`)) {
+      try {
+        eliminarContacto(contactoInfo.id);
+        
+        // Actualizar el candidato para remover el contactoId
+        setCandidates(prev => 
+          prev.map(c => c.id === candidate.id ? { ...c, contactoId: undefined, status: 'reviewed' } : c)
+        );
+
+        // Notificar a los departamentos
+        window.dispatchEvent(new CustomEvent('contactos-actualizados', {
+          detail: { contactoId: contactoInfo.id }
+        }));
+
+        toast.success(`Contact de ${candidate.name} supprimé avec succès`, {
+          description: 'Le candidat est maintenant disponible pour être assigné à nouveau'
+        });
+
+        // Cerrar el dialog de perfil
+        setDialogPerfilOpen(false);
+        setCandidatoParaPerfil(null);
+      } catch (error) {
+        console.error('❌ Erreur lors de la suppression du contact:', error);
+        toast.error('Erreur lors de la suppression du contact');
+      }
+    }
+  };
+
   // 🔍 Fonction pour vérifier si un candidat est déjà assigné à un département
   const verificarCandidatoAsignado = (candidate: Candidate, departamentoId: string): boolean => {
     const contactosExistentes = obtenerContactosPorDepartamento(departamentoId);
@@ -329,6 +375,24 @@ export function Recrutement() {
       
       if (contactoEncontrado && contactoEncontrado.numeroArchivo) {
         return contactoEncontrado.numeroArchivo;
+      }
+    }
+    return null;
+  };
+
+  // 🔍 Fonction pour obtenir le contacto asociado a un candidato si existe
+  const obtenerContactoCandidato = (candidate: Candidate): { id: string; departamentoId: string } | null => {
+    // Buscar en tous les departamentos
+    for (const dept of departamentosDisponibles) {
+      const contactosExistentes = obtenerContactosPorDepartamento(dept.id);
+      const contactoEncontrado = contactosExistentes.find(contacto => 
+        contacto.email.toLowerCase() === candidate.email.toLowerCase() ||
+        (contacto.nombre.toLowerCase() === candidate.name.split(' ')[0].toLowerCase() &&
+         contacto.apellido.toLowerCase() === candidate.name.split(' ').slice(1).join(' ').toLowerCase())
+      );
+      
+      if (contactoEncontrado) {
+        return { id: contactoEncontrado.id, departamentoId: dept.id };
       }
     }
     return null;
@@ -411,6 +475,7 @@ export function Recrutement() {
         apartamento: candidatoParaAssignar.appartement || '',
         ciudad: candidatoParaAssignar.ville || '',
         codigoPostal: candidatoParaAssignar.codePostal || '',
+        quartier: candidatoParaAssignar.quartier || '', // ✅ CRÍTICO: Incluir quartier
         cargo: candidatoParaAssignar.position,
         idiomas: [],
         documents: []
@@ -424,6 +489,11 @@ export function Recrutement() {
       const contactoGuardado = guardarContacto(nuevoContacto);
       
       console.log('✅ Contacto sauvegardé avec succès:', contactoGuardado);
+      
+      // ✅ Guardar el ID del contacto en el candidato
+      setCandidates(prev => 
+        prev.map(c => c.id === candidatoParaAssignar.id ? { ...c, contactoId: contactoGuardado.id } : c)
+      );
       
       // 🔥 Déclencher événement personnalisé pour synchroniser départements
       window.dispatchEvent(new CustomEvent('contactos-actualizados', {
@@ -1284,32 +1354,57 @@ export function Recrutement() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-3 justify-end pt-4 border-t">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setDialogPerfilOpen(false);
-                      setCandidatoParaPerfil(null);
-                    }}
-                    style={{ fontFamily: 'Montserrat, sans-serif' }}
-                  >
-                    Fermer
-                  </Button>
-                  <Button
-                    className="text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                    style={{
-                      background: `linear-gradient(135deg, ${branding.secondaryColor} 0%, ${branding.secondaryColor}dd 100%)`,
-                      fontFamily: 'Montserrat, sans-serif'
-                    }}
-                    onClick={() => {
-                      setDialogPerfilOpen(false);
-                      setCandidatoParaAssignar(candidatoParaPerfil);
-                      setDialogAssignerOpen(true);
-                    }}
-                  >
-                    <Link className="w-4 h-4 mr-2" />
-                    Assigner au département
-                  </Button>
+                <div className="flex gap-3 justify-between pt-4 border-t">
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setDialogPerfilOpen(false);
+                        setCandidatoParaPerfil(null);
+                      }}
+                      style={{ fontFamily: 'Montserrat, sans-serif' }}
+                    >
+                      Fermer
+                    </Button>
+                  </div>
+                  
+                  <div className="flex gap-3">
+                    {(() => {
+                      const tieneContacto = obtenerContactoCandidato(candidatoParaPerfil);
+                      
+                      if (tieneContacto) {
+                        return (
+                          <Button
+                            variant="outline"
+                            className="border-red-500 text-red-600 hover:bg-red-50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                            style={{ fontFamily: 'Montserrat, sans-serif' }}
+                            onClick={() => handleEliminarContacto(candidatoParaPerfil)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Supprimer le contact
+                          </Button>
+                        );
+                      } else {
+                        return (
+                          <Button
+                            className="text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                            style={{
+                              background: `linear-gradient(135deg, ${branding.secondaryColor} 0%, ${branding.secondaryColor}dd 100%)`,
+                              fontFamily: 'Montserrat, sans-serif'
+                            }}
+                            onClick={() => {
+                              setDialogPerfilOpen(false);
+                              setCandidatoParaAssignar(candidatoParaPerfil);
+                              setDialogAssignerOpen(true);
+                            }}
+                          >
+                            <Link className="w-4 h-4 mr-2" />
+                            Assigner au département
+                          </Button>
+                        );
+                      }
+                    })()}
+                  </div>
                 </div>
               </div>
             );

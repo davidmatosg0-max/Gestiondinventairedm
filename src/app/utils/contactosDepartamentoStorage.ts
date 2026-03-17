@@ -365,7 +365,8 @@ export function guardarContacto(contacto: any): ContactoDepartamento {
     direccion: nuevoContacto.direccion,
     apartamento: nuevoContacto.apartamento,
     ciudad: nuevoContacto.ciudad,
-    codigoPostal: nuevoContacto.codigoPostal
+    codigoPostal: nuevoContacto.codigoPostal,
+    quartier: nuevoContacto.quartier // ✅ CRÍTICO: Incluir quartier en logs
   });
   contactos.push(nuevoContacto);
   guardarTodosContactos(contactos);
@@ -380,7 +381,8 @@ export function guardarContacto(contacto: any): ContactoDepartamento {
       direccion: contactoVerificado.direccion,
       apartamento: contactoVerificado.apartamento,
       ciudad: contactoVerificado.ciudad,
-      codigoPostal: contactoVerificado.codigoPostal
+      codigoPostal: contactoVerificado.codigoPostal,
+      quartier: contactoVerificado.quartier // ✅ CRÍTICO: Incluir quartier en logs
     });
     
     // ⚠️ Si la dirección se perdió, forzar una nueva escritura
@@ -420,7 +422,8 @@ export function actualizarContacto(id: string, datosActualizados: Partial<Contac
       direccion: datosActualizados.direccion,
       apartamento: datosActualizados.apartamento,
       ciudad: datosActualizados.ciudad,
-      codigoPostal: datosActualizados.codigoPostal
+      codigoPostal: datosActualizados.codigoPostal,
+      quartier: datosActualizados.quartier // ✅ CRÍTICO: Incluir quartier en logs
     });
     
     contactos[index] = { ...contactos[index], ...datosActualizados };
@@ -430,7 +433,8 @@ export function actualizarContacto(id: string, datosActualizados: Partial<Contac
       direccion: contactos[index].direccion,
       apartamento: contactos[index].apartamento,
       ciudad: contactos[index].ciudad,
-      codigoPostal: contactos[index].codigoPostal
+      codigoPostal: contactos[index].codigoPostal,
+      quartier: contactos[index].quartier // ✅ CRÍTICO: Incluir quartier en logs
     });
     
     guardarTodosContactos(contactos);
@@ -444,7 +448,8 @@ export function actualizarContacto(id: string, datosActualizados: Partial<Contac
         direccion: contactoVerificado.direccion,
         apartamento: contactoVerificado.apartamento,
         ciudad: contactoVerificado.ciudad,
-        codigoPostal: contactoVerificado.codigoPostal
+        codigoPostal: contactoVerificado.codigoPostal,
+        quartier: contactoVerificado.quartier // ✅ CRÍTICO: Incluir quartier en logs
       });
       
       // ⚠️ Si la dirección se perdió, forzar una nueva escritura

@@ -1012,12 +1012,12 @@ export function GestionDonateursFournisseurs() {
 
       {/* Dialog de formulario - DISEÑO MODERNO */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 gap-0">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 gap-0" aria-describedby="donateur-fournisseur-description">
           <DialogHeader className="sr-only">
               <DialogTitle>
                 {modeEdition ? 'Modifier' : 'Nouveau'} {activeTab === 'donateurs' ? 'Donateur' : 'Fournisseur'}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription id="donateur-fournisseur-description">
                 {modeEdition ? 'Mettez à jour les informations du partenaire' : 'Ajoutez un nouveau partenaire à votre réseau'}
               </DialogDescription>
             </DialogHeader>
@@ -1754,10 +1754,10 @@ export function GestionDonateursFournisseurs() {
 
       {/* Dialog de Historial - VISUALIZACIÓN */}
       <Dialog open={dialogHistoriqueOpen} onOpenChange={setDialogHistoriqueOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden p-0 gap-0">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden p-0 gap-0" aria-describedby="historique-partenaire-description">
           <DialogHeader className="sr-only">
               <DialogTitle>Historique du Partenaire</DialogTitle>
-              <DialogDescription>
+              <DialogDescription id="historique-partenaire-description">
                 Consultez l'historique des modifications et des activités
               </DialogDescription>
             </DialogHeader>
