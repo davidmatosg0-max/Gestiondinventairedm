@@ -1580,23 +1580,34 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
   // Función para obtener el nombre del departamento del contacto asociado
   const obtenerNombreDepartamentoContacto = (benevole: Benevole): string => {
-    const contactoAsociado = obtenerContactoAsociado(benevole);
-    if (!contactoAsociado) {
+    const todosLosContactos = obtenerContactosDepartamento();
+    // Buscar TODOS los contactos asociados a este bénévole
+    const contactosAsociados = todosLosContactos.filter(c => 
+      c.email.toLowerCase() === benevole.email.toLowerCase()
+    );
+
+    // Si no hay contactos asociados, mostrar el campo departement del bénévole
+    if (contactosAsociados.length === 0) {
       return benevole.departement || '—';
     }
 
-    // Buscar el departamento por ID
-    const departamento = departementosStorage.find(
-      d => d.id.toString() === contactoAsociado.departamentoId.toString()
-    );
+    // Si hay múltiples contactos, mostrar todos los departamentos
+    const nombresDepartamentos = contactosAsociados.map(contacto => {
+      const departamento = departementosStorage.find(
+        d => d.id.toString() === contacto.departamentoId.toString()
+      );
+      
+      if (departamento) {
+        const estadoIcon = contacto.activo ? '✅' : '⚠️';
+        return `${estadoIcon} ${departamento.nombre}`;
+      }
+      return null;
+    }).filter(Boolean);
 
-    if (departamento) {
-      // Mostrar el estado del contacto con emoji
-      const estadoIcon = contactoAsociado.activo ? '✅' : '⚠️';
-      return `${estadoIcon} ${departamento.nombre}`;
-    }
-
-    return benevole.departement || '—';
+    // Unir todos los nombres con ", "
+    return nombresDepartamentos.length > 0 
+      ? nombresDepartamentos.join(', ') 
+      : benevole.departement || '—';
   };
 
   // Función para cambiar el estado activo/inactivo del contacto

@@ -163,7 +163,27 @@ function sincronizarBenevoleComoContacto(benevole: Benevole): boolean {
     
     const tipoContacto = mapearTipoBenevole(benevole.tipo);
     
-    // Preparar datos del contacto
+    // 🔒 SI EL CONTACTO YA EXISTE EN OTRO DEPARTAMENTO, NO SOBRESCRIBIR
+    if (contactoExistente) {
+      // Verificar si ya está asignado a Entrepôt
+      const departamentosActuales = Array.isArray(contactoExistente.departamentoIds) 
+        ? contactoExistente.departamentoIds 
+        : [contactoExistente.departamentoId];
+      
+      const yaEstaEnEntrepot = departamentosActuales.includes('2');
+      
+      if (yaEstaEnEntrepot) {
+        console.log(`⚠️ Contacto ya existe en Entrepôt: ${benevole.prenom} ${benevole.nom} (${benevole.email}) - NO SE SOBRESCRIBE`);
+        return false;
+      } else {
+        // Agregar Entrepôt a los departamentos existentes sin eliminar los otros
+        console.log(`⚠️ Contacto existe en otros departamentos (${departamentosActuales.join(', ')}): ${benevole.prenom} ${benevole.nom} - NO SE SINCRONIZA AUTOMÁTICAMENTE`);
+        console.log(`💡 Para asignar manualmente a Entrepôt, use el botón "Assigner" en el módulo Bénévoles`);
+        return false;
+      }
+    }
+    
+    // Preparar datos del contacto SOLO SI NO EXISTE
     const datosContacto = {
       departamentoId: '2', // Entrepôt
       departamentoIds: ['2'], // Entrepôt
@@ -199,21 +219,10 @@ function sincronizarBenevoleComoContacto(benevole: Benevole): boolean {
       }))
     };
     
-    if (contactoExistente) {
-      // Actualizar contacto existente
-      const actualizado = actualizarContacto(contactoExistente.id, datosContacto);
-      if (actualizado) {
-        console.log(`✅ Contacto actualizado: ${benevole.prenom} ${benevole.nom} (${benevole.email})`);
-        return true;
-      }
-    } else {
-      // Crear nuevo contacto
-      guardarContacto(datosContacto as Omit<ContactoDepartamento, 'id'>);
-      console.log(`✅ Nuevo contacto creado: ${benevole.prenom} ${benevole.nom} (${benevole.email})`);
-      return true;
-    }
-    
-    return false;
+    // Crear nuevo contacto solo si no existe
+    guardarContacto(datosContacto as Omit<ContactoDepartamento, 'id'>);
+    console.log(`✅ Nuevo contacto creado: ${benevole.prenom} ${benevole.nom} (${benevole.email})`);
+    return true;
   } catch (error) {
     console.error(`❌ Error al sincronizar bénévole ${benevole.prenom} ${benevole.nom}:`, error);
     return false;
