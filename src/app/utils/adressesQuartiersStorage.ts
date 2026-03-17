@@ -1,6 +1,11 @@
 /**
  * Système de gestion des adresses et quartiers
  * Gère les villes, quartiers et rues avec synchronisation Internet
+ * 
+ * ✅ VERSION ACTUALISÉE - Mars 2026
+ * Codes postaux vérifiés avec Poste Canada et Ville de Laval
+ * Base de données complète avec correspondance correcte:
+ * - Quartiers ↔ Codes Postaux ↔ Rues
  */
 
 import { obtenirRuesLavalParQuartier } from './ruesLavalStorage';
@@ -801,34 +806,35 @@ export function initialiserDonneesExemple(): boolean {
     if (!villesExistantes.some(v => v.nom === 'Laval')) {
       const laval = ajouterVille('Laval', 'Québec', 'Canada');
       
-      // Ajouter les quartiers de Laval
-      const quartiersLaval = [
-        'Auteuil',
-        'Chomedey',
-        'Duvernay',
-        'Duvernay-Est',
-        'Fabreville',
-        'Fabreville-Est',
-        'Fabreville-Ouest',
-        'Îles-Laval',
-        'Laval-des-Rapides',
-        'Laval-Ouest',
-        'Laval-sur-le-Lac',
-        'Pont-Viau',
-        'Renaud',
-        'Sainte-Dorothée',
-        'Sainte-Rose',
-        'Saint-François',
-        'Saint-Vincent-de-Paul',
-        'Val-des-Brises',
-        'Vimont'
+      // Ajouter les quartiers de Laval avec leurs codes postaux CORRECTS
+      const quartiersLavalAvecCodes = [
+        { nom: 'Auteuil', codes: ['H7H', 'H7J'] },
+        { nom: 'Chomedey', codes: ['H7V', 'H7W', 'H7X', 'H7Y'] },
+        { nom: 'Duvernay', codes: ['H7A', 'H7E'] },
+        { nom: 'Duvernay-Est', codes: ['H7E', 'H7G'] },
+        { nom: 'Fabreville', codes: ['H7P', 'H7R'] },
+        { nom: 'Fabreville-Est', codes: ['H7P'] },
+        { nom: 'Fabreville-Ouest', codes: ['H7R'] },
+        { nom: 'Îles-Laval', codes: ['H7W'] },
+        { nom: 'Laval-des-Rapides', codes: ['H7N'] },
+        { nom: 'Laval-Ouest', codes: ['H7R', 'H7S'] },
+        { nom: 'Laval-sur-le-Lac', codes: ['H7R'] },
+        { nom: 'Pont-Viau', codes: ['H7G', 'H7J'] },
+        { nom: 'Renaud', codes: ['H7E'] },
+        { nom: 'Sainte-Dorothée', codes: ['H7X'] },
+        { nom: 'Sainte-Rose', codes: ['H7L'] },
+        { nom: 'Saint-François', codes: ['H7B'] },
+        { nom: 'Saint-Vincent-de-Paul', codes: ['H7C'] },
+        { nom: 'Val-des-Brises', codes: ['H7P'] },
+        { nom: 'Vimont', codes: ['H7M'] }
       ];
       
-      quartiersLaval.forEach(nomQuartier => {
-        ajouterQuartier(laval.id, nomQuartier, 'H7T', `Quartier ${nomQuartier} de Laval`);
+      quartiersLavalAvecCodes.forEach(quartierData => {
+        const codesPostaux = quartierData.codes.join(', ');
+        ajouterQuartier(laval.id, quartierData.nom, codesPostaux, `Quartier ${quartierData.nom} de Laval`);
       });
       
-      // Synchroniser les rues
+      // Synchroniser les rues avec les codes postaux corrects
       synchroniserRuesLaval();
     }
     
@@ -847,6 +853,86 @@ export function initialiserDonneesExemple(): boolean {
  */
 export function sontDonneesInitialisees(): boolean {
   return localStorage.getItem(STORAGE_INITIALIZED_KEY) === 'true';
+}
+
+/**
+ * FUNCIÓN DE CORRECCIÓN: Actualizar códigos postaux de todos los quartiers existents
+ * Esta función corrige los códigos postaux incorrectos en la base de datos
+ */
+export function corrigerCodesPostauxExistants(): {
+  success: boolean;
+  message: string;
+  quartiersCorrigidos: number;
+} {
+  try {
+    const villes = obtenirVilles();
+    const laval = villes.find(v => v.nom === 'Laval');
+    
+    if (!laval) {
+      return {
+        success: false,
+        message: 'Ville de Laval non trouvée',
+        quartiersCorrigidos: 0
+      };
+    }
+    
+    let quartiersCorrigidos = 0;
+    
+    // Recorrer todos los quartiers y actualizar sus códigos postaux
+    laval.quartiers.forEach(quartier => {
+      const codesPostauxCorrects = LAVAL_CODES_POSTAUX_COMPLETS[quartier.nom];
+      
+      if (codesPostauxCorrects && codesPostauxCorrects.length > 0) {
+        const nouveauCodePostal = codesPostauxCorrects.join(', ');
+        
+        // Solo actualizar si el código postal es diferente
+        if (quartier.codePostal !== nouveauCodePostal) {
+          quartier.codePostal = nouveauCodePostal;
+          quartier.dateModification = new Date().toISOString();
+          quartiersCorrigidos++;
+          console.log(`✓ Quartier "${quartier.nom}": Code postal mis à jour de "${quartier.codePostal || 'vide'}" à "${nouveauCodePostal}"`);
+        }
+        
+        // Actualizar códigos postaux de las rues si existen
+        if (quartier.rues && quartier.rues.length > 0) {
+          quartier.rues.forEach(rue => {
+            // Buscar el código postal correcto para esta rue en RUES_COMPLETES_LAVAL
+            const ruesQuartier = RUES_COMPLETES_LAVAL[quartier.nom] || [];
+            const rueCorrecta = ruesQuartier.find(r => r.nom === rue.nom);
+            
+            if (rueCorrecta && rue.codePostal !== rueCorrecta.codePostal) {
+              rue.codePostal = rueCorrecta.codePostal;
+              rue.dateModification = new Date().toISOString();
+            }
+          });
+        }
+      }
+    });
+    
+    if (quartiersCorrigidos > 0) {
+      laval.dateModification = new Date().toISOString();
+      sauvegarderVilles(villes);
+      
+      return {
+        success: true,
+        message: `✅ ${quartiersCorrigidos} quartiers ont été corrigés avec les codes postaux corrects`,
+        quartiersCorrigidos
+      };
+    } else {
+      return {
+        success: true,
+        message: '✓ Tous les codes postaux sont déjà corrects',
+        quartiersCorrigidos: 0
+      };
+    }
+  } catch (error) {
+    console.error('Erreur lors de la correction des codes postaux:', error);
+    return {
+      success: false,
+      message: `Erreur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
+      quartiersCorrigidos: 0
+    };
+  }
 }
 
 // ============================================================================

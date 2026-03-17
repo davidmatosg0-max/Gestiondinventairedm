@@ -21,6 +21,7 @@ import {
   exporterDonnees,
   synchroniserAvecInternet,
   synchroniserQuartiersVille,
+  corrigerCodesPostauxExistants,
   type Ville,
   type Quartier
 } from '../utils/adressesQuartiersStorage';
@@ -291,6 +292,42 @@ export function GestionAdressesQuartiers() {
     }
   };
 
+  // 🔧 CORRECCIÓN DE CÓDIGOS POSTALES
+  const handleCorrigerCodesPostaux = async () => {
+    setSyncLoading(true);
+    
+    // Simular delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    try {
+      const resultado = corrigerCodesPostauxExistants();
+      
+      if (resultado.success) {
+        if (resultado.quartiersCorrigidos > 0) {
+          toast.success('✅ Codes Postaux Corrigés!', {
+            description: resultado.message,
+            duration: 6000
+          });
+        } else {
+          toast.info('✓ Vérification Complète', {
+            description: resultado.message,
+            duration: 4000
+          });
+        }
+        cargarVilles();
+      } else {
+        toast.error('Erreur de correction', {
+          description: resultado.message
+        });
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+      toast.error('Erreur lors de la correction des codes postaux');
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -337,6 +374,15 @@ export function GestionAdressesQuartiers() {
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${syncLoading ? 'animate-spin' : ''}`} />
                 {syncLoading ? 'Synchronisation...' : 'Synchroniser'}
+              </Button>
+              <Button
+                onClick={handleCorrigerCodesPostaux}
+                className="bg-[#FF5722] hover:bg-[#E64A19]"
+                style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 500 }}
+                disabled={syncLoading}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${syncLoading ? 'animate-spin' : ''}`} />
+                {syncLoading ? 'Correction...' : 'Corriger Codes Postaux'}
               </Button>
             </div>
           </div>
