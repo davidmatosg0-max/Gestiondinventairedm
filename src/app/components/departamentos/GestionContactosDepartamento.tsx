@@ -319,8 +319,10 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
             contactoExistente.foto = benevole.photo || contactoExistente.foto;
             contactoExistente.notas = benevole.notes || contactoExistente.notas;
             contactoExistente.activo = benevole.statut?.toLowerCase() === 'actif';
-          } else if (benevole.statut?.toLowerCase() === 'actif') {
-            // ➕ AGREGAR nuevo contacto si no existe
+          } else if (departamentoId === 'todos' && benevole.statut?.toLowerCase() === 'actif') {
+            // ➕ SOLO AGREGAR nuevos contactos SI estamos en vista "todos"
+            // En vistas de departamentos específicos, NO agregar automáticamente
+            
             // Extraer IDs de departamentos asignados
             let departamentosAsignados: string[] = [];
             if (Array.isArray(benevole.departement)) {
@@ -331,51 +333,30 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
             
             console.log(`  🔍 Bénévole ${benevole.prenom} ${benevole.nom}: departamentos =`, departamentosAsignados);
             
-            // 3️⃣ VERIFICAR si el bénévole pertenece a este departamento
-            const perteneceADepartamento = departamentoId === 'todos' || 
-              departamentosAsignados.some(d => {
-                // Mapear nombres de departamento a IDs
-                const mapaNombresAIds: { [key: string]: string } = {
-                  'Direction': '1',
-                  'Entrepôt': '2',
-                  'Achats': '3',
-                  'Comptoir': '4',
-                  'Finance': '5',
-                  'Communication': '6',
-                  'Recrutement': '7',
-                  'Transport': '8'
-                };
-                
-                // Verificar si coincide por ID o por nombre
-                return d === departamentoId || mapaNombresAIds[d] === departamentoId;
-              });
+            // Convertir bénévole a contacto (solo para vista 'todos')
+            const contactoConvertido: ContactoDepartamento = {
+              id: benevole.id || `benevole-${Date.now()}-${Math.random()}`,
+              departamentoId: benevole.departementId || '',
+              departamentoIds: departamentosAsignados,
+              nombre: benevole.prenom || '',
+              apellido: benevole.nom || '',
+              email: benevole.email || '',
+              telefono: benevole.telephone || '',
+              tipo: 'benevole',
+              activo: benevole.statut?.toLowerCase() === 'actif',
+              fechaRegistro: benevole.dateInscription || new Date().toISOString(),
+              direccion: benevole.adresse || '',
+              codigoPostal: benevole.codePostal || '',
+              ciudad: benevole.quartier || 'Laval',
+              cargo: 'Bénévole',
+              notas: benevole.notes || '',
+              idiomas: [],
+              genero: 'otro',
+              nombreCompleto: `${benevole.prenom || ''} ${benevole.nom || ''}`.trim()
+            };
             
-            if (perteneceADepartamento) {
-              // Convertir bénévole a contacto
-              const contactoConvertido: ContactoDepartamento = {
-                id: benevole.id || `benevole-${Date.now()}-${Math.random()}`,
-                departamentoId: benevole.departementId || departamentoId,
-                departamentoIds: departamentosAsignados,
-                nombre: benevole.prenom || '',
-                apellido: benevole.nom || '',
-                email: benevole.email || '',
-                telefono: benevole.telephone || '',
-                tipo: 'benevole',
-                activo: benevole.statut?.toLowerCase() === 'actif',
-                fechaRegistro: benevole.dateInscription || new Date().toISOString(),
-                direccion: benevole.adresse || '',
-                codigoPostal: benevole.codePostal || '',
-                ciudad: benevole.quartier || 'Laval',
-                cargo: 'Bénévole',
-                notas: benevole.notes || '',
-                idiomas: [],
-                genero: 'otro',
-                nombreCompleto: `${benevole.prenom || ''} ${benevole.nom || ''}`.trim()
-              };
-              
-              contactosData.push(contactoConvertido);
-              console.log(`  ✅ Agregado bénévole: ${contactoConvertido.nombreCompleto} (depts: ${departamentosAsignados.join(', ')})`);
-            }
+            contactosData.push(contactoConvertido);
+            console.log(`  ✅ Agregado bénévole a vista 'todos': ${contactoConvertido.nombreCompleto}`);
           }
         });
       } catch (error) {

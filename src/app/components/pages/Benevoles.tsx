@@ -27,6 +27,8 @@ import { guardarContacto, type ContactoDepartamento, sincronizarDesdeBenevole, o
 import { sincronizarVoluntariosEntrepot } from '../../utils/sincronizarVoluntariosEntrepot';
 import { registrarActividad } from '../../utils/actividadLogger';
 import { BoutonRetourHeader } from '../shared/BoutonRetour';
+// 🔧 Importar utilidades de debugging
+import '../../utils/debugBenevoles';
 import { 
   UserPlus, 
   Users, 
@@ -2391,14 +2393,27 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       const matchesSearch = 
         `${b.prenom} ${b.nom}`.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         b.email.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
-      const matchesDept = filterDepartement === 'all' || 
-        (Array.isArray(b.departement) 
-          ? b.departement.includes(filterDepartement)
-          : b.departement === filterDepartement);
+      
+      // 🔧 CORRECCIÓN: Filtrar por departamento usando IDs reales
+      let matchesDept = filterDepartement === 'all';
+      if (!matchesDept && filterDepartement !== 'all') {
+        // Obtener departamentos del bénévole desde los contactos
+        const departamentosBenevole = obtenerDepartamentosBenevole(b);
+        // Verificar si alguno de los departamentos del bénévole coincide con el filtro
+        matchesDept = departamentosBenevole.some(dept => dept.nombre === filterDepartement);
+        
+        // Fallback: también verificar el campo departement directo (compatibilidad con datos antiguos)
+        if (!matchesDept) {
+          matchesDept = Array.isArray(b.departement) 
+            ? b.departement.includes(filterDepartement)
+            : b.departement === filterDepartement;
+        }
+      }
+      
       const matchesStatut = filterStatut === 'all' || b.statut === filterStatut;
       return matchesSearch && matchesDept && matchesStatut;
     });
-  }, [benevoles, debouncedSearchTerm, filterDepartement, filterStatut]);
+  }, [benevoles, debouncedSearchTerm, filterDepartement, filterStatut, refreshDepartamentos]);
 
   // ⚡ OPTIMIZACI��N: useCallback para evitar recrear funciones
   const toggleSelectAll = useCallback(() => {

@@ -67,8 +67,15 @@ import './utils/migrateCostcoFlags'; // 🆘 Cargar función de emergencia para 
 import { migrarProgramasEntrada, yaMigradoProgramas, marcarMigracionProgramas } from './utils/migrateProgramasEntrada';
 import './utils/migrateProgramasEntrada'; // 🆘 Cargar funciones de emergencia para programas
 import { migrarPesoUnitarioProductos } from './utils/productStorage';
-import './utils/calcularValorMonetarioProductos'; // 💰 Cargar funciones de cálculo de valores monetarios
+import { calcularValorMonetarioProductos } from './utils/productStorage'; // 💰 Cargar funciones de cálculo de valores monetarios
 import { inicializarProteccionDatos } from './utils/proteccionDatos'; // 🛡️ Sistema de protección total de datos
+// 🔧 Importar utilidades de debugging de benevoles
+import './utils/debugBenevoles';
+import { sincronizarTodosLosBenevolesConContactos } from './utils/debugBenevoles';
+// 🔧 Importar utilidades de debugging de contactos de departamentos
+import './utils/debugContactosDepartamentos';
+// 🧹 Importar utilidades de limpieza de contactos de departamentos
+import './utils/limpiarContactosDepartamento';
 
 // Suprimir warnings internos de Figma Make al inicio
 suppressFigmaWarningsConditional();
@@ -219,6 +226,16 @@ function AppContent() {
     // 🔧 INICIALIZAR COMANDOS DE CONSOLA
     inicializarComandosConsola();
     logger.info('🔧 Comandos de diagnóstico en consola inicializados');
+    
+    // 🔄 SINCRONIZAR AUTOMÁTICAMENTE BÉNÉVOLES CON CONTACTOS AL INICIAR
+    try {
+      const resultado = sincronizarTodosLosBenevolesConContactos();
+      if (resultado.actualizados > 0) {
+        logger.info(`🔄 Sincronización de benevoles: ${resultado.actualizados}/${resultado.total} actualizado(s)`);
+      }
+    } catch (error) {
+      logger.warn('⚠️ Error al sincronizar benevoles:', error);
+    }
   }, []);
 
   // Inicializar dirección RTL si el idioma es árabe
@@ -307,7 +324,7 @@ function AppContent() {
     );
   }
 
-  // Si está en vista pública de bénévoles (hojas de tiempo), mostrar sin autenticación
+  // Si está en vista pública de benevoles (hojas de tiempo), mostrar sin autenticación
   if (currentPage === 'benevoles-public') {
     return (
       <>
