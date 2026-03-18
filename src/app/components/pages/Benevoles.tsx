@@ -541,6 +541,27 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     return []; // PRODUCCIÓN: Array vacío, no usar datos de ejemplo
   });
 
+  // 🔧 NORMALIZAR estados al montar el componente (convertir "Actif" a "actif", etc.)
+  React.useEffect(() => {
+    const normalizarEstados = () => {
+      const benevolesNormalizados = benevoles.map(b => ({
+        ...b,
+        statut: (b.statut?.toLowerCase().trim() || 'actif') as 'actif' | 'inactif' | 'en pause' | 'en attente'
+      }));
+      
+      // Solo actualizar si hay cambios
+      const hayCambios = benevolesNormalizados.some((bn, i) => bn.statut !== benevoles[i].statut);
+      if (hayCambios) {
+        console.log('🔧 Normalizando estados de bénévoles...');
+        setBenevoles(benevolesNormalizados);
+      }
+    };
+    
+    if (benevoles.length > 0) {
+      normalizarEstados();
+    }
+  }, []); // Solo ejecutar al montar
+
   // Guardar bénévoles en localStorage cada vez que cambien
   React.useEffect(() => {
     localStorage.setItem('banqueAlimentaire_benevoles', JSON.stringify(benevoles));
@@ -718,7 +739,9 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       'en attente': { label: 'En attente', color: 'bg-[#FF9800] text-white' }
     };
     
-    const config = statusConfigurations[statut];
+    // 🔧 FIX: Normalizar el statut a minúsculas para comparación
+    const statutNormalized = (statut || '').toLowerCase().trim();
+    const config = statusConfigurations[statutNormalized];
     
     // Si el estado no existe, mostrar badge genérico
     if (!config) {
@@ -1222,7 +1245,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
               : newForm.departement,
             disponibilites: newForm.disponibilites,
             disponibilidadesSemanal: newForm.disponibilidadesSemanal,
-            statut: newForm.statut,
+            statut: (newForm.statut?.toLowerCase().trim() || 'actif') as 'actif' | 'inactif' | 'en pause' | 'en attente',
             sexe: newForm.sexe,
             dateInscription: newForm.dateInscription,
             dateNaissance: newForm.dateNaissance,
@@ -1300,6 +1323,15 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         { benevoleId: editingBenevole.id, email: newForm.email }
       );
 
+      // 🔔 DISPARAR EVENTO DE BÉNÉVOLE ACTUALIZADO
+      window.dispatchEvent(new CustomEvent('benevole-sincronizado', {
+        detail: {
+          nombreCompleto: `${newForm.prenom} ${newForm.nom}`,
+          email: newForm.email,
+          tipo: 'modificar'
+        }
+      }));
+
       toast.success('Bénévole modifié avec succès');
       setEditingBenevole(null);
     } else {
@@ -1319,7 +1351,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
           : newForm.departement,
         disponibilites: newForm.disponibilites,
         disponibilidadesSemanal: newForm.disponibilidadesSemanal,
-        statut: newForm.statut,
+        statut: (newForm.statut?.toLowerCase().trim() || 'actif') as 'actif' | 'inactif' | 'en pause' | 'en attente',
         heuresTotal: 0,
         heuresMois: 0,
         dateInscription: newForm.dateInscription,
@@ -1429,6 +1461,15 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
         `Nouveau bénévole "${newForm.prenom} ${newForm.nom}" créé`,
         { benevoleId: nouveauBenevole.id, email: newForm.email }
       );
+
+      // 🔔 DISPARAR EVENTO DE NUEVO BÉNÉVOLE CREADO
+      window.dispatchEvent(new CustomEvent('benevole-sincronizado', {
+        detail: {
+          nombreCompleto: `${newForm.prenom} ${newForm.nom}`,
+          email: newForm.email,
+          tipo: 'crear'
+        }
+      }));
 
       toast.success('Nouveau bénévole créé avec succès');
     }

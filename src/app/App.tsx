@@ -59,6 +59,9 @@ import './utils/proteccionEmergencia'; // 🆘 Cargar funciones de emergencia en
 import './utils/proteccionRestauracion'; // 🔒 Cargar funciones de protección de restauración
 import { inicializarSincronizacionAutomatica } from './utils/sincronizarVoluntariosEntrepot'; // 🔄 Sincronización automática
 import './utils/debugSincronizacion'; // 🐛 Funciones de debug para sincronización
+import { inicializarComandosConsola } from './utils/comandosConsola'; // 🔧 Comandos de diagnóstico en consola
+import './utils/verificarVoluntarios'; // 🔍 Funciones de verificación de voluntarios en consola
+import './utils/normalizarEstadosBenevoles'; // 🔧 Normalizar estados de bénévoles en consola
 import { migrarFlagsCostco, yaMigradoCostco, marcarMigracionCostco } from './utils/migrateCostcoFlags';
 import './utils/migrateCostcoFlags'; // 🆘 Cargar función de emergencia para migración manual
 import { migrarProgramasEntrada, yaMigradoProgramas, marcarMigracionProgramas } from './utils/migrateProgramasEntrada';
@@ -212,6 +215,10 @@ function AppContent() {
     if (productosCorregidos > 0) {
       logger.info(`🔄 Peso unitario de productos migrado: ${productosCorregidos} producto(s) corregido(s)`);
     }
+    
+    // 🔧 INICIALIZAR COMANDOS DE CONSOLA
+    inicializarComandosConsola();
+    logger.info('🔧 Comandos de diagnóstico en consola inicializados');
   }, []);
 
   // Inicializar dirección RTL si el idioma es árabe

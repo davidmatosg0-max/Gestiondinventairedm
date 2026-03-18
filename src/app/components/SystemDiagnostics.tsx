@@ -68,7 +68,7 @@ export function SystemDiagnostics() {
         comandas: JSON.parse(localStorage.getItem('comandas_banco_alimentos') || '[]').length,
         organismos: JSON.parse(localStorage.getItem('organismos_banco_alimentos') || '[]').length,
         contactos: JSON.parse(localStorage.getItem('banque_alimentaire_contactos_departamento') || '[]').length,
-        benevoles: JSON.parse(localStorage.getItem('benevoles') || '[]').length,
+        benevoles: JSON.parse(localStorage.getItem('banqueAlimentaire_benevoles') || '[]').length, // ✅ CORREGIDO
         departamentos: JSON.parse(localStorage.getItem('departamentos_banco_alimentos') || '[]').length,
       };
       setEstadisticas(stats);

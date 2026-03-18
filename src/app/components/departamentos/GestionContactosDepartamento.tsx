@@ -258,6 +258,8 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       console.log('🔔 Evento benevole-sincronizado recibido:', event.detail);
       // Recargar contactos para reflejar los cambios
       cargarContactos();
+      // ✅ TAMBIÉN RECARGAR LA LISTA DE VOLUNTARIOS DISPONIBLES
+      cargarBenevolesDisponibles();
       toast.success(`Bénévole ${event.detail.nombreCompleto} synchronisé dans tous les départements`);
     };
     
@@ -269,6 +271,14 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       window.removeEventListener('benevole-sincronizado', handleBenevoleSincronizado);
     };
   }, [departamentoId]); // Dependencia: volver a suscribirse si cambia el departamento
+
+  // 🔄 Recargar voluntarios disponibles cuando se abre el diálogo
+  useEffect(() => {
+    if (dialogAsignarBenevole) {
+      console.log('🔄 Diálogo de asignación abierto - Recargando voluntarios disponibles...');
+      cargarBenevolesDisponibles();
+    }
+  }, [dialogAsignarBenevole]);
 
   const cargarContactos = () => {
     // ✅ SIEMPRE cargar contactos de departamento Y bénévoles del módulo principal
@@ -412,14 +422,20 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
 
   const cargarBenevolesDisponibles = () => {
     // Obtenir les bénévoles depuis localStorage (où ils sont stockés dans le module Benevoles)
-    const benevolesData = localStorage.getItem('benevoles');
+    const benevolesData = localStorage.getItem('banqueAlimentaire_benevoles'); // ✅ CORREGIDO: clave correcta
     if (benevolesData) {
       try {
         const benevoles = JSON.parse(benevolesData);
-        setBenevolesDisponibles(benevoles);
+        // 🔒 FILTRAR SOLO BÉNÉVOLES ACTIVOS (normalizado a minúsculas)
+        const benevolesActivos = benevoles.filter((b: any) => b.statut?.toLowerCase().trim() === 'actif');
+        setBenevolesDisponibles(benevolesActivos);
+        console.log('✅ Bénévoles disponibles cargados:', benevolesActivos.length);
       } catch (error) {
         console.error('Erreur lors du chargement des bénévoles:', error);
       }
+    } else {
+      console.warn('⚠️ No se encontraron bénévoles en localStorage');
+      setBenevolesDisponibles([]);
     }
   };
 
@@ -2305,8 +2321,8 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
                               variant="outline" 
                               className="text-xs"
                               style={{ 
-                                borderColor: benevole.statut === 'actif' ? branding.secondaryColor : '#999999',
-                                color: benevole.statut === 'actif' ? branding.secondaryColor : '#999999'
+                                borderColor: benevole.statut?.toLowerCase().trim() === 'actif' ? branding.secondaryColor : '#999999',
+                                color: benevole.statut?.toLowerCase().trim() === 'actif' ? branding.secondaryColor : '#999999'
                               }}
                             >
                               {benevole.statut || 'actif'}
