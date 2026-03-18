@@ -1170,9 +1170,15 @@ function AddressAutocompleteComponent({
                   const newQuartier = e.target.value;
                   setQuartier(newQuartier);
                   isUserEditing.current = true;
-                  // ✅ NOTIFICAR al padre cuando cambia el quartier
-                  console.log('🏘️ AddressAutocomplete - Quartier cambiado:', newQuartier);
-                  onChange?.(inputValue, { city, postalCode, apt: apartment, quartier: newQuartier });
+                  // ✅ SIEMPRE notificar al padre, incluso si el valor está vacío
+                  console.log('🏘️ AddressAutocomplete - Quartier cambiado manualmente:', newQuartier || '[vacío]');
+                  // ✅ CRÍTICO: Pasar SIEMPRE el valor completo, no solo cuando hay cambios
+                  onChange?.(inputValue, { 
+                    city, 
+                    postalCode, 
+                    apt: apartment, 
+                    quartier: newQuartier // ✅ SIEMPRE pasar el valor, incluso si es ''
+                  });
                 }}
                 placeholder="Ex: Chomedey"
                 disabled={disabled}

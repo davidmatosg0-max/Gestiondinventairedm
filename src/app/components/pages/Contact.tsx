@@ -18,6 +18,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { toast } from 'sonner';
+import { guardarMensajeContacto } from '../../utils/contactosStorage';
 
 export function Contact() {
   const { t } = useTranslation();
@@ -29,17 +30,70 @@ export function Contact() {
     asunto: '',
     mensaje: ''
   });
+  const [enviando, setEnviando] = useState(false);
 
   const handleEnviar = () => {
-    if (!formulario.nombre || !formulario.email || !formulario.asunto || !formulario.mensaje) {
-      toast.error('Veuillez remplir tous les champs');
+    // Validación de campos
+    if (!formulario.nombre.trim()) {
+      toast.error('❌ Veuillez entrer votre nom');
       return;
     }
 
-    // Simular envío
-    toast.success('✅ Message envoyé avec succès!');
-    setFormulario({ nombre: '', email: '', asunto: '', mensaje: '' });
-    setMostrarFormulario(false);
+    if (!formulario.email.trim()) {
+      toast.error('❌ Veuillez entrer votre email');
+      return;
+    }
+
+    // Validación básica de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formulario.email)) {
+      toast.error('❌ Email invalide');
+      return;
+    }
+
+    if (!formulario.asunto.trim()) {
+      toast.error('❌ Veuillez entrer le sujet');
+      return;
+    }
+
+    if (!formulario.mensaje.trim()) {
+      toast.error('❌ Veuillez entrer votre message');
+      return;
+    }
+
+    setEnviando(true);
+
+    try {
+      // Guardar en localStorage
+      const mensajeGuardado = guardarMensajeContacto(
+        formulario.nombre,
+        formulario.email,
+        formulario.asunto,
+        formulario.mensaje
+      );
+
+      console.log('✅ Mensaje de contacto guardado:', mensajeGuardado);
+
+      toast.success('✅ Message envoyé avec succès!', {
+        description: `Nous vous répondrons à ${formulario.email} dans les plus brefs délais`,
+        duration: 5000
+      });
+
+      // Limpiar formulario
+      setFormulario({ nombre: '', email: '', asunto: '', mensaje: '' });
+      
+      // Esperar un momento antes de cerrar
+      setTimeout(() => {
+        setMostrarFormulario(false);
+        setEnviando(false);
+      }, 1500);
+    } catch (error) {
+      console.error('❌ Error al guardar mensaje:', error);
+      toast.error('❌ Erreur lors de l\'envoi du message', {
+        description: 'Veuillez réessayer'
+      });
+      setEnviando(false);
+    }
   };
 
   // Información de contacto
@@ -238,9 +292,10 @@ export function Contact() {
                 style={{ 
                   background: `linear-gradient(135deg, ${branding.primaryColor} 0%, ${branding.secondaryColor} 100%)`
                 }}
+                disabled={enviando}
               >
                 <Send className="w-5 h-5 mr-2" />
-                Envoyer le Message
+                {enviando ? 'Envoi...' : 'Envoyer le Message'}
               </Button>
             </div>
           </div>

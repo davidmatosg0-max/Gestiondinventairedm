@@ -47,7 +47,7 @@ import { BalanceProvider } from '../contexts/BalanceContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { logger, showWelcomeBanner } from './utils/logger';
 import { runDataMigrations } from './utils/dataMigration';
-import { inicializarAutoBackup, diagnosticarAutoBackup, ejecutarBackupAutomatico } from './utils/autoBackupStorage';
+import { inicializarAutoBackup, diagnosticarAutoBackup, ejecutarBackupAutomatico, limpiarTodosLosBackups, verificarTamañoBackups } from './utils/autoBackupStorage'; // ✅ Agregar nuevas funciones
 import { inicializarFileSystem } from './utils/fileSystemAccess';
 // 🔍 Herramientas de verificación PRS
 import './utils/verificarPRS';
@@ -84,7 +84,7 @@ function AppContent() {
 
   // Crear ofertas de ejemplo e inicializar unidades al cargar la app
   useEffect(() => {
-    // 🛡️🛡️🛡️ ACTIVAR SISTEMA DE PROTECCIÓN TOTAL DE DATOS
+    // 🛡️🛡️🛡 ACTIVAR SISTEMA DE PROTECCIÓN TOTAL DE DATOS
     // DEBE SER LO PRIMERO QUE SE EJECUTE
     inicializarProteccionDatos();
     
@@ -120,16 +120,66 @@ function AppContent() {
     inicializarConfigSupport();
     
     // 🔄 INICIALIZAR SISTEMA DE BACKUP AUTOMÁTICO
-    inicializarAutoBackup();
-    logger.info('🔄 Sistema de backup automático inicializado');
+    // ✅ LIMPIEZA OBLIGATORIA: Eliminar TODOS los backups al iniciar para prevenir QuotaExceeded
+    try {
+      console.log('🧹 Verificando backups en localStorage...');
+      const backupsExistentes = localStorage.getItem('storedBackups');
+      if (backupsExistentes) {
+        const tamañoBackups = new Blob([backupsExistentes]).size;
+        console.warn(`⚠️ Encontrados backups almacenados: ${(tamañoBackups / 1024 / 1024).toFixed(2)} MB`);
+        console.warn('⚠️ LIMPIANDO TODOS los backups para prevenir errores de cuota...');
+        localStorage.removeItem('storedBackups');
+        console.log('✅ Backups eliminados exitosamente');
+      } else {
+        console.log('✅ No hay backups almacenados');
+      }
+      
+      // ✅ FORZAR DESACTIVACIÓN DE BACKUPS AUTOMÁTICOS
+      const configBackup = localStorage.getItem('autoBackupConfig');
+      if (configBackup) {
+        try {
+          const config = JSON.parse(configBackup);
+          if (config.enabled) {
+            console.warn('⚠️ Backups automáticos estaban activados, DESACTIVANDO...');
+            config.enabled = false;
+            localStorage.setItem('autoBackupConfig', JSON.stringify(config));
+            console.log('✅ Backups automáticos DESACTIVADOS permanentemente');
+          }
+        } catch (e) {
+          console.warn('⚠️ Error al verificar config de backups, eliminando...');
+          localStorage.removeItem('autoBackupConfig');
+        }
+      }
+      
+      console.log('💡 IMPORTANTE: Los backups automáticos están DESACTIVADOS por defecto');
+      console.log('💡 Para crear backups, usa el botón "Descargar Backup" manualmente');
+    } catch (cleanError) {
+      console.error('⚠️ Error al verificar backups:', cleanError);
+      // Forzar limpieza en caso de error
+      try {
+        localStorage.removeItem('storedBackups');
+        localStorage.removeItem('autoBackupConfig');
+        console.log('✅ Backups y configuración eliminados por seguridad');
+      } catch (e) {
+        console.error('❌ No se pudo limpiar backups:', e);
+      }
+    }
+    
+    // NO inicializar backups automáticos - están desactivados por defecto
+    // inicializarAutoBackup(); // <-- COMENTADO PERMANENTEMENTE
+    logger.info('⏸️ Sistema de backup automático desactivado (usa backups manuales)');
     
     // 🔍 EXPONER FUNCIONES DE DIAGNÓSTICO GLOBALMENTE (para testing)
     if (typeof window !== 'undefined') {
       (window as any).diagnosticarBackup = diagnosticarAutoBackup;
       (window as any).ejecutarBackupManual = ejecutarBackupAutomatico;
+      (window as any).limpiarBackups = limpiarTodosLosBackups; // ✅ NUEVA: Limpiar backups
+      (window as any).verificarBackups = verificarTamañoBackups; // ✅ NUEVA: Ver tamaño
       console.log('🔧 Funciones de diagnóstico de backup disponibles en consola:');
       console.log('  - diagnosticarBackup() - Ver estado completo del sistema');
       console.log('  - ejecutarBackupManual() - Ejecutar backup inmediato');
+      console.log('  - verificarBackups() - Ver tamaño y uso de espacio ✅ NUEVO');
+      console.log('  - limpiarBackups() - Limpiar TODOS los backups (emergencia) ✅ NUEVO');
     }
     
     // 📁 INICIALIZAR SISTEMA DE ARCHIVOS (File System Access API)

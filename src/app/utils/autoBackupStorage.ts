@@ -87,10 +87,8 @@ export function guardarConfigAutoBackup(config: AutoBackupConfig): void {
       nextBackup: config.nextBackup
     });
     
-    // Re-inicializar el sistema de backup con la nueva configuración
-    inicializarAutoBackup();
-    
-    // Dispatch event para notificar cambios
+    // ✅ NO LLAMAR inicializarAutoBackup aquí para evitar recursión
+    // Solo dispatch el evento
     window.dispatchEvent(new CustomEvent('autoBackupConfigUpdated', { detail: config }));
   } catch (error) {
     console.error('Error al guardar config de auto backup:', error);
@@ -117,36 +115,66 @@ export function obtenerBackupsAlmacenados(): StoredBackup[] {
  * Guardar un backup
  */
 export function guardarBackup(data: string, automatic: boolean = false): StoredBackup {
+  const config = obtenerConfigAutoBackup();
+  
+  const newBackup: StoredBackup = {
+    id: `backup_${Date.now()}`,
+    timestamp: new Date().toISOString(),
+    data: data,
+    size: new Blob([data]).size,
+    automatic: automatic
+  };
+  
+  // ✅ CRÍTICO: Si el backup es grande, NO HACER NADA más que retornarlo
+  const TAMAÑO_MAXIMO_BACKUP = 2 * 1024 * 1024; // 2MB máximo por backup
+  if (newBackup.size > TAMAÑO_MAXIMO_BACKUP) {
+    console.warn(`⚠️ Backup demasiado grande (${formatearTamano(newBackup.size)}), no se guardará en localStorage`);
+    console.log('✅ Backup NO se guardará - retornando objeto sin persistencia');
+    // ✅ RETORNAR INMEDIATAMENTE - NO intentar guardar NADA
+    // La descarga se manejará desde ejecutarBackupAutomatico()
+    return newBackup;
+  }
+  
   try {
-    const backups = obtenerBackupsAlmacenados();
-    const config = obtenerConfigAutoBackup();
+    // ✅ LIMPIAR BACKUPS ANTIGUOS PRIMERO para hacer espacio
+    try {
+      const backupsAntiguos = obtenerBackupsAlmacenados();
+      if (backupsAntiguos.length > 0) {
+        console.log(`🧹 Limpiando ${backupsAntiguos.length} backup(s) antiguo(s) para hacer espacio...`);
+        localStorage.removeItem(STORED_BACKUPS_KEY);
+      }
+    } catch (cleanError) {
+      console.warn('⚠️ No se pudo limpiar backups antiguos:', cleanError);
+    }
     
-    const newBackup: StoredBackup = {
-      id: `backup_${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      data: data,
-      size: new Blob([data]).size,
-      automatic: automatic
-    };
+    // Crear array con solo el nuevo backup
+    const trimmedBackups = [newBackup];
     
-    // Agregar el nuevo backup al inicio
-    backups.unshift(newBackup);
-    
-    // Mantener solo los últimos N backups
-    const trimmedBackups = backups.slice(0, config.maxBackups);
-    
-    localStorage.setItem(STORED_BACKUPS_KEY, JSON.stringify(trimmedBackups));
-    
-    // Actualizar último backup en config
-    if (automatic) {
-      const updatedConfig = { ...config, lastBackup: newBackup.timestamp };
-      guardarConfigAutoBackup(updatedConfig);
+    // ✅ INTENTAR GUARDAR CON MANEJO DE ERRORES
+    try {
+      localStorage.setItem(STORED_BACKUPS_KEY, JSON.stringify(trimmedBackups));
+      console.log(`✅ Backup guardado en localStorage (1 backup)`);
+    } catch (quotaError) {
+      console.error('❌ Error de cuota excedida al guardar backup:', quotaError);
+      console.log('⚠️ No se guardará en localStorage - continuar sin persistencia');
+      
+      // Eliminar todos los backups de localStorage
+      try {
+        localStorage.removeItem(STORED_BACKUPS_KEY);
+        console.log('✅ Backups eliminados de localStorage');
+      } catch (removeError) {
+        console.error('❌ No se pudo eliminar backups:', removeError);
+      }
+      
+      // NO lanzar excepción - solo retornar el objeto
+      console.log('ℹ️ El backup no se persistió pero se retorna el objeto');
     }
     
     return newBackup;
   } catch (error) {
-    console.error('Error al guardar backup:', error);
-    throw error;
+    console.error('❌ Error al procesar backup:', error);
+    // NO lanzar excepción - retornar el objeto de todas formas
+    return newBackup;
   }
 }
 
@@ -248,6 +276,12 @@ export function ejecutarBackupAutomatico(): boolean {
     console.log('🔄 Iniciando backup automático...');
     const config = obtenerConfigAutoBackup();
     
+    // ✅ VERIFICAR SI LOS BACKUPS ESTÁN REALMENTE HABILITADOS
+    if (!config.enabled) {
+      console.log('⏸️ Backups automáticos están desactivados, abortando...');
+      return false;
+    }
+    
     // Crear backup de todo el localStorage (excepto los backups mismos)
     const backup: Record<string, any> = {};
     
@@ -264,23 +298,80 @@ export function ejecutarBackupAutomatico(): boolean {
     console.log(`📦 Datos a respaldar: ${Object.keys(backup).length} claves`);
     
     const backupData = JSON.stringify(backup, null, 2);
-    const savedBackup = guardarBackup(backupData, true);
+    const backupSize = new Blob([backupData]).size;
+    const backupSizeMB = (backupSize / 1024 / 1024).toFixed(2);
     
-    console.log(`✅ Backup guardado: ${savedBackup.id} (${formatearTamano(savedBackup.size)})`);
+    console.log(`📊 Tamaño del backup: ${backupSizeMB} MB`);
     
-    // Auto-descargar si está configurado
-    if (config.autoDownload) {
-      console.log('📥 Auto-descargando backup...');
-      descargarBackup(savedBackup, config.filePrefix);
+    // ✅ SI EL BACKUP ES MUY GRANDE (>2MB), SOLO DESCARGAR - NO GUARDAR EN LOCALSTORAGE
+    const TAMAÑO_MAXIMO = 2 * 1024 * 1024; // 2MB
+    
+    if (backupSize > TAMAÑO_MAXIMO) {
+      console.warn(`⚠️ Backup demasiado grande (${backupSizeMB} MB), descargando directamente...`);
+      console.log('💡 No se guardará en localStorage para prevenir errores de cuota');
+      
+      // Crear objeto de backup temporal solo para descargar
+      const tempBackup: StoredBackup = {
+        id: `backup_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        data: backupData,
+        size: backupSize,
+        automatic: true
+      };
+      
+      // Descargar automáticamente
+      console.log('📥 Descargando backup automáticamente...');
+      descargarBackup(tempBackup, config.filePrefix);
+      
+      console.log('✅ Backup descargado exitosamente (no guardado en localStorage)');
+      
+      // Actualizar solo la fecha del último backup en config (sin guardar el backup completo)
+      try {
+        const updatedConfig = { ...config, lastBackup: tempBackup.timestamp };
+        localStorage.setItem(AUTO_BACKUP_CONFIG_KEY, JSON.stringify(updatedConfig));
+      } catch (configError) {
+        console.warn('⚠️ No se pudo actualizar fecha de último backup');
+      }
+      
+      return true;
     }
     
-    // Limpiar backups antiguos
-    limpiarBackupsAntiguos();
-    
-    console.log('✅ Backup automático ejecutado exitosamente');
-    console.log(`📅 Próximo backup: ${config.nextBackup ? new Date(config.nextBackup).toLocaleString('fr-CA') : 'No programado'}`);
-    
-    return true;
+    // Si el backup es pequeño (<2MB), intentar guardarlo
+    try {
+      const savedBackup = guardarBackup(backupData, true);
+      console.log(`✅ Backup guardado: ${savedBackup.id} (${formatearTamano(savedBackup.size)})`);
+      
+      // Auto-descargar si está configurado
+      if (config.autoDownload) {
+        console.log('📥 Auto-descargando backup...');
+        descargarBackup(savedBackup, config.filePrefix);
+      }
+      
+      // Limpiar backups antiguos
+      limpiarBackupsAntiguos();
+      
+      console.log('✅ Backup automático ejecutado exitosamente');
+      console.log(`📅 Próximo backup: ${config.nextBackup ? new Date(config.nextBackup).toLocaleString('fr-CA') : 'No programado'}`);
+      
+      return true;
+    } catch (saveError) {
+      console.error('❌ Error al guardar backup:', saveError);
+      
+      // Fallback: Descargar directamente si falla guardar
+      console.log('📥 Descargando backup como alternativa...');
+      const tempBackup: StoredBackup = {
+        id: `backup_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        data: backupData,
+        size: backupSize,
+        automatic: true
+      };
+      
+      descargarBackup(tempBackup, config.filePrefix);
+      console.log('✅ Backup descargado (guardado falló)');
+      
+      return true;
+    }
   } catch (error) {
     console.error('❌ Error al ejecutar backup automático:', error);
     return false;
@@ -440,6 +531,28 @@ export function inicializarAutoBackup(): void {
   
   if (!config.enabled) {
     console.log('⏸️ Sistema de backup automático desactivado');
+    console.log('💡 Para activarlo, ve a Configuración > Backups Automáticos');
+    console.log('💡 IMPORTANTE: Los backups automáticos pueden llenar localStorage rápidamente');
+    console.log('💡 Se recomienda activar "Auto-descarga" para guardar backups en tu PC');
+    return;
+  }
+  
+  // ✅ VERIFICACIÓN DE SEGURIDAD: No ejecutar backup si hay problemas de espacio
+  try {
+    const backupsExistentes = localStorage.getItem(STORED_BACKUPS_KEY);
+    if (backupsExistentes) {
+      const tamañoBackups = new Blob([backupsExistentes]).size;
+      const limiteSeguro = 3 * 1024 * 1024; // 3MB
+      
+      if (tamañoBackups > limiteSeguro) {
+        console.warn('⚠️ ADVERTENCIA: Backups exceden el límite seguro');
+        console.warn('⚠️ Sistema de backup automático DESHABILITADO por seguridad');
+        console.warn('💡 Ejecuta limpiarBackups() para liberar espacio');
+        return;
+      }
+    }
+  } catch (e) {
+    console.warn('⚠️ No se pudo verificar tamaño de backups, deshabilitando por seguridad');
     return;
   }
   
@@ -519,4 +632,87 @@ export function diagnosticarAutoBackup(): void {
   console.log('  - Intervalo activo:', backupIntervalId !== null);
   console.log('  - Debe ejecutar backup ahora:', debeEjecutarBackup());
   console.log('===========================================================================');
+}
+
+/**
+ * ✅ FUNCIÓN DE EMERGENCIA: Limpiar TODOS los backups de localStorage
+ * Usar solo si tienes error de cuota excedida
+ */
+export function limpiarTodosLosBackups(): void {
+  try {
+    console.log('🧹 ==================== LIMPIEZA TOTAL DE BACKUPS ====================');
+    console.log('⚠️ Esta operación eliminará TODOS los backups almacenados en localStorage');
+    
+    const backupsAnteriores = obtenerBackupsAlmacenados();
+    console.log(`📦 Backups a eliminar: ${backupsAnteriores.length}`);
+    
+    if (backupsAnteriores.length > 0) {
+      const tamañoTotal = backupsAnteriores.reduce((sum, b) => sum + b.size, 0);
+      console.log(`💾 Espacio a liberar: ${formatearTamano(tamañoTotal)}`);
+      
+      // Eliminar todos los backups
+      localStorage.removeItem(STORED_BACKUPS_KEY);
+      console.log('✅ Todos los backups han sido eliminados de localStorage');
+      console.log('💡 Recomendación: Descarga backups manualmente en lugar de almacenarlos');
+      console.log('💡 Configura "Auto-descarga" en ON para descargar backups directamente');
+    } else {
+      console.log('ℹ️ No hay backups para eliminar');
+    }
+    
+    console.log('=====================================================================');
+  } catch (error) {
+    console.error('❌ Error al limpiar backups:', error);
+  }
+}
+
+/**
+ * ✅ VERIFICAR TAMAÑO DE BACKUPS EN LOCALSTORAGE
+ */
+export function verificarTamañoBackups(): void {
+  try {
+    console.log('📊 ==================== ANÁLISIS DE BACKUPS ====================');
+    
+    const backups = obtenerBackupsAlmacenados();
+    const backupsData = localStorage.getItem(STORED_BACKUPS_KEY);
+    
+    if (!backupsData) {
+      console.log('ℹ️ No hay backups almacenados');
+      console.log('===============================================================');
+      return;
+    }
+    
+    const tamañoBackupsKey = new Blob([backupsData]).size;
+    console.log(`📦 Total de backups: ${backups.length}`);
+    console.log(`💾 Tamaño de clave 'storedBackups': ${formatearTamano(tamañoBackupsKey)}`);
+    console.log('');
+    console.log('📋 Detalle de backups:');
+    
+    backups.forEach((backup, index) => {
+      console.log(`  ${index + 1}. ${backup.automatic ? '🤖 Auto' : '👤 Manual'} | ${formatearFecha(backup.timestamp)} | ${formatearTamano(backup.size)}`);
+    });
+    
+    const tamañoTotal = backups.reduce((sum, b) => sum + b.size, 0);
+    console.log('');
+    console.log(`💾 Tamaño total de datos: ${formatearTamano(tamañoTotal)}`);
+    
+    // Límite de localStorage (aproximado: 5-10MB)
+    const limiteAproximado = 5 * 1024 * 1024; // 5MB
+    const porcentajeUso = (tamañoBackupsKey / limiteAproximado) * 100;
+    
+    console.log(`📊 Uso estimado de cuota: ${porcentajeUso.toFixed(1)}% del límite de 5MB`);
+    
+    if (porcentajeUso > 80) {
+      console.warn('⚠️ ADVERTENCIA: Uso de cuota muy alto (>80%)');
+      console.warn('💡 Ejecuta limpiarTodosLosBackups() para liberar espacio');
+    } else if (porcentajeUso > 50) {
+      console.log('⚠️ Uso moderado de cuota (>50%)');
+      console.log('💡 Considera limpiar backups antiguos');
+    } else {
+      console.log('✅ Uso de cuota saludable (<50%)');
+    }
+    
+    console.log('===============================================================');
+  } catch (error) {
+    console.error('❌ Error al verificar tamaño de backups:', error);
+  }
 }

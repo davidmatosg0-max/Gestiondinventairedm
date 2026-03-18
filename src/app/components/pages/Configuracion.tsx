@@ -1647,7 +1647,7 @@ export function Configuracion() {
                         {t('configuration.newSubcategory')}
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-h-[90vh] overflow-y-auto scrollbar-thin">
+                    <DialogContent className="max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="subcategoria-form-description">
                       <DialogHeader>
                         <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                           {editandoSubcategoria ? t('configuration.editSubcategory') : t('configuration.newSubcategoryForm')}
@@ -1957,7 +1957,7 @@ export function Configuracion() {
                         {t('configuration.newCategory')}
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent aria-describedby="categoria-form-description">
                       <DialogHeader>
                         <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                           {editandoCategoria ? t('configuration.editCategory') : t('configuration.newCategory')}
@@ -2639,7 +2639,7 @@ export function Configuracion() {
                     {t('configuration.newProgram')}
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent aria-describedby="programa-form-description">
                   <DialogHeader>
                     <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                       {editandoPrograma ? t('configuration.editProgram') : t('configuration.newProgramForm')}
@@ -3050,7 +3050,7 @@ export function Configuracion() {
           setProductoPRSDialogOpen(open);
           if (!open) resetFormProductoPRS();
         }}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" aria-describedby="producto-prs-description">
             <DialogHeader>
               <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
                 <div className="flex items-center gap-2">
@@ -3427,7 +3427,7 @@ export function Configuracion() {
 
       {/* Dialog Eliminar Categoría */}
       <Dialog open={dialogEliminarCategoria} onOpenChange={setDialogEliminarCategoria}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="eliminar-categoria-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', color: '#DC3545' }}>
               <div className="flex items-center gap-2">
@@ -3497,7 +3497,7 @@ export function Configuracion() {
 
       {/* Dialog Eliminar Subcategoría */}
       <Dialog open={dialogEliminarSubcategoria} onOpenChange={setDialogEliminarSubcategoria}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="eliminar-subcategoria-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', color: '#DC3545' }}>
               <div className="flex items-center gap-2">
@@ -3570,7 +3570,7 @@ export function Configuracion() {
 
       {/* Dialog Crear Variante */}
       <Dialog open={varianteDialogOpen} onOpenChange={setVarianteDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="variante-dialog-description">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Montserrat, sans-serif', color: '#1E73BE' }}>
               <div className="flex items-center gap-2">
@@ -3823,7 +3823,7 @@ export function Configuracion() {
           setSubcategoriaBase(null);
         }
       }}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="subcategoria-variante-description">
           <DialogHeader className="pb-4 border-b">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#9C27B0] to-[#7B1FA2] flex items-center justify-center text-white text-2xl">

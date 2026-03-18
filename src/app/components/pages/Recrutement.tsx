@@ -9,6 +9,7 @@ import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
+import { AddressAutocomplete } from '../ui/address-autocomplete';
 import { 
   UserPlus, 
   Users, 
@@ -28,30 +29,17 @@ import {
   ArrowLeft,
   Trash2,
   Link,
-  UserMinus
+  UserMinus,
+  Edit, // ✅ Agregar icono de edición
+  User // ✅ Agregar icono de usuario para el formulario
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { guardarContacto, obtenerContactosPorDepartamento, eliminarContactosDuplicados, eliminarContacto } from '../../utils/contactosDepartamentoStorage';
+import { obtenerCandidatos, guardarCandidatos, actualizarCandidato, agregarCandidato, eliminarCandidato, type Candidato } from '../../utils/candidatosStorage'; // ✅ Importar storage
+import { obtenerVilles, obtenerQuartiersPorVille } from '../../utils/adressesQuartiersStorage'; // ✅ Para selector de quartier
 
-interface Candidate {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  position: string;
-  status: 'pending' | 'reviewed' | 'interview' | 'accepted' | 'rejected';
-  applicationDate: string;
-  experience: string;
-  availability: string;
-  numeroArchivo?: string; // ✅ Agregar número de archivo
-  adresse?: string; // ✅ Dirección completa
-  appartement?: string; // ✅ Apartamento/Unidad
-  ville?: string; // ✅ Ciudad
-  codePostal?: string; // ✅ Código postal
-  quartier?: string; // ✅ Quartier/Barrio
-  departamentoIds?: string[]; // ✅ IDs de departamentos asignados
-  contactoId?: string; // ✅ ID del contacto creado en departamento
-}
+// ✅ Usar tipo Candidato del storage
+type Candidate = Candidato;
 
 export function Recrutement() {
   const { t } = useTranslation();
@@ -68,6 +56,24 @@ export function Recrutement() {
   // 🎯 Estado para el diálogo de perfil detallado
   const [dialogPerfilOpen, setDialogPerfilOpen] = useState(false);
   const [candidatoParaPerfil, setCandidatoParaPerfil] = useState<Candidate | null>(null);
+  
+  // ✅ NUEVO: Estados para el diálogo de edición
+  const [dialogEdicionOpen, setDialogEdicionOpen] = useState(false);
+  const [candidatoParaEditar, setCandidatoParaEditar] = useState<Candidate | null>(null);
+  const [formEdicion, setFormEdicion] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    position: '',
+    status: 'pending' as Candidate['status'],
+    experience: '',
+    availability: '',
+    adresse: '',
+    appartement: '',
+    ville: '',
+    codePostal: '',
+    quartier: ''
+  });
 
   // ✅ LISTA CORRECTA DE DEPARTAMENTOS CON IDs NUMÉRICOS (coinciden con departamentosStorage.ts)
   const departamentosDisponibles = [
@@ -79,67 +85,15 @@ export function Recrutement() {
     { id: '8', nombre: 'Bénévoles', icono: '👥', color: '#4CAF50', codigo: 'BENEVOLES' },
   ];
 
-  // Mock data - Candidatos
-  const [candidates, setCandidates] = useState<Candidate[]>([
-    {
-      id: 1,
-      name: 'Jean Tremblay',
-      email: 'jean.tremblay@email.com',
-      phone: '(514) 555-0101',
-      position: 'Bénévole - Distribution',
-      status: 'pending',
-      applicationDate: '2024-02-08',
-      experience: '2 ans d\'expérience en service communautaire',
-      availability: 'Lundi, Mercredi, Vendredi'
-    },
-    {
-      id: 2,
-      name: 'Marie Dubois',
-      email: 'marie.dubois@email.com',
-      phone: '(514) 555-0102',
-      position: 'Coordinateur bénévole',
-      status: 'interview',
-      applicationDate: '2024-02-06',
-      experience: '5 ans en gestion d\'équipe',
-      availability: 'Temps plein'
-    },
-    {
-      id: 3,
-      name: 'Pierre Gagnon',
-      email: 'pierre.gagnon@email.com',
-      phone: '(514) 555-0103',
-      position: 'Bénévole - Entrepôt',
-      status: 'accepted',
-      applicationDate: '2024-02-05',
-      experience: 'Expérience en logistique',
-      availability: 'Samedi, Dimanche'
-    },
-    {
-      id: 4,
-      name: 'Sophie Bernard',
-      email: 'sophie.bernard@email.com',
-      phone: '(514) 555-0104',
-      position: 'Chauffeur bénévole',
-      status: 'reviewed',
-      applicationDate: '2024-02-07',
-      experience: 'Permis classe 3, 10 ans d\'expérience',
-      availability: 'Flexible'
-    },
-    {
-      id: 5,
-      name: 'Sylvain Forget',
-      email: 'sylvain_forget@videotron.ca',
-      phone: '514 718-1068',
-      position: 'Bénévole - Entrepôt',
-      status: 'accepted',
-      applicationDate: '2026-03-16',
-      experience: 'Bénévole expérimenté',
-      availability: 'Variable',
-      adresse: '7184 Boulevard des Mille-Îles',
-      ville: 'Laval',
-      codePostal: 'H7T 1C7'
-    }
-  ]);
+  // ✅ Candidatos desde localStorage (ya no mock estáticos)
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  
+  // ✅ Cargar candidatos al montar el componente
+  useEffect(() => {
+    const candidatosGuardados = obtenerCandidatos();
+    setCandidates(candidatosGuardados);
+    console.log('✅ Candidatos cargados desde localStorage:', candidatosGuardados.length);
+  }, []);
 
   // Estadísticas
   const stats = {
@@ -147,6 +101,127 @@ export function Recrutement() {
     pending: candidates.filter(c => c.status === 'pending').length,
     interview: candidates.filter(c => c.status === 'interview').length,
     accepted: candidates.filter(c => c.status === 'accepted').length
+  };
+
+  // ✅ NUEVO: Función para abrir edición de candidato
+  const handleAbrirEdicion = (candidato: Candidate) => {
+    console.log('✏️ Abriendo edición de candidato:', candidato.id, candidato.name);
+    setCandidatoParaEditar(candidato);
+    setFormEdicion({
+      name: candidato.name,
+      email: candidato.email,
+      phone: candidato.phone,
+      position: candidato.position,
+      status: candidato.status,
+      experience: candidato.experience,
+      availability: candidato.availability,
+      adresse: candidato.adresse || '',
+      appartement: candidato.appartement || '',
+      ville: candidato.ville || '',
+      codePostal: candidato.codePostal || '',
+      quartier: candidato.quartier || ''
+    });
+    console.log('📋 Quartier cargado:', candidato.quartier || '[vacío]');
+    setDialogEdicionOpen(true);
+  };
+
+  // ✅ NUEVO: Función para guardar edición con QUARTIER
+  const handleGuardarEdicion = () => {
+    if (!candidatoParaEditar) return;
+    
+    // Validaciones
+    if (!formEdicion.name.trim()) {
+      toast.error('❌ Le nom est requis');
+      return;
+    }
+    if (!formEdicion.email.trim()) {
+      toast.error('❌ L\'email est requis');
+      return;
+    }
+    
+    console.log('💾 Guardando candidato con datos COMPLETOS:', {
+      id: candidatoParaEditar.id,
+      name: formEdicion.name,
+      email: formEdicion.email,
+      phone: formEdicion.phone,
+      position: formEdicion.position,
+      status: formEdicion.status,
+      experience: formEdicion.experience,
+      availability: formEdicion.availability,
+      adresse: formEdicion.adresse || '[vacío]',
+      appartement: formEdicion.appartement || '[vacío]',
+      ville: formEdicion.ville || '[vacío]',
+      codePostal: formEdicion.codePostal || '[vacío]',
+      quartier: formEdicion.quartier || '[vacío]'
+    });
+    
+    // ✅ CRÍTICO: Actualizar candidato con TODOS los campos sin excepción
+    const candidatoActualizado = actualizarCandidato(candidatoParaEditar.id, {
+      name: formEdicion.name.trim(),
+      email: formEdicion.email.trim(),
+      phone: formEdicion.phone.trim(),
+      position: formEdicion.position.trim(),
+      status: formEdicion.status,
+      experience: formEdicion.experience.trim(),
+      availability: formEdicion.availability.trim(),
+      adresse: formEdicion.adresse.trim(),
+      appartement: formEdicion.appartement.trim(),
+      ville: formEdicion.ville.trim(),
+      codePostal: formEdicion.codePostal.trim(),
+      quartier: formEdicion.quartier.trim() // ✅ CRÍTICO: Guardar quartier SIEMPRE
+    });
+    
+    if (candidatoActualizado) {
+      // Actualizar lista local
+      setCandidates(prev => prev.map(c => 
+        c.id === candidatoActualizado.id ? candidatoActualizado : c
+      ));
+      
+      console.log('✅ Candidato actualizado exitosamente con TODOS LOS DATOS:', {
+        id: candidatoActualizado.id,
+        name: candidatoActualizado.name,
+        email: candidatoActualizado.email,
+        phone: candidatoActualizado.phone,
+        position: candidatoActualizado.position,
+        status: candidatoActualizado.status,
+        experience: candidatoActualizado.experience,
+        availability: candidatoActualizado.availability,
+        adresse: candidatoActualizado.adresse || '[vacío]',
+        appartement: candidatoActualizado.appartement || '[vacío]',
+        ville: candidatoActualizado.ville || '[vacío]',
+        codePostal: candidatoActualizado.codePostal || '[vacío]',
+        quartier: candidatoActualizado.quartier || '[vacío]'
+      });
+      
+      // ✅ Verificar que los datos se guardaron en localStorage
+      const candidatosVerificacion = obtenerCandidatos();
+      const candidatoVerificado = candidatosVerificacion.find(c => c.id === candidatoActualizado.id);
+      
+      if (candidatoVerificado) {
+        console.log('✅ VERIFICACIÓN EXITOSA - Candidato guardado en localStorage:', {
+          id: candidatoVerificado.id,
+          name: candidatoVerificado.name,
+          quartier: candidatoVerificado.quartier || '[vacío]',
+          ville: candidatoVerificado.ville || '[vacío]',
+          codePostal: candidatoVerificado.codePostal || '[vacío]'
+        });
+      } else {
+        console.error('❌ ERROR DE VERIFICACIÓN - Candidato NO encontrado en localStorage');
+      }
+      
+      toast.success('✅ Candidat mis à jour avec succès', {
+        description: formEdicion.quartier 
+          ? `Quartier: ${formEdicion.quartier} | Ville: ${formEdicion.ville}` 
+          : `Informations sauvegardées`,
+        duration: 5000
+      });
+      
+      setDialogEdicionOpen(false);
+      setCandidatoParaEditar(null);
+    } else {
+      console.error('❌ Error al actualizar candidato en localStorage');
+      toast.error('❌ Erreur lors de la mise à jour du candidat');
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -184,13 +259,25 @@ export function Recrutement() {
   });
 
   const handleStatusChange = (candidateId: number, newStatus: string) => {
-    // Buscar el candidat pour obtenir ses datos
+    // Buscar el candidat pour obtener sus datos
     const candidate = candidates.find(c => c.id === candidateId);
     
-    // Actualizar el estado del candidat
+    // ✅ Actualizar en localStorage primero
+    const candidatoActualizado = actualizarCandidato(candidateId, { 
+      status: newStatus as Candidate['status'] 
+    });
+    
+    if (!candidatoActualizado) {
+      toast.error('❌ Erreur lors de la mise à jour du statut');
+      return;
+    }
+    
+    // Actualizar el estado local
     setCandidates(prev => 
-      prev.map(c => c.id === candidateId ? { ...c, status: newStatus as Candidate['status'] } : c)
+      prev.map(c => c.id === candidateId ? candidatoActualizado : c)
     );
+    
+    console.log('✅ Statut mis à jour:', { id: candidateId, newStatus });
     
     // ✅ Si se acepta el candidat, crear automáticamente en el département correspondiente
     if (newStatus === 'accepted' && candidate) {
@@ -1022,6 +1109,20 @@ export function Recrutement() {
                       <Button 
                         variant="outline" 
                         size="sm"
+                        className="hover:scale-105 transition-all duration-300 hover:bg-blue-50 border-2"
+                        style={{ 
+                          fontFamily: 'Montserrat, sans-serif',
+                          color: '#1a4d7a',
+                          borderColor: '#1a4d7a'
+                        }}
+                        onClick={() => handleAbrirEdicion(candidate)}
+                        title="Éditer le candidat"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
                         className="hover:scale-105 transition-all duration-300 hover:bg-red-50 border-2"
                         style={{ 
                           fontFamily: 'Montserrat, sans-serif',
@@ -1069,6 +1170,241 @@ export function Recrutement() {
           )}
         </div>
       </div>
+
+      {/* ✅ Dialog: Éditer Candidat */}
+      <Dialog open={dialogEdicionOpen} onOpenChange={setDialogEdicionOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="editer-candidat-description">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              <Edit className="w-6 h-6" style={{ color: branding.primaryColor }} />
+              Éditer le Candidat
+            </DialogTitle>
+            <DialogDescription id="editer-candidat-description">
+              Modifiez les informations du candidat {candidatoParaEditar?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          {candidatoParaEditar && (
+            <div className="space-y-6 mt-4">
+              {/* Información Personal */}
+              <div 
+                className="p-4 rounded-lg border-l-4"
+                style={{ 
+                  backgroundColor: `${branding.primaryColor}10`, 
+                  borderLeftColor: branding.primaryColor
+                }}
+              >
+                <h4 className="font-semibold mb-3 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.primaryColor }}>
+                  <User className="w-5 h-5" />
+                  Informations Personnelles
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs font-semibold">Nom complet *</Label>
+                    <Input
+                      value={formEdicion.name}
+                      onChange={(e) => setFormEdicion(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Jean Dupont"
+                      className="mt-1"
+                      style={{ fontFamily: 'Roboto, sans-serif' }}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">Poste recherché *</Label>
+                    <Input
+                      value={formEdicion.position}
+                      onChange={(e) => setFormEdicion(prev => ({ ...prev, position: e.target.value }))}
+                      placeholder="Bénévole Entrepôt"
+                      className="mt-1"
+                      style={{ fontFamily: 'Roboto, sans-serif' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Coordonnées */}
+              <div 
+                className="p-4 rounded-lg border-l-4"
+                style={{ 
+                  backgroundColor: `${branding.secondaryColor}10`, 
+                  borderLeftColor: branding.secondaryColor
+                }}
+              >
+                <h4 className="font-semibold mb-3 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif', color: branding.secondaryColor }}>
+                  <Mail className="w-5 h-5" />
+                  Coordonnées
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs font-semibold">Email *</Label>
+                    <Input
+                      type="email"
+                      value={formEdicion.email}
+                      onChange={(e) => setFormEdicion(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="jean.dupont@email.com"
+                      className="mt-1"
+                      style={{ fontFamily: 'Roboto, sans-serif' }}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">Téléphone</Label>
+                    <Input
+                      type="tel"
+                      value={formEdicion.phone}
+                      onChange={(e) => setFormEdicion(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="(514) 123-4567"
+                      className="mt-1"
+                      style={{ fontFamily: 'Roboto, sans-serif' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Adresse Complète */}
+              <div 
+                className="p-4 rounded-lg border-l-4"
+                style={{ 
+                  backgroundColor: '#8b5cf610', 
+                  borderLeftColor: '#8b5cf6'
+                }}
+              >
+                <h4 className="font-semibold mb-3 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif', color: '#8b5cf6' }}>
+                  <MapPin className="w-5 h-5" />
+                  Adresse Complète
+                </h4>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-xs font-semibold">
+                      <span className="text-purple-900">📍 Adresse complète avec ville, code postal et quartier</span>
+                    </Label>
+                    <AddressAutocomplete
+                      key={`address-edit-${candidatoParaEditar.id}`}
+                      value={formEdicion.adresse || ''}
+                      initialCity={formEdicion.ville || ''}
+                      initialPostalCode={formEdicion.codePostal || ''}
+                      initialApartment={formEdicion.appartement || ''}
+                      initialQuartier={formEdicion.quartier || ''}
+                      onChange={(value, details) => {
+                        console.log('📝 Recrutement - onChange recibido:', { value, details });
+                        
+                        setFormEdicion(prev => ({
+                          ...prev,
+                          adresse: value,
+                          ville: details?.city !== undefined ? details.city : prev.ville,
+                          codePostal: details?.postalCode !== undefined ? details.postalCode : prev.codePostal,
+                          appartement: details?.apt !== undefined ? details.apt : prev.appartement,
+                          quartier: details?.quartier !== undefined ? details.quartier : prev.quartier
+                        }));
+                        
+                        console.log('✅ Recrutement - Quartier actualizado:', details?.quartier || '[sin cambio]');
+                      }}
+                      placeholder="123 Rue Principale, Laval, QC H7M 1A1"
+                      showAdditionalFields={true}
+                    />
+                    <p className="text-[10px] sm:text-xs text-purple-700 italic flex items-center gap-1 font-medium mt-1">
+                      <Sparkles className="w-3 h-3" />
+                      Le système enregistre automatiquement la ville, le code postal, l'appartement et le quartier
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Expérience et Disponibilité */}
+              <div 
+                className="p-4 rounded-lg border-l-4"
+                style={{ 
+                  backgroundColor: '#f59e0b10', 
+                  borderLeftColor: '#f59e0b'
+                }}
+              >
+                <h4 className="font-semibold mb-3 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif', color: '#f59e0b' }}>
+                  <Briefcase className="w-5 h-5" />
+                  Expérience et Disponibilité
+                </h4>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-xs font-semibold">Expérience</Label>
+                    <Textarea
+                      value={formEdicion.experience}
+                      onChange={(e) => setFormEdicion(prev => ({ ...prev, experience: e.target.value }))}
+                      placeholder="Décrivez l'expérience du candidat..."
+                      className="mt-1 min-h-[80px]"
+                      style={{ fontFamily: 'Roboto, sans-serif' }}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs font-semibold">Disponibilité</Label>
+                    <Input
+                      value={formEdicion.availability}
+                      onChange={(e) => setFormEdicion(prev => ({ ...prev, availability: e.target.value }))}
+                      placeholder="Lundi-Vendredi, 9h-17h"
+                      className="mt-1"
+                      style={{ fontFamily: 'Roboto, sans-serif' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Statut */}
+              <div 
+                className="p-4 rounded-lg border-l-4"
+                style={{ 
+                  backgroundColor: '#06b6d410', 
+                  borderLeftColor: '#06b6d4'
+                }}
+              >
+                <h4 className="font-semibold mb-3 flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif', color: '#06b6d4' }}>
+                  <CheckCircle className="w-5 h-5" />
+                  Statut de la Candidature
+                </h4>
+                <div>
+                  <Label className="text-xs font-semibold">Statut actuel</Label>
+                  <Select 
+                    value={formEdicion.status} 
+                    onValueChange={(value: any) => setFormEdicion(prev => ({ ...prev, status: value }))}
+                  >
+                    <SelectTrigger className="mt-1" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">En attente</SelectItem>
+                      <SelectItem value="reviewed">Examiné</SelectItem>
+                      <SelectItem value="interview">Entretien</SelectItem>
+                      <SelectItem value="accepted">Accepté</SelectItem>
+                      <SelectItem value="rejected">Rejeté</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Boutons d'action */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDialogEdicionOpen(false);
+                    setCandidatoParaEditar(null);
+                  }}
+                  style={{ fontFamily: 'Montserrat, sans-serif' }}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  className="text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                  style={{
+                    background: `linear-gradient(135deg, ${branding.secondaryColor} 0%, ${branding.secondaryColor}dd 100%)`,
+                    fontFamily: 'Montserrat, sans-serif'
+                  }}
+                  onClick={handleGuardarEdicion}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Sauvegarder les modifications
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog: Assigner au Département */}
       <Dialog open={dialogAssignerOpen} onOpenChange={setDialogAssignerOpen}>

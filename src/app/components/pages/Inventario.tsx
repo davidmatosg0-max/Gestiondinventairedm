@@ -2332,7 +2332,7 @@ export function Inventario() {
 
       {/* Dialog: Compartir Lista de Productos */}
       <Dialog open={compartirDialogOpen} onOpenChange={setCompartirDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="share-product-list-description">
           {!vistaPreviewLista ? (
             <>
               <DialogHeader>
@@ -2736,7 +2736,7 @@ export function Inventario() {
 
       {/* Dialog Guía de Conversiones */}
       <Dialog open={guiaConversionesOpen} onOpenChange={setGuiaConversionesOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="guia-conversiones-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 600 }}>
               <HelpCircle className="w-6 h-6 text-[#1a4d7a]" />
@@ -2752,7 +2752,7 @@ export function Inventario() {
 
       {/* Dialog Crear Variante de Producto */}
       <Dialog open={varianteDialogOpen} onOpenChange={setVarianteDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-thin" aria-describedby="crear-variante-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               <Copy className="h-5 w-5 text-[#1a4d7a]" />
