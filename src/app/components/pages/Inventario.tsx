@@ -2924,7 +2924,7 @@ export function Inventario() {
 
       {/* Diálogo de Localización/Deslocalización */}
       <Dialog open={dialogLocalizacionOpen} onOpenChange={setDialogLocalizacionOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="location-management-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-[#1a4d7a]" style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700 }}>
               <MapPin className="h-5 w-5" />

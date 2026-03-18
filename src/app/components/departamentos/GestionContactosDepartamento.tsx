@@ -250,17 +250,130 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       }
     };
 
-    // Agregar listener
+    // Agregar listeners
     window.addEventListener('contactos-actualizados', handleContactosActualizados);
+    
+    // 🆕 Escuchar sincronizaciones de bénévoles
+    const handleBenevoleSincronizado = (event: any) => {
+      console.log('🔔 Evento benevole-sincronizado recibido:', event.detail);
+      // Recargar contactos para reflejar los cambios
+      cargarContactos();
+      toast.success(`Bénévole ${event.detail.nombreCompleto} synchronisé dans tous les départements`);
+    };
+    
+    window.addEventListener('benevole-sincronizado', handleBenevoleSincronizado);
 
-    // Cleanup: remover listener cuando se desmonta el componente
+    // Cleanup: remover listeners cuando se desmonta el componente
     return () => {
       window.removeEventListener('contactos-actualizados', handleContactosActualizados);
+      window.removeEventListener('benevole-sincronizado', handleBenevoleSincronizado);
     };
   }, [departamentoId]); // Dependencia: volver a suscribirse si cambia el departamento
 
   const cargarContactos = () => {
-    const contactosData = obtenerContactosPorDepartamento(departamentoId);
+    // ✅ SIEMPRE cargar contactos de departamento Y bénévoles del módulo principal
+    let contactosData: ContactoDepartamento[];
+    
+    // 1️⃣ Cargar contactos de departamentos
+    if (departamentoId === 'todos') {
+      contactosData = obtenerContactosDepartamento();
+    } else {
+      contactosData = obtenerContactosPorDepartamento(departamentoId);
+    }
+    
+    // 2️⃣ 🔥 SIEMPRE FUSIONAR Y SINCRONIZAR con bénévoles del módulo Bénévoles
+    const benevolesModuloRaw = localStorage.getItem('banqueAlimentaire_benevoles');
+    if (benevolesModuloRaw) {
+      try {
+        const benevolesModulo = JSON.parse(benevolesModuloRaw);
+        console.log('🔍 DEBUG - Bénévoles encontrados en módulo principal:', benevolesModulo.length);
+        console.log('🔍 DEBUG - Filtrando para departamento:', departamentoId);
+        
+        // Convertir bénévoles a formato ContactoDepartamento
+        benevolesModulo.forEach((benevole: any) => {
+          // Verificar si ya existe como contacto
+          const contactoExistente = contactosData.find(c => 
+            c.email && benevole.email && c.email.toLowerCase() === benevole.email.toLowerCase()
+          );
+          
+          if (contactoExistente) {
+            // 🔄 ACTUALIZAR contacto existente con datos del módulo principal
+            console.log(`🔄 Sincronizando datos de: ${benevole.prenom} ${benevole.nom}`);
+            contactoExistente.nombre = benevole.prenom || contactoExistente.nombre;
+            contactoExistente.apellido = benevole.nom || contactoExistente.apellido;
+            contactoExistente.nombreCompleto = `${benevole.prenom || ''} ${benevole.nom || ''}`.trim();
+            contactoExistente.telefono = benevole.telephone || contactoExistente.telefono;
+            contactoExistente.direccion = benevole.adresse || contactoExistente.direccion;
+            contactoExistente.ciudad = benevole.ville || contactoExistente.ciudad;
+            contactoExistente.codigoPostal = benevole.codePostal || contactoExistente.codigoPostal;
+            contactoExistente.foto = benevole.photo || contactoExistente.foto;
+            contactoExistente.notas = benevole.notes || contactoExistente.notas;
+            contactoExistente.activo = benevole.statut?.toLowerCase() === 'actif';
+          } else if (benevole.statut?.toLowerCase() === 'actif') {
+            // ➕ AGREGAR nuevo contacto si no existe
+            // Extraer IDs de departamentos asignados
+            let departamentosAsignados: string[] = [];
+            if (Array.isArray(benevole.departement)) {
+              departamentosAsignados = benevole.departement;
+            } else if (typeof benevole.departement === 'string') {
+              departamentosAsignados = benevole.departement.split(',').map((d: string) => d.trim());
+            }
+            
+            console.log(`  🔍 Bénévole ${benevole.prenom} ${benevole.nom}: departamentos =`, departamentosAsignados);
+            
+            // 3️⃣ VERIFICAR si el bénévole pertenece a este departamento
+            const perteneceADepartamento = departamentoId === 'todos' || 
+              departamentosAsignados.some(d => {
+                // Mapear nombres de departamento a IDs
+                const mapaNombresAIds: { [key: string]: string } = {
+                  'Direction': '1',
+                  'Entrepôt': '2',
+                  'Achats': '3',
+                  'Comptoir': '4',
+                  'Finance': '5',
+                  'Communication': '6',
+                  'Recrutement': '7',
+                  'Transport': '8'
+                };
+                
+                // Verificar si coincide por ID o por nombre
+                return d === departamentoId || mapaNombresAIds[d] === departamentoId;
+              });
+            
+            if (perteneceADepartamento) {
+              // Convertir bénévole a contacto
+              const contactoConvertido: ContactoDepartamento = {
+                id: benevole.id || `benevole-${Date.now()}-${Math.random()}`,
+                departamentoId: benevole.departementId || departamentoId,
+                departamentoIds: departamentosAsignados,
+                nombre: benevole.prenom || '',
+                apellido: benevole.nom || '',
+                email: benevole.email || '',
+                telefono: benevole.telephone || '',
+                tipo: 'benevole',
+                activo: benevole.statut?.toLowerCase() === 'actif',
+                fechaRegistro: benevole.dateInscription || new Date().toISOString(),
+                direccion: benevole.adresse || '',
+                codigoPostal: benevole.codePostal || '',
+                ciudad: benevole.quartier || 'Laval',
+                cargo: 'Bénévole',
+                notas: benevole.notes || '',
+                idiomas: [],
+                genero: 'otro',
+                nombreCompleto: `${benevole.prenom || ''} ${benevole.nom || ''}`.trim()
+              };
+              
+              contactosData.push(contactoConvertido);
+              console.log(`  ✅ Agregado bénévole: ${contactoConvertido.nombreCompleto} (depts: ${departamentosAsignados.join(', ')})`);
+            }
+          }
+        });
+      } catch (error) {
+        console.error('❌ Error al cargar bénévoles del módulo principal:', error);
+      }
+    }
+    
+    console.log('🔍 DEBUG - Total después de fusión:', contactosData.length);
     
     // 🔒 FILTRAR SOLO BÉNÉVOLES (excluir donadores y fournisseurs)
     const soloBenevoles = contactosData.filter(c => c.tipo === 'benevole');
@@ -269,7 +382,7 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
     console.log('🔍 DEBUG - Total bénévoles:', soloBenevoles.length);
     console.log(`🔍 DEBUG - Filtrados ${contactosData.length - soloBenevoles.length} contactos (donadores/fournisseurs)`);
     soloBenevoles.forEach(c => {
-      console.log(`  - ${c.nombre} ${c.apellido} (tipo: ${c.tipo}, activo: ${c.activo}, deptId: ${c.departamentoId})`);
+      console.log(`  - ${c.nombre} ${c.apellido} (tipo: ${c.tipo}, activo: ${c.activo}, deptId: ${c.departamentoId}, deptIds: ${c.departamentoIds?.join(', ') || 'N/A'})`);
       console.log(`    📍 Dirección: ${c.direccion || 'N/A'}, Apt: ${c.apartamento || 'N/A'}, Ciudad: ${c.ciudad || 'N/A'}, CP: ${c.codigoPostal || 'N/A'}`);
     });
     setContactos(soloBenevoles);
@@ -467,6 +580,11 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
   };
 
   const abrirDialogoNuevo = () => {
+    // ⚠️ No permitir crear contactos si estamos en modo "todos"
+    if (departamentoId === 'todos') {
+      toast.error('❌ Impossible de créer un contact en mode "Tous les Bénévoles". Veuillez utiliser le module Bénévoles pour assigner des départements.');
+      return;
+    }
     limpiarFormulario();
     setDialogAbierto(true);
   };
@@ -680,6 +798,125 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
       
       actualizarContacto(contactoSeleccionado.id, datosActualizados);
       
+      // 🔄🔄🔄 SINCRONIZACIÓN TOTAL: Si es un bénévole, propagar cambios a TODOS los lugares
+      if (datosActualizados.tipo === 'benevole' && datosActualizados.email) {
+        try {
+          console.log('🔄 ==========================================');
+          console.log('🔄 INICIANDO SINCRONIZACIÓN TOTAL DE BÉNÉVOLE');
+          console.log('🔄 Email:', datosActualizados.email);
+          console.log('🔄 ==========================================');
+          
+          // 1️⃣ Actualizar en el módulo Bénévoles principal
+          const benevolesData = localStorage.getItem('banqueAlimentaire_benevoles');
+          if (benevolesData) {
+            const benevoles = JSON.parse(benevolesData);
+            const benevolesActualizados = benevoles.map((b: any) => {
+              if (b.email && datosActualizados.email && 
+                  b.email.toLowerCase() === datosActualizados.email.toLowerCase()) {
+                console.log('✅ Actualizando bénévole en módulo principal:', b.nom);
+                return {
+                  ...b,
+                  // Actualizar TODOS los campos
+                  nom: datosActualizados.apellido || b.nom,
+                  prenom: datosActualizados.nombre || b.prenom,
+                  email: datosActualizados.email,
+                  telephone: datosActualizados.telefono || b.telephone,
+                  adresse: datosActualizados.direccion || b.adresse,
+                  ville: datosActualizados.ciudad || b.ville,
+                  codePostal: datosActualizados.codigoPostal || b.codePostal,
+                  dateNaissance: datosActualizados.fechaNacimiento || b.dateNaissance,
+                  langues: datosActualizados.idiomas || b.langues,
+                  competences: datosActualizados.certificaciones || b.competences,
+                  disponibilites: datosActualizados.disponibilidades || b.disponibilites,
+                  statut: datosActualizados.activo ? 'Actif' : 'Inactif',
+                  photo: datosActualizados.foto || b.photo,
+                  notes: datosActualizados.notas || b.notes,
+                  // Mantener departamentos y rol existentes
+                  departement: b.departement,
+                  role: b.role
+                };
+              }
+              return b;
+            });
+            localStorage.setItem('banqueAlimentaire_benevoles', JSON.stringify(benevolesActualizados));
+            console.log('✅ Módulo Bénévoles principal actualizado');
+          }
+          
+          // 2️⃣ Actualizar en TODOS los registros de contactosDepartamento con el mismo email
+          const contactosDeptData = localStorage.getItem('banqueAlimentaire_contactosDepartamento');
+          if (contactosDeptData) {
+            const contactosDept = JSON.parse(contactosDeptData);
+            let contactosActualizados = 0;
+            
+            const contactosDeptActualizados = contactosDept.map((c: any) => {
+              if (c.email && datosActualizados.email && 
+                  c.email.toLowerCase() === datosActualizados.email.toLowerCase() &&
+                  c.id !== contactoSeleccionado.id) { // No actualizar el que ya actualizamos
+                contactosActualizados++;
+                console.log(`✅ Sincronizando contacto en departamento: ${c.departamentoId}`);
+                return {
+                  ...c,
+                  // Sincronizar TODOS los campos importantes
+                  nombre: datosActualizados.nombre,
+                  apellido: datosActualizados.apellido,
+                  nombreCompleto: datosActualizados.nombreCompleto,
+                  email: datosActualizados.email,
+                  telefono: datosActualizados.telefono,
+                  emailPrincipal: datosActualizados.emailPrincipal,
+                  telefonoPrincipal: datosActualizados.telefonoPrincipal,
+                  direccion: datosActualizados.direccion,
+                  apartamento: datosActualizados.apartamento,
+                  ciudad: datosActualizados.ciudad,
+                  codigoPostal: datosActualizados.codigoPostal,
+                  quartier: datosActualizados.quartier,
+                  fechaNacimiento: datosActualizados.fechaNacimiento,
+                  genero: datosActualizados.genero,
+                  cargo: datosActualizados.cargo,
+                  numeroEmpleado: datosActualizados.numeroEmpleado,
+                  horario: datosActualizados.horario,
+                  heuresSemaines: datosActualizados.heuresSemaines,
+                  reference: datosActualizados.reference,
+                  supervisor: datosActualizados.supervisor,
+                  especialidad: datosActualizados.especialidad,
+                  idiomas: datosActualizados.idiomas,
+                  certificaciones: datosActualizados.certificaciones,
+                  disponibilidades: datosActualizados.disponibilidades,
+                  contactoEmergencia: datosActualizados.contactoEmergencia,
+                  fechaConfirmacionCasier: datosActualizados.fechaConfirmacionCasier,
+                  codigoEthiqueSigne: datosActualizados.codigoEthiqueSigne,
+                  foto: datosActualizados.foto,
+                  notas: datosActualizados.notas,
+                  activo: datosActualizados.activo,
+                  // Mantener campos específicos del departamento
+                  departamentoId: c.departamentoId,
+                  departamentoIds: c.departamentoIds,
+                  tipo: c.tipo
+                };
+              }
+              return c;
+            });
+            
+            localStorage.setItem('banqueAlimentaire_contactosDepartamento', JSON.stringify(contactosDeptActualizados));
+            console.log(`✅ ${contactosActualizados} contacto(s) sincronizado(s) en otros departamentos`);
+          }
+          
+          console.log('🔄 ==========================================');
+          console.log('🔄 SINCRONIZACIÓN TOTAL COMPLETADA');
+          console.log('🔄 ==========================================');
+          
+          // 🔄 Disparar evento de sincronización global
+          window.dispatchEvent(new CustomEvent('benevole-sincronizado', {
+            detail: {
+              email: datosActualizados.email,
+              nombreCompleto: datosActualizados.nombreCompleto
+            }
+          }));
+          
+        } catch (error) {
+          console.error('❌ Error en sincronización total:', error);
+        }
+      }
+      
       // ✅ VERIFICACIÓN POST-GUARDADO: Leer inmediatamente de localStorage
       setTimeout(() => {
         const contactoVerificado = obtenerContactoPorId(contactoSeleccionado.id);
@@ -754,6 +991,71 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
         const contactoGuardado = guardarContacto(contactoParaGuardar);
         console.log(`✅ DEBUG - Contacto guardado con ID: ${contactoGuardado.id}`);
         
+        // 🔄🔄🔄 SINCRONIZACIÓN EN CREACIÓN: Si es un bénévole nuevo, agregarlo al módulo principal
+        if (contactoGuardado.tipo === 'benevole' && contactoGuardado.email) {
+          try {
+            console.log('🔄 ==========================================');
+            console.log('🔄 SINCRONIZANDO NUEVO BÉNÉVOLE AL MÓDULO PRINCIPAL');
+            console.log('🔄 Email:', contactoGuardado.email);
+            console.log('🔄 ==========================================');
+            
+            const benevolesData = localStorage.getItem('banqueAlimentaire_benevoles');
+            const benevoles = benevolesData ? JSON.parse(benevolesData) : [];
+            
+            // Verificar si el bénévole ya existe por email
+            const benevoleExistente = benevoles.find((b: any) => 
+              b.email && contactoGuardado.email && 
+              b.email.toLowerCase() === contactoGuardado.email.toLowerCase()
+            );
+            
+            if (!benevoleExistente) {
+              // Crear nuevo bénévole en el módulo principal
+              const nuevoBenevole = {
+                id: contactoGuardado.id,
+                nom: contactoGuardado.apellido || '',
+                prenom: contactoGuardado.nombre || '',
+                email: contactoGuardado.email,
+                telephone: contactoGuardado.telefono || '',
+                adresse: contactoGuardado.direccion || '',
+                ville: contactoGuardado.ciudad || '',
+                codePostal: contactoGuardado.codigoPostal || '',
+                dateNaissance: contactoGuardado.fechaNacimiento || '',
+                langues: contactoGuardado.idiomas || [],
+                competences: contactoGuardado.certificaciones || [],
+                disponibilites: contactoGuardado.disponibilidades || [],
+                departement: contactoGuardado.departamentoIds || [departamentoId],
+                statut: 'Actif',
+                photo: contactoGuardado.foto || '',
+                notes: contactoGuardado.notas || '',
+                dateInscription: new Date().toISOString().split('T')[0],
+                heuresContribuees: 0,
+                role: 'Bénévole'
+              };
+              
+              benevoles.push(nuevoBenevole);
+              localStorage.setItem('banqueAlimentaire_benevoles', JSON.stringify(benevoles));
+              console.log('✅ Nuevo bénévole agregado al módulo principal');
+            } else {
+              // Si ya existe, actualizar sus departamentos
+              const benevolesActualizados = benevoles.map((b: any) => {
+                if (b.id === benevoleExistente.id) {
+                  const deptsActuales = Array.isArray(b.departement) ? b.departement : [b.departement];
+                  const nuevosDepts = [...new Set([...deptsActuales, departamentoId])];
+                  console.log(`✅ Agregando departamento ${departamentoId} a bénévole existente`);
+                  return { ...b, departement: nuevosDepts };
+                }
+                return b;
+              });
+              localStorage.setItem('banqueAlimentaire_benevoles', JSON.stringify(benevolesActualizados));
+            }
+            
+            console.log('🔄 SINCRONIZACIÓN DE CREACIÓN COMPLETADA');
+            console.log('🔄 ==========================================');
+          } catch (error) {
+            console.error('❌ Error en sincronización de creación:', error);
+          }
+        }
+        
         // ✅ VERIFICACIÓN POST-GUARDADO: Leer inmediatamente de localStorage
         setTimeout(() => {
           const contactoVerificado = obtenerContactoPorId(contactoGuardado.id);
@@ -809,24 +1111,61 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
     if (contactoSeleccionado) {
       eliminarContacto(contactoSeleccionado.id);
       
-      // 🔄 Si es un bénévole, actualizar su lista de departamentos
+      // 🔄 Si es un bénévole, TAMBIÉN eliminarlo del módulo Bénévoles principal
       if (contactoSeleccionado.tipo === 'benevole' && contactoSeleccionado.email) {
         try {
-          const benevolesData = localStorage.getItem('benevoles');
+          const benevolesData = localStorage.getItem('banqueAlimentaire_benevoles');
           if (benevolesData) {
             const benevoles = JSON.parse(benevolesData);
-            const benevolesActualizados = benevoles.map((b: any) => {
-              if (b.email === contactoSeleccionado.email) {
-                // Quitar este departamento de la lista
-                const depts = Array.isArray(b.departement) ? b.departement : (b.departement ? [b.departement] : []);
-                return {
-                  ...b,
-                  departement: depts.filter((d: string) => d !== departamentoId)
-                };
+            
+            // Buscar el bénévole por email
+            const benevoleEncontrado = benevoles.find((b: any) => 
+              b.email && contactoSeleccionado.email && 
+              b.email.toLowerCase() === contactoSeleccionado.email.toLowerCase()
+            );
+            
+            if (benevoleEncontrado) {
+              // 🗑️ ELIMINAR del módulo principal si solo está en este departamento
+              const depts = Array.isArray(benevoleEncontrado.departement) 
+                ? benevoleEncontrado.departement 
+                : (benevoleEncontrado.departement ? [benevoleEncontrado.departement] : []);
+              
+              // Mapear nombre de departamento a ID si es necesario
+              const mapaNombresAIds: { [key: string]: string } = {
+                'Direction': '1',
+                'Entrepôt': '2',
+                'Achats': '3',
+                'Comptoir': '4',
+                'Finance': '5',
+                'Communication': '6',
+                'Recrutement': '7',
+                'Transport': '8'
+              };
+              
+              const departamentosRestantes = depts.filter((d: string) => {
+                return d !== departamentoId && mapaNombresAIds[d] !== departamentoId;
+              });
+              
+              if (departamentosRestantes.length === 0) {
+                // Si no tiene más departamentos, ELIMINAR completamente
+                const benevolesActualizados = benevoles.filter((b: any) => b.id !== benevoleEncontrado.id);
+                localStorage.setItem('banqueAlimentaire_benevoles', JSON.stringify(benevolesActualizados));
+                console.log(`🗑️ Bénévole ${contactoSeleccionado.nombreCompleto} eliminado completamente del módulo principal`);
+              } else {
+                // Si tiene otros departamentos, solo actualizar la lista
+                const benevolesActualizados = benevoles.map((b: any) => {
+                  if (b.id === benevoleEncontrado.id) {
+                    return {
+                      ...b,
+                      departement: departamentosRestantes
+                    };
+                  }
+                  return b;
+                });
+                localStorage.setItem('banqueAlimentaire_benevoles', JSON.stringify(benevolesActualizados));
+                console.log(`♻️ Bénévole ${contactoSeleccionado.nombreCompleto} actualizado - Departamentos restantes:`, departamentosRestantes);
               }
-              return b;
-            });
-            localStorage.setItem('benevoles', JSON.stringify(benevolesActualizados));
+            }
           }
         } catch (error) {
           console.error('Erreur lors de la mise à jour du bénévole:', error);
@@ -1068,28 +1407,37 @@ export function GestionContactosDepartamento({ departamentoId, departamentoNombr
             </div>
             
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full lg:w-auto">
-              <Button
-                onClick={abrirDialogoAsignarBenevole}
-                className="text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl w-full sm:w-auto text-sm sm:text-base"
-                style={{ 
-                  backgroundColor: branding.primaryColor,
-                  fontFamily: 'Montserrat, sans-serif'
-                }}
-              >
-                <Link className="w-4 h-4 mr-2" />
-                <span className="truncate">Assigner un bénévole</span>
-              </Button>
-              <Button
-                onClick={abrirDialogoNuevo}
-                className="text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl w-full sm:w-auto text-sm sm:text-base"
-                style={{ 
-                  backgroundColor: branding.secondaryColor,
-                  fontFamily: 'Montserrat, sans-serif'
-                }}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nouveau Contact
-              </Button>
+              {departamentoId !== 'todos' && (
+                <>
+                  <Button
+                    onClick={abrirDialogoAsignarBenevole}
+                    className="text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl w-full sm:w-auto text-sm sm:text-base"
+                    style={{ 
+                      backgroundColor: branding.primaryColor,
+                      fontFamily: 'Montserrat, sans-serif'
+                    }}
+                  >
+                    <Link className="w-4 h-4 mr-2" />
+                    <span className="truncate">Assigner un bénévole</span>
+                  </Button>
+                  <Button
+                    onClick={abrirDialogoNuevo}
+                    className="text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl w-full sm:w-auto text-sm sm:text-base"
+                    style={{ 
+                      backgroundColor: branding.secondaryColor,
+                      fontFamily: 'Montserrat, sans-serif'
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Nouveau Contact
+                  </Button>
+                </>
+              )}
+              {departamentoId === 'todos' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-700" style={{ fontFamily: 'Roboto, sans-serif' }}>
+                  💡 <strong>Mode Visualisation</strong> - Pour assigner des départements aux bénévoles, utilisez le bouton "Assigner aux départements" dans la liste des bénévoles.
+                </div>
+              )}
               {/* BOTONES DE DIAGNÓSTICO REMOVIDOS - NO NECESARIOS EN PRODUCCIÓN */}
             </div>
           </div>

@@ -1607,7 +1607,23 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
     });
 
     // 🔄 SINCRONIZAR AUTOMÁTICAMENTE SI SE ASIGNÓ A ENTREPÔT
-    if (departamentosAsignar.some(dept => dept.toLowerCase().includes('entrepôt') || dept.toLowerCase().includes('entrepot'))) {
+    // ✅ CORRECCIÓN: Buscar por nombre del departamento, no por ID
+    const departamentosCompletos = obtenerDepartamentos();
+    const departamentosSeleccionados = departamentosCompletos.filter(dept => 
+      departamentosAsignar.includes(dept.id)
+    );
+    
+    console.log('🔍 Verificando si se asignó a Entrepôt:', {
+      departamentosAsignar,
+      departamentosSeleccionados: departamentosSeleccionados.map(d => ({ id: d.id, nombre: d.nombre }))
+    });
+    
+    if (departamentosSeleccionados.some(dept => 
+      dept.nombre.toLowerCase().includes('entrepôt') || 
+      dept.nombre.toLowerCase().includes('entrepot') ||
+      dept.nombre.toLowerCase().includes('almacén') ||
+      dept.nombre.toLowerCase().includes('almacen')
+    )) {
       console.log('🔄 Sincronizando bénévole a contactos de Entrepôt...');
       setTimeout(() => {
         const resultado = sincronizarVoluntariosEntrepot();
@@ -4434,8 +4450,8 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {sexeData.map((entry, index) => (
-                      <Cell key={`sexe-cell-${index}`} fill={sexeColors[entry.name] || '#999999'} />
+                    {sexeData.map((entry) => (
+                      <Cell key={`sexe-${entry.name}`} fill={sexeColors[entry.name] || '#999999'} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -4493,7 +4509,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                   />
                   <Bar dataKey="value" radius={[8, 8, 0, 0]}>
                     {ageData.map((entry, index) => (
-                      <Cell key={`age-cell-${index}`} fill={ageColors[index % ageColors.length]} />
+                      <Cell key={`age-${entry.name}`} fill={ageColors[index % ageColors.length]} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -4620,7 +4636,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
                     label={(entry) => formaterHeures(entry.heures)}
                   >
                     {heuresByDept.map((entry, index) => (
-                      <Cell key={`dept-cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`dept-${entry.departement}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -5149,7 +5165,8 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
       case 'rapports':
         return renderRapports();
       case 'contactos':
-        return <GestionContactosDepartamento departamentoId="benevoles" nombreDepartamento="Bénévoles" />;
+        // ✅ Vista especial: Mostrar TODOS los bénévoles del sistema (todos los departamentos)
+        return <GestionContactosDepartamento departamentoId="todos" departamentoNombre="Tous les Bénévoles" />;
       default:
         return renderListeBenevoles();
     }
@@ -5750,7 +5767,7 @@ export function Benevoles({ isPublicAccess = false }: BenevolesProps) {
 
       {/* Dialog: Profil Détaillé du Bénévole */}
       <Dialog open={profileModalOpen} onOpenChange={setProfileModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="benevole-profile-description">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               <Users className="w-6 h-6" style={{ color: branding.primaryColor }} />

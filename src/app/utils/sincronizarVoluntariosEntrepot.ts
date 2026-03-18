@@ -7,6 +7,7 @@
  */
 
 import { guardarContacto, obtenerContactosDepartamento, actualizarContacto, type ContactoDepartamento, type DisponibilidadDia } from './contactosDepartamentoStorage';
+import { obtenerDepartamentos } from './departamentosStorage';
 
 // Interfaz de Benevole (debe coincidir con la del componente Benevoles.tsx)
 interface DisponibilidadDiaBenevole {
@@ -75,28 +76,52 @@ function obtenerBenevoles(): Benevole[] {
 function estaAsignadoAEntrepot(benevole: Benevole): boolean {
   if (!benevole.departement) return false;
   
-  // 🔧 FIX: El campo departement puede ser string o array
-  let departamentos: string[] = [];
+  // ✅ CORRECCIÓN: Obtener departamentos del sistema y buscar por nombre
+  const todosDepartamentos = obtenerDepartamentos();
+  const departamentosEntrepot = todosDepartamentos.filter(dept =>
+    dept.nombre.toLowerCase().includes('entrepôt') ||
+    dept.nombre.toLowerCase().includes('entrepot') ||
+    dept.nombre.toLowerCase().includes('almacén') ||
+    dept.nombre.toLowerCase().includes('almacen') ||
+    dept.nombre.toLowerCase().includes('warehouse')
+  );
+  
+  // Si no existe un departamento llamado "Entrepôt", retornar false
+  if (departamentosEntrepot.length === 0) {
+    console.log('⚠️ No se encontró un departamento llamado "Entrepôt" en el sistema');
+    return false;
+  }
+  
+  // Obtener los IDs de los departamentos tipo Entrepôt
+  const idsEntrepot = departamentosEntrepot.map(dept => dept.id);
+  
+  console.log('🔍 Departamentos Entrepôt encontrados:', {
+    departamentos: departamentosEntrepot.map(d => ({ id: d.id, nombre: d.nombre })),
+    ids: idsEntrepot
+  });
+  
+  // 🔧 El campo departement puede ser string o array de IDs
+  let departamentosDelBenevole: string[] = [];
   
   if (typeof benevole.departement === 'string') {
     // Si es string, dividir por comas
-    departamentos = benevole.departement.split(',').map(d => d.trim().toLowerCase());
+    departamentosDelBenevole = benevole.departement.split(',').map(d => d.trim());
   } else if (Array.isArray(benevole.departement)) {
     // Si es array, usar directamente
-    departamentos = benevole.departement.map(d => String(d).trim().toLowerCase());
+    departamentosDelBenevole = benevole.departement.map(d => String(d).trim());
   } else {
     // Si es otro tipo, convertir a string
-    departamentos = [String(benevole.departement).toLowerCase()];
+    departamentosDelBenevole = [String(benevole.departement)];
   }
   
-  // Verificar si contiene "entrepôt", "entrepot", "entrepo", etc.
-  return departamentos.some(dept => 
-    dept.includes('entrepôt') || 
-    dept.includes('entrepot') || 
-    dept.includes('almacén') ||
-    dept.includes('almacen') ||
-    dept.includes('warehouse')
-  );
+  console.log(`🔍 Verificando bénévole ${benevole.prenom} ${benevole.nom}:`, {
+    departamentosAsignados: departamentosDelBenevole,
+    idsEntrepot: idsEntrepot,
+    estaEnEntrepot: departamentosDelBenevole.some(id => idsEntrepot.includes(id))
+  });
+  
+  // Verificar si algún ID del bénévole coincide con algún ID de Entrepôt
+  return departamentosDelBenevole.some(id => idsEntrepot.includes(id));
 }
 
 /**

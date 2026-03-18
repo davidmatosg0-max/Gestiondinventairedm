@@ -1180,7 +1180,7 @@ export function Recrutement() {
               Éditer le Candidat
             </DialogTitle>
             <DialogDescription id="editer-candidat-description">
-              Modifiez les informations du candidat {candidatoParaEditar?.name}
+              Modifiez les informations du candidat sélectionné
             </DialogDescription>
           </DialogHeader>
 
@@ -1415,7 +1415,7 @@ export function Recrutement() {
               Assigner au Département
             </DialogTitle>
             <DialogDescription id="assigner-departement-description">
-              Sélectionnez le département où {candidatoParaAssignar?.name} sera assigné comme bénévole
+              Sélectionnez le département où le candidat sera assigné comme bénévole
             </DialogDescription>
           </DialogHeader>
 
@@ -1550,7 +1550,7 @@ export function Recrutement() {
               Profil du Candidat
             </DialogTitle>
             <DialogDescription id="perfil-candidato-description">
-              Détails complets de la candidature de {candidatoParaPerfil?.name}
+              Détails complets de la candidature du candidat sélectionné
             </DialogDescription>
           </DialogHeader>
 
